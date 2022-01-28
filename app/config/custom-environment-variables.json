@@ -1,0 +1,30 @@
+{
+  "db": {
+    "database": "DB_DATABASE",
+    "host": "DB_HOST",
+    "username": "DB_USERNAME",
+    "password": "DB_PASSWORD",
+    "port": "DB_PORT"
+  },
+  "keycloak": {
+    "clientId": "KC_CLIENTID",
+    "clientSecret": "KC_CLIENTSECRET",
+    "enabled": "KC_ENABLED",
+    "publicKey": "KC_PUBLICKEY",
+    "realm": "KC_REALM",
+    "serverUrl": "KC_SERVERURL"
+  },
+  "objectStorage": {
+    "accessKeyId": "OBJECTSTORAGE_ACCESSKEYID",
+    "bucket": "OBJECTSTORAGE_BUCKET",
+    "endpoint": "OBJECTSTORAGE_ENDPOINT",
+    "key": "OBJECTSTORAGE_KEY",
+    "secretAccessKey": "OBJECTSTORAGE_SECRETACCESSKEY"
+  },
+  "server": {
+    "bodyLimit": "SERVER_BODYLIMIT",
+    "logFile": "SERVER_LOGFILE",
+    "logLevel": "SERVER_LOGLEVEL",
+    "port": "SERVER_PORT"
+  }
+}

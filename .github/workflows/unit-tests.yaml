@@ -1,0 +1,85 @@
+---
+name: Tests
+on:
+  - push
+  - pull_request
+jobs:
+  test-app:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    timeout-minutes: 10
+    strategy:
+      fail-fast: true
+      matrix:
+        node-version:
+          - '12.x'
+          - '14.x'
+          - '16.x'
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Cache node modules
+        uses: actions/cache@v2
+        id: cache-app
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: ${{ github.workspace }}/app/node_modules
+          key: ${{ runner.os }}-app-${{ env.cache-name }}-${{ hashFiles('**/app/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-app-${{ env.cache-name }}-
+            ${{ runner.os }}-app-
+            ${{ runner.os }}-
+      - name: Install dependencies
+        if: steps.cache-app.outputs.cache-hit != 'true'
+        run: npm ci
+      - name: Test
+        run: npm run test
+        env:
+          CI: true
+      - name: Save Coverage Results
+        if: matrix.node-version == '16.x'
+        uses: actions/upload-artifact@v2
+        with:
+          name: coverage-app
+          path: ${{ github.workspace }}/app/coverage
+          retention-days: 1
+  test-coverage:
+    needs:
+      - "test-app"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check Workflow Secrets
+        id: check-secrets
+        run: |
+          unset HAS_SECRETS
+          if [ -n "$CC_TEST_REPORTER_ID" ]; then HAS_SECRETS='true'; fi
+          echo ::set-output name=HAS_SECRETS::${HAS_SECRETS}
+        env:
+          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+      - name: Checkout Repository
+        if: steps.check-secrets.outputs.HAS_SECRETS
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Restore Coverage Results
+        if: steps.check-secrets.outputs.HAS_SECRETS
+        uses: actions/download-artifact@v2
+      - name: Publish code coverage
+        if: steps.check-secrets.outputs.HAS_SECRETS
+        uses: paambaati/codeclimate-action@v2.7.5
+        env:
+          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+        with:
+          coverageLocations: |
+            ${{ github.workspace }}/**/lcov.info:lcov
+          prefix: ${{ github.workplace }}

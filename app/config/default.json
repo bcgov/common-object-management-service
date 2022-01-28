@@ -1,0 +1,22 @@
+{
+  "db": {
+    "database": "coms",
+    "host": "localhost",
+    "port": "5432",
+    "username": "app"
+  },
+  "keycloak": {
+    "serverUrl": "https://dev.oidc.gov.bc.ca/auth"
+  },
+  "objectStorage": {
+    "accessKeyId": "nr-iit-showcase",
+    "bucket": "egejyy",
+    "endpoint": "https://nrs.objectstore.gov.bc.ca",
+    "key": "coms/dev"
+  },
+  "server": {
+    "bodyLimit": "30mb",
+    "logLevel": "http",
+    "port": "8080"
+  }
+}
