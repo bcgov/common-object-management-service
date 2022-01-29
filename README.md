@@ -2,10 +2,10 @@
 # Common Object Management Service [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE) [![Lifecycle:Experimental](https://img.shields.io/badge/Lifecycle-Experimental-339999)](https://github.com/bcgov/repomountie/blob/master/doc/lifecycle-badges.md)
 
 ![Tests](https://github.com/bcgov/common-object-management-service/workflows/Tests/badge.svg)
-[![Maintainability](https://api.codeclimate.com/v1/badges/e7f26d580793ba73b7f7/maintainability)](https://codeclimate.com/github/bcgov/common-object-management-service/maintainability)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/e7f26d580793ba73b7f7/test_coverage)](https://codeclimate.com/github/bcgov/common-object-management-service/test_coverage)
+[![Maintainability](https://api.codeclimate.com/v1/badges/91d2b0aebc348a1d5d0a/maintainability)](https://codeclimate.com/github/bcgov/common-object-management-service/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/91d2b0aebc348a1d5d0a/test_coverage)](https://codeclimate.com/github/bcgov/common-object-management-service/test_coverage)
 
-COMS
+A microservice for managing access control to S3 Objects
 
 ## Directory Structure
 
