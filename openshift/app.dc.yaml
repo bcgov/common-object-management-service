@@ -42,18 +42,18 @@ objects:
               livenessProbe:
                 httpGet:
                   path: "${ROUTE_PATH}/api"
-                  port: 8080
+                  port: 3000
                   scheme: HTTP
                 initialDelaySeconds: 10
                 timeoutSeconds: 1
                 failureThreshold: 3
               ports:
-                - containerPort: 8080
+                - containerPort: 3000
                   protocol: TCP
               readinessProbe:
                 httpGet:
                   path: "${ROUTE_PATH}/api"
-                  port: 8080
+                  port: 3000
                   scheme: HTTP
                 initialDelaySeconds: 10
                 timeoutSeconds: 1
@@ -119,10 +119,10 @@ objects:
       name: "${APP_NAME}-app-${JOB_NAME}"
     spec:
       ports:
-        - name: 8080-tcp
-          port: 8080
+        - name: 3000-tcp
+          port: 3000
           protocol: TCP
-          targetPort: 8080
+          targetPort: 3000
       selector:
         app: "${APP_NAME}-${JOB_NAME}"
         deploymentconfig: "${APP_NAME}-app-${JOB_NAME}"
@@ -136,7 +136,7 @@ objects:
       host: "${ROUTE_HOST}"
       path: "${ROUTE_PATH}"
       port:
-        targetPort: 8080-tcp
+        targetPort: 3000-tcp
       tls:
         insecureEdgeTerminationPolicy: Redirect
         termination: edge

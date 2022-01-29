@@ -1,22 +1,13 @@
 {
-  "frontend": {
-    "keycloak": {
-      "clientId": "client-frontend-local",
-      "realm": "01234567"
-    }
+  "keycloak": {
+    "clientId": "client",
+    "realm": "01234567",
+    "clientSecret": "password"
   },
   "server": {
-    "keycloak": {
-      "clientId": "client",
-      "realm": "01234567",
-      "clientSecret": "password"
-    },
     "logLevel": "silent"
   },
-  "serviceClient": {
-    "commonServices": {
-      "username": "username",
-      "password": "password"
-    }
+  "objectStorage": {
+    "secretAccessKey": "secretAccessKey"
   }
 }

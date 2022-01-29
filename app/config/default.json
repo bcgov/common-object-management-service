@@ -17,6 +17,6 @@
   "server": {
     "bodyLimit": "30mb",
     "logLevel": "http",
-    "port": "8080"
+    "port": "3000"
   }
 }
