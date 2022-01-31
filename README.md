@@ -25,6 +25,7 @@ A microservice for managing access control to S3 Objects
 * [Application Readme](app/README.md)
 * [API Specification](app/README.md#api-usage)
 * [Openshift Readme](openshift/README.md)
+* [Security Reporting](SECURITY.md)
 * [Showcase Team Roadmap](https://github.com/bcgov/nr-get-token/wiki/Product-Roadmap)
 
 ## Getting Help or Reporting an Issue
