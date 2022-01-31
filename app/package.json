@@ -18,7 +18,14 @@
     "clean": "rm -rf coverage dist",
     "purge": "rm -rf node_modules",
     "rebuild": "npm run clean && npm run build",
-    "reinstall": "npm run purge && npm install"
+    "reinstall": "npm run purge && npm install",
+    "migrate": "npm run migrate:latest",
+    "migrate:down": "knex migrate:down",
+    "migrate:latest": "knex migrate:latest",
+    "migrate:make": "knex migrate:make",
+    "migrate:rollback": "knex migrate:rollback",
+    "migrate:rollback:all": "knex migrate:rollback --all",
+    "migrate:up": "knex migrate:up"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.48.0",
