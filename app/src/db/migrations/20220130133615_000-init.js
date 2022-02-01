@@ -108,7 +108,7 @@ exports.up = function (knex) {
             RETURN NEW;
         elsif (TG_OP = 'DELETE') then
             v_old_data := row_to_json(OLD);
-            insert into public.form_submission_audit ("objectId", "dbUser", "actionTimestamp", "action", "originalData")
+            insert into public.audit_object ("objectId", "dbUser", "actionTimestamp", "action", "originalData")
             values (
             OLD.id,
             SESSION_USER,
@@ -125,7 +125,7 @@ exports.up = function (knex) {
     BEGIN
         if (TG_OP = 'UPDATE') then
             v_old_data := row_to_json(OLD);
-            insert into public.audit_object ("objectPermissionId", "dbUser", "updatedByUsername", "actionTimestamp", "action", "originalData")
+            insert into public.audit_object_permission ("objectPermissionId", "dbUser", "updatedByUsername", "actionTimestamp", "action", "originalData")
             values (
             OLD.id,
             SESSION_USER,
@@ -136,7 +136,7 @@ exports.up = function (knex) {
             RETURN NEW;
         elsif (TG_OP = 'DELETE') then
             v_old_data := row_to_json(OLD);
-            insert into public.form_submission_audit ("objectPermissionId", "dbUser", "actionTimestamp", "action", "originalData")
+            insert into public.audit_object_permission ("objectPermissionId", "dbUser", "actionTimestamp", "action", "originalData")
             values (
             OLD.id,
             SESSION_USER,
