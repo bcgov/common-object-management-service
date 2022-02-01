@@ -48,7 +48,7 @@ exports.up = function (knex) {
     }))
     .then(() => knex.schema.createTable('object', table => {
       table.uuid('id').primary();
-      table.string('originalName', 1024).notNullable();
+      table.string('originalName', 255).notNullable();
       table.string('path', 1024).notNullable();
       table.string('mimeType').notNullable();
       table.string('uploaderOidcId').references('oidcId').inTable('user');
