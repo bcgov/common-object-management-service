@@ -14,7 +14,7 @@ const inArrayFilter = (column, values) => {
 };
 
 const tableNames = (models) => {
-  return Object.values(models).map(model => model.tableName());
+  return Object.values(models).map(model => model.tableName);
 };
 
 module.exports = {
