@@ -7,7 +7,7 @@ exports.up = function (knex) {
   return Promise.resolve()
 
     // Create user table and add a dummy system user (to link migration CreatedBy stamps)
-    .then(() => knex.schema.createTable('oidc_user', table => {
+    .then(() => knex.schema.createTable('user', table => {
       table.string('oidcId').primary();
       table.string('firstName');
       table.string('fullName');
@@ -25,7 +25,7 @@ exports.up = function (knex) {
           active: false
         },
       ];
-      return knex('oidc_user').insert(items);
+      return knex('user').insert(items);
     })
     .then(() => knex.schema.createTable('identity_provider', table => {
       table.string('code').primary();
@@ -35,7 +35,7 @@ exports.up = function (knex) {
       stamps(knex, table);
     }))
     // add the idp fk for user (user needs to be created first for stamp fks)
-    .then(() => knex.schema.alterTable('oidc_user', table => {
+    .then(() => knex.schema.alterTable('user', table => {
       table.string('idp').references('code').inTable('identity_provider').after('oidcId');
     }))
 
@@ -52,13 +52,13 @@ exports.up = function (knex) {
       table.string('originalName', 1024).notNullable();
       table.string('path', 1024).notNullable();
       table.string('mimeType').notNullable();
-      table.string('uploaderOidcId').references('oidcId').inTable('oidc_user');
+      table.string('uploaderOidcId').references('oidcId').inTable('user');
       table.boolean('public').notNullable().defaultTo(false);
       stamps(knex, table);
     }))
     .then(() => knex.schema.createTable('object_permission', table => {
       table.uuid('id').primary();
-      table.string('oidcId').references('oidcId').inTable('oidc_user').notNullable();
+      table.string('oidcId').references('oidcId').inTable('user').notNullable();
       table.uuid('objectId').references('id').inTable('object').notNullable();
       table.string('code').references('code').inTable('permission').notNullable();
       stamps(knex, table);
@@ -218,9 +218,9 @@ exports.down = function (knex) {
     .then(() => knex.schema.dropTableIfExists('object_permission'))
     .then(() => knex.schema.dropTableIfExists('object'))
     .then(() => knex.schema.dropTableIfExists('permission'))
-    .then(() => knex.schema.alterTable('oidc_user', table => {
+    .then(() => knex.schema.alterTable('user', table => {
       table.dropColumn('idp');
     }))
     .then(() => knex.schema.dropTableIfExists('identity_provider'))
-    .then(() => knex.schema.dropTableIfExists('oidc_user'));
+    .then(() => knex.schema.dropTableIfExists('user'));
 };

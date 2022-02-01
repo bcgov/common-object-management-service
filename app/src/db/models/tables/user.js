@@ -2,9 +2,9 @@ const { Model } = require('objection');
 const { Timestamps } = require('../mixins');
 const stamps = require('../jsonSchema').stamps;
 
-class OidcUser extends Timestamps(Model) {
+class User extends Timestamps(Model) {
   static get tableName() {
-    return 'oidc_user';
+    return 'user';
   }
 
   static get relationMappings() {
@@ -42,4 +42,4 @@ class OidcUser extends Timestamps(Model) {
   }
 }
 
-module.exports = OidcUser;
+module.exports = User;

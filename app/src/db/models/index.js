@@ -3,7 +3,7 @@ const models = {
   IdentityProvider: require('./tables/identityProvider'),
   Object: require('./tables/object'),
   ObjectPermission: require('./tables/objectPermission'),
-  OidcUser: require('./tables/oidcUser'),
+  User: require('./tables/user'),
 
   // Views
 };
