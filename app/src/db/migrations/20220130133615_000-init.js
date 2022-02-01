@@ -39,7 +39,6 @@ exports.up = function (knex) {
       table.string('idp').references('code').inTable('identity_provider').after('oidcId');
     }))
 
-
     // Add the rest of the tables
     .then(() => knex.schema.createTable('permission', table => {
       table.string('code').primary();
