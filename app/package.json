@@ -25,7 +25,8 @@
     "migrate:make": "knex migrate:make",
     "migrate:rollback": "knex migrate:rollback",
     "migrate:rollback:all": "knex migrate:rollback --all",
-    "migrate:up": "knex migrate:up"
+    "migrate:up": "knex migrate:up",
+    "seed": "knex seed:run"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.48.0",

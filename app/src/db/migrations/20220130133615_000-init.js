@@ -155,9 +155,15 @@ exports.up = function (knex) {
     AFTER UPDATE OR DELETE ON object_permission
     FOR EACH ROW EXECUTE PROCEDURE public.audit_object_permission_func();`))
 
-    // Populate Data
+    // Populate Data (also see seeds for oidc auth provider-specific data)
     .then(() => {
       const items = [
+        {
+          createdBy: CREATED_BY,
+          code: 'CREATE',
+          display: 'Create',
+          active: true
+        },
         {
           createdBy: CREATED_BY,
           code: 'READ',
@@ -166,8 +172,14 @@ exports.up = function (knex) {
         },
         {
           createdBy: CREATED_BY,
-          code: 'WRITE',
-          display: 'Write',
+          code: 'UPDATE',
+          display: 'Update',
+          active: true
+        },
+        {
+          createdBy: CREATED_BY,
+          code: 'DELETE',
+          display: 'Delete',
           active: true
         },
         {
@@ -178,32 +190,6 @@ exports.up = function (knex) {
         },
       ];
       return knex('permission').insert(items);
-    })
-    .then(() => {
-      const items = [
-        {
-          createdBy: CREATED_BY,
-          code: 'idir',
-          display: 'IDIR',
-          idpAlias: 'idir',
-          active: true
-        },
-        {
-          createdBy: CREATED_BY,
-          code: 'bceid-basic',
-          display: 'Basic BCeID',
-          idpAlias: 'bceid-basic',
-          active: true
-        },
-        {
-          createdBy: CREATED_BY,
-          code: 'bceid-business',
-          display: 'Business BCeID',
-          idpAlias: 'bceid-business',
-          active: true
-        },
-      ];
-      return knex('identity_provider').insert(items);
     });
 };
 
