@@ -1,7 +1,7 @@
 const models = {
   // Tables
   IdentityProvider: require('./tables/identityProvider'),
-  Object: require('./tables/object'),
+  ObjectModel: require('./tables/objectModel'),
   ObjectPermission: require('./tables/objectPermission'),
   User: require('./tables/user'),
 

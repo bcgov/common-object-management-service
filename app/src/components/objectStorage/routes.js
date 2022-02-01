@@ -3,10 +3,14 @@ const routes = require('express').Router();
 const Problem = require('api-problem');
 
 const controller = require('./controller');
+const dalController = require('../objectRecordData/controller');
 
 /** Creates a new object */
 routes.post('/', (req, res, next) => {
   controller.createObject(req, res, next);
+  // TODO: how the method above, it's error handing, and it's return vals play
+  // with the method below needs to be figured out, callback? wait?
+  dalController.create(req, res, next);
 });
 
 /** List all user accessible objects */

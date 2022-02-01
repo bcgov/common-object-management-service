@@ -38,6 +38,8 @@ const controller = {
 
       req.pipe(bb);
     } catch (e) {
+      // TODO: how should this error handling play when the next step after this from the route is to call
+      // another controller?
       next(errorToProblem(SERVICE, e));
     }
   },

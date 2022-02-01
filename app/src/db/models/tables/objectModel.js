@@ -2,7 +2,8 @@ const { Model } = require('objection');
 const { Timestamps } = require('../mixins');
 const stamps = require('../jsonSchema').stamps;
 
-class Object extends Timestamps(Model) {
+// The table is "object" but Object is a bit of a reserved word :)
+class ObjectModel extends Timestamps(Model) {
   static get tableName() {
     return 'object';
   }
@@ -40,4 +41,4 @@ class Object extends Timestamps(Model) {
   }
 }
 
-module.exports = Object;
+module.exports = ObjectModel;
