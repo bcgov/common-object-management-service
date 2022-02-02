@@ -22,7 +22,8 @@ exports.up = function (knex) {
         {
           oidcId: CREATED_BY,
           username: 'System',
-          active: false
+          active: false,
+          createdBy: CREATED_BY,
         },
       ];
       return knex('user').insert(items);
