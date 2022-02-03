@@ -11,7 +11,7 @@ describe('getLogger', () => {
     expect(log.exitOnError).toBeFalsy();
     expect(log.format).toBeTruthy();
     expect(log.level).toBe(config.get('server.logLevel'));
-    expect(log.transports).toHaveLength(1);
+    expect(log.transports.length).toBeGreaterThanOrEqual(1);
   };
 
   it('should return a winston logger', () => {
