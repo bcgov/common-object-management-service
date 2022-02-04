@@ -89,11 +89,11 @@ const objectStorageService = {
   /**
    * @function presignUrl
    * Generates a presigned url for the `command` with a limited expiration window
-   * @param {object} [options.expiresIn=300] The number of seconds this signed url will be valid for
+   * @param {object} [expiresIn=300] The number of seconds this signed url will be valid for
    * @returns {Promise<string>} A presigned url for the direct S3 REST `command` operation
    */
-  presignUrl(command, options={ expiresIn: defaultExpiresIn }) { // Default expire to 5 minutes
-    return getSignedUrl(this._s3Client, command, options);
+  presignUrl(command, expiresIn=defaultExpiresIn) { // Default expire to 5 minutes
+    return getSignedUrl(this._s3Client, command, { expiresIn });
   },
 
   /**
@@ -164,7 +164,7 @@ const objectStorageService = {
     if (versionId) params.VersionId = versionId;
 
 
-    return this.presignUrl(new GetObjectCommand(params), { expiresIn: expires });
+    return this.presignUrl(new GetObjectCommand(params), expires);
   }
 };
 
