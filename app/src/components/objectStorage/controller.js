@@ -8,6 +8,7 @@ const service = require('./service');
 const SERVICE = 'ObjectStorage';
 
 const controller = {
+  /** Creates new objects */
   createObject(req, res, next) {
     try {
       const bb = busboy({ headers: req.headers });
@@ -42,6 +43,7 @@ const controller = {
     }
   },
 
+  /** Deletes the object */
   async deleteObject(req, res, next) {
     try {
       const data = {
@@ -56,6 +58,7 @@ const controller = {
     }
   },
 
+  /** List all versions of the object */
   async listObjectVersion(req, res, next) {
     try {
       const data = {
@@ -70,6 +73,7 @@ const controller = {
     }
   },
 
+  /** Reads via streaming or returns a presigned URL for the object */
   async readObject(req, res, next) {
     try {
       const data = {
@@ -114,6 +118,7 @@ const controller = {
     }
   },
 
+  /** Creates an updated version of the object via streaming */
   async updateObject(req, res, next) {
     try {
       const data = {

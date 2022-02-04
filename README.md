@@ -1,5 +1,7 @@
 
-# Common Object Management Service [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE) [![Lifecycle:Experimental](https://img.shields.io/badge/Lifecycle-Experimental-339999)](https://github.com/bcgov/repomountie/blob/master/doc/lifecycle-badges.md)
+# Common Object Management Service
+
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE) [![Lifecycle:Experimental](https://img.shields.io/badge/Lifecycle-Experimental-339999)](https://github.com/bcgov/repomountie/blob/master/doc/lifecycle-badges.md)
 
 ![Tests](https://github.com/bcgov/common-object-management-service/workflows/Tests/badge.svg)
 [![Maintainability](https://api.codeclimate.com/v1/badges/91d2b0aebc348a1d5d0a/maintainability)](https://codeclimate.com/github/bcgov/common-object-management-service/maintainability)
@@ -12,19 +14,24 @@ A microservice for managing access control to S3 Objects
     .github/                   - PR and Issue templates
     app/                       - Application Root
     ├── src/                   - Node.js web application
-    │   └── docs/              - OpenAPI 3.0 Specification
+    │   ├── components/        - Components Logic Layer
+    │   ├── db/                - Database Layer
+    │   ├── docs/              - OpenAPI 3.0 Specification
+    │   └── routes/            - API Route Layer
     └── tests/                 - Node.js web application tests
     openshift/                 - OpenShift-deployment and shared pipeline files
     CODE-OF-CONDUCT.md         - Code of Conduct
     COMPLIANCE.yaml            - BCGov PIA/STRA compliance status
     CONTRIBUTING.md            - Contributing Guidelines
     LICENSE                    - License
+    SECURITY.md                - Security Policy and Reporting
 
 ## Documentation
 
 * [Application Readme](app/README.md)
 * [API Specification](app/README.md#api-usage)
 * [Openshift Readme](openshift/README.md)
+* [Security Reporting](SECURITY.md)
 * [Showcase Team Roadmap](https://github.com/bcgov/nr-get-token/wiki/Product-Roadmap)
 
 ## Getting Help or Reporting an Issue

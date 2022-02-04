@@ -1,7 +1,7 @@
 module.exports = {
   clearMocks: true,
   collectCoverage: true,
-  collectCoverageFrom: ['src/**/*.js', '!frontend/**/*.*'],
+  collectCoverageFrom: ['src/**/*.js', '!src/db/migrations/*.js', '!src/db/seeds/*.js'],
   moduleFileExtensions: ['js', 'json'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1'
@@ -9,6 +9,6 @@ module.exports = {
   testMatch: [
     '**/tests/unit/**/*.spec.(js|jsx|ts|tsx)|**/__tests__/*.(js|jsx|ts|tsx)'
   ],
-  testPathIgnorePatterns: ['frontend'],
+  testPathIgnorePatterns: [],
   testURL: 'http://localhost/',
 };
