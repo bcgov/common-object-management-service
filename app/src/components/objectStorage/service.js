@@ -18,6 +18,8 @@ const key = utils.delimit(config.get('objectStorage.key'));
 const accessKeyId = config.get('objectStorage.accessKeyId');
 const secretAccessKey = config.get('objectStorage.secretAccessKey');
 
+const defaultExpiresIn = 300;
+
 const objectStorageService = {
   /**
    * @private
@@ -41,13 +43,15 @@ const objectStorageService = {
    * @function deleteObject
    * Deletes the object at `filePath`
    * @param {object} options.filePath The filePath of the object
+   * @param {object} [options.versionId] Optional specific versionId for the object
    * @returns {Promise<object>} The response of the delete object operation
    */
-  deleteObject({ filePath }) {
+  deleteObject({ filePath, versionId }) {
     const params = {
       Bucket: bucket,
       Key: filePath
     };
+    if (versionId) params.VersionId = versionId;
 
     return this._s3Client.send(new DeleteObjectCommand(params));
   },
@@ -88,9 +92,8 @@ const objectStorageService = {
    * @param {object} [options.expiresIn=300] The number of seconds this signed url will be valid for
    * @returns {Promise<string>} A presigned url for the direct S3 REST `command` operation
    */
-  presignUrl(command, { expiresIn }) {
-    if (!expiresIn) expiresIn = 300; // Default expire to 5 minutes
-    return getSignedUrl(this._s3Client, command, { expiresIn });
+  presignUrl(command, options={ expiresIn: defaultExpiresIn }) { // Default expire to 5 minutes
+    return getSignedUrl(this._s3Client, command, options);
   },
 
   /**
@@ -137,28 +140,31 @@ const objectStorageService = {
   readObject({ filePath, versionId }) {
     const params = {
       Bucket: bucket,
-      Key: filePath,
-      VersionId: versionId
+      Key: filePath
     };
+    if (versionId) params.VersionId = versionId;
 
     return this._s3Client.send(new GetObjectCommand(params));
   },
 
   /**
-   * @function readObject
+   * @function readSignedUrl
    * Yields a presigned url for the get object operation with a limited expiration window
    * @param {object} options.filePath The filePath of the object
    * @param {object} [options.versionId] Optional specific versionId for the object
+   * @param {object} [options.expiresIn] The number of seconds this signed url will be valid for
    * @returns {Promise<string>} A presigned url for the direct S3 REST `command` operation
    */
-  readSignedUrl({ filePath, versionId }) {
+  readSignedUrl({ filePath, versionId, expiresIn }) {
+    const expires = expiresIn ? expiresIn : defaultExpiresIn;
     const params = {
       Bucket: bucket,
-      Key: filePath,
-      VersionId: versionId
+      Key: filePath
     };
+    if (versionId) params.VersionId = versionId;
 
-    return this.presignUrl(new GetObjectCommand(params), 300);
+
+    return this.presignUrl(new GetObjectCommand(params), { expiresIn: expires });
   }
 };
 
