@@ -19,8 +19,7 @@ const utils = require('../../../../src/components/objectStorage/utils');
 
 const bucket = config.get('objectStorage.bucket');
 const key = utils.delimit(config.get('objectStorage.key'));
-
-const defaultExpiresIn = 300;
+const defaultTempExpiresIn = parseInt(config.get('objectStorage.defaultTempExpiresIn'), 10);
 
 const s3ClientMock = mockClient(service._s3Client);
 
@@ -118,7 +117,7 @@ describe('presignUrl', () => {
 
     expect(result).toBeTruthy();
     expect(getSignedUrl).toHaveBeenCalledTimes(1);
-    expect(getSignedUrl).toHaveBeenCalledWith(expect.any(Object), command, { expiresIn: defaultExpiresIn });
+    expect(getSignedUrl).toHaveBeenCalledWith(expect.any(Object), command, { expiresIn: defaultTempExpiresIn });
   });
 
   it('should call getSignedUrl with custom expiry', () => {
@@ -268,7 +267,7 @@ describe('readSignedUrl', () => {
         Bucket: bucket,
         Key: filePath
       }
-    }), defaultExpiresIn);
+    }), defaultTempExpiresIn);
   });
 
   it('should call presignUrl with a get object command for a specific version and default expiration', () => {
@@ -284,7 +283,7 @@ describe('readSignedUrl', () => {
         Key: filePath,
         VersionId: versionId
       }
-    }), defaultExpiresIn);
+    }), defaultTempExpiresIn);
   });
 
   it('should call presignUrl with a get object command for a specific version and custom expiration', () => {

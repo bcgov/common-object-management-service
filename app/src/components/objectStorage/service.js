@@ -14,11 +14,10 @@ const utils = require('./utils');
 // Get app configuration
 const endpoint = config.get('objectStorage.endpoint');
 const bucket = config.get('objectStorage.bucket');
+const defaultTempExpiresIn = parseInt(config.get('objectStorage.defaultTempExpiresIn'), 10);
 const key = utils.delimit(config.get('objectStorage.key'));
 const accessKeyId = config.get('objectStorage.accessKeyId');
 const secretAccessKey = config.get('objectStorage.secretAccessKey');
-
-const defaultExpiresIn = 300;
 
 const objectStorageService = {
   /**
@@ -92,7 +91,7 @@ const objectStorageService = {
    * @param {object} [expiresIn=300] The number of seconds this signed url will be valid for
    * @returns {Promise<string>} A presigned url for the direct S3 REST `command` operation
    */
-  presignUrl(command, expiresIn=defaultExpiresIn) { // Default expire to 5 minutes
+  presignUrl(command, expiresIn=defaultTempExpiresIn) { // Default expire to 5 minutes
     return getSignedUrl(this._s3Client, command, { expiresIn });
   },
 
@@ -156,7 +155,7 @@ const objectStorageService = {
    * @returns {Promise<string>} A presigned url for the direct S3 REST `command` operation
    */
   readSignedUrl({ filePath, versionId, expiresIn }) {
-    const expires = expiresIn ? expiresIn : defaultExpiresIn;
+    const expires = expiresIn ? expiresIn : defaultTempExpiresIn;
     const params = {
       Bucket: bucket,
       Key: filePath

@@ -17,6 +17,7 @@
   "objectStorage": {
     "accessKeyId": "OBJECTSTORAGE_ACCESSKEYID",
     "bucket": "OBJECTSTORAGE_BUCKET",
+    "defaultTempExpiresIn": "OBJECTSTORAGE_TEMP_EXPIRESIN",
     "endpoint": "OBJECTSTORAGE_ENDPOINT",
     "key": "OBJECTSTORAGE_KEY",
     "secretAccessKey": "OBJECTSTORAGE_SECRETACCESSKEY"
