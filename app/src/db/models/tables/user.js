@@ -7,25 +7,14 @@ class User extends Timestamps(Model) {
     return 'user';
   }
 
-  static get relationMappings() {
-    const ObjectPermission = require('./objectPermission');
-
-    return {
-      objectPermission: {
-        relation: Model.HasManyRelation,
-        modelClass: ObjectPermission,
-        join: {
-          from: 'object.id',
-          to: 'object_permission.objectId'
-        }
-      }
-    };
+  static get idColumn() {
+    return 'oidcId';
   }
 
   static get jsonSchema() {
     return {
       type: 'object',
-      required: ['oidcId', 'idp', 'username', 'mimeType'],
+      required: ['oidcId', 'idp', 'username'],
       properties: {
         oidcId: { type: 'string' },
         idp: { type: 'string' },
@@ -33,7 +22,7 @@ class User extends Timestamps(Model) {
         fullName: { type: 'string' },
         lastName: { type: 'string' },
         username: { type: 'string' },
-        email: { type: 'email' },
+        email: { type: 'string' },
         active: { type: 'boolean' },
         ...stamps
       },

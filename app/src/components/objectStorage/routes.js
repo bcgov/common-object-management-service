@@ -1,8 +1,14 @@
 /* eslint-disable no-unused-vars */
+const config = require('config');
 const routes = require('express').Router();
 const Problem = require('api-problem');
 
 const controller = require('./controller');
+const { currentUser } = require('../middleware/userAccess');
+
+if (config.has('keycloak.enabled')) {
+  routes.use(currentUser);
+}
 
 /** Creates a new object */
 routes.post('/', (req, res, next) => {
