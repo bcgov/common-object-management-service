@@ -48,9 +48,13 @@ jobs:
           images: bcgovimages/common-object-management-service
           # Creates tags based off of branch names and semver tags
           tags: |
+            type=schedule
             type=ref,event=branch
+            type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha
           # Always updates the 'latest' tag
           flavor: |
             latest=true
