@@ -109,6 +109,7 @@ const service = {
   },
 
   // Get a user record
+  // TODO, this is failing with the toISOString issue at the moment, see knexfile
   readUser: async (oidcId) => {
     return User.query()
       .findById(oidcId)
