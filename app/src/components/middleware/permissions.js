@@ -1,5 +1,6 @@
 const Problem = require('api-problem');
 
+const config = require('config');
 const log = require('../log')(module.filename);
 const { Permissions } = require('../constants');
 const service = require('../objectRecordData/service');
@@ -36,6 +37,10 @@ const currentObjectRecord = async (req, res, next) => {
  */
 const hasPermission = (permission) => {
   return async (req, res, next) => {
+    if (!config.has('keycloak.enabled')) {
+      return next();
+    }
+
     // If asking to read a public file you're good
     if (req.currentObjectRecord.public && permission === Permissions.READ) {
       return next();
