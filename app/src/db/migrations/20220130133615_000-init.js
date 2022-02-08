@@ -37,7 +37,7 @@ exports.up = function (knex) {
     }))
     // add the idp fk for user (user needs to be created first for stamp fks)
     .then(() => knex.schema.alterTable('user', table => {
-      table.string('idp').references('code').inTable('identity_provider').after('oidcId');
+      table.string('idp').references('code').inTable('identity_provider');
     }))
 
     // Add the rest of the tables
