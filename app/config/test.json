@@ -2,7 +2,8 @@
   "keycloak": {
     "clientId": "client",
     "realm": "01234567",
-    "clientSecret": "password"
+    "clientSecret": "password",
+    "serverUrl": "serverUrl"
   },
   "server": {
     "logLevel": "silent"

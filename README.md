@@ -7,6 +7,10 @@
 [![Maintainability](https://api.codeclimate.com/v1/badges/91d2b0aebc348a1d5d0a/maintainability)](https://codeclimate.com/github/bcgov/common-object-management-service/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/91d2b0aebc348a1d5d0a/test_coverage)](https://codeclimate.com/github/bcgov/common-object-management-service/test_coverage)
 
+[![version](https://img.shields.io/docker/v/bcgovimages/common-object-management-service.svg?sort=semver)](https://hub.docker.com/r/bcgovimages/common-object-management-service)
+[![pulls](https://img.shields.io/docker/pulls/bcgovimages/common-object-management-service.svg)](https://hub.docker.com/r/bcgovimages/common-object-management-service)
+[![size](https://img.shields.io/docker/image-size/bcgovimages/common-object-management-service.svg)](https://hub.docker.com/r/bcgovimages/common-object-management-service)
+
 A microservice for managing access control to S3 Objects
 
 ## Directory Structure
