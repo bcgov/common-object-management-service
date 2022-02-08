@@ -3,6 +3,7 @@ const { User } = require('../../db/models');
 const service = {
 
   // Get objects out of token and handle "public" unauthed
+  // TODO: Update object values to not be called "keycloakId" (artifact from CHEFS)
   _parseToken: (token) => {
     try {
       // identity_provider_* will be undefined if user login is to local keycloak (userid/password)
@@ -18,11 +19,6 @@ const service = {
         email
       } = token.content;
 
-      //TODO: I can't figure out why idp and identity below are coming in blank with the client I'm testing with
-      // on CHEFS for exampe these are populated. Need to figure out the setup difference?
-      // Hard code for now
-      const idpHack = idp ? idp : 'idir';
-
       return {
         keycloakId: keycloakId,
         username: identity ? identity : username,
@@ -30,8 +26,7 @@ const service = {
         lastName: lastName,
         fullName: fullName,
         email: email,
-        idp: idpHack,
-        // idp: idp ? idp : '',
+        idp: idp ? idp : '',
         public: false
       };
     } catch (e) {
@@ -50,6 +45,7 @@ const service = {
   },
 
   // Create a user DB record
+  // TODO: Update to use wrapping etrx design
   createUser: async (data) => {
     let trx;
     try {
@@ -77,6 +73,7 @@ const service = {
   },
 
   // Get the user from the DB or record them in there if new
+  // TODO: Update to use wrapping etrx design
   initUserId: async (userInfo) => {
     if (userInfo.public) {
       return { id: 'public', ...userInfo };
@@ -94,7 +91,7 @@ const service = {
       user = await service.createUser(obj);
     } else {
       // what if name or email changed?
-      user = await service.updateUser(user.id, obj);
+      user = await service.updateUser(user.oidcId, obj);
     }
 
     // return with the db id...
@@ -109,12 +106,38 @@ const service = {
   },
 
   // Get a user record
-  // TODO, this is failing with the toISOString issue at the moment, see knexfile
   readUser: async (oidcId) => {
     return User.query()
       .findById(oidcId)
       .throwIfNotFound();
   },
+
+  // TODO: Update to use wrapping etrx design
+  updateUser: async (oidcId, data) => {
+    let trx;
+    try {
+      const obj = await service.readUser(oidcId);
+      trx = await User.startTransaction();
+
+      const update = {
+        oidcId: data.keycloakId,
+        username: data.username,
+        fullName: data.fullName,
+        email: data.email,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        idp: data.idp
+      };
+
+      await User.query(trx).patchAndFetchById(obj.oidcId, update);
+      await trx.commit();
+      const result = await service.readUser(oidcId);
+      return result;
+    } catch (err) {
+      if (trx) await trx.rollback();
+      throw err;
+    }
+  }
 };
 
 module.exports = service;
