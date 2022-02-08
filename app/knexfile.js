@@ -24,9 +24,9 @@ types.setTypeParser(1082, (value) => {
   return format(value, 'yyyy-MM-dd');
 });
 // timestamps...
-types.setTypeParser(1114, (value) => value.toISOString());
+types.setTypeParser(1114, (value) => new Date(value).toISOString());
 // timestamps with zone
-types.setTypeParser(1184, (value) => value.toISOString());
+types.setTypeParser(1184, (value) => new Date(value).toISOString());
 
 const logWrapper = (level, msg) => log.log(level, msg);
 
