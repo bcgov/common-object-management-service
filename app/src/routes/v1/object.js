@@ -3,8 +3,10 @@ const config = require('config');
 const routes = require('express').Router();
 const Problem = require('api-problem');
 
-const dalController = require('../objectRecordData/controller');
-const { controller: osController } = require('../../components/objectStorage');
+const {
+  recordController: recordController,
+  storageController: storageController
+} = require('../../controllers');
 const { currentUser } = require('../../components/middleware/userAccess');
 
 if (config.has('keycloak.enabled')) {
@@ -13,32 +15,32 @@ if (config.has('keycloak.enabled')) {
 
 /** Creates a new object */
 routes.post('/', (req, res, next) => {
-  osController.createObject(req, res, next);
+  storageController.createObject(req, res, next);
 });
 
 /** List all user accessible objects */
 routes.get('/', (req, res, next) => {
-  dalController.fetchAll(req, res, next);
+  recordController.fetchAll(req, res, next);
 });
 
 /** Returns the object */
 routes.get('/:objId', (req, res, next) => {
-  osController.readObject(req, res, next);
+  storageController.readObject(req, res, next);
 });
 
 /** Updates an object */
 routes.post('/:objId', (req, res, next) => {
-  osController.updateObject(req, res, next);
+  storageController.updateObject(req, res, next);
 });
 
 /** Deletes the object */
 routes.delete('/:objId', async (req, res, next) => {
-  osController.deleteObject(req, res, next);
+  storageController.deleteObject(req, res, next);
 });
 
 /** Returns the object version history */
 routes.get('/:objId/versions', async (req, res, next) => {
-  osController.listObjectVersion(req, res, next);
+  storageController.listObjectVersion(req, res, next);
 });
 
 /** Sets an object public property */

@@ -9,7 +9,7 @@ const {
 } = require('@aws-sdk/client-s3');
 const config = require('config');
 
-const utils = require('./utils');
+const utils = require('../components/utils');
 
 // Get app configuration
 const endpoint = config.get('objectStorage.endpoint');

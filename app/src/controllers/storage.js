@@ -2,8 +2,8 @@ const busboy = require('busboy');
 const config = require('config');
 const { v4: uuidv4 } = require('uuid');
 
-const errorToProblem = require('../errorToProblem');
-const service = require('./service');
+const errorToProblem = require('../components/errorToProblem');
+const service = require('../services/storage');
 
 const SERVICE = 'ObjectStorage';
 

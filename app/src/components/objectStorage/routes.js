@@ -4,8 +4,8 @@ const routes = require('express').Router();
 const Problem = require('api-problem');
 
 const { Permissions } = require('../constants');
-const controller = require('./controller');
-const dalController = require('../objectRecordData/controller');
+const controller = require('../../controllers/objectStorage');
+const dalController = require('../../controllers/objectRecord');
 const { currentUser } = require('../middleware/userAccess');
 const { currentObjectRecord, hasPermission } = require('../middleware/permissions');
 

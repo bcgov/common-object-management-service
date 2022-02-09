@@ -3,7 +3,7 @@ const Problem = require('api-problem');
 const config = require('config');
 const log = require('../log')(module.filename);
 const { Permissions } = require('../constants');
-const service = require('../objectRecordData/service');
+const service = require('../../services/objectRecord');
 
 /**
  * @function currentObjectRecord

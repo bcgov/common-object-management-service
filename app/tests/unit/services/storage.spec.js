@@ -14,8 +14,8 @@ const { mockClient } = require('aws-sdk-client-mock');
 const config = require('config');
 const { Readable } = require('stream');
 
-const service = require('../../../../src/components/objectStorage/service');
-const utils = require('../../../../src/components/objectStorage/utils');
+const service = require('../../../src/services/storage');
+const utils = require('../../../src/components/utils');
 
 const bucket = config.get('objectStorage.bucket');
 const key = utils.delimit(config.get('objectStorage.key'));

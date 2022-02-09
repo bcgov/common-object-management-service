@@ -1,7 +1,7 @@
 const Problem = require('api-problem');
 
 const keycloak = require('../keycloak');
-const service = require('../user/service');
+const service = require('../../services/user');
 
 const getToken = req => {
   try {

@@ -1,7 +1,7 @@
 const { v4: uuidv4 } = require('uuid');
 
-const { Permissions } = require('../constants');
-const { ObjectModel, ObjectPermission } = require('../../db/models');
+const { Permissions } = require('../components/constants');
+const { ObjectModel, ObjectPermission } = require('../db/models');
 
 const service = {
 

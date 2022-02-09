@@ -1,4 +1,4 @@
-const { User } = require('../../db/models');
+const { User } = require('../db/models');
 
 const service = {
 

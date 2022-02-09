@@ -1,5 +1,5 @@
 const Problem = require('api-problem');
-const service = require('./service');
+const service = require('../services/record');
 
 const controller = {
 
