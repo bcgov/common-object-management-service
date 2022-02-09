@@ -18,10 +18,12 @@ A microservice for managing access control to S3 Objects
     .github/                   - PR and Issue templates
     app/                       - Application Root
     ├── src/                   - Node.js web application
-    │   ├── components/        - Components Logic Layer
+    │   ├── components/        - Components Layer
+    │   ├── controllers/       - Controller Layer
     │   ├── db/                - Database Layer
     │   ├── docs/              - OpenAPI 3.0 Specification
-    │   └── routes/            - API Route Layer
+    │   ├── routes/            - API Route Layer
+    │   └── services/          - Services Layer
     └── tests/                 - Node.js web application tests
     openshift/                 - OpenShift-deployment and shared pipeline files
     CODE-OF-CONDUCT.md         - Code of Conduct
