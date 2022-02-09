@@ -1,8 +1,7 @@
 const { User } = require('../db/models');
 
 const service = {
-
-  // Get objects out of token and handle "public" unauthed
+  /** Get objects out of token and handle "public" unauthed */
   // TODO: Update object values to not be called "keycloakId" (artifact from CHEFS)
   _parseToken: (token) => {
     try {
@@ -44,12 +43,12 @@ const service = {
     }
   },
 
-  // Create a user DB record
+  /** Create a user DB record */
   // TODO: Update to use wrapping etrx design
-  createUser: async (data) => {
+  createUser: async (data, etrx = undefined) => {
     let trx;
     try {
-      trx = await User.startTransaction();
+      trx = etrx ? etrx : await User.startTransaction();
 
       const obj = {
         oidcId: data.keycloakId,
@@ -63,16 +62,16 @@ const service = {
       };
 
       await User.query(trx).insert(obj);
-      await trx.commit();
+      if (!etrx) await trx.commit();
       const result = await service.readUser(obj.oidcId);
       return result;
     } catch (err) {
-      if (trx) await trx.rollback();
+      if (!etrx && trx) await trx.rollback();
       throw err;
     }
   },
 
-  // Get the user from the DB or record them in there if new
+  /** Get the user from the DB or record them in there if new */
   // TODO: Update to use wrapping etrx design
   initUserId: async (userInfo) => {
     if (userInfo.public) {
@@ -98,26 +97,27 @@ const service = {
     return { id: user.id, usernameIdp: user.idpCode ? `${user.username}@${user.idpCode}` : user.username, ...userInfo };
   },
 
-  // "Log" the user in, IE parse their token and record them in the user table if not already there
+  /** Parse the user token and record in the user table if not already present */
   login: async (token) => {
     const userInfo = service._parseToken(token);
     const user = await service.initUserId(userInfo);
     return user;
   },
 
-  // Get a user record
-  readUser: async (oidcId) => {
+  /** Get a user record */
+  readUser: (oidcId) => {
     return User.query()
       .findById(oidcId)
       .throwIfNotFound();
   },
 
+  /** Updates a user record */
   // TODO: Update to use wrapping etrx design
-  updateUser: async (oidcId, data) => {
+  updateUser: async (oidcId, data, etrx = undefined) => {
     let trx;
     try {
       const obj = await service.readUser(oidcId);
-      trx = await User.startTransaction();
+      trx = etrx ? etrx : await User.startTransaction();
 
       const update = {
         oidcId: data.keycloakId,
@@ -132,11 +132,11 @@ const service = {
       // TODO: think this is running every call, is that ok? Probably, otherwise need to
       // select and compare before update, maybe a smarter patch or something can happen
       await User.query(trx).patchAndFetchById(obj.oidcId, update);
-      await trx.commit();
+      if (!etrx) await trx.commit();
       const result = await service.readUser(oidcId);
       return result;
     } catch (err) {
-      if (trx) await trx.rollback();
+      if (!etrx && trx) await trx.rollback();
       throw err;
     }
   }
