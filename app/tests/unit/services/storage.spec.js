@@ -5,6 +5,7 @@ jest.mock('@aws-sdk/s3-request-presigner', () => ({
 const {
   DeleteObjectCommand,
   GetObjectCommand,
+  HeadBucketCommand,
   HeadObjectCommand,
   ListObjectVersionsCommand,
   PutObjectCommand
@@ -59,6 +60,23 @@ describe('deleteObject', () => {
       Bucket: bucket,
       Key: filePath,
       VersionId: versionId
+    }, true)).toHaveLength(1);
+  });
+});
+
+describe('headBucket', () => {
+  beforeEach(() => {
+    s3ClientMock.reset();
+    s3ClientMock.on(HeadBucketCommand).resolves({});
+  });
+
+  it('should send a head object command', () => {
+    const result = service.headBucket();
+
+    expect(result).toBeTruthy();
+    expect(s3ClientMock.calls()).toHaveLength(1);
+    expect(s3ClientMock.commandCalls(HeadBucketCommand, {
+      Bucket: bucket
     }, true)).toHaveLength(1);
   });
 });
