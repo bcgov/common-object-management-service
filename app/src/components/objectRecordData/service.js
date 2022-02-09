@@ -13,9 +13,11 @@ const service = {
 
       const obj = {};
       obj.id = uuidv4();
-      obj.originalName = objectStorageData.originalname;
-      obj.mimeType = objectStorageData.mimetype;
-      obj.createdBy = currentUser.username;
+      obj.originalName = objectStorageData.originalName;
+      obj.mimeType = objectStorageData.mimeType;
+      if (currentUser.keycloakId) {
+        obj.createdBy = currentUser.username;
+      }
       obj.public = body.public === 'true';
       obj.path = objectStorageData.path;
       if (currentUser.keycloakId) {

@@ -14,11 +14,11 @@ const currentObjectRecord = async (req, res, next) => {
   let record = undefined;
   try {
     // Check if authed, can expand for API key access if needed
-    if (req.params.id) {
-      record = await service.read(req.params.id);
+    if (req.params.objId) {
+      record = await service.read(req.params.objId);
     }
   } catch (error) {
-    log.error(`Failed to find object db record for id ${req.params.id}. Error ${error}`);
+    log.error(`Failed to find object db record for id ${req.params.objId}. Error ${error}`);
   }
 
   if (!record) {
@@ -52,8 +52,8 @@ const hasPermission = (permission) => {
     }
 
     // Permute permissions and check if the permission to check exists for the user making the call
-    const permissions = await service.readPermissions(req.params.id, req.currentUser.keycloakId);
-    if (!permissions.length) {
+    const permissions = await service.readPermissions(req.params.objId, req.currentUser.keycloakId);
+    if (!permissions.some(p => p.code === permission)) {
       return next(new Problem(403, { detail: 'Unauthorized for this file' }));
     }
 

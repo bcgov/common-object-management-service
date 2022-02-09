@@ -1,3 +1,4 @@
+const Problem = require('api-problem');
 const service = require('./service');
 
 const controller = {
@@ -16,26 +17,6 @@ const controller = {
       next(error);
     }
   },
-  // Add new version to an objet
-  updateVersion: async (req, res, next) => {
-    try {
-      const response = await service.updateVersion(req.params.id, req.file, req.currentUser);
-      res.status(201).json(response);
-    } catch (error) {
-      next(error);
-    }
-  },
-  // Fetch all files a user has permissions for
-  fetchAll: async (req, res, next) => {
-    try {
-      const response = await service.fetchAll(req.currentUser);
-      // obviously move this to query
-      const filtered = response.filter(r => r.filePermissions && r.filePermissions.length);
-      res.status(201).json(filtered);
-    } catch (error) {
-      next(error);
-    }
-  },
   // Delete a file
   delete: async (req, res, next) => {
     try {
@@ -44,6 +25,35 @@ const controller = {
     } catch (error) {
       next(error);
     }
+  },
+  // Fetch all files a user has permissions for
+  fetchAll: async (req, res, next) => {
+    try {
+      const response = await service.fetchAllForUser(req.currentUser);
+      // obviously move this to query
+      const filtered = response.filter(r => r.objectPermission && r.objectPermission.length);
+      res.status(201).json(filtered);
+    } catch (error) {
+      next(error);
+    }
+  },
+  // Get an object db record
+  read: async (req, res, next) => {
+    try {
+      // Already got the file DB record on middleware (using service layer) to check permissions
+      const record = req.currentObjectRecord;
+
+      res.status(201).json(record);
+
+    } catch (error) {
+      next(error);
+    }
+  },
+  // Add new version to an objet
+  updateVersion: async (req, res, next) => {
+    // TODO: implement (service would update updated details on object record at least,
+    // discuss if there need to be other model changes to track version stuff in DB with team)
+    next(new Problem(501));
   },
   // ---------------------------------------------------------------------/ object stuff
 
