@@ -8,10 +8,9 @@ const controller = {
   // Add new object
   create: async (req, res, next) => {
     try {
-      // TODO: this won't work since we need the values returned by the object creation service
-      // need to figure that out
-      const needAResultFromObjectStorageLayer = {};
-      const response = await service.create(needAResultFromObjectStorageLayer, req.body, req.currentUser);
+      // TODO: is this how we're doing this? in request?
+      const objectStorageData = req.objectStorageData;
+      const response = await service.create(objectStorageData, req.body, req.currentUser);
       res.status(201).json(response);
     } catch (error) {
       next(error);
