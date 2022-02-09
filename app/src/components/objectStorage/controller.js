@@ -103,8 +103,8 @@ const controller = {
         // Consider looking around for express-based caching middleware
         if (req.get('If-None-Match') === response.ETag) res.status(304).end();
         else {
-          res.status(200);
           response.Body.pipe(res); // Stream body content directly to response
+          res.status(200);
         }
       }
 

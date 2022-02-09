@@ -16,7 +16,7 @@ describe(`GET ${basePath}`, () => {
     expect(Array.isArray(response.body.endpoints)).toBeTruthy();
     expect(response.body.endpoints).toHaveLength(2);
     expect(response.body.endpoints).toContain('/docs');
-    expect(response.body.endpoints).toContain('/hello');
+    expect(response.body.endpoints).toContain('/object');
   });
 });
 
