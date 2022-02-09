@@ -129,6 +129,8 @@ const service = {
         idp: data.idp
       };
 
+      // TODO: think this is running every call, is that ok? Probably, otherwise need to
+      // select and compare before update, maybe a smarter patch or something can happen
       await User.query(trx).patchAndFetchById(obj.oidcId, update);
       await trx.commit();
       const result = await service.readUser(oidcId);

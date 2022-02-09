@@ -54,6 +54,7 @@ exports.up = function (knex) {
       table.string('mimeType').notNullable();
       table.string('uploaderOidcId').references('oidcId').inTable('user');
       table.boolean('public').notNullable().defaultTo(false);
+      table.boolean('active').notNullable().defaultTo(true);
       stamps(knex, table);
     }))
     .then(() => knex.schema.createTable('object_permission', table => {
@@ -115,6 +116,7 @@ exports.up = function (knex) {
             now(),
             'D',
             v_old_data);
+            RETURN NEW;
         end if;
     END;
     $body$ LANGUAGE plpgsql`))
@@ -143,6 +145,7 @@ exports.up = function (knex) {
             now(),
             'D',
             v_old_data);
+            RETURN NEW;
         end if;
     END;
     $body$ LANGUAGE plpgsql`))
