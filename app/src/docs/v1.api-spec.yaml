@@ -2,14 +2,14 @@
 openapi: 3.0.3
 info:
   version: 1.0.0
-  title: Vue Skeleton API
-  description: A minimally viable API
+  title: Common Object Management Service (COMS)
+  description: A microservice for managing access control to S3 Objects
   license:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0.html'
   contact:
-    name: Author
-    email: author@example.com
+    name: NR Common Service Showcase
+    email: NR.CommonServiceShowcase@gov.bc.ca
 servers:
   - url: /api/v1
     description: This Server
@@ -129,7 +129,7 @@ paths:
         the object's version history.
       operationId: GetListObjectVersion
       tags:
-        - Versions
+        - Version
       parameters:
         - $ref: '#/components/parameters/PathObjectId'
       responses:
@@ -152,7 +152,7 @@ paths:
         This endpoint sets the public property for an Object
       operationId: PatchObjectPublic
       tags:
-        - Permissions
+        - Permission
       parameters:
         - $ref: '#/components/parameters/PathObjectId'
       responses:
@@ -173,7 +173,7 @@ paths:
         This endpoint returns an array of the Object's permissions
       operationId: GetObjectPermissions
       tags:
-        - Permissions
+        - Permission
       parameters:
         - $ref: '#/components/parameters/PathObjectId'
       responses:
@@ -194,7 +194,7 @@ paths:
         This endpoint will update the permissions of a specific user
       operationId: PostUpdateUserPermissions
       tags:
-        - Permissions
+        - Permission
       parameters:
         - $ref: '#/components/parameters/PathObjectId'
         - $ref: '#/components/parameters/PathUserId'
@@ -217,7 +217,7 @@ paths:
         This endpoint will delete the permission of an Object with a specific to the objId
       operationId: DeleteObjectPermissions
       tags:
-        - Permissions
+        - Permission
       parameters:
         - $ref: '#/components/parameters/PathObjectId'
         - $ref: '#/components/parameters/PathUserId'
