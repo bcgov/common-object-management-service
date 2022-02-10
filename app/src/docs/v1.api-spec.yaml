@@ -17,30 +17,241 @@ security:
   - BearerAuth: []
     OpenID: []
 paths:
-  /hello:
+  '/object':
     get:
-      summary: Returns hello world result
-      operationId: getHello
+      summary: List all user accessible objects
+      description: >-
+        This endpoint returns a list of all user accessible objects.
+      operationId: GetAccessibleObjects
       tags:
-        - Hello
+        - Object
       responses:
         '200':
-          description: Hello result
+          description: Returns the object information
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HelloDetail'
+                $ref: '#/components/schemas/ObjectDetails'
         '401':
           $ref: '#/components/responses/UnauthorizedError'
         '403':
           $ref: '#/components/responses/Forbidden'
-        default:
-          description: Unexpected error
+    post:
+      summary: Create an Object
+      description: >-
+        This endpoint will create an object.
+      operationId: PostCreateObject
+      tags:
+        - Object
+      responses:
+        '201':
+          description: Returns an array of the created object id
+          content:
+            application/json:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ObjectDetails'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  '/object/{objId}':
+    get:
+      summary: Details of a single Object
+      description: >-
+        This endpoint returns all of the information related to
+        objId.
+      operationId: GetObject
+      tags:
+        - Object
+      parameters:
+        - $ref: '#/components/parameters/PathObjectId'
+      responses:
+        '200':
+          description: Returns the object information
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ObjectDetails'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      summary: Updates an Object
+      description: >-
+        This endpoint will update an object.
+      operationId: PostUpdateObject
+      tags:
+        - Object
+      parameters:
+        - $ref: '#/components/parameters/PathObjectId'
+      responses:
+        '201':
+          description: Returns udpate Object response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MergeResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    delete:
+      summary: Deletes the object
+      description: >-
+        This endpoint will delete the Object specific to the objId
+      operationId: DeleteObject
+      tags:
+        - Object
+      parameters:
+        - $ref: '#/components/parameters/PathObjectId'
+      responses:
+        '202':
+          description: Request is acknowledged but not necessarily completed
+          headers:
+            Content-Location:
+              example: /api/v1/status/00000000-0000-0000-0000-000000000000
+              schema:
+                type: string
+                format: uri
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  '/object/{objId}/versions':
+    get:
+      summary: Returns the object version history
+      description: >-
+        This endpoint returns an array of the information related to
+        the object's version history.
+      operationId: GetListObjectVersion
+      tags:
+        - Versions
+      parameters:
+        - $ref: '#/components/parameters/PathObjectId'
+      responses:
+        '200':
+          description: Returns an array of versions for a specific object
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ObjectDetails'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  '/object/{objId}/public':
+    get:
+      summary: Sets an object public property
+      description: >-
+        This endpoint sets the public property for an Object
+      operationId: PatchObjectPublic
+      tags:
+        - Permissions
+      parameters:
+        - $ref: '#/components/parameters/PathObjectId'
+      responses:
+        '200':
+          description: Returns the object information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObjectDetails'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  '/object/{objId}/permissions':
+    get:
+      summary: Returns the object permissions
+      description: >-
+        This endpoint returns an array of the Object's permissions
+      operationId: GetObjectPermissions
+      tags:
+        - Permissions
+      parameters:
+        - $ref: '#/components/parameters/PathObjectId'
+      responses:
+        '200':
+          description: Returns the object information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObjectDetails'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  '/object/{objId}/permissions/{userId}':
+    post:
+      summary: Grants object permissions to a specific user
+      description: >-
+        This endpoint will update the permissions of a specific user
+      operationId: PostUpdateUserPermissions
+      tags:
+        - Permissions
+      parameters:
+        - $ref: '#/components/parameters/PathObjectId'
+        - $ref: '#/components/parameters/PathUserId'
+      responses:
+        '200':
+          description: Returns the object information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObjectDetails'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    delete:
+      summary: Deletes object permissions for a specific user
+      description: >-
+        This endpoint will delete the permission of an Object with a specific to the objId
+      operationId: DeleteObjectPermissions
+      tags:
+        - Permissions
+      parameters:
+        - $ref: '#/components/parameters/PathObjectId'
+        - $ref: '#/components/parameters/PathUserId'
+      responses:
+        '204':
+          description: Returns udpate Object response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MergeResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 components:
+  parameters:
+      PathObjectId:
+        in: path
+        name: objId
+        description: Uuid of the message
+        required: true
+        schema:
+          type: string
+          format: uuid
+          example: 00000000-0000-0000-0000-000000000000
+      PathUserId:
+        in: path
+        name: userId
+        description: Uuid of the message
+        required: true
+        schema:
+          type: string
+          format: uuid
+          example: 00000000-0000-0000-0000-000000000000
   securitySchemes:
     BearerAuth:
       type: http
@@ -83,10 +294,10 @@ components:
               example: Internal Server Error
             type:
               example: 'https://httpstatuses.com/500'
-    HelloDetail:
-      type: string
-      description: Hello content
-      example: Hello World!
+    MergeResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/TransactionResponse'
     NotFound:
       allOf:
         - $ref: '#/components/schemas/Problem'
@@ -98,6 +309,14 @@ components:
               example: Not Found
             type:
               example: 'https://httpstatuses.com/404'
+    ObjectDetails:
+      type: object
+      properties:
+        objId:
+          type: string
+          description: This Object instance uuid
+          format: uuid
+          example: 00000000-0000-0000-0000-000000000000
     Problem:
       required:
         - type
@@ -117,6 +336,16 @@ components:
         detail:
           type: string
           description: Short description of why this problem was raised.
+    TransactionResponse:
+      type: object
+      required:
+        - txId
+      properties:
+        txId:
+          type: string
+          description: A corresponding transaction uuid
+          format: uuid
+          example: 00000000-0000-0000-0000-000000000000
     ValidationError:
       allOf:
         - $ref: '#/components/schemas/Problem'
