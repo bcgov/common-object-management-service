@@ -6,11 +6,7 @@
     "username": "app"
   },
   "objectStorage": {
-    "accessKeyId": "nr-iit-showcase",
-    "bucket": "egejyy",
-    "defaultTempExpiresIn": "300",
-    "endpoint": "https://nrs.objectstore.gov.bc.ca",
-    "key": "coms/dev"
+    "defaultTempExpiresIn": "300"
   },
   "server": {
     "bodyLimit": "30mb",
