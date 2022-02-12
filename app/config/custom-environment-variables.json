@@ -1,4 +1,8 @@
 {
+  "apiAuth": {
+    "username": "APIAUTH_USERNAME",
+    "password": "APIAUTH_PASSWORD"
+  },
   "db": {
     "database": "DB_DATABASE",
     "host": "DB_HOST",
