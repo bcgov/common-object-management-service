@@ -1,4 +1,5 @@
 module.exports = {
-  recordService: require('./objectRecord'),
-  storageService: require('./objectStorage')
+  recordService: require('./record'),
+  storageService: require('./storage'),
+  userService: require('./user')
 };

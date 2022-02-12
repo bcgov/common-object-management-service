@@ -4,10 +4,6 @@ const path = require('path');
 const router = require('express').Router();
 const yaml = require('js-yaml');
 
-// TODO: Insert Keycloak protect middleware that respects the keycloak.enabled toggle
-// const keycloak = require('../components/keycloak');
-// const { routes: objectRouter } = require('../components/objectStorage');
-
 const getSpec = () => {
   const rawSpec = fs.readFileSync(path.join(__dirname, '../../docs/v1.api-spec.yaml'), 'utf8');
   const spec = yaml.load(rawSpec);

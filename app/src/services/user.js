@@ -1,57 +1,40 @@
 const { User } = require('../db/models');
 
+/**
+ * The User DB Service
+ */
 const service = {
-  /** Get objects out of token and handle "public" unauthed */
-  // TODO: Update object values to not be called "keycloakId" (artifact from CHEFS)
-  _parseToken: (token) => {
-    try {
-      // identity_provider_* will be undefined if user login is to local keycloak (userid/password)
+  /**
+   * @function _tokenToUser
+   * Transforms JWT payload contents into a User Model object
+   * @param {object} token The decoded JWT payload
+   * @returns {object} An equivalent User model object
+   */
+  _tokenToUser: (token) => ({
+    oidcId: token.sub,
+    username: token.identity_provider_identity ? token.identity_provider_identity : token.preferred_username,
+    firstName: token.given_name,
+    fullName: token.name,
+    lastName: token.family_name,
+    email: token.email,
+    idp: token.identity_provider
+  }),
 
-      const {
-        identity_provider_identity: identity,
-        identity_provider: idp,
-        preferred_username: username,
-        given_name: firstName,
-        family_name: lastName,
-        sub: keycloakId,
-        name: fullName,
-        email
-      } = token.content;
-
-      return {
-        keycloakId: keycloakId,
-        username: identity ? identity : username,
-        firstName: firstName,
-        lastName: lastName,
-        fullName: fullName,
-        email: email,
-        idp: idp ? idp : '',
-        public: false
-      };
-    } catch (e) {
-      // any issues parsing the token, or if token doesn't exist, return a default "public" user
-      return {
-        keycloakId: undefined,
-        username: 'public',
-        firstName: undefined,
-        lastName: undefined,
-        fullName: 'public',
-        email: undefined,
-        idp: 'public',
-        public: true
-      };
-    }
-  },
-
-  /** Create a user DB record */
-  // TODO: Update to use wrapping etrx design
+  /**
+   * @function createUser
+   * Create a user DB record
+   * @param {object} data Incoming user data
+   * @param {object} [etrx=undefined] An optional Objection Transaction object
+   * @returns {Promise<object>} The result of running the insert operation
+   * @throws The error encountered upon db transaction failure
+   */
   createUser: async (data, etrx = undefined) => {
     let trx;
     try {
       trx = etrx ? etrx : await User.startTransaction();
 
       const obj = {
-        oidcId: data.keycloakId,
+        oidcId: data.oidcId,
         username: data.username,
         fullName: data.fullName,
         email: data.email,
@@ -63,78 +46,81 @@ const service = {
 
       await User.query(trx).insert(obj);
       if (!etrx) await trx.commit();
-      const result = await service.readUser(obj.oidcId);
-      return result;
+      return await service.readUser(obj.oidcId);
     } catch (err) {
       if (!etrx && trx) await trx.rollback();
       throw err;
     }
   },
 
-  /** Get the user from the DB or record them in there if new */
-  // TODO: Update to use wrapping etrx design
-  initUserId: async (userInfo) => {
-    if (userInfo.public) {
-      return { id: 'public', ...userInfo };
-    }
-
-    const obj = { ...userInfo };
-
-    // if this user does not exists, add...
-    let user = await User.query()
-      .first()
-      .where('oidcId', obj.keycloakId);
-
-    if (!user) {
-      // add to the system.
-      user = await service.createUser(obj);
-    } else {
-      // what if name or email changed?
-      user = await service.updateUser(user.oidcId, obj);
-    }
-
-    // return with the db id...
-    return { id: user.id, usernameIdp: user.idpCode ? `${user.username}@${user.idpCode}` : user.username, ...userInfo };
-  },
-
-  /** Parse the user token and record in the user table if not already present */
+  /**
+   * @function login
+   * Parse the user token and update the user table if necessary
+   * @param {object} token The decoded JWT token payload
+   * @returns {Promise<object>} The result of running the login operation
+   */
   login: async (token) => {
-    const userInfo = service._parseToken(token);
-    const user = await service.initUserId(userInfo);
-    return user;
+    const newUser = service._tokenToUser(token);
+    const oldUser = await User.query().findById(newUser.oidcId);
+
+    if (!oldUser) {
+      // Add user to system
+      return service.createUser(newUser);
+    } else {
+      // Update user data if necessary
+      return service.updateUser(oldUser.oidcId, newUser);
+    }
   },
 
-  /** Get a user record */
+  /**
+   * @function readUser
+   * Gets a user record
+   * @param {string} oidcId The oidcId uuid
+   * @returns {Promise<object>} The result of running the find operation
+   * @throws If no record is found
+   */
   readUser: (oidcId) => {
     return User.query()
       .findById(oidcId)
       .throwIfNotFound();
   },
 
-  /** Updates a user record */
-  // TODO: Update to use wrapping etrx design
+  /**
+   * @function updateUser
+   * Updates a user record only if there are changed values
+   * @param {string} oidcId The oidcId uuid
+   * @param {object} data Incoming user data
+   * @param {object} [etrx=undefined] An optional Objection Transaction object
+   * @returns {Promise<object>} The result of running the patch operation
+   * @throws The error encountered upon db transaction failure
+   */
   updateUser: async (oidcId, data, etrx = undefined) => {
     let trx;
     try {
-      const obj = await service.readUser(oidcId);
-      trx = etrx ? etrx : await User.startTransaction();
+      // Check if any user values have changed
+      const oldUser = await service.readUser(oidcId);
+      const diff = Object.entries(data).some(([key, value]) => oldUser[key] !== value);
 
-      const update = {
-        oidcId: data.keycloakId,
-        username: data.username,
-        fullName: data.fullName,
-        email: data.email,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        idp: data.idp
-      };
+      if (diff) { // Patch existing user
+        trx = etrx ? etrx : await User.startTransaction();
 
-      // TODO: think this is running every call, is that ok? Probably, otherwise need to
-      // select and compare before update, maybe a smarter patch or something can happen
-      await User.query(trx).patchAndFetchById(obj.oidcId, update);
-      if (!etrx) await trx.commit();
-      const result = await service.readUser(oidcId);
-      return result;
+        const obj = {
+          oidcId: data.oidcId,
+          username: data.username,
+          fullName: data.fullName,
+          email: data.email,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          idp: data.idp,
+          updatedBy: data.oidcId
+        };
+
+        await User.query(trx).findById(oidcId).patch(obj);
+        if (!etrx) await trx.commit();
+        return await service.readUser(oidcId);
+      } else { // Nothing to update
+        return oldUser;
+      }
     } catch (err) {
       if (!etrx && trx) await trx.rollback();
       throw err;

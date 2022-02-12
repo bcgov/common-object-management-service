@@ -20,6 +20,10 @@ const key = utils.delimit(config.get('objectStorage.key'));
 const accessKeyId = config.get('objectStorage.accessKeyId');
 const secretAccessKey = config.get('objectStorage.secretAccessKey');
 
+/**
+ * The Core S3 Object Storage Service
+ * @see {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-s3/}
+ */
 const objectStorageService = {
   /**
    * @private

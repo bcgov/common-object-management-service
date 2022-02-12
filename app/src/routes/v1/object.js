@@ -7,11 +7,9 @@ const {
   recordController: recordController,
   storageController: storageController
 } = require('../../controllers');
-const { currentUser } = require('../../components/middleware/userAccess');
+const { currentUser } = require('../../components/middleware/currentUser');
 
-if (config.has('keycloak.enabled')) {
-  routes.use(currentUser);
-}
+routes.use(currentUser);
 
 /** Creates a new object */
 routes.post('/', (req, res, next) => {
