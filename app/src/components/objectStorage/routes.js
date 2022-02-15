@@ -4,10 +4,9 @@ const routes = require('express').Router();
 const Problem = require('api-problem');
 
 const { Permissions } = require('../constants');
-const controller = require('../../controllers/objectStorage');
-const dalController = require('../../controllers/objectRecord');
-const { currentUser } = require('../middleware/userAccess');
-const { currentObjectRecord, hasPermission } = require('../middleware/permissions');
+const { objectController, recordController, storageController } = require('../../controllers');
+const { currentUser } = require('../../middleware/authentication');
+const { currentObjectRecord, hasPermission } = require('../../middleware/authorization');
 
 if (config.has('keycloak.enabled')) {
   routes.use(currentUser);
@@ -15,46 +14,46 @@ if (config.has('keycloak.enabled')) {
 
 /** Creates a new object */
 routes.post('/', (req, res, next) => {
-  controller.createObject(req, res, next);
+  storageController.createObject(req, res, next);
   // mocking this for testing
   req.objectStorageData = {
     originalName: 'from file access above.txt',
     mimeType: 'txt',
     path: 'response from s3 stuff'
   };
-  dalController.create(req, res, next);
+  recordController.create(req, res, next);
   // How to put these 2 results together if 2 controllers?
 });
 
 /** List all user accessible objects */
 routes.get('/', (req, res, next) => {
-  dalController.fetchAll(req, res, next);
+  recordController.fetchAll(req, res, next);
 });
 
 /** Returns the object */
 routes.get('/:objId', currentObjectRecord, hasPermission(Permissions.READ), (req, res, next) => {
-  controller.readObject(req, res, next);
-  dalController.read(req, res, next);
+  objectController.readObject(req, res, next);
+  recordController.read(req, res, next);
   // How to put these 2 results together if 2 controllers?
 });
 
 /** Updates an object */
 routes.post('/:objId', currentObjectRecord, hasPermission(Permissions.UPDATE), (req, res, next) => {
-  controller.updateObject(req, res, next);
+  storageController.updateObject(req, res, next);
   // This needs implementing
   // dalController.updateVersion(req, res, next);
 });
 
 /** Deletes the object */
 routes.delete('/:objId', currentObjectRecord, hasPermission(Permissions.DELETE), (req, res, next) => {
-  controller.deleteObject(req, res, next);
-  dalController.create(req, res, next);
+  storageController.deleteObject(req, res, next);
+  recordController.create(req, res, next);
   // How to put these 2 results together if 2 controllers?
 });
 
 /** Returns the object version history */
 routes.get('/:objId/versions', currentObjectRecord, hasPermission(Permissions.READ), (req, res, next) => {
-  controller.listObjectVersion(req, res, next);
+  storageController.listObjectVersion(req, res, next);
 });
 
 /** Sets an object public property */

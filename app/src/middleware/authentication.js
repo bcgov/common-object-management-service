@@ -3,9 +3,9 @@ const config = require('config');
 const basicAuth = require('express-basic-auth');
 const jwt = require('jsonwebtoken');
 
-const { AuthType } = require('../constants');
-const keycloak = require('../keycloak');
-const { userService } = require('../../services');
+const { AuthType } = require('../components/constants');
+const keycloak = require('../components/keycloak');
+const { userService } = require('../services');
 
 /**
  * Basic Auth configuration object
@@ -14,8 +14,8 @@ const { userService } = require('../../services');
 const basicAuthConfig = {
   // Must be a synchronous function
   authorizer: (username, password) => {
-    const userMatch = basicAuth.safeCompare(username, config.get('apiAuth.username'));
-    const pwMatch = basicAuth.safeCompare(password, config.get('apiAuth.password'));
+    const userMatch = basicAuth.safeCompare(username, config.get('basicAuth.username'));
+    const pwMatch = basicAuth.safeCompare(password, config.get('basicAuth.password'));
     return userMatch & pwMatch;
   },
   unauthorizedResponse: () => {
@@ -31,7 +31,6 @@ const basicAuthConfig = {
  */
 const spkiWrapper = (spki) => `-----BEGIN PUBLIC KEY-----\n${spki}\n-----END PUBLIC KEY-----`;
 
-/** Adds a currentUser object to request if there are valid, parseable authentication artifacts */
 /**
  * @function currentUser
  * Injects a currentUser object to the request if there exists valid authentication artifacts.
@@ -49,15 +48,15 @@ const currentUser = async (req, res, next) => {
 
   if (authorization) {
     // Basic Authorization
-    if (config.has('apiAuth') && authorization.toLowerCase().startsWith('basic ')) {
+    if (config.has('basicAuth.enabled') && authorization.toLowerCase().startsWith('basic ')) {
       currentUser.authType = AuthType.BASIC;
 
-      const checkApiAuth = basicAuth(basicAuthConfig);
-      return checkApiAuth(req, res, next);
+      const checkBasicAuth = basicAuth(basicAuthConfig);
+      return checkBasicAuth(req, res, next);
     }
 
     // OIDC JWT Authorization
-    if (config.has('keycloak') && authorization.toLowerCase().startsWith('bearer ')) {
+    if (config.has('keycloak.enabled') && authorization.toLowerCase().startsWith('bearer ')) {
       try {
         currentUser.authType = AuthType.BEARER;
 

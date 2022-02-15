@@ -3,17 +3,17 @@ const config = require('config');
 const routes = require('express').Router();
 const Problem = require('api-problem');
 
-const {
-  recordController: recordController,
-  storageController: storageController
-} = require('../../controllers');
-const { currentUser } = require('../../components/middleware/currentUser');
+const { Permissions } = require('../../components/constants');
+const { objectController, recordController, storageController } = require('../../controllers');
+const { currentUser } = require('../../middleware/authentication');
+const { currentObject, hasPermission } = require('../../middleware/authorization');
 
 routes.use(currentUser);
+routes.use(currentObject);
 
 /** Creates a new object */
 routes.post('/', (req, res, next) => {
-  storageController.createObject(req, res, next);
+  objectController.createObject(req, res, next);
 });
 
 /** List all user accessible objects */
@@ -22,8 +22,8 @@ routes.get('/', (req, res, next) => {
 });
 
 /** Returns the object */
-routes.get('/:objId', (req, res, next) => {
-  storageController.readObject(req, res, next);
+routes.get('/:objId', hasPermission(Permissions.READ), (req, res, next) => {
+  objectController.readObject(req, res, next);
 });
 
 /** Updates an object */

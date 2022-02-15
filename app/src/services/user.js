@@ -41,7 +41,7 @@ const service = {
         firstName: data.firstName,
         lastName: data.lastName,
         idp: data.idp,
-        createdBy: data.keycloakId
+        createdBy: data.oidcId
       };
 
       await User.query(trx).insert(obj);

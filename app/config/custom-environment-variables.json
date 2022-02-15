@@ -1,7 +1,8 @@
 {
-  "apiAuth": {
-    "username": "APIAUTH_USERNAME",
-    "password": "APIAUTH_PASSWORD"
+  "basicAuth": {
+    "enabled": "BASICAUTH_ENABLED",
+    "username": "BASICAUTH_USERNAME",
+    "password": "BASICAUTH_PASSWORD"
   },
   "db": {
     "database": "DB_DATABASE",
