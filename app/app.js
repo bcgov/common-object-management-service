@@ -35,12 +35,17 @@ if (process.env.NODE_ENV !== 'test') {
   app.use(httpLogger);
 }
 
-// Use Keycloak OIDC Middleware
+// Application authentication modes
+if (!config.has('basicAuth.enabled') && !config.has('keycloak.enabled')) {
+  log.info('Running in public no-auth mode');
+}
+if (config.has('basicAuth.enabled')) {
+  log.info('Basic Authentication enabled');
+}
 if (config.has('keycloak.enabled')) {
-  log.info('Running in authenticated mode');
+  log.info('OIDC Authentication enabled');
+  // Use Keycloak OIDC Middleware
   app.use(keycloak.middleware());
-} else {
-  log.info('Running in public mode');
 }
 
 // Block requests until service is ready
@@ -188,7 +193,7 @@ function checkConnections() {
       state.connections.data = results[0];
       state.ready = Object.values(state.connections).every(x => x);
       if (!wasReady && state.ready) log.info('Service ready to accept traffic', { function: 'checkConnections' });
-      log.verbose(state);
+      log.debug('App state', { function: 'checkConnections', state });
       if (!state.ready) {
         process.exitCode = 1;
         shutdown();

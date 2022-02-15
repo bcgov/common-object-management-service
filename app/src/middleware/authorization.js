@@ -1,7 +1,6 @@
 const Problem = require('api-problem');
 
 const config = require('config');
-const e = require('express');
 const log = require('../components/log')(module.filename);
 const { AuthType, Permissions } = require('../components/constants');
 const { recordService } = require('../services');
@@ -10,17 +9,16 @@ const { recordService } = require('../services');
  * @function currentObject
  * Injects a currentObject object to the request if there is an applicable object record
  * @param {object} req Express request object
- * @param {object} res Express response object
+ * @param {object} _res Express response object
  * @param {function} next The next callback function
  * @returns {function} Express middleware function
  */
-const currentObject = async (req, res, next) => {
+const currentObject = async (req, _res, next) => {
   if (config.has('keycloak.enabled')) {
     try {
       if (req.params.objId) {
         req.currentObject = await recordService.read(req.params.objId);
       }
-
     } catch (err) {
       // eslint-disable-line no-empty
     }

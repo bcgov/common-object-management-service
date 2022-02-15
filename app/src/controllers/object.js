@@ -31,7 +31,6 @@ const controller = {
       });
       bb.on('close', async () => {
         const result = await Promise.all(objects.map(async (object) => {
-          console.log(object);
           return {
             ...object.data,
             ...await object.response
