@@ -38,7 +38,7 @@ describe(`GET ${basePath}/api-spec.yaml`, () => {
     expect(response.headers['content-type']).toBeTruthy();
     expect(response.headers['content-type']).toMatch('application/yaml; charset=utf-8');
     expect(response.text).toContain('openapi: 3.0.3');
-    expect(response.text).toContain('title: Vue Skeleton API');
+    expect(response.text).toContain('title: Common Object Management Service (COMS)');
   });
 });
 
@@ -51,6 +51,6 @@ describe(`GET ${basePath}/api-spec.json`, () => {
     expect(response.headers['content-type']).toMatch('application/json; charset=utf-8');
     expect(response.body).toBeTruthy();
     expect(response.body.openapi).toMatch('3.0.3');
-    expect(response.body.info.title).toMatch('Vue Skeleton API');
+    expect(response.body.info.title).toMatch('Common Object Management Service (COMS)');
   });
 });
