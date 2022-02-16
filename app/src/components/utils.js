@@ -1,10 +1,13 @@
+
+const config = require('config');
+
 const DELIMITER = '/';
 
 const utils = {
   /**
    * @function delimit
    * Yields a string `s` that will always have a trailing delimiter. Returns an empty string if falsy.
-   * @param {string} The input string
+   * @param {string} s The input string
    * @returns {string} The string `s` with the trailing delimiter, or an empty string.
    */
   delimit(s) {
@@ -12,6 +15,17 @@ const utils = {
       return s.endsWith(DELIMITER) ? s : `${s}${DELIMITER}`;
     }
     return '';
+  },
+
+  /**
+   * @function getPath
+   * Gets the relative path of `objId`
+   * @param {string} objId The object id
+   * @returns {string} The path
+   */
+  getPath(objId) {
+    const key = utils.delimit(config.get('objectStorage.key'));
+    return utils.join(key, objId);
   },
 
   /**
