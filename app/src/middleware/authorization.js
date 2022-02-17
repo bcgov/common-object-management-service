@@ -47,9 +47,9 @@ const hasPermission = (permission) => {
         if (!req.currentObject.public || !permission === Permissions.READ) {
           // Other than the above case, guard against unauthed access for everything else
           if (req.currentUser && req.currentUser.authType === AuthType.BEARER
-            && req.currentUser.tokenPayload && req.currentUser.tokenPayload.oidcId) {
+            && req.currentUser.tokenPayload && req.currentUser.tokenPayload.sub) {
             // Check if user has the required permission in their permission set
-            const permissions = await recordService.readPermissions(req.params.objId, req.currentUser.oidcId);
+            const permissions = await recordService.readPermissions(req.params.objId, req.currentUser.tokenPayload.sub);
             if (!permissions.some(p => p.code === permission)) {
               throw new Error(`User lacks permission '${permission}' on object '${req.params.objId}'`);
             }
