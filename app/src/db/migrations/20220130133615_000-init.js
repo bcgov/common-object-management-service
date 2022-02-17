@@ -52,7 +52,6 @@ exports.up = function (knex) {
       table.string('originalName', 255).notNullable();
       table.string('path', 1024).notNullable();
       table.string('mimeType').notNullable();
-      table.string('uploaderOidcId').references('oidcId').inTable('user');
       table.boolean('public').notNullable().defaultTo(false);
       table.boolean('active').notNullable().defaultTo(true);
       stamps(knex, table);
