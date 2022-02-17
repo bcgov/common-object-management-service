@@ -2,6 +2,7 @@ const busboy = require('busboy');
 const config = require('config');
 const { v4: uuidv4 } = require('uuid');
 
+const { AuthType } = require('../components/constants');
 const errorToProblem = require('../components/errorToProblem');
 const { getPath } = require('../components/utils');
 const { recordService, storageService } = require('../services');
@@ -14,6 +15,9 @@ const controller = {
     try {
       const bb = busboy({ headers: req.headers });
       const objects = [];
+      const oidcId = (req.currentUser && req.currentUser.authType === AuthType.BEARER)
+        ? req.currentUser.tokenPayload.sub
+        : undefined;
 
       bb.on('file', (name, stream, info) => {
         const newId = uuidv4();
@@ -28,7 +32,7 @@ const controller = {
         };
         objects.push({
           data: data,
-          dbResponse: recordService.create(data, getPath(newId), true, req.currentUser.tokenPayload.sub),
+          dbResponse: recordService.create({ ...data, oidcId, path: getPath(newId) }),
           s3Response: storageService.putObject({ ...data, stream })
         });
       });

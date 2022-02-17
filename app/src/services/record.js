@@ -5,31 +5,30 @@ const { ObjectModel, ObjectPermission } = require('../db/models');
 
 const service = {
   /** Create an object DB record and give the uploader (if authed) permissions */
-  create: async (data, path, public=false, oidcId=undefined, etrx = undefined) => {
+  create: async (data, etrx = undefined) => {
     let trx;
     try {
       trx = etrx ? etrx : await ObjectModel.startTransaction();
 
+      // Add file record to DB
       const obj = {
         id: data.id,
         originalName: data.originalName,
-        path: path,
+        path: data.path,
         mimeType: data.mimeType,
-        public: public
+        public: data.public,
+        createdBy: data.oidcId
       };
-      // if (oidcId) obj.createdBy = oidcId;
-
-      // Add file record to DB
       await ObjectModel.query(trx).insert(obj);
 
       // Add all permissions for the uploader
-      if (oidcId) {
+      if (data.oidcId) {
         const perms = Object.keys(Permissions)
           .map((p) => ({
             id: uuidv4(),
-            oidcId: oidcId,
+            oidcId: data.oidcId,
             objectId: obj.id,
-            createdBy: oidcId,
+            createdBy: data.oidcId,
             code: Permissions[p]
           }));
         await ObjectPermission.query(trx).insert(perms);
