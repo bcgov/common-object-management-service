@@ -14,14 +14,13 @@ const { recordService } = require('../services');
  * @returns {function} Express middleware function
  */
 const currentObject = async (req, _res, next) => {
-  if (config.has('keycloak.enabled')) {
-    try {
-      if (req.params.objId) {
-        req.currentObject = Object.freeze(await recordService.read(req.params.objId));
-      }
-    } catch (err) {
-      // eslint-disable-line no-empty
+  // TODO: Only execute this if app is running in mode where db is needed
+  try {
+    if (req.params.objId) {
+      req.currentObject = Object.freeze(await recordService.read(req.params.objId));
     }
+  } catch (err) {
+    // eslint-disable-line no-empty
   }
 
   next();
@@ -35,7 +34,9 @@ const currentObject = async (req, _res, next) => {
  */
 const hasPermission = (permission) => {
   return async (req, res, next) => {
+    // TODO: Only execute this if app is running in mode where db is needed
     try {
+      // TODO: Ensure there are escape hatches for BASICAUTH and NOAUTH modes
       if (config.has('keycloak.enabled')) {
         if (!req.currentObject) {
           // Force 403 on unauthorized or not found; do not allow 404 id brute force discovery

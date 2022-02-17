@@ -1,6 +1,7 @@
 {
   "db": {
     "database": "coms",
+    "enabled": "true",
     "host": "localhost",
     "port": "5432",
     "username": "app"

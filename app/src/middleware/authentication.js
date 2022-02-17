@@ -76,7 +76,7 @@ const currentUser = async (req, res, next) => {
 
         if (isValid) {
           currentUser.tokenPayload = jwt.decode(bearerToken);
-          // TODO: Consider db configuration check for no-auth mode?
+          // TODO: Only execute this if app is running in mode where db is needed
           await userService.login(currentUser.tokenPayload);
         } else {
           throw new Error('Invalid authorization token');

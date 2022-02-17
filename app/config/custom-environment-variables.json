@@ -6,6 +6,7 @@
   },
   "db": {
     "database": "DB_DATABASE",
+    "enabled": "DB_ENABLED",
     "host": "DB_HOST",
     "username": "DB_USERNAME",
     "password": "DB_PASSWORD",
