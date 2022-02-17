@@ -5,43 +5,38 @@ const { ObjectModel, ObjectPermission } = require('../db/models');
 
 const service = {
   /** Create an object DB record and give the uploader (if authed) permissions */
-  create: async (objectStorageData, body, currentUser, etrx = undefined) => {
+  create: async (data, path, public=false, oidcId=undefined, etrx = undefined) => {
     let trx;
     try {
       trx = etrx ? etrx : await ObjectModel.startTransaction();
 
-      const obj = {};
-      obj.id = uuidv4();
-      obj.originalName = objectStorageData.originalName;
-      obj.mimeType = objectStorageData.mimeType;
-      if (currentUser.keycloakId) {
-        obj.createdBy = currentUser.username;
-      }
-      obj.public = body.public === 'true';
-      obj.path = objectStorageData.path;
-      if (currentUser.keycloakId) {
-        obj.uploaderOidcId = currentUser.keycloakId;
-      }
+      const obj = {
+        id: data.id,
+        originalName: data.originalName,
+        path: path,
+        mimeType: data.mimeType,
+        public: public
+      };
+      // if (oidcId) obj.createdBy = oidcId;
 
       // Add file record to DB
       await ObjectModel.query(trx).insert(obj);
 
       // Add all permissions for the uploader
-      if (currentUser.keycloakId) {
-        const pArr = Object.keys(Permissions)
+      if (oidcId) {
+        const perms = Object.keys(Permissions)
           .map((p) => ({
             id: uuidv4(),
-            oidcId: currentUser.keycloakId,
+            oidcId: oidcId,
             objectId: obj.id,
-            createdBy: currentUser.keycloakId,
+            createdBy: oidcId,
             code: Permissions[p]
           }));
-        await ObjectPermission.query(trx).insert(pArr);
+        await ObjectPermission.query(trx).insert(perms);
       }
 
       if (!etrx) await trx.commit();
-      const result = await service.read(obj.id);
-      return result;
+      return await service.read(obj.id);
     } catch (err) {
       if (!etrx && trx) await trx.rollback();
       throw err;

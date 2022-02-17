@@ -10,13 +10,12 @@ const {
 } = require('@aws-sdk/client-s3');
 const config = require('config');
 
-const utils = require('../components/utils');
+const { getPath } = require('../components/utils');
 
 // Get app configuration
 const endpoint = config.get('objectStorage.endpoint');
 const bucket = config.get('objectStorage.bucket');
 const defaultTempExpiresIn = parseInt(config.get('objectStorage.defaultTempExpiresIn'), 10);
-const key = utils.delimit(config.get('objectStorage.key'));
 const accessKeyId = config.get('objectStorage.accessKeyId');
 const secretAccessKey = config.get('objectStorage.secretAccessKey');
 
@@ -128,7 +127,7 @@ const objectStorageService = {
     const params = {
       Bucket: bucket,
       ContentType: mimeType,
-      Key: utils.join(key, id),
+      Key: getPath(id),
       Body: stream,
       Metadata: {
         ...metadata, // Take input metadata first, but always enforce name and id key behavior

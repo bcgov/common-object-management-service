@@ -3,7 +3,8 @@ const config = require('config');
 const { v4: uuidv4 } = require('uuid');
 
 const errorToProblem = require('../components/errorToProblem');
-const service = require('../services/storage');
+const { getPath } = require('../components/utils');
+const { recordService, storageService } = require('../services');
 
 const SERVICE = 'ObjectStorage';
 
@@ -15,8 +16,9 @@ const controller = {
       const objects = [];
 
       bb.on('file', (name, stream, info) => {
+        const newId = uuidv4();
         const data = {
-          id: uuidv4(),
+          id: newId,
           fieldName: name,
           mimeType: info.mimeType,
           originalName: info.filename
@@ -26,16 +28,16 @@ const controller = {
         };
         objects.push({
           data: data,
-          response: service.putObject({ ...data, stream })
+          dbResponse: recordService.create(data, getPath(newId), true, req.currentUser.tokenPayload.sub),
+          s3Response: storageService.putObject({ ...data, stream })
         });
       });
       bb.on('close', async () => {
-        const result = await Promise.all(objects.map(async (object) => {
-          return {
-            ...object.data,
-            ...await object.response
-          };
-        }));
+        const result = await Promise.all(objects.map(async (object) => ({
+          ...object.data,
+          ...await object.dbResponse,
+          ...await object.s3Response
+        })));
         res.status(200).json(result);
       });
 
@@ -52,8 +54,8 @@ const controller = {
         filePath: `${config.get('objectStorage.key')}/${req.params.objId}`,
       };
 
-      await service.headObject(data); // First check if object exists
-      const response = await service.deleteObject(data); // Attempt deletion operation
+      await storageService.headObject(data); // First check if object exists
+      const response = await storageService.deleteObject(data); // Attempt deletion operation
       res.status(200).json(response);
     } catch (e) {
       next(errorToProblem(SERVICE, e));
@@ -67,8 +69,8 @@ const controller = {
         filePath: `${config.get('objectStorage.key')}/${req.params.objId}`,
       };
 
-      await service.headObject(data); // First check if object exists
-      const response = await service.listObjectVersion(data);
+      await storageService.headObject(data); // First check if object exists
+      const response = await storageService.listObjectVersion(data);
       res.status(200).json(response);
     } catch (e) {
       next(errorToProblem(SERVICE, e));
@@ -83,11 +85,11 @@ const controller = {
         versionId: req.query.versionId ? req.query.versionId.toString() : undefined
       };
 
-      await service.headObject(data); // First check if object exists
+      await storageService.headObject(data); // First check if object exists
 
       // Download through service
       if (req.query.download) {
-        const response = await service.readObject(data);
+        const response = await storageService.readObject(data);
 
         // Set Headers
         // TODO: Consider looking around for express-based header middleware
@@ -112,7 +114,7 @@ const controller = {
 
       // Download via redirect
       else {
-        const response = await service.readSignedUrl(data);
+        const response = await storageService.readSignedUrl(data);
         res.status(302).set('Location', response).end();
       }
     } catch (e) {
@@ -127,7 +129,7 @@ const controller = {
         filePath: `${config.get('objectStorage.key')}/${req.params.objId}`
       };
 
-      await service.headObject(data); // First check if object exists
+      await storageService.headObject(data); // First check if object exists
 
       const bb = busboy({ headers: req.headers, limits: { files: 1 } });
       let object = undefined;
@@ -137,14 +139,14 @@ const controller = {
           id: req.params.objId,
           fieldName: name,
           mimeType: info.mimeType,
-          originalName: info.filename,
+          originalName: info.filename
           // TODO: Implement metadata and tag support - request shape TBD
           // metadata: { foo: 'bar', baz: 'bam' }
           // tags: { foo: 'bar', baz: 'bam' }
         };
         object = {
           data: data,
-          response: service.putObject({ ...data, stream })
+          response: storageService.putObject({ ...data, stream })
         };
       });
       bb.on('close', async () => {
