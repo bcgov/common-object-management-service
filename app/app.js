@@ -4,9 +4,11 @@ const cors = require('cors');
 const express = require('express');
 const Problem = require('api-problem');
 
+const { AuthMode } = require('./src/components/constants');
 const keycloak = require('./src/components/keycloak');
 const log = require('./src/components/log')(module.filename);
 const httpLogger = require('./src/components/log').httpLogger;
+const { getAppAuthMode } = require('./src/components/utils');
 const v1Router = require('./src/routes/v1');
 
 const DataConnection = require('./src/db/dataConnection');
@@ -36,14 +38,22 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 // Application authentication modes
-if (!config.has('basicAuth.enabled') && !config.has('keycloak.enabled')) {
-  log.info('Running in public no-auth mode');
+state.authMode = getAppAuthMode();
+switch (state.authMode) {
+  case AuthMode.NOAUTH:
+    log.info('Running in public no-auth mode');
+    break;
+  case AuthMode.BASICAUTH:
+    log.info('Running in public no-auth mode');
+    break;
+  case AuthMode.OIDCAUTH:
+    log.info('Running in public oidc auth mode');
+    break;
+  case AuthMode.FULLAUTH:
+    log.info('Running in full (basic + oidc) auth mode');
+    break;
 }
-if (config.has('basicAuth.enabled')) {
-  log.info('Basic Authentication enabled');
-}
-if (config.has('keycloak.enabled')) {
-  log.info('OIDC Authentication enabled');
+if (state.authMode === AuthMode.OIDCAUTH || state.authMode === AuthMode.FULLAUTH) {
   // Use Keycloak OIDC Middleware
   app.use(keycloak.middleware());
 }

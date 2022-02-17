@@ -17,7 +17,7 @@ const currentObject = async (req, _res, next) => {
   if (config.has('keycloak.enabled')) {
     try {
       if (req.params.objId) {
-        req.currentObject = await recordService.read(req.params.objId);
+        req.currentObject = Object.freeze(await recordService.read(req.params.objId));
       }
     } catch (err) {
       // eslint-disable-line no-empty

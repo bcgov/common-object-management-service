@@ -1,6 +1,8 @@
 
 const config = require('config');
 
+const { AuthMode } = require('./constants');
+
 const DELIMITER = '/';
 
 const utils = {
@@ -15,6 +17,21 @@ const utils = {
       return s.endsWith(DELIMITER) ? s : `${s}${DELIMITER}`;
     }
     return '';
+  },
+
+  /**
+   * @function getAppAuthMode
+   * Yields the current `AuthMode` this application is operating under.
+   * @returns {string} The application AuthMode
+   */
+  getAppAuthMode() {
+    const basicAuth = config.has('basicAuth.enabled');
+    const oidcAuth = config.has('keycloak.enabled');
+
+    if (!basicAuth && !oidcAuth) return AuthMode.NOAUTH;
+    if (basicAuth && !oidcAuth) return AuthMode.BASICAUTH;
+    if (!basicAuth && oidcAuth) return AuthMode.OIDCAUTH;
+    if (basicAuth && oidcAuth) return AuthMode.FULLAUTH;
   },
 
   /**
