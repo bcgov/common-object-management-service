@@ -44,13 +44,13 @@ const service = {
 
 
   /** Delete an object record */
-  delete: async (id, etrx = undefined) => {
+  delete: async (objId, etrx = undefined) => {
     let trx;
     try {
       trx = etrx ? etrx : await ObjectModel.startTransaction();
 
       await ObjectModel.query(trx)
-        .deleteById(id)
+        .deleteById(objId)
         .throwIfNotFound();
 
       if (!etrx) await trx.commit();
@@ -61,17 +61,20 @@ const service = {
   },
 
   /** For the given user, get the permissions they have */
-  fetchAllForUser: (currentUser) => {
+  fetchAllForUser: (oidcId) => {
+    // TODO: Consider using ObjectPermission as top level instead for efficiency?
     return ObjectModel.query()
       .allowGraph('[objectPermission]')
       .withGraphFetched('objectPermission')
-      .modifyGraph('objectPermission', builder => builder.where('oidcId', currentUser.keycloakId));
+      .modifyGraph('objectPermission', builder => builder.where('oidcId', oidcId))
+      // TODO: Convert this filter to compute on DB query
+      .then(response => response.filter(r => r.objectPermission && r.objectPermission.length));
   },
 
 
   /** Share a file permission with a user */
-  share: async (objectId, oidcId, permissions, currentUser, etrx = undefined) => {
-    if (!oidcId || !objectId || !Array.isArray(permissions)) {
+  share: async (objId, oidcId, permissions, currentUser, etrx = undefined) => {
+    if (!oidcId || !objId || !Array.isArray(permissions)) {
       throw new Error('invalid parameters supplied');
     }
 
@@ -83,7 +86,7 @@ const service = {
         .map((p) => ({
           id: uuidv4(),
           oidcId: oidcId,
-          objectId: objectId,
+          objectId: objId,
           createdBy: currentUser.keycloakId,
           code: Permissions[p]
         }));
@@ -91,7 +94,7 @@ const service = {
 
 
       if (!etrx) await trx.commit();
-      const result = await service.readPermissions(objectId, oidcId);
+      const result = await service.readPermissions(objId, oidcId);
       return result;
     } catch (err) {
       if (!etrx && trx) await trx.rollback();
@@ -100,16 +103,16 @@ const service = {
   },
 
   /** Get an object db record */
-  read: (id) => {
+  read: (objId) => {
     return ObjectModel.query()
-      .findById(id)
+      .findById(objId)
       .throwIfNotFound();
   },
 
   /** For an object and user get the permissions they have */
-  readPermissions: (objectId, oidcId) => {
+  readPermissions: (objId, oidcId) => {
     return ObjectPermission.query()
-      .where('objectId', objectId)
+      .where('objectId', objId)
       .where('oidcId', oidcId);
   },
 };

@@ -1,5 +1,4 @@
 const busboy = require('busboy');
-const config = require('config');
 const { v4: uuidv4 } = require('uuid');
 
 const { AuthType } = require('../components/constants');
@@ -55,7 +54,7 @@ const controller = {
   async deleteObject(req, res, next) {
     try {
       const data = {
-        filePath: `${config.get('objectStorage.key')}/${req.params.objId}`,
+        filePath: getPath(req.params.objId)
       };
 
       await storageService.headObject(data); // First check if object exists
@@ -66,11 +65,26 @@ const controller = {
     }
   },
 
+  /** List all user accessible objects */
+  async listUserObject(req, res, next) {
+    try {
+      // TODO: Consider accepting oidcId as a query parameter
+      // TODO: Add support for filtering by set of permissions
+      const oidcId = (req.currentUser && req.currentUser.authType === AuthType.BEARER)
+        ? req.currentUser.tokenPayload.sub
+        : undefined;
+      const response = await recordService.fetchAllForUser(oidcId);
+      res.status(201).json(response);
+    } catch (error) {
+      next(error);
+    }
+  },
+
   /** List all versions of the object */
   async listObjectVersion(req, res, next) {
     try {
       const data = {
-        filePath: `${config.get('objectStorage.key')}/${req.params.objId}`,
+        filePath: getPath(req.params.objId)
       };
 
       await storageService.headObject(data); // First check if object exists
@@ -85,7 +99,7 @@ const controller = {
   async readObject(req, res, next) {
     try {
       const data = {
-        filePath: `${config.get('objectStorage.key')}/${req.params.objId}`,
+        filePath: getPath(req.params.objId),
         versionId: req.query.versionId ? req.query.versionId.toString() : undefined
       };
 
@@ -130,7 +144,7 @@ const controller = {
   async updateObject(req, res, next) {
     try {
       const data = {
-        filePath: `${config.get('objectStorage.key')}/${req.params.objId}`
+        filePath: getPath(req.params.objId)
       };
 
       await storageService.headObject(data); // First check if object exists
