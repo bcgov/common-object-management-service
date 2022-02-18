@@ -9,6 +9,28 @@ const { recordService, storageService } = require('../services');
 const SERVICE = 'ObjectStorage';
 
 const controller = {
+  /**
+   * @function _setS3Headers
+   * Accepts a typical S3 response object and inserts appropriate express response headers
+   * @param {object} s3Resp S3 response object
+   * @param {object} res Express response object
+   */
+  _setS3Headers(s3Resp, res) {
+    // TODO: Consider looking around for express-based header middleware
+    if (s3Resp.ContentLength) res.set('Content-Length', s3Resp.ContentLength);
+    if (s3Resp.ContentType) res.set('Content-Type', s3Resp.ContentType);
+    if (s3Resp.ETag) res.set('ETag', s3Resp.ETag);
+    if (s3Resp.LastModified) res.set('Last-Modified', s3Resp.LastModified);
+    if (s3Resp.ServerSideEncryption) res.set('x-amz-server-side-encryption', s3Resp.ServerSideEncryption);
+    if (s3Resp.VersionId) res.set('x-amz-version-id', s3Resp.VersionId);
+    if (s3Resp.Metadata) {
+      Object.entries(s3Resp.Metadata).forEach(([key, value]) => {
+        res.set(`x-amz-meta-${key}`, value);
+      });
+      if (s3Resp.Metadata.name) res.attachment(s3Resp.Metadata.name);
+    }
+  },
+
   /** Creates new objects */
   createObject(req, res, next) {
     try {
@@ -68,7 +90,16 @@ const controller = {
   /** Returns object headers */
   async headObject(req, res, next) {
     try {
-      throw new Error('Not Implemented');
+      const data = {
+        filePath: getPath(req.params.objId)
+      };
+
+      const response = await storageService.headObject(data);
+
+      // Set Headers
+      // TODO: Consider adding 'x-coms-public' and 'x-coms-path' headers into API spec?
+      controller._setS3Headers(response, res);
+      res.status(204).end();
     } catch (e) {
       next(errorToProblem(SERVICE, e));
     }
@@ -119,16 +150,7 @@ const controller = {
         const response = await storageService.readObject(data);
 
         // Set Headers
-        // TODO: Consider looking around for express-based header middleware
-        if (response.Metadata) {
-          Object.entries(response.Metadata).forEach(([key, value]) => {
-            res.set(`x-amz-meta-${key}`, value);
-          });
-          if (response.Metadata.name) res.attachment(response.Metadata.name);
-        }
-        if (response.ContentType) res.set('Content-Type', response.ContentType);
-        if (response.ETag) res.set('ETag', response.ETag);
-        if (response.LastModified) res.set('Last-Modified', response.LastModified);
+        controller._setS3Headers(response, res);
 
         // TODO: Proper 304 caching logic (with If-Modified-Since header support)
         // Consider looking around for express-based caching middleware

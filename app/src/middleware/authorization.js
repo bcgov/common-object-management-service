@@ -3,7 +3,8 @@ const Problem = require('api-problem');
 const config = require('config');
 const log = require('../components/log')(module.filename);
 const { AuthType, Permissions } = require('../components/constants');
-const { recordService } = require('../services');
+const { getPath } = require('../components/utils');
+const { recordService, storageService } = require('../services');
 
 /**
  * @function currentObject
@@ -14,13 +15,16 @@ const { recordService } = require('../services');
  * @returns {function} Express middleware function
  */
 const currentObject = async (req, _res, next) => {
-  // TODO: Only execute this if app is running in mode where db is needed
   try {
     if (req.params.objId) {
-      req.currentObject = Object.freeze(await recordService.read(req.params.objId));
+      req.currentObject = Object.freeze({
+        // TODO: Only execute this if app is running in mode where db is needed
+        ...await recordService.read(req.params.objId),
+        ...await storageService.headObject({ filePath: getPath(req.params.objId) })
+      });
     }
   } catch (err) {
-    // eslint-disable-line no-empty
+    log.warn(err.message, { function: 'currentObject' });
   }
 
   next();

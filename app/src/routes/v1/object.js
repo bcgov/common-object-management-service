@@ -19,6 +19,11 @@ routes.get('/', (req, res, next) => {
   objectController.listUserObject(req, res, next);
 });
 
+/** Returns object headers */
+routes.head('/:objId', currentObject, hasPermission(Permissions.READ), (req, res, next) => {
+  objectController.headObject(req, res, next);
+});
+
 /** Returns the object */
 routes.get('/:objId', currentObject, hasPermission(Permissions.READ), (req, res, next) => {
   objectController.readObject(req, res, next);
@@ -32,11 +37,6 @@ routes.post('/:objId', currentObject, hasPermission(Permissions.UPDATE), (req, r
 /** Deletes the object */
 routes.delete('/:objId', currentObject, hasPermission(Permissions.DELETE), async (req, res, next) => {
   objectController.deleteObject(req, res, next);
-});
-
-/** Returns object headers */
-routes.get('/:objId/headers', currentObject, hasPermission(Permissions.READ), (req, res, next) => {
-  objectController.headObject(req, res, next);
 });
 
 /** Returns the object version history */
