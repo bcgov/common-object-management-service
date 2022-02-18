@@ -65,6 +65,15 @@ const controller = {
     }
   },
 
+  /** Returns object headers */
+  async headObject(req, res, next) {
+    try {
+      throw new Error('Not Implemented');
+    } catch (e) {
+      next(errorToProblem(SERVICE, e));
+    }
+  },
+
   /** List all user accessible objects */
   async listUserObject(req, res, next) {
     try {

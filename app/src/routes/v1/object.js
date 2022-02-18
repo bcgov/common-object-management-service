@@ -34,6 +34,11 @@ routes.delete('/:objId', currentObject, hasPermission(Permissions.DELETE), async
   objectController.deleteObject(req, res, next);
 });
 
+/** Returns object headers */
+routes.get('/:objId/headers', currentObject, hasPermission(Permissions.READ), (req, res, next) => {
+  objectController.headObject(req, res, next);
+});
+
 /** Returns the object version history */
 routes.get('/:objId/versions', currentObject, hasPermission(Permissions.READ), async (req, res, next) => {
   objectController.listObjectVersion(req, res, next);
