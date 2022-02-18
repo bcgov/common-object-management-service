@@ -47,7 +47,11 @@ const service = {
   delete: async (objId, etrx = undefined) => {
     let trx;
     try {
-      trx = etrx ? etrx : await ObjectModel.startTransaction();
+      trx = etrx ? etrx : await ObjectPermission.startTransaction();
+
+      await ObjectPermission.query(trx)
+        .delete()
+        .where('objectId', objId);
 
       await ObjectModel.query(trx)
         .deleteById(objId)
@@ -71,8 +75,8 @@ const service = {
       .then(response => response.filter(r => r.objectPermission && r.objectPermission.length));
   },
 
-
   /** Share a file permission with a user */
+  // TODO: Refactor
   share: async (objId, oidcId, permissions, currentUser, etrx = undefined) => {
     if (!oidcId || !objId || !Array.isArray(permissions)) {
       throw new Error('invalid parameters supplied');
@@ -114,6 +118,29 @@ const service = {
     return ObjectPermission.query()
       .where('objectId', objId)
       .where('oidcId', oidcId);
+  },
+
+  /** Update an object DB record */
+  update: async (data, etrx = undefined) => {
+    let trx;
+    try {
+      trx = etrx ? etrx : await ObjectModel.startTransaction();
+
+      // Add file record to DB
+      const response = await ObjectModel.query(trx).patchAndFetchById(data.id, {
+        originalName: data.originalName,
+        path: data.path,
+        mimeType: data.mimeType,
+        public: data.public,
+        updatedBy: data.oidcId
+      });
+
+      if (!etrx) await trx.commit();
+      return response;
+    } catch (err) {
+      if (!etrx && trx) await trx.rollback();
+      throw err;
+    }
   },
 };
 

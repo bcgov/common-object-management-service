@@ -103,7 +103,7 @@ exports.up = function (knex) {
             SESSION_USER,
             NEW."updatedBy",
             now(),
-            'U',
+            'UPDATE',
             v_old_data);
             RETURN NEW;
         elsif (TG_OP = 'DELETE') then
@@ -113,7 +113,7 @@ exports.up = function (knex) {
             OLD.id,
             SESSION_USER,
             now(),
-            'D',
+            'DELETE',
             v_old_data);
             RETURN NEW;
         end if;
@@ -132,7 +132,7 @@ exports.up = function (knex) {
             SESSION_USER,
             NEW."updatedBy",
             now(),
-            'U',
+            'UPDATE',
             v_old_data);
             RETURN NEW;
         elsif (TG_OP = 'DELETE') then
@@ -142,7 +142,7 @@ exports.up = function (knex) {
             OLD.id,
             SESSION_USER,
             now(),
-            'D',
+            'DELETE',
             v_old_data);
             RETURN NEW;
         end if;

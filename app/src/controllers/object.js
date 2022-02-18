@@ -41,9 +41,9 @@ const controller = {
         : undefined;
 
       bb.on('file', (name, stream, info) => {
-        const newId = uuidv4();
+        const objId = uuidv4();
         const data = {
-          id: newId,
+          id: objId,
           fieldName: name,
           mimeType: info.mimeType,
           originalName: info.filename
@@ -53,7 +53,7 @@ const controller = {
         };
         objects.push({
           data: data,
-          dbResponse: recordService.create({ ...data, oidcId, path: getPath(newId) }),
+          dbResponse: recordService.create({ ...data, oidcId, path: getPath(objId) }),
           s3Response: storageService.putObject({ ...data, stream })
         });
       });
@@ -79,7 +79,7 @@ const controller = {
         filePath: getPath(req.params.objId)
       };
 
-      await storageService.headObject(data); // First check if object exists
+      await recordService.delete(req.params.objId);
       const response = await storageService.deleteObject(data); // Attempt deletion operation
       res.status(200).json(response);
     } catch (e) {
@@ -91,7 +91,8 @@ const controller = {
   async headObject(req, res, next) {
     try {
       const data = {
-        filePath: getPath(req.params.objId)
+        filePath: getPath(req.params.objId),
+        versionId: req.query.versionId ? req.query.versionId.toString() : undefined
       };
 
       const response = await storageService.headObject(data);
@@ -127,7 +128,6 @@ const controller = {
         filePath: getPath(req.params.objId)
       };
 
-      await storageService.headObject(data); // First check if object exists
       const response = await storageService.listObjectVersion(data);
       res.status(200).json(response);
     } catch (e) {
@@ -142,8 +142,6 @@ const controller = {
         filePath: getPath(req.params.objId),
         versionId: req.query.versionId ? req.query.versionId.toString() : undefined
       };
-
-      await storageService.headObject(data); // First check if object exists
 
       // Download through service
       if (req.query.download) {
@@ -171,21 +169,31 @@ const controller = {
     }
   },
 
+  // Toggle an object's public status
+  // Share file with a user (add permissions)
+  // TODO: Reimplement, consider moving to a permissions controller?
+  share: async (req, res, next) => {
+    try {
+      const response = await recordService.share(req);
+      res.status(201).json(response);
+    } catch (error) {
+      next(error);
+    }
+  },
+
   /** Creates an updated version of the object via streaming */
   async updateObject(req, res, next) {
     try {
-      const data = {
-        filePath: getPath(req.params.objId)
-      };
-
-      await storageService.headObject(data); // First check if object exists
-
       const bb = busboy({ headers: req.headers, limits: { files: 1 } });
+      const oidcId = (req.currentUser && req.currentUser.authType === AuthType.BEARER)
+        ? req.currentUser.tokenPayload.sub
+        : undefined;
       let object = undefined;
 
       bb.on('file', (name, stream, info) => {
+        const objId = req.params.objId;
         const data = {
-          id: req.params.objId,
+          id: objId,
           fieldName: name,
           mimeType: info.mimeType,
           originalName: info.filename
@@ -195,11 +203,16 @@ const controller = {
         };
         object = {
           data: data,
-          response: storageService.putObject({ ...data, stream })
+          dbResponse: recordService.update({ ...data, oidcId, path: getPath(objId) }),
+          s3Response: storageService.putObject({ ...data, stream })
         };
       });
       bb.on('close', async () => {
-        const result = { ...object.data, ...await object.response };
+        const result = {
+          ...object.data,
+          ...await object.dbResponse,
+          ...await object.s3Response
+        };
         res.status(200).json(result);
       });
 

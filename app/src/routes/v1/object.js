@@ -49,6 +49,7 @@ routes.patch('/:objId/public', currentObject, hasPermission(Permissions.MANAGE),
   new Problem(501).send(res);
 });
 
+// TODO: Move all routes below this todo into new permissions route
 /** Returns the object permissions */
 routes.get('/:objId/permissions', currentObject, hasPermission(Permissions.READ), (req, res, next) => {
   new Problem(501).send(res);
