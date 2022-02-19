@@ -32,7 +32,6 @@ class ObjectModel extends Timestamps(Model) {
         originalName: { type: 'string', minLength: 1, maxLength: 255 },
         path: { type: 'string', minLength: 1, maxLength: 1024 },
         mimeType: { type: 'string' },
-        uploaderOidcId: { type: 'string' },
         public: { type: 'boolean' },
         ...stamps
       },

@@ -5,10 +5,14 @@
     "clientSecret": "password",
     "serverUrl": "serverUrl"
   },
+  "objectStorage": {
+    "accessKeyId": "accessKeyId",
+    "bucket": "bucket",
+    "endpoint": "http://endpoint",
+    "key": "key",
+    "secretAccessKey": "secretAccessKey"
+  },
   "server": {
     "logLevel": "silent"
-  },
-  "objectStorage": {
-    "secretAccessKey": "secretAccessKey"
   }
 }

@@ -2,6 +2,7 @@ const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const {
   DeleteObjectCommand,
   GetObjectCommand,
+  HeadBucketCommand,
   HeadObjectCommand,
   ListObjectVersionsCommand,
   PutObjectCommand,
@@ -9,16 +10,19 @@ const {
 } = require('@aws-sdk/client-s3');
 const config = require('config');
 
-const utils = require('./utils');
+const { getPath } = require('../components/utils');
 
 // Get app configuration
 const endpoint = config.get('objectStorage.endpoint');
 const bucket = config.get('objectStorage.bucket');
 const defaultTempExpiresIn = parseInt(config.get('objectStorage.defaultTempExpiresIn'), 10);
-const key = utils.delimit(config.get('objectStorage.key'));
 const accessKeyId = config.get('objectStorage.accessKeyId');
 const secretAccessKey = config.get('objectStorage.secretAccessKey');
 
+/**
+ * The Core S3 Object Storage Service
+ * @see {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-s3/}
+ */
 const objectStorageService = {
   /**
    * @private
@@ -53,6 +57,19 @@ const objectStorageService = {
     if (versionId) params.VersionId = versionId;
 
     return this._s3Client.send(new DeleteObjectCommand(params));
+  },
+
+  /**
+   * @function headBucket
+   * Checks if a bucket exists and if the S3Client has correct access permissions
+   * @returns {Promise<object>} The response of the head bucket operation
+   */
+  headBucket() {
+    const params = {
+      Bucket: bucket,
+    };
+
+    return this._s3Client.send(new HeadBucketCommand(params));
   },
 
   /**
@@ -110,7 +127,7 @@ const objectStorageService = {
     const params = {
       Bucket: bucket,
       ContentType: mimeType,
-      Key: utils.join(key, id),
+      Key: getPath(id),
       Body: stream,
       Metadata: {
         ...metadata, // Take input metadata first, but always enforce name and id key behavior

@@ -5,6 +5,7 @@ jest.mock('@aws-sdk/s3-request-presigner', () => ({
 const {
   DeleteObjectCommand,
   GetObjectCommand,
+  HeadBucketCommand,
   HeadObjectCommand,
   ListObjectVersionsCommand,
   PutObjectCommand
@@ -14,8 +15,8 @@ const { mockClient } = require('aws-sdk-client-mock');
 const config = require('config');
 const { Readable } = require('stream');
 
-const service = require('../../../../src/components/objectStorage/service');
-const utils = require('../../../../src/components/objectStorage/utils');
+const service = require('../../../src/services/storage');
+const utils = require('../../../src/components/utils');
 
 const bucket = config.get('objectStorage.bucket');
 const key = utils.delimit(config.get('objectStorage.key'));
@@ -59,6 +60,23 @@ describe('deleteObject', () => {
       Bucket: bucket,
       Key: filePath,
       VersionId: versionId
+    }, true)).toHaveLength(1);
+  });
+});
+
+describe('headBucket', () => {
+  beforeEach(() => {
+    s3ClientMock.reset();
+    s3ClientMock.on(HeadBucketCommand).resolves({});
+  });
+
+  it('should send a head object command', () => {
+    const result = service.headBucket();
+
+    expect(result).toBeTruthy();
+    expect(s3ClientMock.calls()).toHaveLength(1);
+    expect(s3ClientMock.commandCalls(HeadBucketCommand, {
+      Bucket: bucket
     }, true)).toHaveLength(1);
   });
 });
