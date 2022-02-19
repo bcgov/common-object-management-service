@@ -22,6 +22,7 @@ A microservice for managing access control to S3 Objects
     │   ├── controllers/       - Controller Layer
     │   ├── db/                - Database Layer
     │   ├── docs/              - OpenAPI 3.0 Specification
+    │   ├── middleware/        - Middleware Layer
     │   ├── routes/            - API Route Layer
     │   └── services/          - Services Layer
     └── tests/                 - Node.js web application tests
