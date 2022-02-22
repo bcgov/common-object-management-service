@@ -6,7 +6,13 @@ const CREATED_BY = uuid.NIL;
 exports.up = function (knex) {
   return Promise.resolve()
 
-    // Create user table and add a dummy system user (to link migration CreatedBy stamps)
+    // Base COMS tables
+    .then(() => knex.schema.createTable('identity_provider', table => {
+      table.string('code').primary();
+      table.boolean('active').notNullable().defaultTo(true);
+      stamps(knex, table);
+    }))
+
     .then(() => knex.schema.createTable('user', table => {
       table.string('oidcId').primary();
       table.string('firstName');
@@ -14,39 +20,18 @@ exports.up = function (knex) {
       table.string('lastName');
       table.string('username').notNullable().index();
       table.string('email').index();
-      table.boolean('active').notNullable().defaultTo(true);
-      stamps(knex, table);
-    }))
-    .then(() => {
-      const items = [
-        {
-          oidcId: CREATED_BY,
-          username: 'System',
-          active: false,
-          createdBy: CREATED_BY,
-        },
-      ];
-      return knex('user').insert(items);
-    })
-    .then(() => knex.schema.createTable('identity_provider', table => {
-      table.string('code').primary();
-      table.string('display').notNullable();
-      table.string('idpAlias');
-      table.boolean('active').notNullable().defaultTo(true);
-      stamps(knex, table);
-    }))
-    // add the idp fk for user (user needs to be created first for stamp fks)
-    .then(() => knex.schema.alterTable('user', table => {
       table.string('idp').references('code').inTable('identity_provider');
+      table.boolean('active').notNullable().defaultTo(true);
+      stamps(knex, table);
     }))
 
-    // Add the rest of the tables
     .then(() => knex.schema.createTable('permission', table => {
       table.string('code').primary();
       table.string('display').notNullable();
       table.boolean('active').notNullable().defaultTo(true);
       stamps(knex, table);
     }))
+
     .then(() => knex.schema.createTable('object', table => {
       table.uuid('id').primary();
       table.string('originalName', 255).notNullable();
@@ -56,6 +41,7 @@ exports.up = function (knex) {
       table.boolean('active').notNullable().defaultTo(true);
       stamps(knex, table);
     }))
+
     .then(() => knex.schema.createTable('object_permission', table => {
       table.uuid('id').primary();
       table.string('oidcId').references('oidcId').inTable('user').notNullable();
@@ -64,7 +50,7 @@ exports.up = function (knex) {
       stamps(knex, table);
     }))
 
-    // Audit tables for object and object permissions
+    // Audit tables for object and object_permission
     .then(() => knex.schema.createTable('audit_object', table => {
       table.specificType(
         'id',
@@ -157,58 +143,41 @@ exports.up = function (knex) {
     AFTER UPDATE OR DELETE ON object_permission
     FOR EACH ROW EXECUTE PROCEDURE public.audit_object_permission_func();`))
 
-    // Populate Data (also see seeds for oidc auth provider-specific data)
+    // Populate Data
     .then(() => {
-      const items = [
-        {
-          createdBy: CREATED_BY,
-          code: 'CREATE',
-          display: 'Create',
-          active: true
-        },
-        {
-          createdBy: CREATED_BY,
-          code: 'READ',
-          display: 'Read',
-          active: true
-        },
-        {
-          createdBy: CREATED_BY,
-          code: 'UPDATE',
-          display: 'Update',
-          active: true
-        },
-        {
-          createdBy: CREATED_BY,
-          code: 'DELETE',
-          display: 'Delete',
-          active: true
-        },
-        {
-          createdBy: CREATED_BY,
-          code: 'MANAGE',
-          display: 'Manage',
-          active: true
-        },
-      ];
+      const users = ['System'];
+      const items = users.map((user) => ({
+        oidcId: CREATED_BY,
+        username: user,
+        active: false,
+        createdBy: CREATED_BY,
+      }));
+      return knex('user').insert(items);
+    })
+
+    .then(() => {
+      const perms = ['Create', 'Read', 'Update', 'Delete', 'Manage' ];
+      const items = perms.map((perm) => ({
+        createdBy: CREATED_BY,
+        code: perm.toUpperCase(),
+        display: perm,
+        active: true
+      }));
       return knex('permission').insert(items);
     });
 };
 
 exports.down = function (knex) {
   return Promise.resolve()
-    .then(() => knex.schema.raw('DROP TRIGGER audit_object_trigger ON object'))
-    .then(() => knex.schema.raw('DROP FUNCTION audit_object_func()'))
-    .then(() => knex.schema.dropTableIfExists('audit_object'))
     .then(() => knex.schema.raw('DROP TRIGGER audit_object_permission_trigger ON object_permission'))
+    .then(() => knex.schema.raw('DROP TRIGGER audit_object_trigger ON object'))
     .then(() => knex.schema.raw('DROP FUNCTION audit_object_permission_func()'))
+    .then(() => knex.schema.raw('DROP FUNCTION audit_object_func()'))
     .then(() => knex.schema.dropTableIfExists('audit_object_permission'))
+    .then(() => knex.schema.dropTableIfExists('audit_object'))
     .then(() => knex.schema.dropTableIfExists('object_permission'))
     .then(() => knex.schema.dropTableIfExists('object'))
     .then(() => knex.schema.dropTableIfExists('permission'))
-    .then(() => knex.schema.alterTable('user', table => {
-      table.dropColumn('idp');
-    }))
-    .then(() => knex.schema.dropTableIfExists('identity_provider'))
-    .then(() => knex.schema.dropTableIfExists('user'));
+    .then(() => knex.schema.dropTableIfExists('user'))
+    .then(() => knex.schema.dropTableIfExists('identity_provider'));
 };

@@ -10,7 +10,7 @@ class IdentityProvider extends Timestamps(Model) {
   static get idColumn() {
     return 'code';
   }
-  
+
   static get relationMappings() {
     const IdentityProvider = require('./identityProvider');
 
@@ -42,11 +42,9 @@ class IdentityProvider extends Timestamps(Model) {
   static get jsonSchema() {
     return {
       type: 'object',
-      required: ['code', 'display', 'idpAlias'],
+      required: ['code'],
       properties: {
         code: { type: 'string', minLength: 1, maxLength: 255 },
-        display: { type: 'string', minLength: 1, maxLength: 255 },
-        idpAlias: { type: 'string', minLength: 1, maxLength: 255 },
         active: { type: 'boolean' },
         ...stamps
       },
