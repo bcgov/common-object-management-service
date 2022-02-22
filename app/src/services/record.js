@@ -96,7 +96,6 @@ const service = {
         }));
       await ObjectPermission.query(trx).insert(permRecs);
 
-
       if (!etrx) await trx.commit();
       const result = await service.readPermissions(objId, oidcId);
       return result;
