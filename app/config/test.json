@@ -1,4 +1,8 @@
 {
+  "basicAuth": {
+    "username": "username0",
+    "password": "password1"
+  },
   "keycloak": {
     "clientId": "client",
     "realm": "01234567",
