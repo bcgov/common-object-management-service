@@ -167,6 +167,8 @@ class DataConnection {
       } catch (e) {
         log.error(e);
       }
+    } else {
+      if (cb) cb();
     }
   }
 
