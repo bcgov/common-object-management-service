@@ -22,6 +22,23 @@ describe('errorToProblem', () => {
     expect(result.errors).toBeUndefined();
   });
 
+  it('should return a 422 problem with a supplied string response', () => {
+    const e = {
+      response: {
+        data: '{ "detail": "d" }',
+        status: 422
+      }
+    };
+    const result = errorToProblem(SERVICE, e);
+
+    expect(result).toBeTruthy();
+    expect(result instanceof Problem).toBeTruthy();
+    expect(result.title).toMatch('Unprocessable Entity');
+    expect(result.status).toBe(422);
+    expect(result.detail).toMatch('d');
+    expect(result.errors).toBeUndefined();
+  });
+
   it('should throw a 502 problem', () => {
     const e = {
       message: 'msg'
