@@ -14,7 +14,7 @@ class User extends Timestamps(Model) {
   static get jsonSchema() {
     return {
       type: 'object',
-      required: ['oidcId', 'idp', 'username'],
+      required: ['oidcId', 'username'],
       properties: {
         oidcId: { type: 'string' },
         idp: { type: 'string' },

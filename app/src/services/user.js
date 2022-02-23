@@ -1,4 +1,6 @@
-const { User } = require('../db/models');
+const uuid = require('uuid');
+
+const { IdentityProvider, User } = require('../db/models');
 
 /**
  * The User DB Service
@@ -21,6 +23,33 @@ const service = {
   }),
 
   /**
+   * @function createIdp
+   * Create an identity provider record
+   * @param {string} code The identity provider code
+   * @param {object} [etrx=undefined] An optional Objection Transaction object
+   * @returns {Promise<object>} The result of running the insert operation
+   * @throws The error encountered upon db transaction failure
+   */
+  createIdp: async (code, etrx = undefined) => {
+    let trx;
+    try {
+      trx = etrx ? etrx : await User.startTransaction();
+
+      const obj = {
+        code: code,
+        createdBy: uuid.NIL
+      };
+
+      const response = await IdentityProvider.query(trx).insertAndFetch(obj);
+      if (!etrx) await trx.commit();
+      return response;
+    } catch (err) {
+      if (!etrx && trx) await trx.rollback();
+      throw err;
+    }
+  },
+
+  /**
    * @function createUser
    * Create a user DB record
    * @param {object} data Incoming user data
@@ -33,6 +62,11 @@ const service = {
     try {
       trx = etrx ? etrx : await User.startTransaction();
 
+      if (data.idp) {
+        const identityProvider = await service.readIdp(data.idp);
+        if (!identityProvider) await service.createIdp(data.idp, trx);
+      }
+
       const obj = {
         oidcId: data.oidcId,
         username: data.username,
@@ -44,9 +78,9 @@ const service = {
         createdBy: data.oidcId
       };
 
-      await User.query(trx).insert(obj);
+      const response = await User.query(trx).insertAndFetch(obj);
       if (!etrx) await trx.commit();
-      return await service.readUser(obj.oidcId);
+      return response;
     } catch (err) {
       if (!etrx && trx) await trx.rollback();
       throw err;
@@ -70,6 +104,16 @@ const service = {
       // Update user data if necessary
       return service.updateUser(oldUser.oidcId, newUser);
     }
+  },
+
+  /**
+   * @function readIdp
+   * Gets an identity provider record
+   * @param {string} code The identity provider code
+   * @returns {Promise<object>} The result of running the find operation
+   */
+  readIdp: (code) => {
+    return IdentityProvider.query().findById(code);
   },
 
   /**
@@ -104,8 +148,12 @@ const service = {
       if (diff) { // Patch existing user
         trx = etrx ? etrx : await User.startTransaction();
 
+        if (data.idp) {
+          const identityProvider = await service.readIdp(data.idp);
+          if (!identityProvider) await service.createIdp(data.idp, trx);
+        }
+
         const obj = {
-          oidcId: data.oidcId,
           username: data.username,
           fullName: data.fullName,
           email: data.email,
@@ -115,9 +163,9 @@ const service = {
           updatedBy: data.oidcId
         };
 
-        await User.query(trx).findById(oidcId).patch(obj);
+        const response = await User.query(trx).patchAndFetchById(oidcId, obj);
         if (!etrx) await trx.commit();
-        return await service.readUser(oidcId);
+        return response;
       } else { // Nothing to update
         return oldUser;
       }
