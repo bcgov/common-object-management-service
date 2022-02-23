@@ -1,5 +1,3 @@
-// const Problem = require('api-problem');
-
 const { currentObject, hasPermission } = require('../../../src/middleware/authorization');
 const { recordService, storageService } = require('../../../src/services');
 const { Permissions } = require('../../../src/components/constants');
@@ -82,13 +80,6 @@ describe('currentObject', () => {
 });
 
 describe('hasPermission', () => {
-  // const perm = 'submission_read';
-
-  // const subPermSpy = jest.spyOn(userAccess, 'hasSubmissionPermissions');
-  // beforeEach(() => {
-  //   subPermSpy.mockReset();
-  // });
-
   it('returns a middleware function', async () => {
     const mw = hasPermission(Permissions.READ);
     expect(mw).toBeInstanceOf(Function);
