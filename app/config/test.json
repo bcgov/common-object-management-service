@@ -6,6 +6,7 @@
   "keycloak": {
     "clientId": "client",
     "realm": "01234567",
+    "enabled": true,
     "clientSecret": "password",
     "serverUrl": "serverUrl"
   },

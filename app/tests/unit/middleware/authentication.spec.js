@@ -1,6 +1,20 @@
 const Problem = require('api-problem');
 
-const { basicAuthConfig, spkiWrapper } = require('../../../src/middleware/authentication');
+const { basicAuthConfig, currentUser, spkiWrapper } = require('../../../src/middleware/authentication');
+const { AuthType } = require('../../../src/components/constants');
+
+const testRes = {
+  writeHead: jest.fn(),
+  end: jest.fn()
+};
+
+const testNoAuthUser = {
+  authType: AuthType.NONE
+};
+
+afterEach(() => {
+  jest.clearAllMocks();
+});
 
 describe('basicAuthConfig authorizer', () => {
   // Username and PW set in test env config
@@ -38,5 +52,41 @@ describe('spkiWrapper', () => {
     98TwDIK/39WEB/V607As+KoYazQG8drorw==
     `;
     expect(spkiWrapper(spki)).toEqual(`-----BEGIN PUBLIC KEY-----\n${spki}\n-----END PUBLIC KEY-----`);
+  });
+});
+
+describe('currentUser', () => {
+  it('sets no auth as the type if no auth header', async () => {
+    const testReq = {
+      params: {
+        someParam: 123
+      },
+      get: jest.fn().mockReturnValue(undefined)
+    };
+    const nxt = jest.fn();
+
+    await currentUser(testReq, testRes, nxt);
+    expect(testReq.get).toHaveBeenCalledTimes(1);
+    expect(testReq.get).toHaveBeenCalledWith('Authorization');
+    expect(testReq.currentUser).toEqual(testNoAuthUser);
+    expect(nxt).toHaveBeenCalledTimes(1);
+    expect(nxt).toHaveBeenCalledWith();
+  });
+
+  it('sets no auth as the type if blank auth header', async () => {
+    const testReq = {
+      params: {
+        someParam: 123
+      },
+      get: jest.fn().mockReturnValue('')
+    };
+    const nxt = jest.fn();
+
+    await currentUser(testReq, testRes, nxt);
+    expect(testReq.get).toHaveBeenCalledTimes(1);
+    expect(testReq.get).toHaveBeenCalledWith('Authorization');
+    expect(testReq.currentUser).toEqual(testNoAuthUser);
+    expect(nxt).toHaveBeenCalledTimes(1);
+    expect(nxt).toHaveBeenCalledWith();
   });
 });
