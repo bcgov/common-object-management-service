@@ -16,9 +16,7 @@ const dataConnection = new DataConnection();
 
 const apiRouter = express.Router();
 const state = {
-  connections: {
-    data: false
-  },
+  connections: {},
   ready: false,
   shutdown: false
 };
@@ -37,23 +35,38 @@ if (process.env.NODE_ENV !== 'test') {
   app.use(httpLogger);
 }
 
+// Application database mode
+if (config.has('db.enabled')) {
+  state.connections.data = false;
+  log.info('Running COMS with a database');
+} else {
+  log.info('Running COMS without a database');
+}
+
 // Application authentication modes
 state.authMode = getAppAuthMode();
 switch (state.authMode) {
   case AuthMode.NOAUTH:
-    log.info('Running in public no-auth mode');
+    log.info('Running COMS in public no-auth mode');
     break;
   case AuthMode.BASICAUTH:
-    log.info('Running in public no-auth mode');
+    log.info('Running COMS in basic auth mode');
     break;
   case AuthMode.OIDCAUTH:
-    log.info('Running in public oidc auth mode');
+    log.info('Running COMS in oidc auth mode');
     break;
   case AuthMode.FULLAUTH:
-    log.info('Running in full (basic + oidc) auth mode');
+    log.info('Running COMS in full (basic + oidc) auth mode');
     break;
 }
 if (state.authMode === AuthMode.OIDCAUTH || state.authMode === AuthMode.FULLAUTH) {
+  // Enforce DB requirement
+  if (!config.has('db.enabled')) {
+    log.error('A database is required for authentication modes leveraging oidc');
+    process.exitCode = 1;
+    cleanup(); // Shutdown without delay
+  }
+
   // Use Keycloak OIDC Middleware
   app.use(keycloak.middleware());
 }
@@ -167,7 +180,9 @@ function initializeConnections() {
     .then(results => {
       state.connections.data = results[0];
 
-      if (state.connections.data) log.info('DataConnection Reachable', { function: 'initializeConnections' });
+      if (config.has('db.enabled') && state.connections.data) {
+        log.info('DataConnection Reachable', { function: 'initializeConnections' });
+      }
     })
     .catch(error => {
       log.error(`Initialization failed: Database OK = ${state.connections.data}`, { function: 'initializeConnections' });
