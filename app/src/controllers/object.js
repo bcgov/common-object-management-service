@@ -177,18 +177,6 @@ const controller = {
     }
   },
 
-  // Toggle an object's public status
-  // Share file with a user (add permissions)
-  // TODO: Reimplement, consider moving to a permissions controller?
-  share: async (req, res, next) => {
-    try {
-      const response = await recordService.share(req);
-      res.status(201).json(response);
-    } catch (error) {
-      next(error);
-    }
-  },
-
   /** Creates an updated version of the object via streaming */
   async updateObject(req, res, next) {
     try {

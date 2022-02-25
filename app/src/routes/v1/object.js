@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 const routes = require('express').Router();
 const Problem = require('api-problem');
 
@@ -42,23 +41,8 @@ routes.get('/:objId/versions', currentObject, hasPermission(Permissions.READ), a
 });
 
 /** Sets an object public property */
+// eslint-disable-next-line no-unused-vars
 routes.patch('/:objId/public', currentObject, hasPermission(Permissions.MANAGE), (req, res, next) => {
-  new Problem(501).send(res);
-});
-
-// TODO: Move all routes below this todo into new permissions route
-/** Returns the object permissions */
-routes.get('/:objId/permissions', currentObject, hasPermission(Permissions.READ), (req, res, next) => {
-  new Problem(501).send(res);
-});
-
-/** Grants object permissions to a specific user */
-routes.post('/:objId/permissions/:userId', currentObject, hasPermission(Permissions.MANAGE), (req, res, next) => {
-  new Problem(501).send(res);
-});
-
-/** Deletes object permissions for a specific user */
-routes.delete('/:objId/permissions/:userId', currentObject, hasPermission(Permissions.MANAGE), (req, res, next) => {
   new Problem(501).send(res);
 });
 

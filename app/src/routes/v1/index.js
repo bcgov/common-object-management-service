@@ -8,6 +8,7 @@ const { currentUser } = require('../../middleware/authentication');
 
 router.use(currentUser);
 
+/** Gets the OpenAPI specification */
 const getSpec = () => {
   const rawSpec = fs.readFileSync(path.join(__dirname, '../../docs/v1.api-spec.yaml'), 'utf8');
   const spec = yaml.load(rawSpec);
@@ -21,7 +22,8 @@ router.get('/', (_req, res) => {
   res.status(200).json({
     endpoints: [
       '/docs',
-      '/object'
+      '/object',
+      '/permission'
     ]
   });
 });
@@ -44,5 +46,8 @@ router.get('/api-spec.json', (_req, res) => {
 
 /** Object Router */
 router.use('/object', require('./object'));
+
+/** Permission Router */
+router.use('/permission', require('./permission'));
 
 module.exports = router;
