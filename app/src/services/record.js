@@ -65,6 +65,7 @@ const service = {
   },
 
   /** For the given user, get the permissions they have */
+  // TODO: Move to permission service
   fetchAllForUser: (oidcId) => {
     // TODO: Consider using ObjectPermission as top level instead for efficiency?
     return ObjectModel.query()
@@ -75,8 +76,15 @@ const service = {
       .then(response => response.filter(r => r.objectPermission && r.objectPermission.length));
   },
 
+  /** Get an object db record */
+  // TODO: Add modify logic to ObjectModel
+  listObjects: () => {
+    return ObjectModel.query();
+  },
+
   /** Share a file permission with a user */
   // TODO: Refactor
+  // TODO: Move to permission service
   share: async (objId, oidcId, permissions, currentUser, etrx = undefined) => {
     if (!oidcId || !objId || !Array.isArray(permissions)) {
       throw new Error('invalid parameters supplied');
@@ -113,6 +121,7 @@ const service = {
   },
 
   /** For an object and user get the permissions they have */
+  // TODO: Move to permission service
   readPermissions: (objId, oidcId) => {
     return ObjectPermission.query()
       .where('objectId', objId)

@@ -8,12 +8,12 @@ const { currentObject, hasPermission } = require('../../middleware/authorization
 
 /** Creates new objects */
 routes.post('/', (req, res, next) => {
-  objectController.createObject(req, res, next);
+  objectController.createObjects(req, res, next);
 });
 
-/** List all user accessible objects */
+/** List and search for all objects */
 routes.get('/', (req, res, next) => {
-  objectController.listUserObject(req, res, next);
+  objectController.listObjects(req, res, next);
 });
 
 /** Returns object headers */
