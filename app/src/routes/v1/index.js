@@ -4,6 +4,10 @@ const path = require('path');
 const router = require('express').Router();
 const yaml = require('js-yaml');
 
+const { currentUser } = require('../../middleware/authentication');
+
+router.use(currentUser);
+
 const getSpec = () => {
   const rawSpec = fs.readFileSync(path.join(__dirname, '../../docs/v1.api-spec.yaml'), 'utf8');
   const spec = yaml.load(rawSpec);
