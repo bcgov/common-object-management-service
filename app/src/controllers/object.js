@@ -1,11 +1,12 @@
 const busboy = require('busboy');
-const { v4: uuidv4 } = require('uuid');
+const { v4: uuidv4, NIL } = require('uuid');
 
 const { AuthType } = require('../components/constants');
 const errorToProblem = require('../components/errorToProblem');
 const { getPath } = require('../components/utils');
 const { recordService, storageService } = require('../services');
 
+const SYSTEM_USER = NIL;
 const SERVICE = 'ObjectStorage';
 
 const controller = {

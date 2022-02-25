@@ -18,7 +18,6 @@ const currentObject = async (req, _res, next) => {
   try {
     if (req.params.objId) {
       req.currentObject = Object.freeze({
-        // TODO: Only execute this if app is running in mode where db is needed
         ...await recordService.read(req.params.objId),
         ...await storageService.headObject({ filePath: getPath(req.params.objId) })
       });
@@ -70,7 +69,6 @@ const hasPermission = (permission) => {
     next();
   };
 };
-
 
 module.exports = {
   currentObject, hasPermission

@@ -1,6 +1,8 @@
-const uuid = require('uuid');
+const { NIL } = require('uuid');
 
 const { IdentityProvider, User } = require('../db/models');
+
+const SYSTEM_USER = NIL;
 
 /**
  * The User DB Service
@@ -37,7 +39,7 @@ const service = {
 
       const obj = {
         code: code,
-        createdBy: uuid.NIL
+        createdBy: SYSTEM_USER
       };
 
       const response = await IdentityProvider.query(trx).insertAndFetch(obj);
