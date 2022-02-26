@@ -1,6 +1,9 @@
+const Problem = require('api-problem');
+
+const errorToProblem = require('../components/errorToProblem');
 const { recordService } = require('../services');
 
-const Problem = require('api-problem');
+const SERVICE = 'RecordService';
 
 const controller = {
   /** Searches for object permissions */
@@ -20,8 +23,8 @@ const controller = {
     try {
       const response = await recordService.share(req);
       res.status(201).json(response);
-    } catch (error) {
-      next(error);
+    } catch (e) {
+      next(errorToProblem(SERVICE, e));
     }
   },
 

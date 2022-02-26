@@ -23,7 +23,8 @@ router.get('/', (_req, res) => {
     endpoints: [
       '/docs',
       '/object',
-      '/permission'
+      '/permission',
+      '/user'
     ]
   });
 });
@@ -49,5 +50,8 @@ router.use('/object', require('./object'));
 
 /** Permission Router */
 router.use('/permission', require('./permission'));
+
+/** User Router */
+router.use('/user', require('./user'));
 
 module.exports = router;

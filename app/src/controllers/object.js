@@ -6,7 +6,7 @@ const errorToProblem = require('../components/errorToProblem');
 const { getPath, getAppAuthMode } = require('../components/utils');
 const { recordService, storageService } = require('../services');
 
-const SERVICE = 'ObjectStorage';
+const SERVICE = 'StorageService';
 
 const authMode = getAppAuthMode();
 
