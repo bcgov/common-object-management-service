@@ -3,7 +3,9 @@ const routes = require('express').Router();
 
 const { Permissions } = require('../../components/constants');
 const { permissionController } = require('../../controllers');
-const { currentObject, hasPermission } = require('../../middleware/authorization');
+const { checkAppMode, currentObject, hasPermission } = require('../../middleware/authorization');
+
+routes.use(checkAppMode);
 
 /** Searches for object permissions */
 routes.get('/', currentObject, hasPermission(Permissions.READ), (req, res, next) => {

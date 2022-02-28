@@ -3,7 +3,9 @@ const Problem = require('api-problem');
 
 const { Permissions } = require('../../components/constants');
 const { objectController } = require('../../controllers');
-const { currentObject, hasPermission } = require('../../middleware/authorization');
+const { checkAppMode, currentObject, hasPermission } = require('../../middleware/authorization');
+
+routes.use(checkAppMode);
 
 /** Creates new objects */
 routes.post('/', (req, res, next) => {
