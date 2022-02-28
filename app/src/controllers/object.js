@@ -1,12 +1,14 @@
 const busboy = require('busboy');
 const { v4: uuidv4 } = require('uuid');
 
-const { AuthType } = require('../components/constants');
+const { AuthMode, AuthType } = require('../components/constants');
 const errorToProblem = require('../components/errorToProblem');
-const { getPath } = require('../components/utils');
+const { getPath, getAppAuthMode } = require('../components/utils');
 const { recordService, storageService } = require('../services');
 
-const SERVICE = 'ObjectStorage';
+const SERVICE = 'StorageService';
+
+const authMode = getAppAuthMode();
 
 const controller = {
   /**
@@ -32,7 +34,7 @@ const controller = {
   },
 
   /** Creates new objects */
-  createObject(req, res, next) {
+  createObjects(req, res, next) {
     try {
       const bb = busboy({ headers: req.headers });
       const objects = [];
@@ -106,15 +108,21 @@ const controller = {
     }
   },
 
-  /** List all user accessible objects */
-  async listUserObject(req, res, next) {
+  /** List and search for all objects */
+  // TODO: Consider metadata/tagging query parameter design
+  // TODO: Consider accepting oidcId as a query parameter
+  // TODO: Add support for filtering by set of permissions
+  async listObjects(req, res, next) {
     try {
-      // TODO: Consider accepting oidcId as a query parameter
-      // TODO: Add support for filtering by set of permissions
-      const oidcId = (req.currentUser && req.currentUser.authType === AuthType.BEARER)
-        ? req.currentUser.tokenPayload.sub
-        : undefined;
-      const response = await recordService.fetchAllForUser(oidcId);
+      let response = undefined;
+      if (authMode === AuthMode.NOAUTH || authMode === AuthMode.BASICAUTH) {
+        response = await recordService.listObjects();
+      } else if (authMode === AuthMode.OIDCAUTH || authMode === AuthMode.FULLAUTH) {
+        const oidcId = (req.currentUser && req.currentUser.authType === AuthType.BEARER)
+          ? req.currentUser.tokenPayload.sub
+          : undefined;
+        response = await recordService.fetchAllForUser(oidcId);
+      }
       res.status(201).json(response);
     } catch (error) {
       next(error);
@@ -166,18 +174,6 @@ const controller = {
       }
     } catch (e) {
       next(errorToProblem(SERVICE, e));
-    }
-  },
-
-  // Toggle an object's public status
-  // Share file with a user (add permissions)
-  // TODO: Reimplement, consider moving to a permissions controller?
-  share: async (req, res, next) => {
-    try {
-      const response = await recordService.share(req);
-      res.status(201).json(response);
-    } catch (error) {
-      next(error);
     }
   },
 

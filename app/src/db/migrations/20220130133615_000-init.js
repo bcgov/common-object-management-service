@@ -1,7 +1,7 @@
 const stamps = require('../stamps');
-const uuid = require('uuid');
+const { NIL } = require('uuid');
 
-const CREATED_BY = uuid.NIL;
+const SYSTEM_USER = NIL;
 
 exports.up = function (knex) {
   return Promise.resolve()
@@ -147,10 +147,10 @@ exports.up = function (knex) {
     .then(() => {
       const users = ['System'];
       const items = users.map((user) => ({
-        oidcId: CREATED_BY,
+        oidcId: SYSTEM_USER,
         username: user,
         active: false,
-        createdBy: CREATED_BY,
+        createdBy: SYSTEM_USER,
       }));
       return knex('user').insert(items);
     })
@@ -158,7 +158,7 @@ exports.up = function (knex) {
     .then(() => {
       const perms = ['Create', 'Read', 'Update', 'Delete', 'Manage' ];
       const items = perms.map((perm) => ({
-        createdBy: CREATED_BY,
+        createdBy: SYSTEM_USER,
         code: perm.toUpperCase(),
         display: perm,
         active: true

@@ -1,3 +1,5 @@
 module.exports = {
-  objectController: require('./object')
+  objectController: require('./object'),
+  permissionController: require('./permission'),
+  userController: require('./user')
 };

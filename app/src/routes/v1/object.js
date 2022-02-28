@@ -1,22 +1,20 @@
-/* eslint-disable no-unused-vars */
 const routes = require('express').Router();
 const Problem = require('api-problem');
 
 const { Permissions } = require('../../components/constants');
 const { objectController } = require('../../controllers');
-const { currentUser } = require('../../middleware/authentication');
-const { currentObject, hasPermission } = require('../../middleware/authorization');
+const { checkAppMode, currentObject, hasPermission } = require('../../middleware/authorization');
 
-routes.use(currentUser);
+routes.use(checkAppMode);
 
 /** Creates new objects */
 routes.post('/', (req, res, next) => {
-  objectController.createObject(req, res, next);
+  objectController.createObjects(req, res, next);
 });
 
-/** List all user accessible objects */
+/** List and search for all objects */
 routes.get('/', (req, res, next) => {
-  objectController.listUserObject(req, res, next);
+  objectController.listObjects(req, res, next);
 });
 
 /** Returns object headers */
@@ -45,23 +43,8 @@ routes.get('/:objId/versions', currentObject, hasPermission(Permissions.READ), a
 });
 
 /** Sets an object public property */
+// eslint-disable-next-line no-unused-vars
 routes.patch('/:objId/public', currentObject, hasPermission(Permissions.MANAGE), (req, res, next) => {
-  new Problem(501).send(res);
-});
-
-// TODO: Move all routes below this todo into new permissions route
-/** Returns the object permissions */
-routes.get('/:objId/permissions', currentObject, hasPermission(Permissions.READ), (req, res, next) => {
-  new Problem(501).send(res);
-});
-
-/** Grants object permissions to a specific user */
-routes.post('/:objId/permissions/:userId', currentObject, hasPermission(Permissions.MANAGE), (req, res, next) => {
-  new Problem(501).send(res);
-});
-
-/** Deletes object permissions for a specific user */
-routes.delete('/:objId/permissions/:userId', currentObject, hasPermission(Permissions.MANAGE), (req, res, next) => {
   new Problem(501).send(res);
 });
 

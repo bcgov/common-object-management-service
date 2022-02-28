@@ -2,9 +2,39 @@ const Problem = require('api-problem');
 
 const config = require('config');
 const log = require('../components/log')(module.filename);
-const { AuthType, Permissions } = require('../components/constants');
-const { getPath } = require('../components/utils');
+const { AuthMode, AuthType, Permissions } = require('../components/constants');
+const { getAppAuthMode, getPath } = require('../components/utils');
 const { recordService, storageService } = require('../services');
+
+/**
+ * @function checkAppMode
+ * Rejects the request if the incoming authentication mode does not match the application mode
+ * @param {object} req Express request object
+ * @param {object} res Express response object
+ * @param {function} next The next callback function
+ * @returns {function} Express middleware function
+ */
+const checkAppMode = (req, res, next) => {
+  const authMode = getAppAuthMode();
+  const authType = req.currentUser ? req.currentUser.AuthType : undefined;
+
+  try {
+    if (authMode === AuthMode.BASICAUTH && authType === AuthType.BEARER) {
+      throw new Error('Basic auth mode does not support Bearer type auth');
+    } else if (authMode === AuthMode.OIDCAUTH && authType === AuthType.BASIC) {
+      throw new Error('Oidc auth mode does not support Basic type auth');
+    }
+  } catch (err) {
+    log.verbose(err.message, { function: 'checkAppMode', authMode: authMode, authType: authType });
+    return new Problem(501, {
+      detail: 'Current application mode does not support incoming authentication type',
+      authMode: authMode,
+      authType: authType
+    }).send(res);
+  }
+
+  next();
+};
 
 /**
  * @function currentObject
@@ -18,7 +48,6 @@ const currentObject = async (req, _res, next) => {
   try {
     if (req.params.objId) {
       req.currentObject = Object.freeze({
-        // TODO: Only execute this if app is running in mode where db is needed
         ...await recordService.read(req.params.objId),
         ...await storageService.headObject({ filePath: getPath(req.params.objId) })
       });
@@ -71,7 +100,6 @@ const hasPermission = (permission) => {
   };
 };
 
-
 module.exports = {
-  currentObject, hasPermission
+  checkAppMode, currentObject, hasPermission
 };

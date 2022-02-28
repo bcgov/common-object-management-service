@@ -1,9 +1,9 @@
-const uuid = require('uuid');
+const { NIL } = require('uuid');
 
-const CREATED_BY = uuid.NIL;
+const SYSTEM_USER = NIL;
 
 module.exports = (knex, table) => {
-  table.string('createdBy').defaultTo(CREATED_BY);
+  table.string('createdBy').defaultTo(SYSTEM_USER);
   table.timestamp('createdAt', {useTz: true}).defaultTo(knex.fn.now());
   table.string('updatedBy');
   table.timestamp('updatedAt', {useTz: true}).defaultTo(knex.fn.now());
