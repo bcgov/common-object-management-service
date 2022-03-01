@@ -33,7 +33,7 @@ const service = {
   createIdp: async (idp, etrx = undefined) => {
     let trx;
     try {
-      trx = etrx ? etrx : await User.startTransaction();
+      trx = etrx ? etrx : await IdentityProvider.startTransaction();
 
       const obj = {
         idp: idp,
