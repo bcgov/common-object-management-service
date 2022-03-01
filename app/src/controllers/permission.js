@@ -14,12 +14,12 @@ const controller = {
 
   /** Returns the object permissions */
   // eslint-disable-next-line no-unused-vars
-  objectPermission(req, res, next) {
+  objectPermissions(req, res, next) {
     new Problem(501).send(res);
   },
 
   /** Grants object permissions to a specific user */
-  async addPermission(req, res, next) {
+  async addPermissions(req, res, next) {
     try {
       const response = await recordService.share(req);
       res.status(201).json(response);
@@ -30,7 +30,7 @@ const controller = {
 
   /** Deletes object permissions for a specific user */
   // eslint-disable-next-line no-unused-vars
-  removePermission(req, res, next) {
+  removePermissions(req, res, next) {
     new Problem(501).send(res);
   }
 };
