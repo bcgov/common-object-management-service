@@ -1,5 +1,5 @@
 const { currentObject, hasPermission } = require('../../../src/middleware/authorization');
-const { recordService, storageService } = require('../../../src/services');
+const { objectService, storageService } = require('../../../src/services');
 const { Permissions } = require('../../../src/components/constants');
 
 const testRes = {
@@ -12,7 +12,7 @@ afterEach(() => {
 });
 
 describe('currentObject', () => {
-  const recordServiceReadSpy = jest.spyOn(recordService, 'read');
+  const objectServiceReadSpy = jest.spyOn(objectService, 'read');
   const storageServiceHeadSpy = jest.spyOn(storageService, 'headObject');
 
   it('does not inject any current object to request if no object id param', async () => {
@@ -50,11 +50,11 @@ describe('currentObject', () => {
       },
     };
     const nxt = jest.fn();
-    recordServiceReadSpy.mockImplementation(() => { throw new Error('test'); });
+    objectServiceReadSpy.mockImplementation(() => { throw new Error('test'); });
 
     await currentObject(testReq, testRes, nxt);
     expect(testReq.currentObject).toBeUndefined();
-    expect(recordServiceReadSpy).toHaveBeenCalledWith('1234');
+    expect(objectServiceReadSpy).toHaveBeenCalledWith('1234');
     expect(nxt).toHaveBeenCalledTimes(1);
     expect(nxt).toHaveBeenCalledWith();
   });
@@ -68,12 +68,12 @@ describe('currentObject', () => {
     const testRecord = { a: 1 };
     const testStorage = { b: 2 };
     const nxt = jest.fn();
-    recordServiceReadSpy.mockReturnValue(testRecord);
+    objectServiceReadSpy.mockReturnValue(testRecord);
     storageServiceHeadSpy.mockReturnValue(testStorage);
 
     await currentObject(testReq, testRes, nxt);
     expect(testReq.currentObject).toEqual({ ...testRecord, ...testStorage });
-    expect(recordServiceReadSpy).toHaveBeenCalledWith('1234');
+    expect(objectServiceReadSpy).toHaveBeenCalledWith('1234');
     expect(nxt).toHaveBeenCalledTimes(1);
     expect(nxt).toHaveBeenCalledWith();
   });

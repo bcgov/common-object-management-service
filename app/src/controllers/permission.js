@@ -1,9 +1,9 @@
 const Problem = require('api-problem');
 
 const errorToProblem = require('../components/errorToProblem');
-const { recordService } = require('../services');
+const { permissionService } = require('../services');
 
-const SERVICE = 'RecordService';
+const SERVICE = 'PermissionService';
 
 const controller = {
   /** Searches for object permissions */
@@ -21,7 +21,7 @@ const controller = {
   /** Grants object permissions to a specific user */
   async addPermissions(req, res, next) {
     try {
-      const response = await recordService.share(req);
+      const response = await permissionService.share(req);
       res.status(201).json(response);
     } catch (e) {
       next(errorToProblem(SERVICE, e));
