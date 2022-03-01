@@ -1,8 +1,6 @@
-const { NIL } = require('uuid');
+const { NIL: SYSTEM_USER } = require('uuid');
 
 const { IdentityProvider, User } = require('../db/models');
-
-const SYSTEM_USER = NIL;
 
 /**
  * The User DB Service
