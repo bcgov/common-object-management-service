@@ -67,10 +67,8 @@ const currentObject = async (req, _res, next) => {
  */
 const hasPermission = (permission) => {
   return async (req, res, next) => {
-    // TODO: Only execute this if app is running in mode where db is needed
     try {
-      // TODO: Ensure there are escape hatches for BASICAUTH and NOAUTH modes
-      if (config.has('keycloak.enabled')) {
+      if (config.has('db.enabled') && config.has('keycloak.enabled')) {
         if (!req.currentObject) {
           // Force 403 on unauthorized or not found; do not allow 404 id brute force discovery
           throw new Error('Missing object record');
@@ -79,10 +77,13 @@ const hasPermission = (permission) => {
         // Only skip permission check if object is public and read permission is requested
         if (!req.currentObject.public || !permission === Permissions.READ) {
           // Other than the above case, guard against unauthed access for everything else
-          if (req.currentUser && req.currentUser.authType === AuthType.BEARER
-            && req.currentUser.tokenPayload && req.currentUser.tokenPayload.sub) {
+          const authType = req.currentUser ? req.currentUser.authType : undefined;
+          const sub = req.currentUser.tokenPayload ? req.currentUser.tokenPayload.sub : undefined;
+
+          if (authType && authType === AuthType.BEARER && sub) {
             // Check if user has the required permission in their permission set
-            const permissions = await recordService.readPermissions(req.params.objId, req.currentUser.tokenPayload.sub);
+            const permissions = await recordService.readPermissions(req.params.objId, sub);
+
             if (!permissions.some(p => p.code === permission)) {
               throw new Error(`User lacks permission '${permission}' on object '${req.params.objId}'`);
             }
