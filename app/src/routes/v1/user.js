@@ -6,7 +6,7 @@ const { checkAppMode } = require('../../middleware/authorization');
 
 routes.use(checkAppMode);
 
-/** Searches for users */
+/** Search for users */
 routes.get('/', (req, res, next) => {
   userController.userSearch(req, res, next);
 });
