@@ -7,6 +7,26 @@ class ObjectPermission extends Timestamps(Model) {
     return 'object_permission';
   }
 
+  static get modifiers() {
+    return {
+      filterOidcId(query, value) {
+        if (value) {
+          query.where('oidcId', value);
+        }
+      },
+      filterObjectId(query, value) {
+        if (value) {
+          query.where('objectId', value);
+        }
+      },
+      filterCodes(query, value) {
+        if (value && Array.isArray(value) && value.length) {
+          query.where('code', value);
+        }
+      }
+    };
+  }
+
   static get jsonSchema() {
     return {
       type: 'object',
