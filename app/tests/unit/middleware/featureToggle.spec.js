@@ -10,7 +10,7 @@ afterEach(() => {
 });
 
 describe.skip('requireDb', () => {
-  it('calls next if DbMode is enabled', async () => {
+  it('calls next if database is enabled', async () => {
     const nxt = jest.fn();
     const req = { a: '1' };
 
@@ -18,7 +18,7 @@ describe.skip('requireDb', () => {
     expect(nxt).toHaveBeenCalledTimes(1);
   });
 
-  it('501s if the DbMode is disabled', async () => {
+  it('501s if the database is disabled', async () => {
     const nxt = jest.fn();
     const req = { a: '1' };
 

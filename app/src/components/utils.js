@@ -1,7 +1,7 @@
 
 const config = require('config');
 
-const { AuthMode, DbMode } = require('./constants');
+const { AuthMode } = require('./constants');
 
 const DELIMITER = '/';
 
