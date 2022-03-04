@@ -1,8 +1,6 @@
 const Problem = require('api-problem');
-
+const config = require('config');
 const log = require('../components/log')(module.filename);
-const { DbMode } = require('../components/constants');
-const { getAppDbMode } = require('../components/utils');
 
 /**
  * @function requireDb
@@ -13,17 +11,17 @@ const { getAppDbMode } = require('../components/utils');
  * @returns {function} Express middleware function
  */
 const requireDb = (req, res, next) => {
-  const dbMode = getAppDbMode();
+  const hasDb = config.has('db.enabled');
 
   try {
-    if (dbMode === DbMode.DISABLED) {
+    if (!hasDb) {
       throw new Error('Database mode is disabled');
     }
   } catch (err) {
-    log.verbose(err.message, { function: 'requireDb', dbMode: dbMode });
+    log.verbose(err.message, { function: 'requireDb', hasDb: hasDb });
     return new Problem(501, {
       detail: 'This operation isn\'t supported in No Database mode',
-      dbMode: dbMode,
+      hasDb: hasDb,
     }).send(res);
   }
 

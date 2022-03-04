@@ -35,15 +35,6 @@ const utils = {
   },
 
   /**
-   * @function getDbMode
-   * Yields the current `DbMode` this application is operating under.
-   * @returns {string} The application DbMode
-   */
-  getAppDbMode() {
-    return config.has('db.enabled') ? DbMode.ENABLED : DbMode.DISABLED;
-  },
-
-  /**
    * @function getPath
    * Gets the relative path of `objId`
    * @param {string} objId The object id

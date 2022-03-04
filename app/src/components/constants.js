@@ -21,14 +21,6 @@ module.exports = Object.freeze({
     NONE: 'NONE'
   },
 
-  /** Database  mode */
-  DbMode: {
-    /** Datbase calls are enabled */
-    ENABLED: 'ENABLED',
-    /** Datbase calls are disabled */
-    DISABLED: 'DISABLED',
-  },
-
   /** Object permissions */
   Permissions: {
     /** Grants object creation permission */
