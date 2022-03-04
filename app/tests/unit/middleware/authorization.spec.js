@@ -85,6 +85,16 @@ describe('hasPermission', () => {
     expect(mw).toBeInstanceOf(Function);
   });
 
+  // TODO: Revisit after config mocking is done
+  it.skip('calls next and does nothing if db is not enabled', async () => {
+    const mw = hasPermission(Permissions.READ);
+    const nxt = jest.fn();
+    const req = { a: '1' };
+
+    await mw(req, testRes, nxt);
+    expect(nxt).toHaveBeenCalledTimes(1);
+  });
+
   it('403s if the request has no current object', async () => {
     const mw = hasPermission(Permissions.READ);
     const nxt = jest.fn();

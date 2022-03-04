@@ -6,7 +6,7 @@ const errorToProblem = require('../components/errorToProblem');
 const { getPath, getAppAuthMode } = require('../components/utils');
 const { objectService, storageService } = require('../services');
 
-const SERVICE = 'StorageService';
+const SERVICE = 'ObjectService';
 
 const authMode = getAppAuthMode();
 
@@ -231,7 +231,7 @@ const controller = {
         updatedBy: oidcId
       };
 
-      const response = await recordService.update(data);
+      const response = await objectService.update(data);
 
       res.status(200).json(response);
     } catch (e) {
