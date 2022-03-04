@@ -1,4 +1,4 @@
-const { v4: uuidv4 } = require('uuid');
+const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 
 const { Permissions } = require('../components/constants');
 const { ObjectModel, ObjectPermission } = require('../db/models');
@@ -15,10 +15,18 @@ const service = {
       .then(response => response.filter(r => r.objectPermission && r.objectPermission.length));
   },
 
-  /** Share a file permission with a user */
-  // TODO: Refactor
-  share: async (objId, oidcId, permissions, currentUser, etrx = undefined) => {
-    if (!oidcId || !objId || !Array.isArray(permissions)) {
+  /**
+   * @function addPermissions
+   * Grants object permissions to users
+   * @param {string} objId The objectId uuid
+   * @param {object[]} data Incoming array of `oidcId` and `code` permission tuples to add for this `objId`
+   * @param {string} [currentOidcId=SYSTEM_USER] The optional oidcId uuid actor; defaults to system user if unspecified
+   * @param {object} [etrx=undefined] An optional Objection Transaction object
+   * @returns {Promise<object>} The result of running the insert operation
+   * @throws The error encountered upon db transaction failure
+   */
+  addPermissions: async (objId, data, currentOidcId = SYSTEM_USER, etrx = undefined) => {
+    if (!Array.isArray(data) && !data.length || !objId) {
       throw new Error('invalid parameters supplied');
     }
 
@@ -26,30 +34,36 @@ const service = {
     try {
       trx = etrx ? etrx : await ObjectPermission.startTransaction();
 
-      const permRecs = permissions
-        .map((p) => ({
+      // Get existing permissions for the current object
+      const currentPerms = await service.searchPermissions({ objId });
+      const obj = data
+        // Ensure all codes are upper cased
+        .map(p => ({ ...p, code: p.code.toUpperCase() }))
+        // Filter out any invalid code values
+        .filter(p => Permissions.some(perm => perm === p.code))
+        // Filter entry tuples that already exist
+        .filter(p => !currentPerms.some(cp => cp.oidcId === p.oidcId && cp.code === p.code))
+        // Create DB objects to insert
+        .map(p => ({
           id: uuidv4(),
-          oidcId: oidcId,
+          oidcId: p.oidcId,
           objectId: objId,
-          createdBy: currentUser.keycloakId,
-          code: Permissions[p]
+          code: p.code,
+          createdBy: currentOidcId,
         }));
-      await ObjectPermission.query(trx).insert(permRecs);
+
+      // Insert missing entries
+      let response = [];
+      if (obj.length) {
+        response = await ObjectPermission.query(trx).insertAndFetch(obj);
+      }
 
       if (!etrx) await trx.commit();
-      const result = await service.readPermissions(objId, oidcId);
-      return result;
+      return response;
     } catch (err) {
       if (!etrx && trx) await trx.rollback();
       throw err;
     }
-  },
-
-  /** For an object and user get the permissions they have */
-  readPermissions: (objId, oidcId) => {
-    return ObjectPermission.query()
-      .where('objectId', objId)
-      .where('oidcId', oidcId);
   },
 
   /**

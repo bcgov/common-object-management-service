@@ -1,5 +1,6 @@
 const Problem = require('api-problem');
 
+const { AuthType } = require('../components/constants');
 const errorToProblem = require('../components/errorToProblem');
 const { permissionService } = require('../services');
 
@@ -18,10 +19,18 @@ const controller = {
     new Problem(501).send(res);
   },
 
-  /** Grants object permissions to a specific user */
+  /** Grants object permissions to users */
   async addPermissions(req, res, next) {
     try {
-      const response = await permissionService.share(req);
+      // TODO: Do this kind of logic in validation layer/library instead
+      if (!req.body || !Array.isArray(req.body) || !req.body.length) {
+        return new Problem(422).send(res);
+      }
+
+      const oidcId = (req.currentUser && req.currentUser.authType === AuthType.BEARER)
+        ? req.currentUser.tokenPayload.sub
+        : undefined;
+      const response = await permissionService.addPermissions(req.params.objId, req.body, oidcId);
       res.status(201).json(response);
     } catch (e) {
       next(errorToProblem(SERVICE, e));

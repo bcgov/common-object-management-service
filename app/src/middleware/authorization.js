@@ -4,7 +4,7 @@ const config = require('config');
 const log = require('../components/log')(module.filename);
 const { AuthMode, AuthType, Permissions } = require('../components/constants');
 const { getAppAuthMode, getPath } = require('../components/utils');
-const { objectService, storageService } = require('../services');
+const { objectService, permissionService, storageService } = require('../services');
 
 /**
  * @function checkAppMode
@@ -82,7 +82,10 @@ const hasPermission = (permission) => {
 
           if (authType && authType === AuthType.BEARER && sub) {
             // Check if user has the required permission in their permission set
-            const permissions = await objectService.readPermissions(req.params.objId, sub);
+            const permissions = await permissionService.searchPermissions({
+              objId: req.params.objId,
+              oidcId: sub
+            });
 
             if (!permissions.some(p => p.code === permission)) {
               throw new Error(`User lacks permission '${permission}' on object '${req.params.objId}'`);
