@@ -1,5 +1,5 @@
 const busboy = require('busboy');
-const { v4: uuidv4 } = require('uuid');
+const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 
 const { AuthMode, AuthType } = require('../components/constants');
 const errorToProblem = require('../components/errorToProblem');
@@ -213,6 +213,27 @@ const controller = {
       });
 
       req.pipe(bb);
+    } catch (e) {
+      next(errorToProblem(SERVICE, e));
+    }
+  },
+
+  /** Sets the public flag of an object */
+  async togglePublic(req, res, next) {
+    try {
+      const oidcId = (req.currentUser && req.currentUser.authType === AuthType.BEARER)
+        ? req.currentUser.tokenPayload.sub
+        : SYSTEM_USER;
+
+      const data = {
+        id: req.params.objId,
+        public: req.body.public,
+        updatedBy: oidcId
+      };
+
+      const response = await recordService.update(data);
+
+      res.status(200).json(response);
     } catch (e) {
       next(errorToProblem(SERVICE, e));
     }

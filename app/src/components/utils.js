@@ -1,7 +1,7 @@
 
 const config = require('config');
 
-const { AuthMode } = require('./constants');
+const { AuthMode, DbMode } = require('./constants');
 
 const DELIMITER = '/';
 
@@ -32,6 +32,15 @@ const utils = {
     if (basicAuth && !oidcAuth) return AuthMode.BASICAUTH;
     if (!basicAuth && oidcAuth) return AuthMode.OIDCAUTH;
     if (basicAuth && oidcAuth) return AuthMode.FULLAUTH;
+  },
+
+  /**
+   * @function getDbMode
+   * Yields the current `DbMode` this application is operating under.
+   * @returns {string} The application DbMode
+   */
+  getAppDbMode() {
+    return config.has('db.enabled') ? DbMode.ENABLED : DbMode.DISABLED;
   },
 
   /**
