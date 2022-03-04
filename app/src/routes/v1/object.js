@@ -1,8 +1,8 @@
 const routes = require('express').Router();
-const Problem = require('api-problem');
 
 const { Permissions } = require('../../components/constants');
 const { objectController } = require('../../controllers');
+const { requireDb } = require('../../middleware/featureToggle');
 const { checkAppMode, currentObject, hasPermission } = require('../../middleware/authorization');
 
 routes.use(checkAppMode);
@@ -43,9 +43,8 @@ routes.get('/:objId/versions', currentObject, hasPermission(Permissions.READ), a
 });
 
 /** Sets an object public property */
-// eslint-disable-next-line no-unused-vars
-routes.patch('/:objId/public', currentObject, hasPermission(Permissions.MANAGE), (req, res, next) => {
-  new Problem(501).send(res);
+routes.patch('/:objId/public', requireDb, currentObject, hasPermission(Permissions.MANAGE), (req, res, next) => {
+  objectController.togglePublic(req, res, next);
 });
 
 module.exports = routes;
