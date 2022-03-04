@@ -24,7 +24,8 @@ function featureNoDb(service) {
 
 module.exports = {
   featureNoDb: featureNoDb,
-  recordService: featureNoDb(require('./record')),
+  objectService: featureNoDb(require('./object')),
+  permissionService: featureNoDb(require('./permission')),
   storageService: require('./storage'),
   userService: featureNoDb(require('./user')),
 };

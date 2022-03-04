@@ -1,7 +1,5 @@
 const stamps = require('../stamps');
-const { NIL } = require('uuid');
-
-const SYSTEM_USER = NIL;
+const { NIL: SYSTEM_USER } = require('uuid');
 
 exports.up = function (knex) {
   return Promise.resolve()

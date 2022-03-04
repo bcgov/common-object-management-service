@@ -4,9 +4,9 @@ const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 const { AuthMode, AuthType } = require('../components/constants');
 const errorToProblem = require('../components/errorToProblem');
 const { getPath, getAppAuthMode } = require('../components/utils');
-const { recordService, storageService } = require('../services');
+const { objectService, storageService } = require('../services');
 
-const SERVICE = 'StorageService';
+const SERVICE = 'ObjectService';
 
 const authMode = getAppAuthMode();
 
@@ -55,7 +55,7 @@ const controller = {
         };
         objects.push({
           data: data,
-          dbResponse: recordService.create({ ...data, oidcId, path: getPath(objId) }),
+          dbResponse: objectService.create({ ...data, oidcId, path: getPath(objId) }),
           s3Response: storageService.putObject({ ...data, stream })
         });
       });
@@ -81,7 +81,7 @@ const controller = {
         filePath: getPath(req.params.objId)
       };
 
-      await recordService.delete(req.params.objId);
+      await objectService.delete(req.params.objId);
       const response = await storageService.deleteObject(data); // Attempt deletion operation
       res.status(200).json(response);
     } catch (e) {
@@ -116,12 +116,12 @@ const controller = {
     try {
       let response = undefined;
       if (authMode === AuthMode.NOAUTH || authMode === AuthMode.BASICAUTH) {
-        response = await recordService.listObjects();
+        response = await objectService.listObjects();
       } else if (authMode === AuthMode.OIDCAUTH || authMode === AuthMode.FULLAUTH) {
         const oidcId = (req.currentUser && req.currentUser.authType === AuthType.BEARER)
           ? req.currentUser.tokenPayload.sub
           : undefined;
-        response = await recordService.fetchAllForUser(oidcId);
+        response = await objectService.fetchAllForUser(oidcId);
       }
       res.status(201).json(response);
     } catch (error) {
@@ -199,7 +199,7 @@ const controller = {
         };
         object = {
           data: data,
-          dbResponse: recordService.update({ ...data, oidcId, path: getPath(objId) }),
+          dbResponse: objectService.update({ ...data, oidcId, path: getPath(objId) }),
           s3Response: storageService.putObject({ ...data, stream })
         };
       });
@@ -231,7 +231,7 @@ const controller = {
         updatedBy: oidcId
       };
 
-      const response = await recordService.update(data);
+      const response = await objectService.update(data);
 
       res.status(200).json(response);
     } catch (e) {

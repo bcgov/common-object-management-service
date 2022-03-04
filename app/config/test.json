@@ -1,12 +1,18 @@
 {
   "basicAuth": {
+    "enabled": "true",
+    "username": "username0",
+    "password": "password1"
+  },
+  "db": {
+    "enabled": "true",
     "username": "username0",
     "password": "password1"
   },
   "keycloak": {
     "clientId": "client",
     "realm": "01234567",
-    "enabled": true,
+    "enabled": "true",
     "clientSecret": "password",
     "serverUrl": "serverUrl"
   },

@@ -1,6 +1,4 @@
-const { NIL } = require('uuid');
-
-const SYSTEM_USER = NIL;
+const { NIL: SYSTEM_USER } = require('uuid');
 
 module.exports = (knex, table) => {
   table.string('createdBy').defaultTo(SYSTEM_USER);

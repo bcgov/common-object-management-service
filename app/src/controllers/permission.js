@@ -1,9 +1,10 @@
 const Problem = require('api-problem');
 
+const { AuthType } = require('../components/constants');
 const errorToProblem = require('../components/errorToProblem');
-const { recordService } = require('../services');
+const { permissionService } = require('../services');
 
-const SERVICE = 'RecordService';
+const SERVICE = 'PermissionService';
 
 const controller = {
   /** Searches for object permissions */
@@ -14,14 +15,22 @@ const controller = {
 
   /** Returns the object permissions */
   // eslint-disable-next-line no-unused-vars
-  objectPermission(req, res, next) {
+  objectPermissions(req, res, next) {
     new Problem(501).send(res);
   },
 
-  /** Grants object permissions to a specific user */
-  async addPermission(req, res, next) {
+  /** Grants object permissions to users */
+  async addPermissions(req, res, next) {
     try {
-      const response = await recordService.share(req);
+      // TODO: Do this kind of logic in validation layer/library instead
+      if (!req.body || !Array.isArray(req.body) || !req.body.length) {
+        return new Problem(422).send(res);
+      }
+
+      const oidcId = (req.currentUser && req.currentUser.authType === AuthType.BEARER)
+        ? req.currentUser.tokenPayload.sub
+        : undefined;
+      const response = await permissionService.addPermissions(req.params.objId, req.body, oidcId);
       res.status(201).json(response);
     } catch (e) {
       next(errorToProblem(SERVICE, e));
@@ -30,7 +39,7 @@ const controller = {
 
   /** Deletes object permissions for a specific user */
   // eslint-disable-next-line no-unused-vars
-  removePermission(req, res, next) {
+  removePermissions(req, res, next) {
     new Problem(501).send(res);
   }
 };
