@@ -1,7 +1,7 @@
 
 const config = require('config');
 
-const { AuthMode } = require('./constants');
+const { AuthMode, AuthType } = require('./constants');
 
 const DELIMITER = '/';
 
@@ -32,6 +32,19 @@ const utils = {
     if (basicAuth && !oidcAuth) return AuthMode.BASICAUTH;
     if (!basicAuth && oidcAuth) return AuthMode.OIDCAUTH;
     if (basicAuth && oidcAuth) return AuthMode.FULLAUTH;
+  },
+
+  /**
+   * @function getCurrentOidcId
+   * Attempts to acquire current user oidcId. Yields `defaultValue` otherwise
+   * @param {object} currentUser The express request currentUser object
+   * @param {string} [defaultValue=undefined] An optional default return value
+   * @returns {string} The current user oidcId if applicable, or `defaultValue`
+   */
+  getCurrentOidcId(currentUser, defaultValue = undefined) {
+    return (currentUser && currentUser.authType === AuthType.BEARER)
+      ? currentUser.tokenPayload.sub
+      : defaultValue;
   },
 
   /**
