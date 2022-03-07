@@ -25,18 +25,18 @@ const service = {
   /**
    * @function createIdp
    * Create an identity provider record
-   * @param {string} code The identity provider code
+   * @param {string} idp The identity provider code
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<object>} The result of running the insert operation
    * @throws The error encountered upon db transaction failure
    */
-  createIdp: async (code, etrx = undefined) => {
+  createIdp: async (idp, etrx = undefined) => {
     let trx;
     try {
       trx = etrx ? etrx : await User.startTransaction();
 
       const obj = {
-        code: code,
+        idp: idp,
         createdBy: SYSTEM_USER
       };
 

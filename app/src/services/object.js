@@ -21,7 +21,7 @@ const service = {
       };
       await ObjectModel.query(trx).insert(obj);
 
-      // Add all permissions for the uploader
+      // Add all permission codes for the uploader
       if (data.oidcId) {
         const perms = Object.keys(Permissions)
           .map((p) => ({
@@ -29,7 +29,7 @@ const service = {
             oidcId: data.oidcId,
             objectId: obj.id,
             createdBy: data.oidcId,
-            code: Permissions[p]
+            permCode: Permissions[p]
           }));
         await ObjectPermission.query(trx).insert(perms);
       }

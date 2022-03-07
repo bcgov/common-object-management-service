@@ -1,4 +1,3 @@
-
 const config = require('config');
 
 const { AuthMode, AuthType } = require('./constants');

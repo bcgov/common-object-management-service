@@ -87,7 +87,7 @@ const hasPermission = (permission) => {
               oidcId: sub
             });
 
-            if (!permissions.some(p => p.code === permission)) {
+            if (!permissions.some(p => p.permCode === permission)) {
               throw new Error(`User lacks permission '${permission}' on object '${req.params.objId}'`);
             }
           } else {

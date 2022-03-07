@@ -1,7 +1,7 @@
 const Problem = require('api-problem');
 
 const errorToProblem = require('../components/errorToProblem');
-const { getCurrentOidcId, mixedQueryToArray } = require('../components/utils');
+const { getCurrentOidcId } = require('../components/utils');
 const { permissionService } = require('../services');
 
 const SERVICE = 'PermissionService';
