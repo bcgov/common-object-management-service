@@ -22,7 +22,7 @@ routes.put('/:objId', currentObject, hasPermission(Permissions.MANAGE), (req, re
   permissionController.addPermissions(req, res, next);
 });
 
-/** Deletes object permissions to users */
+/** Deletes object permissions for a user */
 routes.delete('/:objId', currentObject, hasPermission(Permissions.MANAGE), (req, res, next) => {
   permissionController.removePermissions(req, res, next);
 });

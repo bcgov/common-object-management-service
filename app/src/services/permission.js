@@ -27,7 +27,7 @@ const service = {
    */
   addPermissions: async (objId, data, currentOidcId = SYSTEM_USER, etrx = undefined) => {
     if (!Array.isArray(data) && !data.length || !objId) {
-      throw new Error('invalid parameters supplied');
+      throw new Error('Invalid parameters supplied');
     }
 
     let trx;
@@ -38,17 +38,17 @@ const service = {
       const currentPerms = await service.searchPermissions({ objId });
       const obj = data
         // Ensure all codes are upper cased
-        .map(p => ({ ...p, code: p.code.toUpperCase() }))
+        .map(p => ({ ...p, code: p.permCode.toUpperCase().trim() }))
         // Filter out any invalid code values
-        .filter(p => Permissions.some(perm => perm === p.code))
+        .filter(p => Object.values(Permissions).some(perm => perm === p.permCode))
         // Filter entry tuples that already exist
-        .filter(p => !currentPerms.some(cp => cp.oidcId === p.oidcId && cp.code === p.code))
+        .filter(p => !currentPerms.some(cp => cp.oidcId === p.oidcId && cp.permCode === p.permCode))
         // Create DB objects to insert
         .map(p => ({
           id: uuidv4(),
           oidcId: p.oidcId,
           objectId: objId,
-          code: p.code,
+          permCode: p.permCode,
           createdBy: currentOidcId,
         }));
 
@@ -57,6 +57,51 @@ const service = {
       if (obj.length) {
         response = await ObjectPermission.query(trx).insertAndFetch(obj);
       }
+
+      if (!etrx) await trx.commit();
+      return response;
+    } catch (err) {
+      if (!etrx && trx) await trx.rollback();
+      throw err;
+    }
+  },
+
+  /**
+   * @function removePermissions
+   * Deletes object permissions for a user
+   * @param {string} objId The objectId uuid
+   * @param {string} oidcId Incoming oidcId uuid of the user to change
+   * @param {string[]} [permissions=undefined] An array of permission codes to remove; defaults to undefined
+   * @param {object} [etrx=undefined] An optional Objection Transaction object
+   * @returns {Promise<object>} The result of running the delete operation
+   * @throws The error encountered upon db transaction failure
+   */
+  removePermissions: async (objId, oidcId, permissions = undefined, etrx = undefined) => {
+    if (!objId || !oidcId) {
+      throw new Error('Invalid parameters supplied');
+    }
+
+    let trx;
+    try {
+      trx = etrx ? etrx : await ObjectPermission.startTransaction();
+
+      let perms = undefined;
+      if (permissions && Array.isArray(permissions)) {
+        perms = permissions
+          // Ensure all codes are upper cased
+          .map(p => p.toUpperCase().trim())
+          // Filter out any invalid code values
+          .filter(p => Object.values(Permissions).some(perm => perm === p));
+      }
+
+      const response = await ObjectPermission.query(trx)
+        .delete()
+        .modify('filterOidcId', oidcId)
+        .modify('filterObjectId', objId)
+        .modify('filterPermissionCodes', perms)
+        // Returns array of deleted rows instead of count
+        // https://vincit.github.io/objection.js/recipes/returning-tricks.html
+        .returning('*');
 
       if (!etrx) await trx.commit();
       return response;

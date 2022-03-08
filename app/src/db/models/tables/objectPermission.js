@@ -54,7 +54,7 @@ class ObjectPermission extends Timestamps(Model) {
       },
       filterPermissionCodes(query, value) {
         if (value && Array.isArray(value) && value.length) {
-          query.where('permCode', value);
+          query.whereIn('permCode', value);
         }
       }
     };
