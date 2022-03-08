@@ -1,7 +1,6 @@
-
 const config = require('config');
 
-const { AuthMode } = require('./constants');
+const { AuthMode, AuthType } = require('./constants');
 
 const DELIMITER = '/';
 
@@ -35,6 +34,19 @@ const utils = {
   },
 
   /**
+   * @function getCurrentOidcId
+   * Attempts to acquire current user oidcId. Yields `defaultValue` otherwise
+   * @param {object} currentUser The express request currentUser object
+   * @param {string} [defaultValue=undefined] An optional default return value
+   * @returns {string} The current user oidcId if applicable, or `defaultValue`
+   */
+  getCurrentOidcId(currentUser, defaultValue = undefined) {
+    return (currentUser && currentUser.authType === AuthType.BEARER)
+      ? currentUser.tokenPayload.sub
+      : defaultValue;
+  },
+
+  /**
    * @function getPath
    * Gets the relative path of `objId`
    * @param {string} objId The object id
@@ -64,6 +76,36 @@ const utils = {
       return parts.join(DELIMITER);
     }
     return '';
+  },
+
+  /**
+   * @function mixedQueryToArray
+   * Standardizes query params to yield an array of unique string values
+   * @param {string|string[]} param The query param to process
+   * @returns {string[]} A unique array of string values
+   */
+  mixedQueryToArray(param) {
+    // Short circuit undefined if param is falsy
+    if (!param) return undefined;
+
+    const result = (Array.isArray(param))
+      ? param.flatMap(p => utils.parseCSV(p))
+      : utils.parseCSV(param);
+
+    // Return unique values
+    return [...new Set(result)];
+  },
+
+  /**
+   * @function parseCSV
+   * Converts a comma separated value string into an array of string values
+   * @param {string} value The CSV string to parse
+   * @returns {string[]} An array of string values, or `value` if it is not a string
+   */
+  parseCSV(value) {
+    return (typeof value === 'string' || value instanceof String)
+      ? value.split(',').map(s => s.trim())
+      : value;
   },
 
   /**

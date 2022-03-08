@@ -1,9 +1,9 @@
 const busboy = require('busboy');
 const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 
-const { AuthMode, AuthType } = require('../components/constants');
+const { AuthMode } = require('../components/constants');
 const errorToProblem = require('../components/errorToProblem');
-const { getPath, getAppAuthMode } = require('../components/utils');
+const { getAppAuthMode, getCurrentOidcId, getPath } = require('../components/utils');
 const { objectService, storageService } = require('../services');
 
 const SERVICE = 'ObjectService';
@@ -38,9 +38,7 @@ const controller = {
     try {
       const bb = busboy({ headers: req.headers });
       const objects = [];
-      const oidcId = (req.currentUser && req.currentUser.authType === AuthType.BEARER)
-        ? req.currentUser.tokenPayload.sub
-        : undefined;
+      const oidcId = getCurrentOidcId(req.currentUser);
 
       bb.on('file', (name, stream, info) => {
         const objId = uuidv4();
@@ -118,9 +116,7 @@ const controller = {
       if (authMode === AuthMode.NOAUTH || authMode === AuthMode.BASICAUTH) {
         response = await objectService.listObjects();
       } else if (authMode === AuthMode.OIDCAUTH || authMode === AuthMode.FULLAUTH) {
-        const oidcId = (req.currentUser && req.currentUser.authType === AuthType.BEARER)
-          ? req.currentUser.tokenPayload.sub
-          : undefined;
+        const oidcId = getCurrentOidcId(req.currentUser);
         response = await objectService.fetchAllForUser(oidcId);
       }
       res.status(201).json(response);
@@ -181,9 +177,7 @@ const controller = {
   async updateObject(req, res, next) {
     try {
       const bb = busboy({ headers: req.headers, limits: { files: 1 } });
-      const oidcId = (req.currentUser && req.currentUser.authType === AuthType.BEARER)
-        ? req.currentUser.tokenPayload.sub
-        : undefined;
+      const oidcId = getCurrentOidcId(req.currentUser);
       let object = undefined;
 
       bb.on('file', (name, stream, info) => {
@@ -221,10 +215,7 @@ const controller = {
   /** Sets the public flag of an object */
   async togglePublic(req, res, next) {
     try {
-      const oidcId = (req.currentUser && req.currentUser.authType === AuthType.BEARER)
-        ? req.currentUser.tokenPayload.sub
-        : SYSTEM_USER;
-
+      const oidcId = getCurrentOidcId(req.currentUser, SYSTEM_USER);
       const data = {
         id: req.params.objId,
         public: req.body.public,

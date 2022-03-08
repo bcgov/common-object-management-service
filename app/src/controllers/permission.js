@@ -1,7 +1,7 @@
 const Problem = require('api-problem');
 
-const { AuthType } = require('../components/constants');
 const errorToProblem = require('../components/errorToProblem');
+const { getCurrentOidcId } = require('../components/utils');
 const { permissionService } = require('../services');
 
 const SERVICE = 'PermissionService';
@@ -27,9 +27,7 @@ const controller = {
         return new Problem(422).send(res);
       }
 
-      const oidcId = (req.currentUser && req.currentUser.authType === AuthType.BEARER)
-        ? req.currentUser.tokenPayload.sub
-        : undefined;
+      const oidcId = getCurrentOidcId(req.currentUser);
       const response = await permissionService.addPermissions(req.params.objId, req.body, oidcId);
       res.status(201).json(response);
     } catch (e) {

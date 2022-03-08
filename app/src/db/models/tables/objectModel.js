@@ -28,11 +28,12 @@ class ObjectModel extends Timestamps(Model) {
       type: 'object',
       required: ['id', 'originalName', 'path', 'mimeType'],
       properties: {
-        id: { type: 'string' },
+        id: { type: 'string', minLength: 1, maxLength: 255 },
         originalName: { type: 'string', minLength: 1, maxLength: 255 },
         path: { type: 'string', minLength: 1, maxLength: 1024 },
-        mimeType: { type: 'string' },
+        mimeType: { type: 'string', minLength: 1, maxLength: 255 },
         public: { type: 'boolean' },
+        active: { type: 'boolean' },
         ...stamps
       },
       additionalProperties: false
