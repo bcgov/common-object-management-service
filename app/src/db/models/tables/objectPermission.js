@@ -44,22 +44,29 @@ class ObjectPermission extends Timestamps(Model) {
     return {
       filterOidcId(query, value) {
         if (value) {
-          query.where('oidcId', value);
-        }
-      },
-      filterOidcIds(query, value) {
-        if (value && Array.isArray(value) && value.length) {
-          query.whereIn('oidcId', value);
+          if (Array.isArray(value) && value.length) {
+            query.whereIn('oidcId', value);
+          } else {
+            query.where('oidcId', value);
+          }
         }
       },
       filterObjectId(query, value) {
         if (value) {
-          query.where('objectId', value);
+          if (Array.isArray(value) && value.length) {
+            query.whereIn('objectId', value);
+          } else {
+            query.where('objectId', value);
+          }
         }
       },
-      filterPermissionCodes(query, value) {
-        if (value && Array.isArray(value) && value.length) {
-          query.whereIn('permCode', value);
+      filterPermissionCode(query, value) {
+        if (value) {
+          if (Array.isArray(value) && value.length) {
+            query.whereIn('permCode', value);
+          } else {
+            query.where('permCode', value);
+          }
         }
       }
     };

@@ -104,9 +104,9 @@ const service = {
 
       const response = await ObjectPermission.query(trx)
         .delete()
-        .modify('filterOidcIds', oidcIds)
+        .modify('filterOidcId', oidcIds)
         .modify('filterObjectId', objId)
-        .modify('filterPermissionCodes', perms)
+        .modify('filterPermissionCode', perms)
         // Returns array of deleted rows instead of count
         // https://vincit.github.io/objection.js/recipes/returning-tricks.html
         .returning('*');
@@ -131,7 +131,7 @@ const service = {
     return ObjectPermission.query()
       .modify('filterOidcId', params.oidcId)
       .modify('filterObjectId', params.objId)
-      .modify('filterPermissionCodes', params.permCodes);
+      .modify('filterPermissionCode', params.permCodes);
   }
 };
 
