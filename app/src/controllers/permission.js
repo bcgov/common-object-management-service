@@ -7,19 +7,56 @@ const { permissionService } = require('../services');
 const SERVICE = 'PermissionService';
 
 const controller = {
-  /** Searches for object permissions */
-  // eslint-disable-next-line no-unused-vars
-  objectPermissionSearch(req, res, next) {
-    new Problem(501).send(res);
+  /**
+   * @function searchPermissions
+   * Searches for object permissions
+   * @param {object} req Express request object
+   * @param {object} res Express response object
+   * @param {function} next The next callback function
+   * @returns {function} Express middleware function
+   */
+  async searchPermissions(req, res, next) {
+    try {
+      const response = await permissionService.searchPermissions({
+        objId: mixedQueryToArray(req.query.objId),
+        oidcId: mixedQueryToArray(req.query.oidcId),
+        permCode: mixedQueryToArray(req.query.permCode)
+      });
+      res.status(200).json(response);
+    } catch (e) {
+      next(errorToProblem(SERVICE, e));
+    }
   },
 
-  /** Returns the object permissions */
-  // eslint-disable-next-line no-unused-vars
-  objectPermissions(req, res, next) {
-    new Problem(501).send(res);
+  /**
+   * @function listPermissions
+   * Returns the object permissions
+   * @param {object} req Express request object
+   * @param {object} res Express response object
+   * @param {function} next The next callback function
+   * @returns {function} Express middleware function
+   */
+  async listPermissions(req, res, next) {
+    try {
+      const response = await permissionService.searchPermissions({
+        objId: req.params.objId,
+        oidcId: mixedQueryToArray(req.query.oidcId),
+        permCode: mixedQueryToArray(req.query.permCode)
+      });
+      res.status(200).json(response);
+    } catch (e) {
+      next(errorToProblem(SERVICE, e));
+    }
   },
 
-  /** Grants object permissions to users */
+  /**
+   * @function addPermissions
+   * Grants object permissions to users
+   * @param {object} req Express request object
+   * @param {object} res Express response object
+   * @param {function} next The next callback function
+   * @returns {function} Express middleware function
+   */
   async addPermissions(req, res, next) {
     try {
       // TODO: Do this kind of logic in validation layer/library instead
@@ -35,7 +72,14 @@ const controller = {
     }
   },
 
-  /** Deletes object permissions for a user */
+  /**
+   * @function removePermissions
+   * Deletes object permissions for a user
+   * @param {object} req Express request object
+   * @param {object} res Express response object
+   * @param {function} next The next callback function
+   * @returns {function} Express middleware function
+   */
   async removePermissions(req, res, next) {
     try {
       // TODO: Do this kind of logic in validation layer/library instead
@@ -43,9 +87,9 @@ const controller = {
         return new Problem(422).send(res);
       }
 
+      const oidcIds = mixedQueryToArray(req.query.oidcId);
       const permissions = mixedQueryToArray(req.query.permCode);
-      const users = mixedQueryToArray(req.query.oidcId);
-      const response = await permissionService.removePermissions(req.params.objId, users, permissions);
+      const response = await permissionService.removePermissions(req.params.objId, oidcIds, permissions);
       res.status(200).json(response);
     } catch (e) {
       next(errorToProblem(SERVICE, e));

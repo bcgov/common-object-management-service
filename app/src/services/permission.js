@@ -122,16 +122,16 @@ const service = {
   /**
    * @function searchPermissions
    * Search and filter for specific object permissions
-   * @param {object} [params.oidcId] Optional string uuid representing the user
-   * @param {object} [params.objId] Optional string uuid representing the object
-   * @param {object} [params.permCodes] Optional array containing a set of permission code strings
+   * @param {string|string[]} [params.oidcId] Optional string or array of uuids representing the user
+   * @param {string|string[]} [params.objId] Optional string or array of uuid representing the object
+   * @param {string|string[]} [params.permCode] Optional string or array of permission codes
    * @returns {Promise<object>} The result of running the find operation
    */
   searchPermissions: (params) => {
     return ObjectPermission.query()
       .modify('filterOidcId', params.oidcId)
       .modify('filterObjectId', params.objId)
-      .modify('filterPermissionCode', params.permCodes);
+      .modify('filterPermissionCode', params.permCode);
   }
 };
 
