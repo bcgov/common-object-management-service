@@ -104,6 +104,29 @@ const hasPermission = (permission) => {
   };
 };
 
+/**
+ * @function isBasicAuth
+ * Only allows basic authentication requests if application is in the appropriate mode
+ * @param {object} req Express request object
+ * @param {object} res Express response object
+ * @param {function} next The next callback function
+ * @returns {function} Express middleware function
+ */
+const isBasicAuth = (req, res, next) => {
+  const authMode = getAppAuthMode();
+  const authType = req.currentUser ? req.currentUser.authType : undefined;
+
+  if (authMode === AuthMode.OIDCAUTH) {
+    return new Problem(501, { detail: 'This action is not supported in the current authentication mode' }).send(res);
+  }
+
+  if (authMode === AuthMode.BASICAUTH || authMode === AuthMode.FULLAUTH && authType !== AuthType.BASIC) {
+    return new Problem(403, { detail: 'User lacks permission to complete this action' }).send(res);
+  }
+
+  next();
+};
+
 module.exports = {
-  checkAppMode, currentObject, hasPermission
+  checkAppMode, currentObject, hasPermission, isBasicAuth
 };
