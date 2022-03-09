@@ -47,6 +47,11 @@ class ObjectPermission extends Timestamps(Model) {
           query.where('oidcId', value);
         }
       },
+      filterOidcIds(query, value) {
+        if (value && Array.isArray(value) && value.length) {
+          query.whereIn('oidcId', value);
+        }
+      },
       filterObjectId(query, value) {
         if (value) {
           query.where('objectId', value);

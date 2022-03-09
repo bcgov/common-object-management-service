@@ -26,8 +26,11 @@ const service = {
    * @throws The error encountered upon db transaction failure
    */
   addPermissions: async (objId, data, currentOidcId = SYSTEM_USER, etrx = undefined) => {
-    if (!Array.isArray(data) && !data.length || !objId) {
-      throw new Error('Invalid parameters supplied');
+    if (!objId) {
+      throw new Error('Invalid objId supplied');
+    }
+    if (!data || !Array.isArray(data) || !data.length) {
+      throw new Error('Invalid data supplied');
     }
 
     let trx;
@@ -70,15 +73,18 @@ const service = {
    * @function removePermissions
    * Deletes object permissions for a user
    * @param {string} objId The objectId uuid
-   * @param {string} oidcId Incoming oidcId uuid of the user to change
+   * @param {string[]} oidcIds Incoming array of user oidcId uuids to change
    * @param {string[]} [permissions=undefined] An array of permission codes to remove; defaults to undefined
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<object>} The result of running the delete operation
    * @throws The error encountered upon db transaction failure
    */
-  removePermissions: async (objId, oidcId, permissions = undefined, etrx = undefined) => {
-    if (!objId || !oidcId) {
-      throw new Error('Invalid parameters supplied');
+  removePermissions: async (objId, oidcIds, permissions = undefined, etrx = undefined) => {
+    if (!objId) {
+      throw new Error('Invalid objId supplied');
+    }
+    if (!oidcIds || !Array.isArray(oidcIds) || !oidcIds.length) {
+      throw new Error('Invalid oidcIds supplied');
     }
 
     let trx;
@@ -86,17 +92,19 @@ const service = {
       trx = etrx ? etrx : await ObjectPermission.startTransaction();
 
       let perms = undefined;
-      if (permissions && Array.isArray(permissions)) {
-        perms = permissions
+      if (permissions && Array.isArray(permissions) && permissions.length) {
+        const cleanPerms = permissions
           // Ensure all codes are upper cased
           .map(p => p.toUpperCase().trim())
           // Filter out any invalid code values
           .filter(p => Object.values(Permissions).some(perm => perm === p));
+        // Set as undefined if empty array
+        perms = (cleanPerms.length) ? cleanPerms : undefined;
       }
 
       const response = await ObjectPermission.query(trx)
         .delete()
-        .modify('filterOidcId', oidcId)
+        .modify('filterOidcIds', oidcIds)
         .modify('filterObjectId', objId)
         .modify('filterPermissionCodes', perms)
         // Returns array of deleted rows instead of count

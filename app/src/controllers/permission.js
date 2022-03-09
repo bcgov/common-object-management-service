@@ -44,7 +44,8 @@ const controller = {
       }
 
       const permissions = mixedQueryToArray(req.query.permCode);
-      const response = await permissionService.removePermissions(req.params.objId, req.query.oidcId, permissions);
+      const users = mixedQueryToArray(req.query.oidcId);
+      const response = await permissionService.removePermissions(req.params.objId, users, permissions);
       res.status(200).json(response);
     } catch (e) {
       next(errorToProblem(SERVICE, e));
