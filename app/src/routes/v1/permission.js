@@ -2,12 +2,13 @@ const routes = require('express').Router();
 
 const { Permissions } = require('../../components/constants');
 const { permissionController } = require('../../controllers');
-const { checkAppMode, currentObject, hasPermission, isBasicAuth } = require('../../middleware/authorization');
+const { checkAppMode, currentObject, hasPermission } = require('../../middleware/authorization');
+const { requireBasicAuth } = require('../../middleware/featureToggle');
 
 routes.use(checkAppMode);
 
 /** Search for object permissions */
-routes.get('/', isBasicAuth, (req, res, next) => {
+routes.get('/', requireBasicAuth, (req, res, next) => {
   permissionController.searchPermissions(req, res, next);
 });
 
