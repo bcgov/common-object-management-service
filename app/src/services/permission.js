@@ -3,8 +3,12 @@ const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 const { Permissions } = require('../components/constants');
 const { ObjectModel, ObjectPermission } = require('../db/models');
 
+/**
+ * The Permission DB Service
+ */
 const service = {
   /** For the given user, get the permissions they have */
+  // TODO: Determine if this function is still necessary
   fetchAllForUser: (oidcId) => {
     // TODO: Consider using ObjectPermission as top level instead for efficiency?
     return ObjectModel.query()
@@ -19,7 +23,7 @@ const service = {
    * @function addPermissions
    * Grants object permissions to users
    * @param {string} objId The objectId uuid
-   * @param {object[]} data Incoming array of `oidcId` and `code` permission tuples to add for this `objId`
+   * @param {object[]} data Incoming array of `oidcId` and `permCode` tuples to add for this `objId`
    * @param {string} [currentOidcId=SYSTEM_USER] The optional oidcId uuid actor; defaults to system user if unspecified
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<object>} The result of running the insert operation
@@ -73,18 +77,15 @@ const service = {
    * @function removePermissions
    * Deletes object permissions for a user
    * @param {string} objId The objectId uuid
-   * @param {string[]} oidcIds Incoming array of user oidcId uuids to change
-   * @param {string[]} [permissions=undefined] An array of permission codes to remove; defaults to undefined
+   * @param {string[]} [oidcIds=undefined] Optional incoming array of user oidcId uuids to change
+   * @param {string[]} [permissions=undefined] An optional array of permission codes to remove; defaults to undefined
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<object>} The result of running the delete operation
    * @throws The error encountered upon db transaction failure
    */
-  removePermissions: async (objId, oidcIds, permissions = undefined, etrx = undefined) => {
+  removePermissions: async (objId, oidcIds = undefined, permissions = undefined, etrx = undefined) => {
     if (!objId) {
       throw new Error('Invalid objId supplied');
-    }
-    if (!oidcIds || !Array.isArray(oidcIds) || !oidcIds.length) {
-      throw new Error('Invalid oidcIds supplied');
     }
 
     let trx;

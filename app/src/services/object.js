@@ -1,10 +1,24 @@
-const { v4: uuidv4 } = require('uuid');
-
+const permissionService = require('./permission');
 const { Permissions } = require('../components/constants');
-const { ObjectModel, ObjectPermission } = require('../db/models');
+const { ObjectModel } = require('../db/models');
 
+/**
+ * The Object DB Service
+ */
 const service = {
-  /** Create an object DB record and give the uploader (if authed) permissions */
+  /**
+   * @function create
+   * Create an object DB record and give the uploader (if authed) permissions
+   * @param {string} data.id The object uuid
+   * @param {string} data.mimeType The object's mime type
+   * @param {string} data.oidcId The uploading user oidcId
+   * @param {string} data.originalName The object's original name
+   * @param {string} data.path The relative S3 key/path of the object
+   * @param {string} [data.public] The optional public flag - defaults to true if undefined
+   * @param {object} [etrx=undefined] An optional Objection Transaction object
+   * @returns {Promise<object>} The result of running the insert operation
+   * @throws The error encountered upon db transaction failure
+   */
   create: async (data, etrx = undefined) => {
     let trx;
     try {
@@ -23,36 +37,35 @@ const service = {
 
       // Add all permission codes for the uploader
       if (data.oidcId) {
-        const perms = Object.keys(Permissions)
-          .map((p) => ({
-            id: uuidv4(),
-            oidcId: data.oidcId,
-            objectId: obj.id,
-            createdBy: data.oidcId,
-            permCode: Permissions[p]
-          }));
-        await ObjectPermission.query(trx).insert(perms);
+        const perms = Object.values(Permissions).map((p) => ({
+          oidcId: data.oidcId,
+          permCode: p
+        }));
+        await permissionService.addPermissions(data.id, perms, data.oidcId, trx);
       }
 
       if (!etrx) await trx.commit();
-      return await service.read(obj.id);
+      return await service.read(data.id);
     } catch (err) {
       if (!etrx && trx) await trx.rollback();
       throw err;
     }
   },
 
-
-  /** Delete an object record */
+  /**
+   * @function delete
+   * Delete an object record
+   * @param {string} objId The object uuid to delete
+   * @param {object} [etrx=undefined] An optional Objection Transaction object
+   * @returns {Promise<object>} The result of running the delete operation
+   * @throws The error encountered upon db transaction failure
+   */
   delete: async (objId, etrx = undefined) => {
     let trx;
     try {
-      trx = etrx ? etrx : await ObjectPermission.startTransaction();
+      trx = etrx ? etrx : await ObjectModel.startTransaction();
 
-      await ObjectPermission.query(trx)
-        .delete()
-        .where('objectId', objId);
-
+      await permissionService.removePermissions(objId, undefined, undefined, trx);
       await ObjectModel.query(trx)
         .deleteById(objId)
         .throwIfNotFound();
@@ -70,14 +83,32 @@ const service = {
     return ObjectModel.query();
   },
 
-  /** Get an object db record */
+  /**
+   * @function read
+   * Get an object db record
+   * @param {string} objId The object uuid to delete
+   * @returns {Promise<object>} The result of running the read operation
+   * @throws If there are no records found
+   */
   read: (objId) => {
     return ObjectModel.query()
       .findById(objId)
       .throwIfNotFound();
   },
 
-  /** Update an object DB record */
+  /**
+   * @function update
+   * Update an object DB record
+   * @param {string} data.id The object uuid
+   * @param {string} data.mimeType The object's mime type
+   * @param {string} data.oidcId The uploading user oidcId
+   * @param {string} data.originalName The object's original name
+   * @param {string} data.path The relative S3 key/path of the object
+   * @param {string} [data.public] The optional public flag - defaults to true if undefined
+   * @param {object} [etrx=undefined] An optional Objection Transaction object
+   * @returns {Promise<object>} The result of running the patch operation
+   * @throws The error encountered upon db transaction failure
+   */
   update: async (data, etrx = undefined) => {
     let trx;
     try {
