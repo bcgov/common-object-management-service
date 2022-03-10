@@ -42,7 +42,7 @@ routes.get('/:objId/versions', currentObject, hasPermission(Permissions.READ), a
   objectController.listObjectVersion(req, res, next);
 });
 
-/** Sets an object public property */
+/** Sets the public flag of an object */
 routes.patch('/:objId/public', requireDb, currentObject, hasPermission(Permissions.MANAGE), (req, res, next) => {
   objectController.togglePublic(req, res, next);
 });

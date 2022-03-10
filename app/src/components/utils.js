@@ -82,18 +82,18 @@ const utils = {
    * @function mixedQueryToArray
    * Standardizes query params to yield an array of unique string values
    * @param {string|string[]} param The query param to process
-   * @returns {string[]} A unique array of string values
+   * @returns {string[]} A unique, non-empty array of string values, or undefined if empty
    */
   mixedQueryToArray(param) {
     // Short circuit undefined if param is falsy
     if (!param) return undefined;
 
-    const result = (Array.isArray(param))
+    const parsed = (Array.isArray(param))
       ? param.flatMap(p => utils.parseCSV(p))
       : utils.parseCSV(param);
+    const unique = [...new Set(parsed)];
 
-    // Return unique values
-    return [...new Set(result)];
+    return unique.length ? unique : undefined;
   },
 
   /**

@@ -42,6 +42,7 @@ const spkiWrapper = (spki) => `-----BEGIN PUBLIC KEY-----\n${spki}\n-----END PUB
  */
 const currentUser = async (req, res, next) => {
   const authorization = req.get('Authorization');
+  const checkBasicAuth = basicAuth(basicAuthConfig);
   const currentUser = {
     authType: AuthType.NONE
   };
@@ -50,16 +51,13 @@ const currentUser = async (req, res, next) => {
     // Basic Authorization
     if (config.has('basicAuth.enabled') && authorization.toLowerCase().startsWith('basic ')) {
       currentUser.authType = AuthType.BASIC;
-
-      const checkBasicAuth = basicAuth(basicAuthConfig);
-      return checkBasicAuth(req, res, next);
     }
 
     // OIDC JWT Authorization
-    if (config.has('keycloak.enabled') && authorization.toLowerCase().startsWith('bearer ')) {
-      try {
-        currentUser.authType = AuthType.BEARER;
+    else if (config.has('keycloak.enabled') && authorization.toLowerCase().startsWith('bearer ')) {
+      currentUser.authType = AuthType.BEARER;
 
+      try {
         const bearerToken = authorization.substring(7);
         let isValid = false;
 
@@ -86,8 +84,12 @@ const currentUser = async (req, res, next) => {
     }
   }
 
+  // Inject currentUser data into request
   req.currentUser = Object.freeze(currentUser);
-  next();
+
+  // Continue middleware stack based on detected AuthType
+  if (currentUser.authType === AuthType.BASIC) checkBasicAuth(req, res, next);
+  else next();
 };
 
 module.exports = {

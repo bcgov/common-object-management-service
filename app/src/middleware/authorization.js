@@ -1,6 +1,6 @@
 const Problem = require('api-problem');
-
 const config = require('config');
+
 const log = require('../components/log')(module.filename);
 const { AuthMode, AuthType, Permissions } = require('../components/constants');
 const { getAppAuthMode, getPath } = require('../components/utils');
