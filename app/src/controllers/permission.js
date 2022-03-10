@@ -6,6 +6,9 @@ const { permissionService } = require('../services');
 
 const SERVICE = 'PermissionService';
 
+/**
+ * The Permission Controller
+ */
 const controller = {
   /**
    * @function searchPermissions
@@ -83,7 +86,7 @@ const controller = {
   async removePermissions(req, res, next) {
     try {
       // TODO: Do this kind of logic in validation layer/library instead
-      if (!req.query.oidcId || !req.query.oidcId) {
+      if (!req.query.oidcId || !req.query.permCode) {
         return new Problem(422).send(res);
       }
 

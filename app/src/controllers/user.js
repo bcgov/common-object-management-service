@@ -3,6 +3,9 @@ const { userService } = require('../services');
 
 const SERVICE = 'UserService';
 
+/**
+ * The User Controller
+ */
 const controller = {
   /** Searches for users */
   // TODO: Add more complete query library for user search parameterization

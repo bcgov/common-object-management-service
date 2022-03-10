@@ -10,6 +10,9 @@ const SERVICE = 'ObjectService';
 
 const authMode = getAppAuthMode();
 
+/**
+ * The Object Controller
+ */
 const controller = {
   /**
    * @function _setS3Headers
@@ -33,7 +36,14 @@ const controller = {
     }
   },
 
-  /** Creates new objects */
+  /**
+   * @function createObjects
+   * Creates new objects
+   * @param {object} req Express request object
+   * @param {object} res Express response object
+   * @param {function} next The next callback function
+   * @returns {function} Express middleware function
+   */
   createObjects(req, res, next) {
     try {
       const bb = busboy({ headers: req.headers });
@@ -72,7 +82,14 @@ const controller = {
     }
   },
 
-  /** Deletes the object */
+  /**
+   * @function deleteObject
+   * Deletes the object
+   * @param {object} req Express request object
+   * @param {object} res Express response object
+   * @param {function} next The next callback function
+   * @returns {function} Express middleware function
+   */
   async deleteObject(req, res, next) {
     try {
       const data = {
@@ -87,7 +104,14 @@ const controller = {
     }
   },
 
-  /** Returns object headers */
+  /**
+   * @function headObject
+   * Returns object headers
+   * @param {object} req Express request object
+   * @param {object} res Express response object
+   * @param {function} next The next callback function
+   * @returns {function} Express middleware function
+   */
   async headObject(req, res, next) {
     try {
       const data = {
@@ -125,7 +149,14 @@ const controller = {
     }
   },
 
-  /** List all versions of the object */
+  /**
+   * @function listObjectVersion
+   * List all versions of the object
+   * @param {object} req Express request object
+   * @param {object} res Express response object
+   * @param {function} next The next callback function
+   * @returns {function} Express middleware function
+   */
   async listObjectVersion(req, res, next) {
     try {
       const data = {
@@ -139,7 +170,14 @@ const controller = {
     }
   },
 
-  /** Reads via streaming or returns a presigned URL for the object */
+  /**
+   * @function readObject
+   * Reads via streaming or returns a presigned URL for the object
+   * @param {object} req Express request object
+   * @param {object} res Express response object
+   * @param {function} next The next callback function
+   * @returns {function} Express middleware function
+   */
   async readObject(req, res, next) {
     try {
       const data = {
@@ -173,7 +211,14 @@ const controller = {
     }
   },
 
-  /** Creates an updated version of the object via streaming */
+  /**
+   * @function updateObject
+   * Creates an updated version of the object via streaming
+   * @param {object} req Express request object
+   * @param {object} res Express response object
+   * @param {function} next The next callback function
+   * @returns {function} Express middleware function
+   */
   async updateObject(req, res, next) {
     try {
       const bb = busboy({ headers: req.headers, limits: { files: 1 } });
@@ -212,7 +257,14 @@ const controller = {
     }
   },
 
-  /** Sets the public flag of an object */
+  /**
+   * @function togglePublic
+   * Sets the public flag of an object
+   * @param {object} req Express request object
+   * @param {object} res Express response object
+   * @param {function} next The next callback function
+   * @returns {function} Express middleware function
+   */
   async togglePublic(req, res, next) {
     try {
       const oidcId = getCurrentOidcId(req.currentUser, SYSTEM_USER);
