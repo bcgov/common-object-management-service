@@ -1,7 +1,11 @@
 const Problem = require('api-problem');
+const config = require('config');
 
 const { basicAuthConfig, currentUser, spkiWrapper } = require('../../../src/middleware/authentication');
 const { AuthType } = require('../../../src/components/constants');
+
+// Mock config library - @see https://stackoverflow.com/a/64819698
+jest.mock('config');
 
 const testRes = {
   writeHead: jest.fn(),
@@ -12,46 +16,71 @@ const testNoAuthUser = {
   authType: AuthType.NONE
 };
 
-afterEach(() => {
-  jest.clearAllMocks();
+beforeEach(() => {
+  config.get.mockReset();
+  config.has.mockReset();
 });
 
-describe('basicAuthConfig authorizer', () => {
-  // Username and PW set in test env config
-  it('returns true if user and PW match', () => {
-    expect(basicAuthConfig.authorizer('username0', 'password1')).toBeTruthy();
-  });
-  it('returns false if user and PW do not match', () => {
-    expect(basicAuthConfig.authorizer('username456', 'password1')).toBeFalsy();
-    expect(basicAuthConfig.authorizer('username0', 'password456')).toBeFalsy();
-    expect(basicAuthConfig.authorizer('something', 'notright')).toBeFalsy();
-  });
-});
+describe('basicAuthConfig', () => {
+  describe('authorizer', () => {
+    const username = 'username';
+    const password = 'password';
 
-describe('basicAuthConfig unauthorizedResponse', () => {
-  it('returns a problem', () => {
-    const result = basicAuthConfig.unauthorizedResponse();
-    expect(result).toBeTruthy();
-    expect(result).toBeInstanceOf(Problem);
-    expect(result.status).toEqual(401);
+    beforeEach(() => {
+      config.get
+        .mockReturnValueOnce(username)
+        .mockReturnValueOnce(password);
+    });
+
+    it('returns true if user and password match', () => {
+      expect(basicAuthConfig.authorizer(username, password)).toBeTruthy();
+      expect(config.get).toHaveBeenCalledTimes(2);
+      expect(config.get).toHaveBeenNthCalledWith(1, 'basicAuth.username');
+      expect(config.get).toHaveBeenNthCalledWith(2, 'basicAuth.password');
+    });
+
+    it('returns false if user does not match', () => {
+      expect(basicAuthConfig.authorizer('garbage', password)).toBeFalsy();
+      expect(config.get).toHaveBeenCalledTimes(2);
+      expect(config.get).toHaveBeenNthCalledWith(1, 'basicAuth.username');
+      expect(config.get).toHaveBeenNthCalledWith(2, 'basicAuth.password');
+    });
+
+    it('returns false if password does not match', () => {
+      expect(basicAuthConfig.authorizer(username, 'garbage')).toBeFalsy();
+      expect(config.get).toHaveBeenCalledTimes(2);
+      expect(config.get).toHaveBeenNthCalledWith(1, 'basicAuth.username');
+      expect(config.get).toHaveBeenNthCalledWith(2, 'basicAuth.password');
+    });
+
+    it('returns false if neither user nor password match', () => {
+      expect(basicAuthConfig.authorizer('usergarbage', 'pwgarbage')).toBeFalsy();
+      expect(config.get).toHaveBeenCalledTimes(2);
+      expect(config.get).toHaveBeenNthCalledWith(1, 'basicAuth.username');
+      expect(config.get).toHaveBeenNthCalledWith(2, 'basicAuth.password');
+    });
+  });
+
+  describe('unauthorizedResponse', () => {
+    it('returns a problem', () => {
+      const result = basicAuthConfig.unauthorizedResponse();
+
+      expect(result).toBeTruthy();
+      expect(result).toBeInstanceOf(Problem);
+      expect(result.status).toEqual(401);
+    });
   });
 });
 
 describe('spkiWrapper', () => {
   it('returns the PEM format we expect', () => {
-    const spki = `MIIB9TCCAWACAQAwgbgxGTAXBgNVBAoMEFF1b1ZhZGlzIExpbWl0ZWQxHDAaBgNV
-    BAsME0RvY3VtZW50IERlcGFydG1lbnQxOTA3BgNVBAMMMFdoeSBhcmUgeW91IGRl
-    Y29kaW5nIG1lPyAgVGhpcyBpcyBvbmx5IGEgdGVzdCEhITERMA8GA1UEBwwISGFt
-    aWx0b24xETAPBgNVBAgMCFBlbWJyb2tlMQswCQYDVQQGEwJCTTEPMA0GCSqGSIb3
-    DQEJARYAMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCJ9WRanG/fUvcfKiGl
-    EL4aRLjGt537mZ28UU9/3eiJeJznNSOuNLnF+hmabAu7H0LT4K7EdqfF+XUZW/2j
-    RKRYcvOUDGF9A7OjW7UfKk1In3+6QDCi7X34RE161jqoaJjrm/T18TOKcgkkhRzE
-    apQnIDm0Ea/HVzX/PiSOGuertwIDAQABMAsGCSqGSIb3DQEBBQOBgQBzMJdAV4QP
-    Awel8LzGx5uMOshezF/KfP67wJ93UW+N7zXY6AwPgoLj4Kjw+WtU684JL8Dtr9FX
-    ozakE+8p06BpxegR4BR3FMHf6p+0jQxUEAkAyb/mVgm66TyghDGC6/YkiKoZptXQ
-    98TwDIK/39WEB/V607As+KoYazQG8drorw==
-    `;
-    expect(spkiWrapper(spki)).toEqual(`-----BEGIN PUBLIC KEY-----\n${spki}\n-----END PUBLIC KEY-----`);
+    const spki = 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4CcG7WPTCF4YLHxT3bs9ilcQ6SS+A2e/PiZ9hqR0noelBCsdW0SQGOhjE7nhl2lrZ0W/o80YKMzNZ42Hmc7p0sHU3RN95OCTHvyCazC/CKM2i+gD+cAspP/Ns+hOqNmxC/XIsgD3bZ2zobNMhNy3jgDaAsbs3kOGPIwkdo/vWeo7N6fZPxOgSp6JoGBDtehuyhQ/4y2f7TnyicIvHMuc2d7Bz4GalQ/ra+GspmZ/HqL93A6c8sDHa8fqC8O+gnzpBNsCOxJcq/i3NOaGrOFMCiJwsNVc2dUcY8epcW3pwakIRLlC6D7oawbxv7c3UsXoCt4XSC0hdjwXg5kxVXHoDQIDAQAB';
+
+    const result = spkiWrapper(spki);
+
+    expect(result).toBeTruthy();
+    expect(typeof result).toBe('string');
+    expect(result).toEqual(`-----BEGIN PUBLIC KEY-----\n${spki}\n-----END PUBLIC KEY-----`);
   });
 });
 
