@@ -11,7 +11,7 @@ const { userService } = require('../services');
  * Basic Auth configuration object
  * @see {@link https://github.com/LionC/express-basic-auth}
  */
-const basicAuthConfig = {
+const _basicAuthConfig ={
   // Must be a synchronous function
   authorizer: (username, password) => {
     const userMatch = basicAuth.safeCompare(username, config.get('basicAuth.username'));
@@ -24,12 +24,18 @@ const basicAuthConfig = {
 };
 
 /**
- * @function spkiWrapper
+ * An express middleware function that checks basic authentication validity
+ * @see {@link https://github.com/LionC/express-basic-auth}
+ */
+const _checkBasicAuth = basicAuth(_basicAuthConfig);
+
+/**
+ * @function _spkiWrapper
  * Wraps an SPKI key with PEM header and footer
  * @param {string} spki The PEM-encoded Simple public-key infrastructure string
  * @returns {string} The PEM-encoded SPKI with PEM header and footer
  */
-const spkiWrapper = (spki) => `-----BEGIN PUBLIC KEY-----\n${spki}\n-----END PUBLIC KEY-----`;
+const _spkiWrapper = (spki) => `-----BEGIN PUBLIC KEY-----\n${spki}\n-----END PUBLIC KEY-----`;
 
 /**
  * @function currentUser
@@ -42,7 +48,6 @@ const spkiWrapper = (spki) => `-----BEGIN PUBLIC KEY-----\n${spki}\n-----END PUB
  */
 const currentUser = async (req, res, next) => {
   const authorization = req.get('Authorization');
-  const checkBasicAuth = basicAuth(basicAuthConfig);
   const currentUser = {
     authType: AuthType.NONE
   };
@@ -62,9 +67,10 @@ const currentUser = async (req, res, next) => {
         let isValid = false;
 
         if (config.has('keycloak.publicKey')) {
-          const key = config.get('keycloak.publicKey').startsWith('-----BEGIN')
-            ? config.get('keycloak.publicKey')
-            : spkiWrapper(config.get('keycloak.publicKey'));
+          const publicKey = config.get('keycloak.publicKey');
+          const key = publicKey.startsWith('-----BEGIN')
+            ? publicKey
+            : _spkiWrapper(publicKey);
           isValid = jwt.verify(bearerToken, key, {
             issuer: `${config.get('keycloak.serverUrl')}/realms/${config.get('keycloak.realm')}`
           });
@@ -88,10 +94,12 @@ const currentUser = async (req, res, next) => {
   req.currentUser = Object.freeze(currentUser);
 
   // Continue middleware stack based on detected AuthType
-  if (currentUser.authType === AuthType.BASIC) checkBasicAuth(req, res, next);
+  if (currentUser.authType === AuthType.BASIC) {
+    _checkBasicAuth(req, res, next);
+  }
   else next();
 };
 
 module.exports = {
-  basicAuthConfig, currentUser, spkiWrapper
+  _basicAuthConfig, _checkBasicAuth, currentUser, _spkiWrapper
 };
