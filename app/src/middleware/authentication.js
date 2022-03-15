@@ -68,10 +68,10 @@ const currentUser = async (req, res, next) => {
 
         if (config.has('keycloak.publicKey')) {
           const publicKey = config.get('keycloak.publicKey');
-          const key = publicKey.startsWith('-----BEGIN')
+          const pemKey = publicKey.startsWith('-----BEGIN')
             ? publicKey
             : _spkiWrapper(publicKey);
-          isValid = jwt.verify(bearerToken, key, {
+          isValid = jwt.verify(bearerToken, pemKey, {
             issuer: `${config.get('keycloak.serverUrl')}/realms/${config.get('keycloak.realm')}`
           });
         } else {
