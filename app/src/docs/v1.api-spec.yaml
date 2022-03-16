@@ -3,7 +3,7 @@ openapi: 3.0.3
 info:
   version: 1.0.0
   title: Common Object Management Service (COMS)
-  description: A microservice for managing access control to S3 Objects
+  description: An API for managing S3 Objects
   license:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0.html'
@@ -12,60 +12,153 @@ info:
     email: NR.CommonServiceShowcase@gov.bc.ca
 servers:
   - url: /api/v1
-    description: This Server
+    description: Your Server
 security:
   - BearerAuth: []
-    OpenID: []
+  - OpenID: []
+  - Basic: []
 paths:
+
   '/object':
-    get:
-      summary: List all user accessible objects
+    post:
+      summary: Creates new objects
       description: >-
-        This endpoint returns a list of all user accessible objects.
-      operationId: GetAccessibleObjects
+        This endpoint will create object(s) in the configured object storage.
+        If a person's OIDC ID is passed in the request and COMS is running in either either 'OIDC' or 'Full' mode, all all object permissions are assigned to that user.
+      operationId: createObjects
       tags:
         - Object
+      requestBody:
+        description: Form-data containing files
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              properties:
+                file:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
       responses:
         '200':
-          description: Returns the object information
+          description: Returns an array of the created objects
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ObjectDetails'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-    post:
-      summary: Create an Object
+                type: array
+                items:
+                  $ref: '#/components/schemas/ObjectsArrayResponse'
+
+
+    get:
+      summary: List and search for all objects
       description: >-
-        This endpoint will create an object.
-      operationId: PostCreateObject
+        This endpoint returns a list of all user accessible objects.
+      operationId: listObjects
+      security:
+        - OpenID: []
+        - Basic: []
       tags:
         - Object
       responses:
         '201':
-          description: Returns an array of the created object id
+          # TODO: listObjects controller
+          description: Returns and array of objects
           content:
             application/json:
+              schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/ObjectDetails'
+                  $ref: '#/components/schemas/ObjectsArrayResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedError'
         '403':
           $ref: '#/components/responses/Forbidden'
+
+
+
   '/object/{objId}':
-    get:
-      summary: Details of a single Object
+
+
+    head:
+      summary: Returns object headers
       description: >-
-        This endpoint returns all of the information related to
-        objId.
-      operationId: GetObject
+        This endpoint returns S3 and COMS headers for a single object
+      operationId: headObject
       tags:
         - Object
+      security:
+        - OpenID: []
+        - Basic: []
       parameters:
         - $ref: '#/components/parameters/PathObjectId'
+        - $ref: '#/components/parameters/QueryVersionId'
+      responses:
+        '204':
+          description: Returns object headers
+          headers:
+            ETag:
+              schema:
+                type: integer
+              description: >-
+                An entity tag (ETag) is an opaque identifier assigned by a web server to a specific version of a resource found at a URL
+            Last-Modified:
+              schema:
+                type: string
+                format: date-time
+              description: Creation date of the object
+            x-amz-server-side-encryption:
+              schema:
+                type: string
+              description: >-
+                If the object is stored using server-side encryption either with an AWS KMS key or an Amazon S3-managed encryption key, the response includes this header with the value of the server-side encryption algorithm used when storing this object in Amazon S3 (for example, AES256, aws:kms).
+            x-amz-version-id:
+              schema:
+                type: string
+              description: Version of the object
+            x-amz-meta-id:
+              schema:
+                type: string
+              description: The Object ID
+            x-amz-meta-name:
+              schema:
+                type: string
+              description: The original file name of the object when it was created
+            Content-Disposition:
+              schema:
+                type: string
+              description: Specifies presentational information for the object
+            Content-Length:
+              schema:
+                type: integer
+              description: Size of the body in bytes
+            Content-Type:
+              schema:
+                type: string
+              description: A standard MIME type describing the format of the object data
+        # '401':
+        #   $ref: '#/components/responses/UnauthorizedError'
+        # '403':
+        #   $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+
+    get:
+      summary: Returns a single object
+      description: >-
+        This endpoint returns details of an object
+      operationId: readObject
+      tags:
+        - Object
+      security:
+        - OpenID: []
+        - Basic: []
+      parameters:
+        - $ref: '#/components/parameters/PathObjectId'
+        - $ref: '#/components/parameters/QueryDownload'
+        - $ref: '#/components/parameters/QueryVersionId'
       responses:
         '200':
           description: Returns the object information
@@ -73,15 +166,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ObjectDetails'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+        # '401':
+        #   $ref: '#/components/responses/UnauthorizedError'
+        # '403':
+        #   $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NoSuchKey'
+
+
     post:
       summary: Updates an Object
-      description: >-
-        This endpoint will update an object.
-      operationId: PostUpdateObject
+      description: Creates an updated version of the object via streaming.
+      operationId: updateObject
+      security:
+        - OpenID: []
+        - Basic: []
       tags:
         - Object
       parameters:
@@ -92,42 +191,53 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MergeResponse'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
+                oneOf:
+                  - $ref: '#/components/schemas/ObjectDetails'
+                  - $ref: '#/components/schemas/ObjectDetailsDb'
         '403':
           $ref: '#/components/responses/Forbidden'
+
+
     delete:
       summary: Deletes the object
-      description: >-
-        This endpoint will delete the Object specific to the objId
-      operationId: DeleteObject
+      # description: This endpoint will delete the Object specific to the objId
+      operationId: deleteObject
+      security:
+        - OpenID: []
+        - Basic: []
       tags:
         - Object
       parameters:
         - $ref: '#/components/parameters/PathObjectId'
       responses:
-        '202':
-          description: Request is acknowledged but not necessarily completed
-          headers:
-            Content-Location:
-              example: /api/v1/status/00000000-0000-0000-0000-000000000000
+        '200':
+          description: >-
+            Object was deleted from object storage and COMS database as well as any permissions on this onbject
+          content:
+            application/json:
               schema:
-                type: string
-                format: uri
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '409':
-          $ref: '#/components/responses/Conflict'
+                $ref: '#/components/schemas/ObjectDeleteResponse'
+
+        # '401':
+        #   $ref: '#/components/responses/UnauthorizedError'
+        # '403':
+        #   $ref: '#/components/responses/Forbidden'
+        # '409':
+        #   $ref: '#/components/responses/Conflict'
+
+
+
   '/object/{objId}/versions':
+
     get:
       summary: Returns the object version history
       description: >-
         This endpoint returns an array of the information related to
         the object's version history.
       operationId: GetListObjectVersion
+      security:
+        - OpenID: []
+        - Basic: []
       tags:
         - Version
       parameters:
@@ -138,19 +248,45 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ObjectDetails'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+                type: object
+                properties:
+                  $metadata:
+                    $ref: '#/components/schemas/Metadata'
+                  IsTruncated:
+                    type: boolean
+                    description: Whether or not this object listing is complete
+                  KeyMarker:
+                    description: Marks the last key returned in a truncated response
+                  MaxKeys:
+                    type: integer
+                    description: >-
+                      Sets the maximum number of keys returned in the response. By default the action returns up to 1,000 key names. The response might contain fewer keys but will never contain more.
+                  Name:
+                    description: Name of the S3 bucket
+                  Perfix:
+                    description: Keys that begin with the indicated prefix
+                  VersionIdMarker:
+                    description: Marks the last version of the key returned in a truncated response
+                  Versions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Version'
+        # '401':
+        #   $ref: '#/components/responses/UnauthorizedError'
+        # '403':
+        #   $ref: '#/components/responses/Forbidden'
+
+
+
   '/object/{objId}/public':
     get:
-      summary: Sets an object public property
-      description: >-
-        This endpoint sets the public property for an Object
-      operationId: PatchObjectPublic
+      summary: Sets the public flag of an object
+      # description: >-
+      #   This endpoint sets the public property for an Object
+      operationId: togglePublic
+      security:
+        - OpenID: []
+        - Basic: []
       tags:
         - Permission
       parameters:
@@ -161,21 +297,117 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ObjectDetails'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-  '/object/{objId}/permissions':
+                $ref: '#/components/schemas/ObjectUpdated'
+        # '401':
+        #   $ref: '#/components/responses/UnauthorizedError'
+        # '403':
+        #   $ref: '#/components/responses/Forbidden'
+
+
+
+  '/permission':
+    get:
+      summary: Search for object permissions
+      description: >-
+        This endpoint returns an array of the permissions filtering by attributes in the provided parameters
+      operationId: searchPermissions
+      security:
+        - Basic: []
+      tags:
+        - Permission
+      parameters:
+        - in: query
+          name: objId
+          schema:
+            type: array
+            items:
+              type: string
+              $ref: '#/components/parameters/QueryObjectId'
+        - in: query
+          name: oidcId
+          schema:
+            type: array
+            items:
+              $ref: '#/components/parameters/QueryOidcId'
+        - in: query
+          name: permCode
+          schema:
+            type: array
+            items:
+              $ref: '#/components/parameters/QueryPermCode'
+      responses:
+        '200':
+          description: Returns a JSON object representation of each permission as defined in the database that match the provided parameters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Permission'
+
+        # '401':
+        #   $ref: '#/components/responses/UnauthorizedError'
+        # '403':
+        #   $ref: '#/components/responses/Forbidden'
+
+
+  '/permission/{objId}':
+
     get:
       summary: Returns the object permissions
-      description: >-
-        This endpoint returns an array of the Object's permissions
-      operationId: GetObjectPermissions
+      operationId: listPermissions
+      security:
+        - OpenID: []
+        - Basic: []
       tags:
         - Permission
       parameters:
         - $ref: '#/components/parameters/PathObjectId'
+        - in: query
+          name: oidcId
+          schema:
+            type: array
+            items:
+              $ref: '#/components/parameters/QueryOidcId'
+        - in: query
+          name: permCode
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: false
+          example: UPDATE
+      responses:
+        '200':
+          description: Returns a JSON object representation of each permission as defined in the database that match the provided obJect ID and query parameters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Permission'
+
+    put:
+      summary: Grants object permissions to users
+      operationId: addPermissions
+      security:
+        - OpenID: []
+        - Basic: []
+      tags:
+        - Permission
+      parameters:
+        - $ref: '#/components/parameters/PathObjectId'
+      requestBody:
+        description: An array of objects, each containing a user ID and the permission being added
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                $ref: '#/components/schemas/OidcPermission'
+
       responses:
         '200':
           description: Returns the object information
@@ -183,75 +415,142 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ObjectDetails'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-  '/object/{objId}/permissions/{userId}':
-    post:
-      summary: Grants object permissions to a specific user
-      description: >-
-        This endpoint will update the permissions of a specific user
-      operationId: PostUpdateUserPermissions
-      tags:
-        - Permission
-      parameters:
-        - $ref: '#/components/parameters/PathObjectId'
-        - $ref: '#/components/parameters/PathUserId'
-      responses:
-        '200':
-          description: Returns the object information
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ObjectDetails'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '409':
-          $ref: '#/components/responses/Conflict'
+        # '401':
+        #   $ref: '#/components/responses/UnauthorizedError'
+        # '403':
+        #   $ref: '#/components/responses/Forbidden'
+        # '409':
+        #   $ref: '#/components/responses/Conflict'
+
+
     delete:
-      summary: Deletes object permissions for a specific user
-      description: >-
-        This endpoint will delete the permission of an Object with a specific to the objId
-      operationId: DeleteObjectPermissions
+      summary: Deletes permissions for a user
+      operationId: removePermissions
+      security:
+        - OpenID: []
+        - Basic: []
       tags:
         - Permission
       parameters:
         - $ref: '#/components/parameters/PathObjectId'
-        - $ref: '#/components/parameters/PathUserId'
+        - in: query
+          name: oidcId
+          schema:
+            type: array
+            items:
+              $ref: '#/components/parameters/QueryOidcId'
+        - in: query
+          name: permCode
+          schema:
+            type: array
+            items:
+              $ref: '#/components/parameters/QueryPermCode'
       responses:
         '204':
           description: Returns udpate Object response.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MergeResponse'
+                $ref: '#/components/schemas/PermissionResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedError'
         '403':
           $ref: '#/components/responses/Forbidden'
+
+
+  '/user':
+    get:
+      summary: Search for users
+      operationId: userSearch
+      tags:
+        - User
+      parameters:
+        - $ref: '#/components/parameters/QueryOidcId'
+      responses:
+        '200':
+          description: Returns a JSON object representation of the user matching provided parameters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+
+
 components:
   parameters:
       PathObjectId:
         in: path
         name: objId
-        description: Uuid of the message
+        description: uuid of an object
         required: true
         schema:
           type: string
           format: uuid
           example: 00000000-0000-0000-0000-000000000000
-      PathUserId:
+      QueryObjectId:
         in: path
-        name: userId
-        description: Uuid of the message
+        name: objId
+        description: uuid of an object
         required: true
         schema:
           type: string
           format: uuid
           example: 00000000-0000-0000-0000-000000000000
+      QueryDownload:
+        in: query
+        name: download
+        description: request the file to be downloaded as a binary stream
+        schema:
+          type: boolean
+          format: integer
+          example: 1
+      QueryVersionId:
+        in: query
+        name: versionId
+        description: request a specified version
+        schema:
+          type: boolean
+          format: string
+          example: 1647462569641
+          description: a version identifier created in S3
+      QueryMessageId:
+        in: query
+        name: msgId
+        description: Uuid of a message
+        schema:
+          type: string
+          format: uuid
+          example: 00000000-0000-0000-0000-000000000000
+      PathOidcId:
+        in: path
+        name: oidcId
+        description: Uuid of a user
+        required: true
+        schema:
+          type: string
+          format: uuid
+          example: 00000000-0000-0000-0000-000000000000
+      QueryOidcId:
+        in: query
+        name: oidcId
+        description: Uuid of the keycloak user(??)
+        required: true
+        schema:
+          type: string
+          format: uuid
+          example: 00000000-0000-0000-0000-000000000000
+      QueryPermCode:
+        in: query
+        name: permCode
+        description: the permission type
+        required: false
+        schema:
+          type: string
+          example: UPDATE
+
+
+
   securitySchemes:
     BearerAuth:
       type: http
@@ -259,7 +558,12 @@ components:
       bearerFormat: JWT
     OpenID:
       type: openIdConnect
-      openIdConnectUrl: 'https://example.com/.well-known/openid-configuration'
+      openIdConnectUrl: >-
+        https://oidc.gov.bc.ca/auth/realms/your-realm-name/.well-known/openid-configuration
+    Basic:
+      type: http
+      scheme: basic
+
   schemas:
     BadRequest:
       allOf:
@@ -294,29 +598,321 @@ components:
               example: Internal Server Error
             type:
               example: 'https://httpstatuses.com/500'
-    MergeResponse:
-      type: array
-      items:
-        $ref: '#/components/schemas/TransactionResponse'
-    NotFound:
+    NoSuchKey:
       allOf:
-        - $ref: '#/components/schemas/Problem'
         - type: object
           properties:
             status:
               example: 404
             title:
-              example: Not Found
+              example: Internal Server Error
             type:
-              example: 'https://httpstatuses.com/404'
+              example: 'https://httpstatuses.com/500'
+
+    ObjectsArrayResponse:
+      type: array
+      items:
+        oneOf:
+          - $ref: '#/components/schemas/ObjectDetails'
+          - $ref: '#/components/schemas/ObjectDetailsDb'
+
+    ObjectDeleteResponse:
+      type: object
+      properties:
+        $metadata:
+          $ref: '#/components/schemas/Metadata'
+        DeleteMarker:
+          type: boolean
+        VersionId:
+          type: string
+
     ObjectDetails:
       type: object
       properties:
-        objId:
+        id:
           type: string
-          description: This Object instance uuid
+          description: The primary identifier for this object
           format: uuid
-          example: 00000000-0000-0000-0000-000000000000
+          example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
+        fieldName: # maybe move
+          type: string
+          description:  >-
+            A unique form field chosen for the key for each file in the multi-part form-data post
+          example: 'file1'
+        mimeType:
+          type: string
+          description: the MIME Type of the file uploaded
+          example: text/plain
+        originalName:
+          type: string
+          description: The original name of the file uploaded
+        $metadata:
+          $ref: '#/components/schemas/Metadata'
+        ETag:
+          type: string
+          example: "9d1aaa54b84e1d6ccc6e0477c5717fe3"
+        ServerSideEncryption:
+          type: string
+          example: AES256
+        VersionId:
+          type: string
+          example: 1647022579353
+
+    ObjectDetailsDb:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The primary identifier for this object
+          format: uuid
+          example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
+        fieldName:
+          type: string
+          description:  >-
+            A unique form field chosen for the key for each file in the multi-part form-data post
+          example: 'file1'
+        mimeType:
+          type: string
+          description: the MIME Type of the file uploaded
+          example: text/plain
+        originalName:
+          type: string
+          description: The original name of the file uploaded
+        public:
+          type: boolean
+          description: Is the object readable by anyone with the URI?
+        active:
+          type: boolean
+        createdBy:
+          type: string
+          format: uuid
+          example: 72cf13d7-aef7-4ad5-8ddd-0ff23eefb442
+          description: >-
+            Either the OIDC ID of the current user if request was authenticated with a Bearer token (ex. JWT), or a 'nil' uuid if request was authenticated via Basic auth
+        createdAt:
+          type: string
+          format: date-time
+          example: "2022-03-11T23:19:16.343Z"
+        updatedBy:
+          type: string
+          format: uuid
+          example: 72cf13d7-aef7-4ad5-8ddd-0ff23eefb442
+          default: null
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2022-03-11T23:19:16.343Z"
+        $metadata:
+          $ref: '#/components/schemas/Metadata'
+        ETag:
+          type: string
+          example: "9d1aaa54b84e1d6ccc6e0477c5717fe3"
+        ServerSideEncryption:
+          type: string
+          example: AES256
+        VersionId:
+          type: string
+          example: 1647022579353
+
+
+    ObjectUpdated:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The primary identifier for this object
+          format: uuid
+          example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
+        mimeType:
+          type: string
+          description: the MIME Type of the object (file)
+          example: text/plain
+        originalName:
+          type: string
+          description: The original name of the file uploaded
+
+        public:
+          type: boolean
+          description: Is the object readable by anyone with the URI?
+        active:
+          type: boolean
+        createdBy:
+          type: string
+          format: uuid
+          example: 72cf13d7-aef7-4ad5-8ddd-0ff23eefb442
+          description: >-
+            Either the OIDC ID of the current user if request was authenticated with a Bearer token (ex. JWT), or a 'nil' uuid if request was authenticated via Basic auth
+        createdAt:
+          type: string
+          format: date-time
+          example: "2022-03-11T23:19:16.343Z"
+        updatedBy:
+          type: string
+          format: uuid
+          example: 72cf13d7-aef7-4ad5-8ddd-0ff23eefb442
+          default: null
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2022-03-11T23:19:16.343Z"
+
+    Version:
+      type: object
+      properties:
+        ETag:
+          type: string
+          example: "9d1aaa54b84e1d6ccc6e0477c5717fe3"
+        Size:
+          type: integer
+          description: Size of the object in bytes
+        StorageClass:
+          description: >-
+            S3 storage classes based on the data access, resiliency, and cost requirements of your workloads
+          example: STANDARD
+        key:
+          description: Key of the object
+        VersionId:
+          description: VersionId used to reference a specific version of the object.
+          type: string
+          example: 1647022579353
+        IsLatest:
+          description: Specifies whether the object is (true) or is not (false) the latest version of an object.
+        LastModified:
+          type: string
+          format: date-time
+          example: "2022-03-11T23:19:16.343Z"
+        Owner:
+          type: object
+          properties:
+            DisplayName:
+              type: string
+              example: Mr Bucket Owner
+            ID:
+              type: string
+              example: Mr Bucket Owner
+
+
+    PermissionResponse:
+      type: array
+      items:
+        oneOf:
+          - $ref: '#/components/schemas/Permission'
+
+
+    Permission:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The primary identifier for this permission
+          format: uuid
+          example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
+        ObjectId:
+          type: string
+          format: uuid
+          example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
+        oidcId:
+          type: string
+          format: uuid
+          example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
+        permCode:
+          type: string
+          example: UPDATE
+        createdBy:
+          type: string
+          format: uuid
+          example: 72cf13d7-aef7-4ad5-8ddd-0ff23eefb442
+        createdAt:
+          type: string
+          format: date-time
+          example: "2022-03-11T23:19:16.343Z"
+        updatedBy:
+          type: string
+          format: uuid
+          example: 72cf13d7-aef7-4ad5-8ddd-0ff23eefb442
+          default: null
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2022-03-11T23:19:16.343Z"
+
+    Metadata:
+      type: object
+      properties:
+        httpStatusCode:
+          type: integer
+          example: 200
+        extendedRequestId:
+          type: string
+          example: a0ec1be0a99a08aee6026ba9756da40327f2d3ce844499b7ee752082f3fb22e3
+        attempts:
+          type: integer
+          example: 1
+        totalRetryDelay:
+          type: integer
+          example: 0
+
+    User:
+      type: object
+      properties:
+        oidcId:
+          type: string
+          description: ID of the user
+          example: 5dad1ec9-d3c0-4b0f-8ead-cb4d9fa98987
+        idp:
+          type: string
+          description: Identity provider used in OIDC server
+          example: idir
+        username:
+          type: string
+          description: Username of this user
+          example: jsmith
+        firstName:
+          type: string
+          example: Jane
+        lastName:
+          type: string
+          example: Smith
+        email:
+          type: string
+          example: jsmith@gov.bc.ca
+        active:
+          type: boolean
+        createdBy:
+          type: string
+          format: uuid
+          example: 72cf13d7-aef7-4ad5-8ddd-0ff23eefb442
+          description: >-
+            Either the OIDC ID of the current user if request was authenticated with a Bearer token (ex. JWT), or a 'nil' uuid if request was authenticated via Basic auth
+        createdAt:
+          type: string
+          format: date-time
+          example: "2022-03-11T23:19:16.343Z"
+        updatedBy:
+          type: string
+          format: uuid
+          example: 72cf13d7-aef7-4ad5-8ddd-0ff23eefb442
+          default: null
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2022-03-11T23:19:16.343Z"
+
+
+    OidcPermission:
+      type: object
+      properties:
+        oidcId:
+          type: string
+          description: The primary identifier for a user
+          format: uuid
+          example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
+        permCode:
+          type: string
+          description: a short name for the permission type
+          example: UPDATE
+
+
     Problem:
       required:
         - type
@@ -336,16 +932,7 @@ components:
         detail:
           type: string
           description: Short description of why this problem was raised.
-    TransactionResponse:
-      type: object
-      required:
-        - txId
-      properties:
-        txId:
-          type: string
-          description: A corresponding transaction uuid
-          format: uuid
-          example: 00000000-0000-0000-0000-000000000000
+
     ValidationError:
       allOf:
         - $ref: '#/components/schemas/Problem'
@@ -374,7 +961,10 @@ components:
               example: Unprocessable Entity
             type:
               example: 'https://httpstatuses.com/422'
+
+
   responses:
+
     Accepted:
       description: Accepted
     BadRequest:
@@ -399,14 +989,35 @@ components:
       description: Lack required role to perform action
     NoContent:
       description: Accepted and no content
+
     NotFound:
-      description: Not found
+      description: xyz
+      allOf:
+        - $ref: '#/components/schemas/Problem'
+        - type: object
+          properties:
+            status:
+              example: 404
+            title:
+              example: Not Found
+            type:
+              example: 'https://httpstatuses.com/404'
+
+    NoSuchKey:
+      description: Requester always has s3 permission on the bucket, so error indicates that no matching object has been found
       content:
-        application/json:
+        application/xml:
           schema:
-            $ref: '#/components/schemas/NotFound'
+            $ref: '#/components/schemas/NoSuchKey'
+          examples:
+            Error:
+              Code: NoSuchKey
+              Message: The specified key does not exist.
+              Resource: <bucketID>/6ea0c4e9-9494-450c-885b-f701b477a856
+
+
     UnauthorizedError:
-      description: Access token is missing or invalid
+      description: Invalid authorization credentials
     UnprocessableEntity:
       description: >-
         The server was unable to process the contained instructions. Generally
