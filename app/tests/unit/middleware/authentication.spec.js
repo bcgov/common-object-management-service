@@ -21,8 +21,11 @@ jest.mock('express-basic-auth', () => {
 jest.mock('../../../src/components/keycloak');
 
 beforeEach(() => {
-  config.get.mockReset();
-  config.has.mockReset();
+  jest.resetAllMocks();
+});
+
+afterAll(() => {
+  jest.restoreAllMocks();
 });
 
 describe('_basicAuthConfig', () => {
@@ -93,27 +96,13 @@ describe('currentUser', () => {
   let req, res, next;
 
   beforeEach(() => {
-    checkBasicAuthSpy.mockReset().mockImplementation(() => {
+    checkBasicAuthSpy.mockImplementation(() => {
       return jest.fn();
     });
-    jwtDecodeSpy.mockReset();
-    jwtVerifySpy.mockReset();
-    loginSpy.mockReset();
-    problemSendSpy.mockReset();
-    validateAccessTokenSpy.mockReset();
 
     req = { get: jest.fn() };
     res = {};
     next = jest.fn();
-  });
-
-  afterAll(() => {
-    checkBasicAuthSpy.mockRestore();
-    jwtDecodeSpy.mockRestore();
-    jwtVerifySpy.mockRestore();
-    loginSpy.mockRestore();
-    problemSendSpy.mockRestore();
-    validateAccessTokenSpy.mockRestore();
   });
 
   describe('No Authorization', () => {
@@ -255,7 +244,7 @@ describe('currentUser', () => {
     it('short circuits without keycloak.publicKey and invalid token', async () => {
       const authorization = 'bearer ';
 
-      problemSendSpy.mockImplementation(() => {});
+      problemSendSpy.mockImplementation(() => { });
       validateAccessTokenSpy.mockResolvedValue(false);
       config.has
         .mockReturnValueOnce(false) // basicAuth.enabled
