@@ -16,7 +16,7 @@ const { objectService, permissionService, storageService } = require('../service
  */
 const checkAppMode = (req, res, next) => {
   const authMode = getAppAuthMode();
-  const authType = req.currentUser ? req.currentUser.AuthType : undefined;
+  const authType = req.currentUser ? req.currentUser.authType : undefined;
 
   try {
     if (authMode === AuthMode.BASICAUTH && authType === AuthType.BEARER) {
