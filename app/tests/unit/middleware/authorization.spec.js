@@ -1,10 +1,14 @@
 const Problem = require('api-problem');
+const config = require('config');
 
-const { currentObject, hasPermission, checkAppMode } = require('../../../src/middleware/authorization');
-const { objectService, storageService } = require('../../../src/services');
+const { checkAppMode, currentObject, hasPermission } = require('../../../src/middleware/authorization');
+const { objectService, permissionService, storageService } = require('../../../src/services');
 const { AuthMode, AuthType, Permissions } = require('../../../src/components/constants');
 const utils = require('../../../src/components/utils');
 
+// Mock config library - @see https://stackoverflow.com/a/64819698
+jest.mock('config');
+// Mock out utils library and use a spy to observe behavior
 jest.mock('../../../src/components/utils');
 
 beforeEach(() => {
@@ -61,105 +65,113 @@ describe('checkAppMode', () => {
 });
 
 describe('currentObject', () => {
-  const testRes = {
-    writeHead: jest.fn(),
-    end: jest.fn()
-  };
+  const objectReadSpy = jest.spyOn(objectService, 'read');
+  const storageHeadObjectSpy = jest.spyOn(storageService, 'headObject');
 
-  const objectServiceReadSpy = jest.spyOn(objectService, 'read');
-  const storageServiceHeadSpy = jest.spyOn(storageService, 'headObject');
+  let req, res, next;
 
-  it('does not inject any current object to request if no object id param', async () => {
-    const testReq = {
-      params: {
-        blah: 123
-      },
-    };
-    const nxt = jest.fn();
-
-    await currentObject(testReq, testRes, nxt);
-    expect(testReq.currentObject).toBeUndefined();
-    expect(nxt).toHaveBeenCalledTimes(1);
-    expect(nxt).toHaveBeenCalledWith();
+  beforeEach(() => {
+    req = {};
+    res = {};
+    next = jest.fn();
   });
 
-  it('does not inject any current object to request if object id param is blank', async () => {
-    const testReq = {
-      params: {
-        objId: ''
-      },
-    };
-    const nxt = jest.fn();
+  it.each([
+    [undefined],
+    ['']
+  ])('does not inject any current object to request with objId %o', (objId) => {
+    req.params = { objId: objId };
 
-    await currentObject(testReq, testRes, nxt);
-    expect(testReq.currentObject).toBeUndefined();
-    expect(nxt).toHaveBeenCalledTimes(1);
-    expect(nxt).toHaveBeenCalledWith();
+    currentObject(req, res, next);
+
+    expect(req.currentObject).toBeUndefined();
+    expect(objectReadSpy).toHaveBeenCalledTimes(0);
+    expect(storageHeadObjectSpy).toHaveBeenCalledTimes(0);
+    expect(utils.getPath).toHaveBeenCalledTimes(0);
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(next).toHaveBeenCalledWith();
   });
 
-  it('moves on if an exception happens', async () => {
-    const testReq = {
-      params: {
-        objId: '1234'
-      },
-    };
-    const nxt = jest.fn();
-    objectServiceReadSpy.mockImplementation(() => { throw new Error('test'); });
+  it('does not inject any current object if an exception happens', () => {
+    const objId = '1234';
+    req.params = { objId: objId };
+    objectReadSpy.mockImplementation(() => { throw new Error('test'); });
+    storageHeadObjectSpy.mockResolvedValue({});
 
-    await currentObject(testReq, testRes, nxt);
-    expect(testReq.currentObject).toBeUndefined();
-    expect(objectServiceReadSpy).toHaveBeenCalledWith('1234');
-    expect(nxt).toHaveBeenCalledTimes(1);
-    expect(nxt).toHaveBeenCalledWith();
+    currentObject(req, res, next);
+
+    expect(req.currentObject).toBeUndefined();
+    expect(objectReadSpy).toHaveBeenCalledTimes(1);
+    expect(objectReadSpy).toHaveBeenCalledWith(objId);
+    expect(storageHeadObjectSpy).toHaveBeenCalledTimes(0);
+    expect(utils.getPath).toHaveBeenCalledTimes(0);
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(next).toHaveBeenCalledWith();
   });
 
-  it('sets the current object based on the results from the services', async () => {
-    const testReq = {
-      params: {
-        objId: '1234'
-      },
-    };
+  it('injects the current object based on the service results', async () => {
+    const objId = '1234';
     const testRecord = { a: 1 };
     const testStorage = { b: 2 };
-    const nxt = jest.fn();
-    objectServiceReadSpy.mockReturnValue(testRecord);
-    storageServiceHeadSpy.mockReturnValue(testStorage);
+    req.params = { objId: objId };
+    objectReadSpy.mockResolvedValue(testRecord);
+    storageHeadObjectSpy.mockResolvedValue(testStorage);
+    utils.getPath.mockReturnValue(`/path/${objId}`);
 
-    await currentObject(testReq, testRes, nxt);
-    expect(testReq.currentObject).toEqual({ ...testRecord, ...testStorage });
-    expect(objectServiceReadSpy).toHaveBeenCalledWith('1234');
-    expect(nxt).toHaveBeenCalledTimes(1);
-    expect(nxt).toHaveBeenCalledWith();
+    await currentObject(req, res, next);
+
+    expect(req.currentObject).toBeTruthy();
+    expect(req.currentObject).toEqual(expect.objectContaining(testRecord));
+    expect(req.currentObject).toEqual(expect.objectContaining(testStorage));
+    expect(objectReadSpy).toHaveBeenCalledTimes(1);
+    expect(objectReadSpy).toHaveBeenCalledWith(objId);
+    expect(storageHeadObjectSpy).toHaveBeenCalledTimes(1);
+    expect(storageHeadObjectSpy).toHaveBeenCalledWith({
+      filePath: expect.stringMatching(`/path/${objId}`)
+    });
+    expect(utils.getPath).toHaveBeenCalledTimes(1);
+    expect(utils.getPath).toHaveBeenCalledWith(objId);
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(next).toHaveBeenCalledWith();
   });
 });
 
 describe('hasPermission', () => {
-  const testRes = {
-    writeHead: jest.fn(),
-    end: jest.fn()
-  };
+  const searchPermissionsSpy = jest.spyOn(permissionService, 'searchPermissions');
+  const problemSendSpy = jest.spyOn(Problem.prototype, 'send');
 
-  it('returns a middleware function', async () => {
+  let req, res, next;
+
+  beforeEach(() => {
+    problemSendSpy.mockImplementation(() => { });
+
+    req = {};
+    res = {};
+    next = jest.fn();
+  });
+
+  it('responds with 403 if the request has no current object', () => {
+    config.has
+      .mockReturnValueOnce(true) // db.enabled
+      .mockReturnValueOnce(true); // keycloak.enabled
+
     const mw = hasPermission(Permissions.READ);
     expect(mw).toBeInstanceOf(Function);
+    mw(req, res, next);
+
+    expect(searchPermissionsSpy).toHaveBeenCalledTimes(0);
+    expect(problemSendSpy).toHaveBeenCalledTimes(1);
+    expect(problemSendSpy).toHaveBeenCalledWith(res);
+    expect(next).toHaveBeenCalledTimes(0);
   });
 
   // TODO: Revisit after config mocking is done
-  it.skip('calls next and does nothing if db is not enabled', async () => {
+  it.skip('calls next and does nothing if db is not enabled', () => {
     const mw = hasPermission(Permissions.READ);
     const nxt = jest.fn();
     const req = { a: '1' };
 
-    await mw(req, testRes, nxt);
+    mw(req, res, nxt);
     expect(nxt).toHaveBeenCalledTimes(1);
-  });
-
-  it('403s if the request has no current object', async () => {
-    const mw = hasPermission(Permissions.READ);
-    const nxt = jest.fn();
-    const req = { a: '1' };
-
-    await mw(req, testRes, nxt);
-    expect(nxt).toHaveBeenCalledTimes(0);
   });
 });
