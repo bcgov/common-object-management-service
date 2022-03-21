@@ -1,5 +1,6 @@
 const Problem = require('api-problem');
 const config = require('config');
+const { NIL: SYSTEM_USER } = require('uuid');
 
 const { checkAppMode, currentObject, hasPermission } = require('../../../src/middleware/authorization');
 const { objectService, permissionService, storageService } = require('../../../src/services');
@@ -26,7 +27,7 @@ describe('checkAppMode', () => {
   let req, res, next;
 
   beforeEach(() => {
-    req = { currentUser: {} };
+    req = {};
     res = {};
     next = jest.fn();
   });
@@ -52,7 +53,7 @@ describe('checkAppMode', () => {
     const sendCount = 1 - nextCount;
     getAppAuthModeSpy.mockReturnValue(mode);
     problemSendSpy.mockImplementation(() => { });
-    req.currentUser.authType = type;
+    if (type) req.currentUser = { authType: type };
 
     checkAppMode(req, res, next);
 
@@ -137,6 +138,8 @@ describe('currentObject', () => {
 });
 
 describe('hasPermission', () => {
+  const getAppAuthModeSpy = jest.spyOn(utils, 'getAppAuthMode');
+  const getCurrentOidcIdSpy = jest.spyOn(utils, 'getCurrentOidcId');
   const searchPermissionsSpy = jest.spyOn(permissionService, 'searchPermissions');
   const problemSendSpy = jest.spyOn(Problem.prototype, 'send');
 
@@ -150,28 +153,166 @@ describe('hasPermission', () => {
     next = jest.fn();
   });
 
-  it('responds with 403 if the request has no current object', () => {
-    config.has
-      .mockReturnValueOnce(true) // db.enabled
-      .mockReturnValueOnce(true); // keycloak.enabled
+  describe('given no currentObject nor currentUser', () => {
+    it.each([
+      [1, false, AuthMode.NOAUTH],
+      [1, false, AuthMode.BASICAUTH],
+      [1, false, AuthMode.OIDCAUTH],
+      [1, false, AuthMode.FULLAUTH],
+      [1, true, AuthMode.NOAUTH],
+      [1, true, AuthMode.BASICAUTH],
+      [0, true, AuthMode.OIDCAUTH],
+      [0, true, AuthMode.FULLAUTH]
+    ])('should call next %i times given hasDb %s and authMode %s', (nextCount, hasDb, mode) => {
+      const sendCount = 1 - nextCount;
+      getAppAuthModeSpy.mockReturnValue(mode);
+      getCurrentOidcIdSpy.mockReturnValue(undefined);
+      config.has.mockReturnValueOnce(hasDb); // db.enabled
 
-    const mw = hasPermission(Permissions.READ);
-    expect(mw).toBeInstanceOf(Function);
-    mw(req, res, next);
+      const mw = hasPermission(Permissions.READ);
+      expect(mw).toBeInstanceOf(Function);
+      mw(req, res, next);
 
-    expect(searchPermissionsSpy).toHaveBeenCalledTimes(0);
-    expect(problemSendSpy).toHaveBeenCalledTimes(1);
-    expect(problemSendSpy).toHaveBeenCalledWith(res);
-    expect(next).toHaveBeenCalledTimes(0);
+      expect(next).toHaveBeenCalledTimes(nextCount);
+      if (nextCount) expect(next).toHaveBeenCalledWith();
+      expect(problemSendSpy).toHaveBeenCalledTimes(sendCount);
+      if (sendCount) expect(problemSendSpy).toHaveBeenCalledWith(res);
+      expect(searchPermissionsSpy).toHaveBeenCalledTimes(0);
+    });
   });
 
-  // TODO: Revisit after config mocking is done
-  it.skip('calls next and does nothing if db is not enabled', () => {
-    const mw = hasPermission(Permissions.READ);
-    const nxt = jest.fn();
-    const req = { a: '1' };
+  describe('given a currentObject but no currentUser', () => {
+    beforeEach(() => {
+      req.currentObject = {};
+    });
 
-    mw(req, res, nxt);
-    expect(nxt).toHaveBeenCalledTimes(1);
+    it.each([
+      [1, false, AuthMode.NOAUTH],
+      [1, false, AuthMode.BASICAUTH],
+      [1, false, AuthMode.OIDCAUTH],
+      [1, false, AuthMode.FULLAUTH],
+      [1, true, AuthMode.NOAUTH],
+      [1, true, AuthMode.BASICAUTH],
+      [0, true, AuthMode.OIDCAUTH],
+      [0, true, AuthMode.FULLAUTH]
+    ])('should call next %i times given hasDb %s and authMode %s', (nextCount, hasDb, mode) => {
+      const sendCount = 1 - nextCount;
+      getAppAuthModeSpy.mockReturnValue(mode);
+      getCurrentOidcIdSpy.mockReturnValue(undefined);
+      config.has.mockReturnValueOnce(hasDb); // db.enabled
+
+      const mw = hasPermission(Permissions.READ);
+      expect(mw).toBeInstanceOf(Function);
+      mw(req, res, next);
+
+      expect(next).toHaveBeenCalledTimes(nextCount);
+      if (nextCount) expect(next).toHaveBeenCalledWith();
+      expect(problemSendSpy).toHaveBeenCalledTimes(sendCount);
+      if (sendCount) expect(problemSendSpy).toHaveBeenCalledWith(res);
+      expect(searchPermissionsSpy).toHaveBeenCalledTimes(0);
+    });
+  });
+
+  describe('given a currentObject and currentUser', () => {
+    beforeEach(() => {
+      req.currentObject = {};
+      req.currentUser = {};
+    });
+
+    it.each([
+      [1, AuthMode.NOAUTH],
+      [1, AuthMode.BASICAUTH],
+      [0, AuthMode.OIDCAUTH],
+      [1, AuthMode.FULLAUTH]
+    ])('should call next %i times when authType BASIC and authMode %s', (nextCount, mode) => {
+      const sendCount = 1 - nextCount;
+      getAppAuthModeSpy.mockReturnValue(mode);
+      getCurrentOidcIdSpy.mockReturnValue(SYSTEM_USER);
+      config.has.mockReturnValueOnce(true); // db.enabled
+      req.currentUser.authType = AuthType.BASIC;
+
+      const mw = hasPermission(Permissions.READ);
+      expect(mw).toBeInstanceOf(Function);
+      mw(req, res, next);
+
+      expect(next).toHaveBeenCalledTimes(nextCount);
+      if (nextCount) expect(next).toHaveBeenCalledWith();
+      expect(problemSendSpy).toHaveBeenCalledTimes(sendCount);
+      if (sendCount) expect(problemSendSpy).toHaveBeenCalledWith(res);
+      expect(searchPermissionsSpy).toHaveBeenCalledTimes(0);
+    });
+
+    it.each([
+      [0, false, Permissions.CREATE],
+      [0, false, Permissions.READ],
+      [0, false, Permissions.UPDATE],
+      [0, false, Permissions.DELETE],
+      [0, false, Permissions.MANAGE],
+      [0, true, Permissions.CREATE],
+      [1, true, Permissions.READ],
+      [0, true, Permissions.UPDATE],
+      [0, true, Permissions.DELETE],
+      [0, true, Permissions.MANAGE]
+    ])('should call next %i times when public %s and permission %s', (nextCount, isPublic, perm) => {
+      const sendCount = 1 - nextCount;
+      getAppAuthModeSpy.mockReturnValue(AuthMode.OIDCAUTH);
+      getCurrentOidcIdSpy.mockReturnValue(SYSTEM_USER);
+      config.has.mockReturnValueOnce(true); // db.enabled
+      req.currentUser.authType = AuthType.OIDC;
+      req.currentObject.public = isPublic;
+
+      const mw = hasPermission(perm);
+      expect(mw).toBeInstanceOf(Function);
+      mw(req, res, next);
+
+      expect(next).toHaveBeenCalledTimes(nextCount);
+      if (nextCount) expect(next).toHaveBeenCalledWith();
+      expect(problemSendSpy).toHaveBeenCalledTimes(sendCount);
+      if (sendCount) expect(problemSendSpy).toHaveBeenCalledWith(res);
+      expect(searchPermissionsSpy).toHaveBeenCalledTimes(0);
+    });
+  });
+
+  describe('given currentObject with public false and currentUser', () => {
+    beforeEach(() => {
+      req.currentObject = {};
+      req.currentUser = {};
+      req.params = {};
+    });
+
+    it.each([
+      [0, AuthType.NONE, undefined, []],
+      [0, AuthType.NONE, SYSTEM_USER, []],
+      [0, AuthType.NONE, SYSTEM_USER, [{ permCode: Permissions.UPDATE }]],
+      [0, AuthType.NONE, SYSTEM_USER, [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }]],
+      [0, AuthType.BEARER, undefined, []],
+      [0, AuthType.BEARER, SYSTEM_USER, []],
+      [0, AuthType.BEARER, SYSTEM_USER, [{ permCode: Permissions.UPDATE }]],
+      [1, AuthType.BEARER, SYSTEM_USER, [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }]]
+    ])('should call next %i times when authType %s, oidcId %o and have permissions %j', async (nextCount, type, oidcId, perms) => {
+      const sendCount = 1 - nextCount;
+      const searchPermCount = +(type === AuthType.BEARER && !!oidcId);
+      getAppAuthModeSpy.mockReturnValue(AuthMode.OIDCAUTH);
+      getCurrentOidcIdSpy.mockReturnValue(oidcId);
+      searchPermissionsSpy.mockResolvedValue(perms);
+      config.has.mockReturnValueOnce(true); // db.enabled
+      req.currentObject.public = false;
+      req.currentUser.authType = type;
+      req.params.objId = SYSTEM_USER;
+
+      const mw = hasPermission(Permissions.READ);
+      expect(mw).toBeInstanceOf(Function);
+      await mw(req, res, next);
+
+      expect(next).toHaveBeenCalledTimes(nextCount);
+      if (nextCount) expect(next).toHaveBeenCalledWith();
+      expect(problemSendSpy).toHaveBeenCalledTimes(sendCount);
+      if (sendCount) expect(problemSendSpy).toHaveBeenCalledWith(res);
+      expect(searchPermissionsSpy).toHaveBeenCalledTimes(searchPermCount);
+      if (searchPermCount) {
+        expect(searchPermissionsSpy).toHaveBeenCalledWith(expect.objectContaining({ objId: SYSTEM_USER }));
+        expect(searchPermissionsSpy).toHaveBeenCalledWith(expect.objectContaining({ oidcId: oidcId }));
+      }
+    });
   });
 });

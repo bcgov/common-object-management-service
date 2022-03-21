@@ -3,7 +3,7 @@ const config = require('config');
 
 const log = require('../components/log')(module.filename);
 const { AuthMode, AuthType, Permissions } = require('../components/constants');
-const { getAppAuthMode, getPath } = require('../components/utils');
+const { getAppAuthMode, getCurrentOidcId, getPath } = require('../components/utils');
 const { objectService, permissionService, storageService } = require('../services');
 
 /**
@@ -67,32 +67,37 @@ const currentObject = async (req, _res, next) => {
  */
 const hasPermission = (permission) => {
   return async (req, res, next) => {
+    const authMode = getAppAuthMode();
+    const authType = req.currentUser ? req.currentUser.authType : undefined;
+    const oidcId = getCurrentOidcId(req.currentUser);
+
+    const canBasicMode = (mode) => [AuthMode.BASICAUTH, AuthMode.FULLAUTH].includes(mode);
+    const canOidcMode = (mode) => [AuthMode.OIDCAUTH, AuthMode.FULLAUTH].includes(mode);
+
     try {
-      if (config.has('db.enabled') && config.has('keycloak.enabled')) {
-        if (!req.currentObject) {
-          // Force 403 on unauthorized or not found; do not allow 404 id brute force discovery
-          throw new Error('Missing object record');
-        }
+      if (!config.has('db.enabled') || !canOidcMode(authMode)) {
+        log.debug('Current application mode does not enforce permission checks', { function: 'hasPermission' });
+      } else if (!req.currentObject) {
+        // Force 403 on unauthorized or not found; do not allow 404 id brute force discovery
+        throw new Error('Missing object record');
+      } else if (authType === AuthType.BASIC && canBasicMode(authMode)) {
+        log.debug('Basic authTypes are always permitted', { function: 'hasPermission' });
+      } else if (req.currentObject.public && permission === Permissions.READ) {
+        log.debug('Read requests on public objects are always permitted', { function: 'hasPermission' });
+      } else {
+        // Guard against unauthorized access for all other cases
+        if (authType === AuthType.BEARER && oidcId) {
+          // Check if user has the required permission in their permission set
+          const permissions = await permissionService.searchPermissions({
+            objId: req.params.objId,
+            oidcId: oidcId
+          });
 
-        // Only skip permission check if object is public and read permission is requested
-        if (!req.currentObject.public || !permission === Permissions.READ) {
-          // Other than the above case, guard against unauthed access for everything else
-          const authType = req.currentUser ? req.currentUser.authType : undefined;
-          const sub = req.currentUser.tokenPayload ? req.currentUser.tokenPayload.sub : undefined;
-
-          if (authType && authType === AuthType.BEARER && sub) {
-            // Check if user has the required permission in their permission set
-            const permissions = await permissionService.searchPermissions({
-              objId: req.params.objId,
-              oidcId: sub
-            });
-
-            if (!permissions.some(p => p.permCode === permission)) {
-              throw new Error(`User lacks permission '${permission}' on object '${req.params.objId}'`);
-            }
-          } else {
-            throw new Error('Missing user identification');
+          if (!permissions.some(p => p.permCode === permission)) {
+            throw new Error(`User lacks permission '${permission}' on object '${req.params.objId}'`);
           }
+        } else {
+          throw new Error('Missing user identification');
         }
       }
     } catch (err) {
