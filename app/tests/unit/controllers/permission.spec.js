@@ -1,7 +1,8 @@
+const Problem = require('api-problem');
+
 const { AuthType } = require('../../../src/components/constants');
 const controller = require('../../../src/controllers/permission');
 const { permissionService } = require('../../../src/services');
-const Problem = require('api-problem');
 
 const mockResponse = () => {
   const res = {};
@@ -9,6 +10,9 @@ const mockResponse = () => {
   res.json = jest.fn().mockReturnValue(res);
   return res;
 };
+
+// Mock config library - @see https://stackoverflow.com/a/64819698
+jest.mock('config');
 
 describe('searchPermissions', () => {
   afterEach(() => {

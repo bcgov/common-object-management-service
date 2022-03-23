@@ -7,6 +7,9 @@ const router = require('../../../src/routes/v1');
 const basePath = '/api/v1';
 const app = expressHelper(basePath, router);
 
+// Mock config library - @see https://stackoverflow.com/a/64819698
+jest.mock('config');
+
 describe(`GET ${basePath}`, () => {
   it('should return all available endpoints', async () => {
     const response = await request(app).get(`${basePath}`);

@@ -1,7 +1,3 @@
-jest.mock('@aws-sdk/s3-request-presigner', () => ({
-  getSignedUrl: jest.fn()
-}));
-
 const {
   DeleteObjectCommand,
   GetObjectCommand,
@@ -23,6 +19,12 @@ const key = utils.delimit(config.get('objectStorage.key'));
 const defaultTempExpiresIn = parseInt(config.get('objectStorage.defaultTempExpiresIn'), 10);
 
 const s3ClientMock = mockClient(service._s3Client);
+
+jest.mock('@aws-sdk/s3-request-presigner', () => ({
+  getSignedUrl: jest.fn()
+}));
+// Mock config library - @see https://stackoverflow.com/a/64819698
+jest.mock('config');
 
 describe('_s3Client', () => {
   it('should be an object', () => {

@@ -1,92 +1,275 @@
 const Problem = require('api-problem');
+const config = require('config');
+const jwt = require('jsonwebtoken');
 
-const { basicAuthConfig, currentUser, spkiWrapper } = require('../../../src/middleware/authentication');
+const mw = require('../../../src/middleware/authentication');
 const { AuthType } = require('../../../src/components/constants');
+const keycloak = require('../../../src/components/keycloak');
+const { userService } = require('../../../src/services');
 
-const testRes = {
-  writeHead: jest.fn(),
-  end: jest.fn()
-};
+// Mock config library - @see https://stackoverflow.com/a/64819698
+jest.mock('config');
+// We need to create a higher order mock to properly intercept this library
+jest.mock('express-basic-auth', () => {
+  function buildMiddleware() {
+    return jest.fn();
+  }
+  buildMiddleware.safeCompare = jest.requireActual('express-basic-auth').safeCompare;
+  return buildMiddleware;
+});
+// Mock out keycloak library and use a spy to observe behavior
+jest.mock('../../../src/components/keycloak');
 
-const testNoAuthUser = {
-  authType: AuthType.NONE
-};
-
-afterEach(() => {
-  jest.clearAllMocks();
+beforeEach(() => {
+  jest.resetAllMocks();
 });
 
-describe('basicAuthConfig authorizer', () => {
-  // Username and PW set in test env config
-  it('returns true if user and PW match', () => {
-    expect(basicAuthConfig.authorizer('username0', 'password1')).toBeTruthy();
+afterAll(() => {
+  jest.restoreAllMocks();
+});
+
+describe('_basicAuthConfig', () => {
+  describe('authorizer', () => {
+    const baduser = 'bad username';
+    const badpw = 'bad password';
+    const gooduser = 'good username';
+    const goodpw = 'good password';
+
+    beforeEach(() => {
+      config.get
+        .mockReturnValueOnce(gooduser) // basicAuth.username
+        .mockReturnValueOnce(goodpw); // basicAuth.password
+    });
+
+    it.each([
+      [1, gooduser, goodpw],
+      [0, baduser, goodpw],
+      [0, gooduser, badpw],
+      [0, baduser, badpw]
+    ])('returns %s with %s and %s', (expected, user, pw) => {
+      expect(mw._basicAuthConfig.authorizer(user, pw)).toBe(expected);
+      expect(config.get).toHaveBeenCalledTimes(2);
+      expect(config.get).toHaveBeenNthCalledWith(1, 'basicAuth.username');
+      expect(config.get).toHaveBeenNthCalledWith(2, 'basicAuth.password');
+    });
   });
-  it('returns false if user and PW do not match', () => {
-    expect(basicAuthConfig.authorizer('username456', 'password1')).toBeFalsy();
-    expect(basicAuthConfig.authorizer('username0', 'password456')).toBeFalsy();
-    expect(basicAuthConfig.authorizer('something', 'notright')).toBeFalsy();
+
+  describe('unauthorizedResponse', () => {
+    it('returns a problem', () => {
+      const result = mw._basicAuthConfig.unauthorizedResponse();
+
+      expect(result).toBeTruthy();
+      expect(result).toBeInstanceOf(Problem);
+      expect(result.status).toEqual(401);
+      expect(result.detail).toMatch('Invalid authorization credentials');
+    });
   });
 });
 
-describe('basicAuthConfig unauthorizedResponse', () => {
-  it('returns a problem', () => {
-    const result = basicAuthConfig.unauthorizedResponse();
-    expect(result).toBeTruthy();
-    expect(result).toBeInstanceOf(Problem);
-    expect(result.status).toEqual(401);
+describe('_checkBasicAuth', () => {
+  it('is a function', () => {
+    expect(mw._checkBasicAuth).toBeTruthy();
+    expect(typeof mw._checkBasicAuth).toBe('function');
   });
 });
 
 describe('spkiWrapper', () => {
   it('returns the PEM format we expect', () => {
-    const spki = `MIIB9TCCAWACAQAwgbgxGTAXBgNVBAoMEFF1b1ZhZGlzIExpbWl0ZWQxHDAaBgNV
-    BAsME0RvY3VtZW50IERlcGFydG1lbnQxOTA3BgNVBAMMMFdoeSBhcmUgeW91IGRl
-    Y29kaW5nIG1lPyAgVGhpcyBpcyBvbmx5IGEgdGVzdCEhITERMA8GA1UEBwwISGFt
-    aWx0b24xETAPBgNVBAgMCFBlbWJyb2tlMQswCQYDVQQGEwJCTTEPMA0GCSqGSIb3
-    DQEJARYAMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCJ9WRanG/fUvcfKiGl
-    EL4aRLjGt537mZ28UU9/3eiJeJznNSOuNLnF+hmabAu7H0LT4K7EdqfF+XUZW/2j
-    RKRYcvOUDGF9A7OjW7UfKk1In3+6QDCi7X34RE161jqoaJjrm/T18TOKcgkkhRzE
-    apQnIDm0Ea/HVzX/PiSOGuertwIDAQABMAsGCSqGSIb3DQEBBQOBgQBzMJdAV4QP
-    Awel8LzGx5uMOshezF/KfP67wJ93UW+N7zXY6AwPgoLj4Kjw+WtU684JL8Dtr9FX
-    ozakE+8p06BpxegR4BR3FMHf6p+0jQxUEAkAyb/mVgm66TyghDGC6/YkiKoZptXQ
-    98TwDIK/39WEB/V607As+KoYazQG8drorw==
-    `;
-    expect(spkiWrapper(spki)).toEqual(`-----BEGIN PUBLIC KEY-----\n${spki}\n-----END PUBLIC KEY-----`);
+    const spki = 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4CcG7WPTCF4YLHxT3bs9ilcQ6SS+A2e/PiZ9hqR0noelBCsdW0SQGOhjE7nhl2lrZ0W/o80YKMzNZ42Hmc7p0sHU3RN95OCTHvyCazC/CKM2i+gD+cAspP/Ns+hOqNmxC/XIsgD3bZ2zobNMhNy3jgDaAsbs3kOGPIwkdo/vWeo7N6fZPxOgSp6JoGBDtehuyhQ/4y2f7TnyicIvHMuc2d7Bz4GalQ/ra+GspmZ/HqL93A6c8sDHa8fqC8O+gnzpBNsCOxJcq/i3NOaGrOFMCiJwsNVc2dUcY8epcW3pwakIRLlC6D7oawbxv7c3UsXoCt4XSC0hdjwXg5kxVXHoDQIDAQAB';
+
+    const result = mw._spkiWrapper(spki);
+
+    expect(result).toBeTruthy();
+    expect(typeof result).toBe('string');
+    expect(result).toEqual(`-----BEGIN PUBLIC KEY-----\n${spki}\n-----END PUBLIC KEY-----`);
   });
 });
 
 describe('currentUser', () => {
-  it('sets no auth as the type if no auth header', async () => {
-    const testReq = {
-      params: {
-        someParam: 123
-      },
-      get: jest.fn().mockReturnValue(undefined)
-    };
-    const nxt = jest.fn();
+  const checkBasicAuthSpy = jest.spyOn(mw, '_checkBasicAuth');
+  const jwtDecodeSpy = jest.spyOn(jwt, 'decode');
+  const jwtVerifySpy = jest.spyOn(jwt, 'verify');
+  const loginSpy = jest.spyOn(userService, 'login');
+  const problemSendSpy = jest.spyOn(Problem.prototype, 'send');
+  const validateAccessTokenSpy = jest.spyOn(keycloak.grantManager, 'validateAccessToken');
 
-    await currentUser(testReq, testRes, nxt);
-    expect(testReq.get).toHaveBeenCalledTimes(1);
-    expect(testReq.get).toHaveBeenCalledWith('Authorization');
-    expect(testReq.currentUser).toEqual(testNoAuthUser);
-    expect(nxt).toHaveBeenCalledTimes(1);
-    expect(nxt).toHaveBeenCalledWith();
+  let req, res, next;
+
+  beforeEach(() => {
+    checkBasicAuthSpy.mockImplementation(() => {
+      return jest.fn();
+    });
+
+    req = { get: jest.fn() };
+    res = {};
+    next = jest.fn();
   });
 
-  it('sets no auth as the type if blank auth header', async () => {
-    const testReq = {
-      params: {
-        someParam: 123
-      },
-      get: jest.fn().mockReturnValue('')
-    };
-    const nxt = jest.fn();
+  describe('No Authorization', () => {
+    it.each([
+      [undefined],
+      [''],
+      ['garbage']
+    ])('sets authType to NONE with authorization header "%s"', (authorization) => {
+      req.get.mockReturnValueOnce(authorization);
 
-    await currentUser(testReq, testRes, nxt);
-    expect(testReq.get).toHaveBeenCalledTimes(1);
-    expect(testReq.get).toHaveBeenCalledWith('Authorization');
-    expect(testReq.currentUser).toEqual(testNoAuthUser);
-    expect(nxt).toHaveBeenCalledTimes(1);
-    expect(nxt).toHaveBeenCalledWith();
+      mw.currentUser(req, res, next);
+
+      expect(req.currentUser).toBeTruthy();
+      expect(req.currentUser).toEqual(expect.objectContaining({ authType: AuthType.NONE }));
+      expect(req.get).toHaveBeenCalledTimes(1);
+      expect(req.get).toHaveBeenCalledWith('Authorization');
+      expect(checkBasicAuthSpy).toHaveBeenCalledTimes(0);
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(next).toHaveBeenCalledWith();
+      expect(problemSendSpy).toHaveBeenCalledTimes(0);
+    });
+  });
+
+  describe('Basic Authorization', () => {
+    it.each([
+      ['basic '],
+      ['basic garbage'],
+      ['Basic Z29vZCB1c2VybmFtZTpnb29kIHBhc3N3b3Jk']
+    ])('sets authType to BASIC with authorization header "%s"', async (authorization) => {
+      config.has.mockReturnValueOnce(true); // basicAuth.enabled
+      req.get.mockReturnValueOnce(authorization);
+
+      mw.currentUser(req, res, next);
+
+      expect(req.currentUser).toBeTruthy();
+      expect(req.currentUser).toEqual(expect.objectContaining({ authType: AuthType.BASIC }));
+      expect(req.get).toHaveBeenCalledTimes(1);
+      expect(req.get).toHaveBeenCalledWith('Authorization');
+      expect(config.has).toHaveBeenCalledTimes(1);
+      expect(config.has).toHaveBeenNthCalledWith(1, 'basicAuth.enabled');
+      expect(checkBasicAuthSpy).toHaveBeenCalledTimes(1);
+      expect(checkBasicAuthSpy).toHaveBeenCalledWith(req, res, next);
+      expect(next).toHaveBeenCalledTimes(0);
+      expect(problemSendSpy).toHaveBeenCalledTimes(0);
+    });
+  });
+
+  describe('OIDC Authorization', () => {
+    const spki = 'SOMESPKI';
+    const publicKey = `-----BEGIN PUBLIC KEY-----\n${spki}\n-----END PUBLIC KEY-----`;
+
+    it.each([
+      ['SPKI', spki],
+      ['PEM', publicKey]
+    ])('sets authType to BEARER with keycloak.publicKey %s', async (_desc, pkey) => {
+      const authorization = 'bearer ';
+      const serverUrl = 'serverUrl';
+      const realm = 'realm';
+
+      jwtVerifySpy.mockReturnValue({}); // return truthy value
+      jwtDecodeSpy.mockReturnValue({ sub: 'sub' });
+      loginSpy.mockImplementation(() => { });
+      config.has
+        .mockReturnValueOnce(false) // basicAuth.enabled
+        .mockReturnValueOnce(true) // keycloak.enabled
+        .mockReturnValueOnce(true); // keycloak.publicKey
+      config.get
+        .mockReturnValueOnce(pkey) // keycloak.publicKey
+        .mockReturnValueOnce(serverUrl) // keycloak.serverUrl
+        .mockReturnValueOnce(realm); // keycloak.realm
+      req.get.mockReturnValueOnce(authorization);
+
+      await mw.currentUser(req, res, next);
+
+      expect(req.currentUser).toBeTruthy();
+      expect(req.currentUser).toEqual(expect.objectContaining({ authType: AuthType.BEARER }));
+      expect(req.currentUser).toEqual(expect.objectContaining({ tokenPayload: { sub: 'sub' } }));
+      expect(req.get).toHaveBeenCalledTimes(1);
+      expect(req.get).toHaveBeenCalledWith('Authorization');
+      expect(config.has).toHaveBeenCalledTimes(3);
+      expect(config.has).toHaveBeenNthCalledWith(1, 'basicAuth.enabled');
+      expect(config.has).toHaveBeenNthCalledWith(2, 'keycloak.enabled');
+      expect(config.has).toHaveBeenNthCalledWith(3, 'keycloak.publicKey');
+      expect(config.get).toHaveBeenCalledTimes(3);
+      expect(config.get).toHaveBeenNthCalledWith(1, 'keycloak.publicKey');
+      expect(config.get).toHaveBeenNthCalledWith(2, 'keycloak.serverUrl');
+      expect(config.get).toHaveBeenNthCalledWith(3, 'keycloak.realm');
+      expect(validateAccessTokenSpy).toHaveBeenCalledTimes(0);
+      expect(checkBasicAuthSpy).toHaveBeenCalledTimes(0);
+      expect(jwtVerifySpy).toHaveBeenCalledTimes(1);
+      expect(jwtVerifySpy).toHaveBeenCalledWith(expect.any(String), publicKey, expect.objectContaining({
+        issuer: `${serverUrl}/realms/${realm}`
+      }));
+      expect(jwtDecodeSpy).toHaveBeenCalledTimes(1);
+      expect(jwtDecodeSpy).toHaveBeenCalledWith(expect.any(String));
+      expect(loginSpy).toHaveBeenCalledTimes(1);
+      expect(loginSpy).toHaveBeenCalledWith(expect.objectContaining({ sub: 'sub' }));
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(next).toHaveBeenCalledWith();
+      expect(problemSendSpy).toHaveBeenCalledTimes(0);
+    });
+
+    it('sets authType to BEARER without keycloak.publicKey and valid token', async () => {
+      const authorization = 'bearer ';
+
+      jwtDecodeSpy.mockReturnValue({ sub: 'sub' });
+      loginSpy.mockImplementation(() => { });
+      validateAccessTokenSpy.mockResolvedValue(true);
+      config.has
+        .mockReturnValueOnce(false) // basicAuth.enabled
+        .mockReturnValueOnce(true) // keycloak.enabled
+        .mockReturnValueOnce(false); // keycloak.publicKey
+      req.get.mockReturnValueOnce(authorization);
+
+      await mw.currentUser(req, res, next);
+
+      expect(req.currentUser).toBeTruthy();
+      expect(req.currentUser).toEqual(expect.objectContaining({ authType: AuthType.BEARER }));
+      expect(req.currentUser).toEqual(expect.objectContaining({ tokenPayload: { sub: 'sub' } }));
+      expect(req.get).toHaveBeenCalledTimes(1);
+      expect(req.get).toHaveBeenCalledWith('Authorization');
+      expect(config.has).toHaveBeenCalledTimes(3);
+      expect(config.has).toHaveBeenNthCalledWith(1, 'basicAuth.enabled');
+      expect(config.has).toHaveBeenNthCalledWith(2, 'keycloak.enabled');
+      expect(config.has).toHaveBeenNthCalledWith(3, 'keycloak.publicKey');
+      expect(validateAccessTokenSpy).toHaveBeenCalledTimes(1);
+      expect(validateAccessTokenSpy).toHaveBeenCalledWith(expect.any(String));
+      expect(checkBasicAuthSpy).toHaveBeenCalledTimes(0);
+      expect(jwtVerifySpy).toHaveBeenCalledTimes(0);
+      expect(jwtDecodeSpy).toHaveBeenCalledTimes(1);
+      expect(jwtDecodeSpy).toHaveBeenCalledWith(expect.any(String));
+      expect(loginSpy).toHaveBeenCalledTimes(1);
+      expect(loginSpy).toHaveBeenCalledWith(expect.objectContaining({ sub: 'sub' }));
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(next).toHaveBeenCalledWith();
+      expect(problemSendSpy).toHaveBeenCalledTimes(0);
+    });
+
+    it('short circuits without keycloak.publicKey and invalid token', async () => {
+      const authorization = 'bearer ';
+
+      problemSendSpy.mockImplementation(() => { });
+      validateAccessTokenSpy.mockResolvedValue(false);
+      config.has
+        .mockReturnValueOnce(false) // basicAuth.enabled
+        .mockReturnValueOnce(true) // keycloak.enabled
+        .mockReturnValueOnce(false); // keycloak.publicKey
+      req.get.mockReturnValueOnce(authorization);
+
+      await mw.currentUser(req, res, next);
+
+      expect(req.currentUser).toBeFalsy();
+      expect(req.get).toHaveBeenCalledTimes(1);
+      expect(req.get).toHaveBeenCalledWith('Authorization');
+      expect(config.has).toHaveBeenCalledTimes(3);
+      expect(config.has).toHaveBeenNthCalledWith(1, 'basicAuth.enabled');
+      expect(config.has).toHaveBeenNthCalledWith(2, 'keycloak.enabled');
+      expect(config.has).toHaveBeenNthCalledWith(3, 'keycloak.publicKey');
+      expect(validateAccessTokenSpy).toHaveBeenCalledTimes(1);
+      expect(validateAccessTokenSpy).toHaveBeenCalledWith(expect.any(String));
+      expect(checkBasicAuthSpy).toHaveBeenCalledTimes(0);
+      expect(jwtVerifySpy).toHaveBeenCalledTimes(0);
+      expect(jwtDecodeSpy).toHaveBeenCalledTimes(0);
+      expect(loginSpy).toHaveBeenCalledTimes(0);
+      expect(next).toHaveBeenCalledTimes(0);
+      expect(problemSendSpy).toHaveBeenCalledTimes(1);
+      expect(problemSendSpy).toHaveBeenCalledWith(res);
+    });
   });
 });

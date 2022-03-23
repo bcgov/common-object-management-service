@@ -9,6 +9,8 @@ const { objectController } = require('../../../../src/controllers');
 const basePath = '/api/v1/object';
 const app = expressHelper(basePath, router);
 
+// Mock config library - @see https://stackoverflow.com/a/64819698
+jest.mock('config');
 
 describe(`POST ${basePath}`, () => {
   const spy = jest.spyOn(objectController, 'createObjects');
