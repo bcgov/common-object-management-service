@@ -186,7 +186,7 @@ const controller = {
       };
 
       // Download through service
-      if (req.query.download) {
+      if (!req.query.expiresIn && req.query.download) {
         const response = await storageService.readObject(data);
 
         // Set Headers
@@ -203,7 +203,10 @@ const controller = {
 
       // Download via redirect
       else {
-        const response = await storageService.readSignedUrl(data);
+        const response = await storageService.readSignedUrl({
+          expiresIn: req.query.expiresIn,
+          ...data
+        });
         res.status(302).set('Location', response).end();
       }
     } catch (e) {
