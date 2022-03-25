@@ -12,8 +12,9 @@ exports.up = function (knex) {
     }))
 
     .then(() => knex.schema.createTable('user', table => {
-      table.uuid('oidcId').primary();
-      table.string('idp', 255).references('idp').inTable('identity_provider');
+      table.uuid('userId').primary();
+      table.uuid('identityId').index();
+      table.string('idp', 255).references('idp').inTable('identity_provider').onUpdate('CASCADE').onDelete('CASCADE');
       table.string('username', 255).notNullable().index();
       table.string('email', 255).index();
       table.string('firstName', 255);
@@ -41,9 +42,9 @@ exports.up = function (knex) {
 
     .then(() => knex.schema.createTable('object_permission', table => {
       table.uuid('id').primary();
-      table.uuid('objectId').references('id').inTable('object').notNullable();
-      table.uuid('oidcId').references('oidcId').inTable('user').notNullable();
-      table.string('permCode').references('permCode').inTable('permission').notNullable();
+      table.uuid('objectId').references('id').inTable('object').notNullable().onUpdate('CASCADE').onDelete('CASCADE');
+      table.uuid('userId').references('userId').inTable('user').notNullable().onUpdate('CASCADE').onDelete('CASCADE');
+      table.string('permCode').references('permCode').inTable('permission').notNullable().onUpdate('CASCADE').onDelete('CASCADE');
       stamps(knex, table);
     }))
 
@@ -144,7 +145,7 @@ exports.up = function (knex) {
     .then(() => {
       const users = ['system'];
       const items = users.map((user) => ({
-        oidcId: SYSTEM_USER,
+        userId: SYSTEM_USER,
         username: user,
         active: true,
         createdBy: SYSTEM_USER,

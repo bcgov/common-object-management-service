@@ -33,8 +33,8 @@ class ObjectPermission extends Timestamps(Model) {
         relation: Model.HasOneRelation,
         modelClass: User,
         join: {
-          from: 'object_permission.oidcId',
-          to: 'user.oidcId'
+          from: 'object_permission.userId',
+          to: 'user.userId'
         }
       }
     };
@@ -42,12 +42,12 @@ class ObjectPermission extends Timestamps(Model) {
 
   static get modifiers() {
     return {
-      filterOidcId(query, value) {
+      filterUserId(query, value) {
         if (value) {
           if (Array.isArray(value) && value.length) {
-            query.whereIn('oidcId', value);
+            query.whereIn('userId', value);
           } else {
-            query.where('oidcId', value);
+            query.where('userId', value);
           }
         }
       },
@@ -75,10 +75,10 @@ class ObjectPermission extends Timestamps(Model) {
   static get jsonSchema() {
     return {
       type: 'object',
-      required: ['id', 'oidcId', 'objectId', 'permCode'],
+      required: ['id', 'userId', 'objectId', 'permCode'],
       properties: {
         id: { type: 'string', maxLength: 255 },
-        oidcId: { type: 'string', maxLength: 255 },
+        userId: { type: 'string', maxLength: 255 },
         objectId: { type: 'string', maxLength: 255 },
         permCode: { type: 'string' },
         ...stamps

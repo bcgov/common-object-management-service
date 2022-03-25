@@ -8,7 +8,7 @@ class User extends Timestamps(Model) {
   }
 
   static get idColumn() {
-    return 'oidcId';
+    return 'userId';
   }
 
   static get relationMappings() {
@@ -28,8 +28,8 @@ class User extends Timestamps(Model) {
         relation: Model.HasManyRelation,
         modelClass: ObjectPermission,
         join: {
-          from: 'user.oidcId',
-          to: 'object_permission.oidcId'
+          from: 'user.userId',
+          to: 'object_permission.userId'
         }
       }
     };
@@ -38,9 +38,10 @@ class User extends Timestamps(Model) {
   static get jsonSchema() {
     return {
       type: 'object',
-      required: ['oidcId', 'username'],
+      required: ['userId', 'username'],
       properties: {
-        oidcId: { type: 'string', maxLength: 255 },
+        userId: { type: 'string', maxLength: 255 },
+        identityId: { type: 'string', maxLength: 255 },
         idp: { type: 'string' },
         firstName: { type: 'string', maxLength: 255 },
         fullName: { type: 'string', maxLength: 255 },
