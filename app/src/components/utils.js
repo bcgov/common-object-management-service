@@ -12,10 +12,8 @@ const utils = {
    * @returns {string} The string `s` with the trailing delimiter, or an empty string.
    */
   delimit(s) {
-    if (s) {
-      return s.endsWith(DELIMITER) ? s : `${s}${DELIMITER}`;
-    }
-    return '';
+    if (s) return s.endsWith(DELIMITER) ? s : `${s}${DELIMITER}`;
+    else return '';
   },
 
   /**
@@ -28,21 +26,45 @@ const utils = {
     const oidcAuth = config.has('keycloak.enabled');
 
     if (!basicAuth && !oidcAuth) return AuthMode.NOAUTH;
-    if (basicAuth && !oidcAuth) return AuthMode.BASICAUTH;
-    if (!basicAuth && oidcAuth) return AuthMode.OIDCAUTH;
-    if (basicAuth && oidcAuth) return AuthMode.FULLAUTH;
+    else if (basicAuth && !oidcAuth) return AuthMode.BASICAUTH;
+    else if (!basicAuth && oidcAuth) return AuthMode.OIDCAUTH;
+    else return AuthMode.FULLAUTH; // basicAuth && oidcAuth
   },
 
   /**
-   * @function getCurrentOidcId
-   * Attempts to acquire current user oidcId. Yields `defaultValue` otherwise
+   * @function getCurrentIdentity
+   * Attempts to acquire current identity. Yields `defaultValue` otherwise
    * @param {object} currentUser The express request currentUser object
    * @param {string} [defaultValue=undefined] An optional default return value
-   * @returns {string} The current user oidcId if applicable, or `defaultValue`
+   * @returns {string} The current user identifier if applicable, or `defaultValue`
    */
-  getCurrentOidcId(currentUser, defaultValue = undefined) {
+  getCurrentIdentity(currentUser, defaultValue = undefined) {
+    const claim = config.has('keycloak.identityKey') ? config.get('keycloak.identityKey') : 'sub';
+    return utils.getCurrentTokenClaim(currentUser, claim, defaultValue);
+  },
+
+  /**
+   * @function getCurrentSubject
+   * Attempts to acquire current subject id. Yields `defaultValue` otherwise
+   * @param {object} currentUser The express request currentUser object
+   * @param {string} [defaultValue=undefined] An optional default return value
+   * @returns {string} The current subject id if applicable, or `defaultValue`
+   */
+  getCurrentSubject(currentUser, defaultValue = undefined) {
+    return utils.getCurrentTokenClaim(currentUser, 'sub', defaultValue);
+  },
+
+  /**
+   * @function getCurrentTokenClaim
+   * Attempts to acquire a specific current token claim. Yields `defaultValue` otherwise
+   * @param {object} currentUser The express request currentUser object
+   * @param {string} claim The requested token claim
+   * @param {string} [defaultValue=undefined] An optional default return value
+   * @returns {object} The requested current token claim if applicable, or `defaultValue`
+   */
+  getCurrentTokenClaim(currentUser, claim, defaultValue = undefined) {
     return (currentUser && currentUser.authType === AuthType.BEARER)
-      ? currentUser.tokenPayload.sub
+      ? currentUser.tokenPayload[claim]
       : defaultValue;
   },
 
@@ -75,7 +97,7 @@ const utils = {
       });
       return parts.join(DELIMITER);
     }
-    return '';
+    else return '';
   },
 
   /**
@@ -113,7 +135,7 @@ const utils = {
    * Reads a Readable stream, writes to and returns an array buffer
    * @see https://github.com/aws/aws-sdk-js-v3/issues/1877#issuecomment-755446927
    * @param {Readable} stream A readable stream object
-   * @returns {array} A buffer usually formatted as an Uint8Array
+   * @returns {Buffer} A buffer usually formatted as an Uint8Array
    */
   streamToBuffer(stream) { // Readable
     return new Promise((resolve, reject) => {

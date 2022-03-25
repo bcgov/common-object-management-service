@@ -3,7 +3,7 @@ const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 
 const { AuthMode } = require('../components/constants');
 const errorToProblem = require('../components/errorToProblem');
-const { getAppAuthMode, getCurrentOidcId, getPath } = require('../components/utils');
+const { getAppAuthMode, getCurrentSubject, getPath } = require('../components/utils');
 const { objectService, storageService } = require('../services');
 
 const SERVICE = 'ObjectService';
@@ -48,7 +48,7 @@ const controller = {
     try {
       const bb = busboy({ headers: req.headers });
       const objects = [];
-      const oidcId = getCurrentOidcId(req.currentUser);
+      const oidcId = getCurrentSubject(req.currentUser);
 
       bb.on('file', (name, stream, info) => {
         const objId = uuidv4();
@@ -140,7 +140,7 @@ const controller = {
       if (authMode === AuthMode.NOAUTH || authMode === AuthMode.BASICAUTH) {
         response = await objectService.listObjects();
       } else if (authMode === AuthMode.OIDCAUTH || authMode === AuthMode.FULLAUTH) {
-        const oidcId = getCurrentOidcId(req.currentUser);
+        const oidcId = getCurrentSubject(req.currentUser);
         response = await objectService.fetchAllForUser(oidcId);
       }
       res.status(201).json(response);
@@ -225,7 +225,7 @@ const controller = {
   async updateObject(req, res, next) {
     try {
       const bb = busboy({ headers: req.headers, limits: { files: 1 } });
-      const oidcId = getCurrentOidcId(req.currentUser);
+      const oidcId = getCurrentSubject(req.currentUser);
       let object = undefined;
 
       bb.on('file', (name, stream, info) => {
@@ -270,7 +270,7 @@ const controller = {
    */
   async togglePublic(req, res, next) {
     try {
-      const oidcId = getCurrentOidcId(req.currentUser, SYSTEM_USER);
+      const oidcId = getCurrentSubject(req.currentUser, SYSTEM_USER);
       const data = {
         id: req.params.objId,
         public: req.body.public,

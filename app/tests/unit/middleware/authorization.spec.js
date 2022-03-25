@@ -139,7 +139,7 @@ describe('currentObject', () => {
 
 describe('hasPermission', () => {
   const getAppAuthModeSpy = jest.spyOn(utils, 'getAppAuthMode');
-  const getCurrentOidcIdSpy = jest.spyOn(utils, 'getCurrentOidcId');
+  const getCurrentSubjectSpy = jest.spyOn(utils, 'getCurrentSubject');
   const searchPermissionsSpy = jest.spyOn(permissionService, 'searchPermissions');
   const problemSendSpy = jest.spyOn(Problem.prototype, 'send');
 
@@ -166,7 +166,7 @@ describe('hasPermission', () => {
     ])('should call next %i times given hasDb %s and authMode %s', (nextCount, hasDb, mode) => {
       const sendCount = 1 - nextCount;
       getAppAuthModeSpy.mockReturnValue(mode);
-      getCurrentOidcIdSpy.mockReturnValue(undefined);
+      getCurrentSubjectSpy.mockReturnValue(undefined);
       config.has.mockReturnValueOnce(hasDb); // db.enabled
 
       const mw = hasPermission(Permissions.READ);
@@ -198,7 +198,7 @@ describe('hasPermission', () => {
     ])('should call next %i times given hasDb %s and authMode %s', (nextCount, hasDb, mode) => {
       const sendCount = 1 - nextCount;
       getAppAuthModeSpy.mockReturnValue(mode);
-      getCurrentOidcIdSpy.mockReturnValue(undefined);
+      getCurrentSubjectSpy.mockReturnValue(undefined);
       config.has.mockReturnValueOnce(hasDb); // db.enabled
 
       const mw = hasPermission(Permissions.READ);
@@ -227,7 +227,7 @@ describe('hasPermission', () => {
     ])('should call next %i times when authType BASIC and authMode %s', (nextCount, mode) => {
       const sendCount = 1 - nextCount;
       getAppAuthModeSpy.mockReturnValue(mode);
-      getCurrentOidcIdSpy.mockReturnValue(SYSTEM_USER);
+      getCurrentSubjectSpy.mockReturnValue(SYSTEM_USER);
       config.has.mockReturnValueOnce(true); // db.enabled
       req.currentUser.authType = AuthType.BASIC;
 
@@ -256,7 +256,7 @@ describe('hasPermission', () => {
     ])('should call next %i times when public %s and permission %s', (nextCount, isPublic, perm) => {
       const sendCount = 1 - nextCount;
       getAppAuthModeSpy.mockReturnValue(AuthMode.OIDCAUTH);
-      getCurrentOidcIdSpy.mockReturnValue(SYSTEM_USER);
+      getCurrentSubjectSpy.mockReturnValue(SYSTEM_USER);
       config.has.mockReturnValueOnce(true); // db.enabled
       req.currentUser.authType = AuthType.OIDC;
       req.currentObject.public = isPublic;
@@ -293,7 +293,7 @@ describe('hasPermission', () => {
       const sendCount = 1 - nextCount;
       const searchPermCount = +(type === AuthType.BEARER && !!oidcId);
       getAppAuthModeSpy.mockReturnValue(AuthMode.OIDCAUTH);
-      getCurrentOidcIdSpy.mockReturnValue(oidcId);
+      getCurrentSubjectSpy.mockReturnValue(oidcId);
       searchPermissionsSpy.mockResolvedValue(perms);
       config.has.mockReturnValueOnce(true); // db.enabled
       req.currentObject.public = false;
