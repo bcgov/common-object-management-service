@@ -5,10 +5,10 @@ jest.mock('../../../src/db/models/tables/identityProvider', () => MockModel);
 
 const service = require('../../../src/services/user');
 
-const oidcId = '00000000-0000-0000-0000-000000000000';
+const userId = '00000000-0000-0000-0000-000000000000';
 
 const token = {
-  sub: oidcId,
+  sub: userId,
   identity_provider_identity: 'jsmith:idir',
   preferred_username: 'john@email.com',
   given_name: 'john',
@@ -19,7 +19,7 @@ const token = {
 };
 
 const user = {
-  oidcId: oidcId,
+  userId: userId,
   username: 'jsmith:idir',
   firstName: 'john',
   lastName: 'smith',
@@ -178,10 +178,10 @@ describe('login', () => {
     expect(MockModel.query).toHaveBeenCalledTimes(1);
     expect(MockModel.query).toHaveBeenCalledWith();
     expect(MockModel.findById).toHaveBeenCalledTimes(1);
-    expect(MockModel.findById).toHaveBeenCalledWith(user.oidcId);
+    expect(MockModel.findById).toHaveBeenCalledWith(user.userId);
   });
 
-  it('Creates a new user if none found in db with matching oidcId', async () => {
+  it('Creates a new user if none found in db with matching userId', async () => {
     MockModel.mockResolvedValue(undefined);
     const etrx = await jest.fn().mockResolvedValue(MockTransaction);
     await service.login(token, etrx);
@@ -191,8 +191,8 @@ describe('login', () => {
     expect(createUserSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('Update user found in db with matching oidcId', async () => {
-    MockModel.mockResolvedValue({ ...user, oidcId: 'a96f2809-d6f4-4cef-a02a-3f72edff06d7' });
+  it('Update user found in db with matching userId', async () => {
+    MockModel.mockResolvedValue({ ...user, userId: 'a96f2809-d6f4-4cef-a02a-3f72edff06d7' });
     await service.login(token);
 
     expect(updateUserSpy).toHaveBeenCalledWith('a96f2809-d6f4-4cef-a02a-3f72edff06d7', user);
@@ -235,13 +235,13 @@ describe('readUser', () => {
     MockTransaction.mockReset();
   });
 
-  it('Query user table by oidcId', () => {
-    service.readUser(oidcId);
+  it('Query user table by userId', () => {
+    service.readUser(userId);
 
     expect(MockModel.query).toHaveBeenCalledTimes(1);
     expect(MockModel.query).toHaveBeenCalledWith();
     expect(MockModel.findById).toHaveBeenCalledTimes(1);
-    expect(MockModel.findById).toHaveBeenCalledWith(oidcId);
+    expect(MockModel.findById).toHaveBeenCalledWith(userId);
     expect(MockModel.throwIfNotFound).toHaveBeenCalledTimes(1);
     expect(MockModel.throwIfNotFound).toHaveBeenCalledWith();
   });
@@ -279,9 +279,9 @@ describe('updateUser', () => {
   it('Does nothing if user is unchanged', async () => {
     readUserSpy.mockReturnValue(user);
     const etrx = await jest.fn().mockResolvedValue(MockTransaction);
-    await service.updateUser(oidcId, user, etrx);
+    await service.updateUser(userId, user, etrx);
 
-    expect(readUserSpy).toHaveBeenCalledWith(oidcId);
+    expect(readUserSpy).toHaveBeenCalledWith(userId);
     expect(readIdpSpy).toHaveBeenCalledTimes(0);
     expect(createIdpSpy).toHaveBeenCalledTimes(0);
     expect(MockModel.query).toHaveBeenCalledTimes(0);
@@ -291,14 +291,14 @@ describe('updateUser', () => {
   it('Updates existing user if properties have changed', async () => {
     readUserSpy.mockReturnValue(oldUser);
     const etrx = await jest.fn().mockResolvedValue(MockTransaction);
-    await service.updateUser(oidcId, user, etrx);
+    await service.updateUser(userId, user, etrx);
 
     // TODO: MockModel is not being reset before this test
     // for next test we should expect it toHaveBeenCalledTimes(1)
     expect(MockModel.query).toHaveBeenCalledTimes(3);
     expect(MockModel.query).toHaveBeenCalledWith(etrx);
     expect(MockModel.patchAndFetchById).toHaveBeenCalledTimes(1);
-    expect(MockModel.patchAndFetchById).toHaveBeenCalledWith(oidcId, expect.anything(Object));
+    expect(MockModel.patchAndFetchById).toHaveBeenCalledWith(userId, expect.anything(Object));
     expect(MockModel.patchAndFetchById).toHaveReturned();
   });
 
@@ -308,7 +308,7 @@ describe('updateUser', () => {
     let oldUser = { ...user, email: 'jsmith@yahoo.com', idp: 'bceid' };
     readUserSpy.mockReturnValue(oldUser);
     const etrx = await jest.fn().mockResolvedValue(MockTransaction);
-    await service.updateUser(oidcId, user, etrx);
+    await service.updateUser(userId, user, etrx);
 
     expect(readIdpSpy).toHaveBeenCalledTimes(1);
     expect(createIdpSpy).toHaveBeenCalledWith(user.idp, etrx);

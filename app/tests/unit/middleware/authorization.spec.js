@@ -289,11 +289,11 @@ describe('hasPermission', () => {
       [0, AuthType.BEARER, SYSTEM_USER, []],
       [0, AuthType.BEARER, SYSTEM_USER, [{ permCode: Permissions.UPDATE }]],
       [1, AuthType.BEARER, SYSTEM_USER, [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }]]
-    ])('should call next %i times when authType %s, oidcId %o and have permissions %j', async (nextCount, type, oidcId, perms) => {
+    ])('should call next %i times when authType %s, userId %o and have permissions %j', async (nextCount, type, userId, perms) => {
       const sendCount = 1 - nextCount;
-      const searchPermCount = +(type === AuthType.BEARER && !!oidcId);
+      const searchPermCount = +(type === AuthType.BEARER && !!userId);
       getAppAuthModeSpy.mockReturnValue(AuthMode.OIDCAUTH);
-      getCurrentSubjectSpy.mockReturnValue(oidcId);
+      getCurrentSubjectSpy.mockReturnValue(userId);
       searchPermissionsSpy.mockResolvedValue(perms);
       config.has.mockReturnValueOnce(true); // db.enabled
       req.currentObject.public = false;
@@ -311,7 +311,7 @@ describe('hasPermission', () => {
       expect(searchPermissionsSpy).toHaveBeenCalledTimes(searchPermCount);
       if (searchPermCount) {
         expect(searchPermissionsSpy).toHaveBeenCalledWith(expect.objectContaining({ objId: SYSTEM_USER }));
-        expect(searchPermissionsSpy).toHaveBeenCalledWith(expect.objectContaining({ oidcId: oidcId }));
+        expect(searchPermissionsSpy).toHaveBeenCalledWith(expect.objectContaining({ userId: userId }));
       }
     });
   });

@@ -13,7 +13,7 @@ const service = {
    * @returns {object} An equivalent User model object
    */
   _tokenToUser: (token) => ({
-    oidcId: token.sub,
+    userId: token.sub,
     username: token.identity_provider_identity ? token.identity_provider_identity : token.preferred_username,
     firstName: token.given_name,
     fullName: token.name,
@@ -68,14 +68,14 @@ const service = {
       }
 
       const obj = {
-        oidcId: data.oidcId,
+        userId: data.userId,
         username: data.username,
         fullName: data.fullName,
         email: data.email,
         firstName: data.firstName,
         lastName: data.lastName,
         idp: data.idp,
-        createdBy: data.oidcId
+        createdBy: data.userId
       };
 
       const response = await User.query(trx).insertAndFetch(obj);
@@ -95,14 +95,14 @@ const service = {
    */
   login: async (token) => {
     const newUser = service._tokenToUser(token);
-    const oldUser = await User.query().findById(newUser.oidcId);
+    const oldUser = await User.query().findById(newUser.userId);
 
     if (!oldUser) {
       // Add user to system
       return service.createUser(newUser);
     } else {
       // Update user data if necessary
-      return service.updateUser(oldUser.oidcId, newUser);
+      return service.updateUser(oldUser.userId, newUser);
     }
   },
 
@@ -119,30 +119,30 @@ const service = {
   /**
    * @function readUser
    * Gets a user record
-   * @param {string} oidcId The oidcId uuid
+   * @param {string} userId The userId uuid
    * @returns {Promise<object>} The result of running the find operation
    * @throws If no record is found
    */
-  readUser: (oidcId) => {
+  readUser: (userId) => {
     return User.query()
-      .findById(oidcId)
+      .findById(userId)
       .throwIfNotFound();
   },
 
   /**
    * @function updateUser
    * Updates a user record only if there are changed values
-   * @param {string} oidcId The oidcId uuid
+   * @param {string} userId The userId uuid
    * @param {object} data Incoming user data
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<object>} The result of running the patch operation
    * @throws The error encountered upon db transaction failure
    */
-  updateUser: async (oidcId, data, etrx = undefined) => {
+  updateUser: async (userId, data, etrx = undefined) => {
     let trx;
     try {
       // Check if any user values have changed
-      const oldUser = await service.readUser(oidcId);
+      const oldUser = await service.readUser(userId);
       const diff = Object.entries(data).some(([key, value]) => oldUser[key] !== value);
 
       if (diff) { // Patch existing user
@@ -160,10 +160,10 @@ const service = {
           firstName: data.firstName,
           lastName: data.lastName,
           idp: data.idp,
-          updatedBy: data.oidcId
+          updatedBy: data.userId
         };
 
-        const response = await User.query(trx).patchAndFetchById(oidcId, obj);
+        const response = await User.query(trx).patchAndFetchById(userId, obj);
         if (!etrx) await trx.commit();
         return response;
       } else { // Nothing to update

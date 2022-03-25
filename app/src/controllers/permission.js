@@ -22,7 +22,7 @@ const controller = {
     try {
       const response = await permissionService.searchPermissions({
         objId: mixedQueryToArray(req.query.objId),
-        oidcId: mixedQueryToArray(req.query.oidcId),
+        userId: mixedQueryToArray(req.query.userId),
         permCode: mixedQueryToArray(req.query.permCode)
       });
       res.status(200).json(response);
@@ -43,7 +43,7 @@ const controller = {
     try {
       const response = await permissionService.searchPermissions({
         objId: req.params.objId,
-        oidcId: mixedQueryToArray(req.query.oidcId),
+        userId: mixedQueryToArray(req.query.userId),
         permCode: mixedQueryToArray(req.query.permCode)
       });
       res.status(200).json(response);
@@ -67,8 +67,8 @@ const controller = {
         return new Problem(422).send(res);
       }
 
-      const oidcId = getCurrentSubject(req.currentUser);
-      const response = await permissionService.addPermissions(req.params.objId, req.body, oidcId);
+      const userId = getCurrentSubject(req.currentUser);
+      const response = await permissionService.addPermissions(req.params.objId, req.body, userId);
       res.status(201).json(response);
     } catch (e) {
       next(errorToProblem(SERVICE, e));
@@ -86,13 +86,13 @@ const controller = {
   async removePermissions(req, res, next) {
     try {
       // TODO: Do this kind of logic in validation layer/library instead
-      if (!req.query.oidcId || !req.query.permCode) {
+      if (!req.query.userId || !req.query.permCode) {
         return new Problem(422).send(res);
       }
 
-      const oidcIds = mixedQueryToArray(req.query.oidcId);
+      const userIds = mixedQueryToArray(req.query.userId);
       const permissions = mixedQueryToArray(req.query.permCode);
-      const response = await permissionService.removePermissions(req.params.objId, oidcIds, permissions);
+      const response = await permissionService.removePermissions(req.params.objId, userIds, permissions);
       res.status(200).json(response);
     } catch (e) {
       next(errorToProblem(SERVICE, e));
