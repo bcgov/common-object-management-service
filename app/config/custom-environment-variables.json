@@ -15,6 +15,7 @@
   "keycloak": {
     "clientId": "KC_CLIENTID",
     "clientSecret": "KC_CLIENTSECRET",
+    "identityKey": "KC_IDENTITYKEY",
     "enabled": "KC_ENABLED",
     "publicKey": "KC_PUBLICKEY",
     "realm": "KC_REALM",
