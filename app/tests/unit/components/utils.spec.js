@@ -14,6 +14,20 @@ afterAll(() => {
   jest.restoreAllMocks();
 });
 
+describe('addDashesToUuid', () => {
+  it.each([
+    [undefined, undefined],
+    [null, null],
+    [123, 123],
+    [{}, {}],
+    ['123456789012345678901234567890', '123456789012345678901234567890'],
+    ['e0603b59-2edc-45f7-acc7-b0cccd6656e1', 'e0603b592edc45f7acc7b0cccd6656e1'],
+    ['e0603b59-2edc-45f7-acc7-b0cccd6656e1', 'E0603B592EDC45F7ACC7B0CCCD6656E1']
+  ])('should return %o given %j', (expected, str) => {
+    expect(utils.addDashesToUuid(str)).toEqual(expected);
+  });
+});
+
 describe('getPath', () => {
   const delimitSpy = jest.spyOn(utils, 'delimit');
   const joinSpy = jest.spyOn(utils, 'join');

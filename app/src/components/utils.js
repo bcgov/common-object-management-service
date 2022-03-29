@@ -6,6 +6,19 @@ const DELIMITER = '/';
 
 const utils = {
   /**
+   * @function addDashesToUuid
+   * Yields a lowercase uuid `str` that has dashes inserted, or `str` if not a string.
+   * @param {string} str The input string uuid
+   * @returns {string} The string `str` but with dashes inserted, or `str` if not a string.
+   */
+  addDashesToUuid(str) {
+    if ((typeof str === 'string' || str instanceof String) && str.length === 32) {
+      return `${str.slice(0,8)}-${str.slice(8,12)}-${str.slice(12,16)}-${str.slice(16,20)}-${str.slice(20)}`.toLowerCase();
+    }
+    else return str;
+  },
+
+  /**
    * @function delimit
    * Yields a string `s` that will always have a trailing delimiter. Returns an empty string if falsy.
    * @param {string} s The input string
