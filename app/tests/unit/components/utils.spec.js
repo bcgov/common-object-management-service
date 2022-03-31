@@ -113,51 +113,61 @@ describe('getAppAuthMode', () => {
 
 describe('getCurrentIdentity', () => {
   const getCurrentTokenClaimSpy = jest.spyOn(utils, 'getCurrentTokenClaim');
+  const parseIdentityKeyClaimsSpy = jest.spyOn(utils, 'parseIdentityKeyClaims');
+
+  const idirClaim = 'idir_user_guid';
+  const subClaim = 'sub';
 
   beforeEach(() => {
     getCurrentTokenClaimSpy.mockReset().mockImplementation(() => { });
+    parseIdentityKeyClaimsSpy.mockReset();
   });
 
-  it.each([undefined, null, '', [], {}])('should call getCurrentTokenClaim with specific identityKey claim given %j', (currentUser) => {
-    const claim = 'idir_user_guid';
-    config.has.mockReturnValueOnce(true); // keycloak.identityKey
-    config.get.mockReturnValueOnce(claim); // keycloak.identityKey
+  it.each([
+    [undefined, [subClaim]],
+    [undefined, [idirClaim, subClaim]],
+    [null, [subClaim]],
+    [null, [idirClaim, subClaim]],
+    ['', [subClaim]],
+    ['', [idirClaim, subClaim]],
+    [[], [subClaim]],
+    [[], [idirClaim, subClaim]],
+    [{}, [subClaim]],
+    [{}, [idirClaim, subClaim]]
+  ])('should call functions correctly given %j', (currentUser, idKeys) => {
+    parseIdentityKeyClaimsSpy.mockReturnValue(idKeys);
 
     utils.getCurrentIdentity(currentUser);
 
-    expect(getCurrentTokenClaimSpy).toHaveBeenCalledTimes(1);
-    expect(getCurrentTokenClaimSpy).toHaveBeenCalledWith(currentUser, claim, undefined);
+    expect(getCurrentTokenClaimSpy).toHaveBeenCalledTimes(idKeys.length);
+    if (idKeys.length > 1) expect(getCurrentTokenClaimSpy).toHaveBeenCalledWith(currentUser, idirClaim, undefined);
+    expect(getCurrentTokenClaimSpy).toHaveBeenCalledWith(currentUser, subClaim, undefined);
+    expect(parseIdentityKeyClaimsSpy).toHaveBeenCalledTimes(1);
+    expect(parseIdentityKeyClaimsSpy).toHaveBeenCalledWith();
   });
 
-  it.each([undefined, null, '', [], {}])('should call getCurrentTokenClaim with sub claim given %j', (currentUser) => {
-    config.has.mockReturnValueOnce(false); // keycloak.identityKey
-
-    utils.getCurrentIdentity(currentUser);
-
-    expect(getCurrentTokenClaimSpy).toHaveBeenCalledTimes(1);
-    expect(getCurrentTokenClaimSpy).toHaveBeenCalledWith(currentUser, 'sub', undefined);
-  });
-
-  it.each([undefined, null, '', [], {}])('should call getCurrentTokenClaim with specific identityKey claim given %j and defaultValue \'default\'', (currentUser) => {
-    const claim = 'idir_user_guid';
+  it.each([
+    [undefined, [subClaim]],
+    [undefined, [idirClaim, subClaim]],
+    [null, [subClaim]],
+    [null, [idirClaim, subClaim]],
+    ['', [subClaim]],
+    ['', [idirClaim, subClaim]],
+    [[], [subClaim]],
+    [[], [idirClaim, subClaim]],
+    [{}, [subClaim]],
+    [{}, [idirClaim, subClaim]]
+  ])('should call functions correctly given %j and defaultValue \'default\'', (currentUser, idKeys) => {
     const defaultValue = 'default';
-    config.has.mockReturnValueOnce(true); // keycloak.identityKey
-    config.get.mockReturnValueOnce(claim); // keycloak.identityKey
+    parseIdentityKeyClaimsSpy.mockReturnValue(idKeys);
 
     utils.getCurrentIdentity(currentUser, defaultValue);
 
-    expect(getCurrentTokenClaimSpy).toHaveBeenCalledTimes(1);
-    expect(getCurrentTokenClaimSpy).toHaveBeenCalledWith(currentUser, claim, defaultValue);
-  });
-
-  it.each([undefined, null, '', [], {}])('should call getCurrentTokenClaim with sub claim given %j and defaultValue \'default\'', (currentUser) => {
-    const defaultValue = 'default';
-    config.has.mockReturnValueOnce(false); // keycloak.identityKey
-
-    utils.getCurrentIdentity(currentUser, defaultValue);
-
-    expect(getCurrentTokenClaimSpy).toHaveBeenCalledTimes(1);
-    expect(getCurrentTokenClaimSpy).toHaveBeenCalledWith(currentUser, 'sub', defaultValue);
+    expect(getCurrentTokenClaimSpy).toHaveBeenCalledTimes(idKeys.length);
+    if (idKeys.length > 1) expect(getCurrentTokenClaimSpy).toHaveBeenCalledWith(currentUser, idirClaim, undefined);
+    expect(getCurrentTokenClaimSpy).toHaveBeenCalledWith(currentUser, subClaim, undefined);
+    expect(parseIdentityKeyClaimsSpy).toHaveBeenCalledTimes(1);
+    expect(parseIdentityKeyClaimsSpy).toHaveBeenCalledWith();
   });
 });
 

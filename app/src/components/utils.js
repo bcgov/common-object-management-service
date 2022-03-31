@@ -46,14 +46,17 @@ const utils = {
 
   /**
    * @function getCurrentIdentity
-   * Attempts to acquire current identity. Yields `defaultValue` otherwise
+   * Attempts to acquire current identity value.
+   * Always takes first non-default value available. Yields `defaultValue` otherwise.
    * @param {object} currentUser The express request currentUser object
    * @param {string} [defaultValue=undefined] An optional default return value
    * @returns {string} The current user identifier if applicable, or `defaultValue`
    */
   getCurrentIdentity(currentUser, defaultValue = undefined) {
-    const claim = config.has('keycloak.identityKey') ? config.get('keycloak.identityKey') : 'sub';
-    return utils.getCurrentTokenClaim(currentUser, claim, defaultValue);
+    return utils.parseIdentityKeyClaims()
+      .map(claim => utils.getCurrentTokenClaim(currentUser, claim, undefined))
+      .filter(value => value) // Drop falsy values from array
+      .concat(defaultValue)[0]; // Add defaultValue as last element of array
   },
 
   /**
@@ -141,6 +144,20 @@ const utils = {
     return (typeof value === 'string' || value instanceof String)
       ? value.split(',').map(s => s.trim())
       : value;
+  },
+
+  /**
+   * @function parseIdentityKeyClaims
+   * Returns an array of strings representing potential identity key claims
+   * Array will always end with the last value as 'sub'
+   * @returns {string[]} An array of string values, or `value` if it is not a string
+   */
+  parseIdentityKeyClaims() {
+    const claims = [];
+    if (config.has('keycloak.identityKey')) {
+      claims.push(...utils.parseCSV(config.get('keycloak.identityKey')));
+    }
+    return claims.concat('sub');
   },
 
   /**
