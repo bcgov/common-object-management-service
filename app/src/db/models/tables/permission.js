@@ -1,6 +1,7 @@
 const { Model } = require('objection');
+
+const { stamps } = require('../jsonSchema');
 const { Timestamps } = require('../mixins');
-const stamps = require('../jsonSchema').stamps;
 
 class Permission extends Timestamps(Model) {
   static get tableName() {

@@ -1,6 +1,7 @@
 const { Model } = require('objection');
+
+const { stamps } = require('../jsonSchema');
 const { Timestamps } = require('../mixins');
-const stamps = require('../jsonSchema').stamps;
 
 // The table is "object" but Object is a bit of a reserved word :)
 class ObjectModel extends Timestamps(Model) {
