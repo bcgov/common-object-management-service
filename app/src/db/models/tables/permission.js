@@ -30,9 +30,7 @@ class Permission extends Timestamps(Model) {
   static get modifiers() {
     return {
       filterActive(query, value) {
-        if (value !== undefined) {
-          query.where('active', value);
-        }
+        if (value !== undefined) query.where('active', value);
       },
       orderDefault(builder) {
         builder.orderByRaw('lower("permission"."permCode")');
