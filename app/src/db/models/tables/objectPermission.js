@@ -2,7 +2,7 @@ const { Model } = require('objection');
 
 const { stamps } = require('../jsonSchema');
 const { Timestamps } = require('../mixins');
-
+const { filterOneOrMany } = require('../utils');
 
 class ObjectPermission extends Timestamps(Model) {
   static get tableName() {
@@ -45,31 +45,13 @@ class ObjectPermission extends Timestamps(Model) {
   static get modifiers() {
     return {
       filterUserId(query, value) {
-        if (value) {
-          if (Array.isArray(value) && value.length) {
-            query.whereIn('userId', value);
-          } else {
-            query.where('userId', value);
-          }
-        }
+        filterOneOrMany(query, value, 'userId');
       },
       filterObjectId(query, value) {
-        if (value) {
-          if (Array.isArray(value) && value.length) {
-            query.whereIn('objectId', value);
-          } else {
-            query.where('objectId', value);
-          }
-        }
+        filterOneOrMany(query, value, 'objectId');
       },
       filterPermissionCode(query, value) {
-        if (value) {
-          if (Array.isArray(value) && value.length) {
-            query.whereIn('permCode', value);
-          } else {
-            query.where('permCode', value);
-          }
-        }
+        filterOneOrMany(query, value, 'permCode');
       }
     };
   }
