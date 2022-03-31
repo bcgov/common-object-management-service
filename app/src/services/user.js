@@ -1,5 +1,6 @@
 const { NIL: SYSTEM_USER } = require('uuid');
 
+const { parseIdentityKeyClaims } = require('../components/utils');
 const { IdentityProvider, User } = require('../db/models');
 
 /**
@@ -14,6 +15,10 @@ const service = {
    */
   _tokenToUser: (token) => ({
     userId: token.sub,
+    identityId: parseIdentityKeyClaims()
+      .map(idKey => token[idKey])
+      .filter(claims => claims) // Drop falsy values from array
+      .concat(undefined)[0], // Set undefined as last element of array
     username: token.identity_provider_identity ? token.identity_provider_identity : token.preferred_username,
     firstName: token.given_name,
     fullName: token.name,
@@ -69,6 +74,7 @@ const service = {
 
       const obj = {
         userId: data.userId,
+        identityId: data.identityId,
         username: data.username,
         fullName: data.fullName,
         email: data.email,
@@ -154,6 +160,7 @@ const service = {
         }
 
         const obj = {
+          identityId: data.identityId,
           username: data.username,
           fullName: data.fullName,
           email: data.email,
@@ -163,6 +170,7 @@ const service = {
           updatedBy: data.userId
         };
 
+        // TODO: add support for updating userId primary key in the event it changes
         const response = await User.query(trx).patchAndFetchById(userId, obj);
         if (!etrx) await trx.commit();
         return response;

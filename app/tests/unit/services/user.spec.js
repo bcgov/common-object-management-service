@@ -20,6 +20,7 @@ const token = {
 
 const user = {
   userId: userId,
+  identityId: userId,
   username: 'jsmith:idir',
   firstName: 'john',
   lastName: 'smith',
@@ -261,8 +262,6 @@ describe('updateUser', () => {
     readIdpSpy.mockReset();
     createIdpSpy.mockReset();
     readUserSpy.mockReset();
-    MockModel.mockReset();
-    MockTransaction.mockReset();
   });
 
   afterAll(() => {
@@ -270,8 +269,6 @@ describe('updateUser', () => {
     readIdpSpy.mockRestore();
     createIdpSpy.mockRestore();
     readUserSpy.mockRestore();
-    MockModel.mockReset();
-    MockTransaction.mockReset();
   });
 
   service._tokenToUser = jest.fn().mockReturnValue(user);
