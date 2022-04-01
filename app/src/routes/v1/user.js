@@ -10,7 +10,7 @@ routes.use(requireDb);
 
 /** Search for users */
 routes.get('/', (req, res, next) => {
-  userController.userSearch(req, res, next);
+  userController.searchUsers(req, res, next);
 });
 
 module.exports = routes;

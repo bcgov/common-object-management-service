@@ -136,6 +136,36 @@ const service = {
   },
 
   /**
+   * @function searchUsers
+   * Search and filter for specific users
+   * @param {string|string[]} [params.userId] Optional string or array of uuids representing the user subject
+   * @param {string|string[]} [params.identityId] Optional string or array of uuids representing the user identity
+   * @param {string|string[]} [params.idp] Optional string or array of identity providers
+   * @param {string} [params.username] Optional username string to match on
+   * @param {string} [params.email] Optional email string to match on
+   * @param {string} [params.firstName] Optional firstName string to match on
+   * @param {string} [params.fullName] Optional fullName string to match on
+   * @param {string} [params.lastName] Optional lastName string to match on
+   * @param {boolean} [params.active] Optional boolean on user active status
+   * @param {string} [params.search] Optional search string to match on in username, email and fullName
+   * @returns {Promise<object>} The result of running the find operation
+   */
+  searchUsers: (params) => {
+    return User.query()
+      .modify('filterUserId', params.userId)
+      .modify('filterIdentityId', params.identityId)
+      .modify('filterIdp', params.idp)
+      .modify('filterUsername', params.username)
+      .modify('filterEmail', params.email)
+      .modify('filterFirstName', params.firstName)
+      .modify('filterFullName', params.fullName)
+      .modify('filterLastName', params.lastName)
+      .modify('filterActive', params.active)
+      .modify('filterSearch', params.search)
+      .modify('orderLastFirstAscending');
+  },
+
+  /**
    * @function updateUser
    * Updates a user record only if there are changed values
    * @param {string} userId The userId uuid
