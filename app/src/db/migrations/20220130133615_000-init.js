@@ -125,8 +125,6 @@ exports.up = function (knex) {
     AFTER UPDATE OR DELETE ON object_permission
     FOR EACH ROW EXECUTE PROCEDURE audit.if_modified_func();`))
 
-
-
     // Populate Baseline Data
     .then(() => {
       const users = ['system'];

@@ -10,7 +10,13 @@ routes.use(requireDb);
 
 /** Search for users */
 routes.get('/', (req, res, next) => {
+  // TODO: Add validation to ensure at least one query parameter is present
   userController.searchUsers(req, res, next);
+});
+
+/** List all identity providers */
+routes.get('/idpList', (req, res, next) => {
+  userController.listIdps(req, res, next);
 });
 
 module.exports = routes;

@@ -10,6 +10,7 @@ routes.use(requireDb);
 
 /** Search for object permissions */
 routes.get('/', requireBasicAuth, (req, res, next) => {
+  // TODO: Add validation to ensure at least one query parameter is present
   permissionController.searchPermissions(req, res, next);
 });
 

@@ -9,6 +9,26 @@ const SERVICE = 'UserService';
  */
 const controller = {
   /**
+   * @function listIdps
+   * Lists all known identity providers
+   * @param {object} req Express request object
+   * @param {object} res Express response object
+   * @param {function} next The next callback function
+   * @returns {function} Express middleware function
+   */
+  async listIdps(req, res, next) {
+    try {
+      const response = await userService.listIdps({
+        // TODO: Consider more robust truthiness checks for 'true' and 'false' string cases
+        active: req.query.active
+      });
+      res.status(200).json(response);
+    } catch (e) {
+      next(errorToProblem(SERVICE, e));
+    }
+  },
+
+  /**
    * @function searchUsers
    * Searches for users
    * @param {object} req Express request object
@@ -27,6 +47,7 @@ const controller = {
         firstName: req.query.firstName,
         fullName: req.query.fullName,
         lastName: req.query.lastName,
+        // TODO: Consider more robust truthiness checks for 'true' and 'false' string cases
         active: req.query.active,
         search: req.query.search
       });

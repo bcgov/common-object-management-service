@@ -94,6 +94,18 @@ const service = {
   },
 
   /**
+   * @function listIdps
+   * Lists all known identity providers
+   * @param {boolean} [params.active] Optional boolean on user active status
+   * @returns {Promise<object>} The result of running the find operation
+   */
+  listIdps: (params) => {
+    return IdentityProvider.query()
+      .modify('filterActive', params.active)
+      .modify('orderDefault');
+  },
+
+  /**
    * @function login
    * Parse the user token and update the user table if necessary
    * @param {object} token The decoded JWT token payload
