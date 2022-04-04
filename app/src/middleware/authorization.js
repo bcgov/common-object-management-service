@@ -3,7 +3,7 @@ const config = require('config');
 
 const log = require('../components/log')(module.filename);
 const { AuthMode, AuthType, Permissions } = require('../components/constants');
-const { getAppAuthMode, getCurrentOidcId, getPath } = require('../components/utils');
+const { getAppAuthMode, getCurrentSubject, getPath } = require('../components/utils');
 const { objectService, permissionService, storageService } = require('../services');
 
 /**
@@ -69,7 +69,7 @@ const hasPermission = (permission) => {
   return async (req, res, next) => {
     const authMode = getAppAuthMode();
     const authType = req.currentUser ? req.currentUser.authType : undefined;
-    const oidcId = getCurrentOidcId(req.currentUser);
+    const userId = getCurrentSubject(req.currentUser);
 
     const canBasicMode = (mode) => [AuthMode.BASICAUTH, AuthMode.FULLAUTH].includes(mode);
     const canOidcMode = (mode) => [AuthMode.OIDCAUTH, AuthMode.FULLAUTH].includes(mode);
@@ -86,11 +86,11 @@ const hasPermission = (permission) => {
         log.debug('Read requests on public objects are always permitted', { function: 'hasPermission' });
       } else {
         // Guard against unauthorized access for all other cases
-        if (authType === AuthType.BEARER && oidcId) {
+        if (authType === AuthType.BEARER && userId) {
           // Check if user has the required permission in their permission set
           const permissions = await permissionService.searchPermissions({
             objId: req.params.objId,
-            oidcId: oidcId
+            userId: userId
           });
 
           if (!permissions.some(p => p.permCode === permission)) {

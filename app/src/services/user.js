@@ -1,5 +1,6 @@
 const { NIL: SYSTEM_USER } = require('uuid');
 
+const { parseIdentityKeyClaims } = require('../components/utils');
 const { IdentityProvider, User } = require('../db/models');
 
 /**
@@ -13,7 +14,11 @@ const service = {
    * @returns {object} An equivalent User model object
    */
   _tokenToUser: (token) => ({
-    oidcId: token.sub,
+    userId: token.sub,
+    identityId: parseIdentityKeyClaims()
+      .map(idKey => token[idKey])
+      .filter(claims => claims) // Drop falsy values from array
+      .concat(undefined)[0], // Set undefined as last element of array
     username: token.identity_provider_identity ? token.identity_provider_identity : token.preferred_username,
     firstName: token.given_name,
     fullName: token.name,
@@ -68,14 +73,15 @@ const service = {
       }
 
       const obj = {
-        oidcId: data.oidcId,
+        userId: data.userId,
+        identityId: data.identityId,
         username: data.username,
         fullName: data.fullName,
         email: data.email,
         firstName: data.firstName,
         lastName: data.lastName,
         idp: data.idp,
-        createdBy: data.oidcId
+        createdBy: data.userId
       };
 
       const response = await User.query(trx).insertAndFetch(obj);
@@ -88,6 +94,18 @@ const service = {
   },
 
   /**
+   * @function listIdps
+   * Lists all known identity providers
+   * @param {boolean} [params.active] Optional boolean on user active status
+   * @returns {Promise<object>} The result of running the find operation
+   */
+  listIdps: (params) => {
+    return IdentityProvider.query()
+      .modify('filterActive', params.active)
+      .modify('orderDefault');
+  },
+
+  /**
    * @function login
    * Parse the user token and update the user table if necessary
    * @param {object} token The decoded JWT token payload
@@ -95,14 +113,14 @@ const service = {
    */
   login: async (token) => {
     const newUser = service._tokenToUser(token);
-    const oldUser = await User.query().findById(newUser.oidcId);
+    const oldUser = await User.query().findById(newUser.userId);
 
     if (!oldUser) {
       // Add user to system
       return service.createUser(newUser);
     } else {
       // Update user data if necessary
-      return service.updateUser(oldUser.oidcId, newUser);
+      return service.updateUser(oldUser.userId, newUser);
     }
   },
 
@@ -119,30 +137,60 @@ const service = {
   /**
    * @function readUser
    * Gets a user record
-   * @param {string} oidcId The oidcId uuid
+   * @param {string} userId The userId uuid
    * @returns {Promise<object>} The result of running the find operation
    * @throws If no record is found
    */
-  readUser: (oidcId) => {
+  readUser: (userId) => {
     return User.query()
-      .findById(oidcId)
+      .findById(userId)
       .throwIfNotFound();
+  },
+
+  /**
+   * @function searchUsers
+   * Search and filter for specific users
+   * @param {string|string[]} [params.userId] Optional string or array of uuids representing the user subject
+   * @param {string|string[]} [params.identityId] Optional string or array of uuids representing the user identity
+   * @param {string|string[]} [params.idp] Optional string or array of identity providers
+   * @param {string} [params.username] Optional username string to match on
+   * @param {string} [params.email] Optional email string to match on
+   * @param {string} [params.firstName] Optional firstName string to match on
+   * @param {string} [params.fullName] Optional fullName string to match on
+   * @param {string} [params.lastName] Optional lastName string to match on
+   * @param {boolean} [params.active] Optional boolean on user active status
+   * @param {string} [params.search] Optional search string to match on in username, email and fullName
+   * @returns {Promise<object>} The result of running the find operation
+   */
+  searchUsers: (params) => {
+    return User.query()
+      .modify('filterUserId', params.userId)
+      .modify('filterIdentityId', params.identityId)
+      .modify('filterIdp', params.idp)
+      .modify('filterUsername', params.username)
+      .modify('filterEmail', params.email)
+      .modify('filterFirstName', params.firstName)
+      .modify('filterFullName', params.fullName)
+      .modify('filterLastName', params.lastName)
+      .modify('filterActive', params.active)
+      .modify('filterSearch', params.search)
+      .modify('orderLastFirstAscending');
   },
 
   /**
    * @function updateUser
    * Updates a user record only if there are changed values
-   * @param {string} oidcId The oidcId uuid
+   * @param {string} userId The userId uuid
    * @param {object} data Incoming user data
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<object>} The result of running the patch operation
    * @throws The error encountered upon db transaction failure
    */
-  updateUser: async (oidcId, data, etrx = undefined) => {
+  updateUser: async (userId, data, etrx = undefined) => {
     let trx;
     try {
       // Check if any user values have changed
-      const oldUser = await service.readUser(oidcId);
+      const oldUser = await service.readUser(userId);
       const diff = Object.entries(data).some(([key, value]) => oldUser[key] !== value);
 
       if (diff) { // Patch existing user
@@ -154,16 +202,18 @@ const service = {
         }
 
         const obj = {
+          identityId: data.identityId,
           username: data.username,
           fullName: data.fullName,
           email: data.email,
           firstName: data.firstName,
           lastName: data.lastName,
           idp: data.idp,
-          updatedBy: data.oidcId
+          updatedBy: data.userId
         };
 
-        const response = await User.query(trx).patchAndFetchById(oidcId, obj);
+        // TODO: add support for updating userId primary key in the event it changes
+        const response = await User.query(trx).patchAndFetchById(userId, obj);
         if (!etrx) await trx.commit();
         return response;
       } else { // Nothing to update

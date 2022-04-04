@@ -1,6 +1,8 @@
 const { Model } = require('objection');
+
+const { stamps } = require('../jsonSchema');
 const { Timestamps } = require('../mixins');
-const stamps = require('../jsonSchema').stamps;
+const { filterOneOrMany } = require('../utils');
 
 class ObjectPermission extends Timestamps(Model) {
   static get tableName() {
@@ -33,8 +35,8 @@ class ObjectPermission extends Timestamps(Model) {
         relation: Model.HasOneRelation,
         modelClass: User,
         join: {
-          from: 'object_permission.oidcId',
-          to: 'user.oidcId'
+          from: 'object_permission.userId',
+          to: 'user.userId'
         }
       }
     };
@@ -42,32 +44,14 @@ class ObjectPermission extends Timestamps(Model) {
 
   static get modifiers() {
     return {
-      filterOidcId(query, value) {
-        if (value) {
-          if (Array.isArray(value) && value.length) {
-            query.whereIn('oidcId', value);
-          } else {
-            query.where('oidcId', value);
-          }
-        }
+      filterUserId(query, value) {
+        filterOneOrMany(query, value, 'userId');
       },
       filterObjectId(query, value) {
-        if (value) {
-          if (Array.isArray(value) && value.length) {
-            query.whereIn('objectId', value);
-          } else {
-            query.where('objectId', value);
-          }
-        }
+        filterOneOrMany(query, value, 'objectId');
       },
       filterPermissionCode(query, value) {
-        if (value) {
-          if (Array.isArray(value) && value.length) {
-            query.whereIn('permCode', value);
-          } else {
-            query.where('permCode', value);
-          }
-        }
+        filterOneOrMany(query, value, 'permCode');
       }
     };
   }
@@ -75,10 +59,10 @@ class ObjectPermission extends Timestamps(Model) {
   static get jsonSchema() {
     return {
       type: 'object',
-      required: ['id', 'oidcId', 'objectId', 'permCode'],
+      required: ['id', 'userId', 'objectId', 'permCode'],
       properties: {
         id: { type: 'string', maxLength: 255 },
-        oidcId: { type: 'string', maxLength: 255 },
+        userId: { type: 'string', maxLength: 255 },
         objectId: { type: 'string', maxLength: 255 },
         permCode: { type: 'string' },
         ...stamps

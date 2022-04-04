@@ -22,7 +22,7 @@ describe('searchPermissions', () => {
   const searchPermissionsSpy = jest.spyOn(permissionService, 'searchPermissions');
 
   const req = {
-    query: { objId: 'xyz-789', oidcId: 'oid-1d', permCode: 'pc' }
+    query: { objId: 'xyz-789', userId: 'oid-1d', permCode: 'pc' }
   };
   const next = jest.fn();
 
@@ -32,7 +32,7 @@ describe('searchPermissions', () => {
     const res = mockResponse();
     await controller.searchPermissions(req, res, next);
     expect(searchPermissionsSpy).toHaveBeenCalledTimes(1);
-    expect(searchPermissionsSpy).toHaveBeenCalledWith({ objId: [req.query.objId], oidcId: [req.query.oidcId], permCode: [req.query.permCode] });
+    expect(searchPermissionsSpy).toHaveBeenCalledWith({ objId: [req.query.objId], userId: [req.query.userId], permCode: [req.query.permCode] });
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({ res: 123 });
     expect(next).toHaveBeenCalledTimes(0);
@@ -58,7 +58,7 @@ describe('listPermissions', () => {
 
   const req = {
     params: { objId: 'xyz-789' },
-    query: { oidcId: 'oid-1d', permCode: 'pc' }
+    query: { userId: 'oid-1d', permCode: 'pc' }
   };
   const next = jest.fn();
 
@@ -68,7 +68,7 @@ describe('listPermissions', () => {
     const res = mockResponse();
     await controller.listPermissions(req, res, next);
     expect(searchPermissionsSpy).toHaveBeenCalledTimes(1);
-    expect(searchPermissionsSpy).toHaveBeenCalledWith({ objId: req.params.objId, oidcId: [req.query.oidcId], permCode: [req.query.permCode] });
+    expect(searchPermissionsSpy).toHaveBeenCalledWith({ objId: req.params.objId, userId: [req.query.userId], permCode: [req.query.permCode] });
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({ res: 123 });
     expect(next).toHaveBeenCalledTimes(0);
@@ -130,7 +130,7 @@ describe('removePermissions', () => {
   const removePermissionsSpy = jest.spyOn(permissionService, 'removePermissions');
   const req = {
     params: { objId: 'xyz-789' },
-    query: { oidcId: 'oid-1d,oid-2d', permCode: 'pc' }
+    query: { userId: 'oid-1d,oid-2d', permCode: 'pc' }
   };
   const next = jest.fn();
 

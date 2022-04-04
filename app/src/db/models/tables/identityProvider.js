@@ -1,6 +1,7 @@
 const { Model } = require('objection');
+
+const { stamps } = require('../jsonSchema');
 const { Timestamps } = require('../mixins');
-const stamps = require('../jsonSchema').stamps;
 
 class IdentityProvider extends Timestamps(Model) {
   static get tableName() {
@@ -29,9 +30,7 @@ class IdentityProvider extends Timestamps(Model) {
   static get modifiers() {
     return {
       filterActive(query, value) {
-        if (value !== undefined) {
-          query.where('active', value);
-        }
+        if (value !== undefined) query.where('active', value);
       },
       orderDefault(builder) {
         builder.orderByRaw('lower("identity_provider"."idp")');

@@ -11,7 +11,7 @@ const service = {
    * Create an object DB record and give the uploader (if authed) permissions
    * @param {string} data.id The object uuid
    * @param {string} data.mimeType The object's mime type
-   * @param {string} data.oidcId The uploading user oidcId
+   * @param {string} data.userId The uploading user userId
    * @param {string} data.originalName The object's original name
    * @param {string} data.path The relative S3 key/path of the object
    * @param {string} [data.public] The optional public flag - defaults to true if undefined
@@ -31,17 +31,17 @@ const service = {
         path: data.path,
         mimeType: data.mimeType,
         public: data.public,
-        createdBy: data.oidcId
+        createdBy: data.userId
       };
       await ObjectModel.query(trx).insert(obj);
 
       // Add all permission codes for the uploader
-      if (data.oidcId) {
+      if (data.userId) {
         const perms = Object.values(Permissions).map((p) => ({
-          oidcId: data.oidcId,
+          userId: data.userId,
           permCode: p
         }));
-        await permissionService.addPermissions(data.id, perms, data.oidcId, trx);
+        await permissionService.addPermissions(data.id, perms, data.userId, trx);
       }
 
       if (!etrx) await trx.commit();
@@ -101,7 +101,7 @@ const service = {
    * Update an object DB record
    * @param {string} data.id The object uuid
    * @param {string} data.mimeType The object's mime type
-   * @param {string} data.oidcId The uploading user oidcId
+   * @param {string} data.userId The uploading user userId
    * @param {string} data.originalName The object's original name
    * @param {string} data.path The relative S3 key/path of the object
    * @param {string} [data.public] The optional public flag - defaults to true if undefined
@@ -120,7 +120,7 @@ const service = {
         path: data.path,
         mimeType: data.mimeType,
         public: data.public,
-        updatedBy: data.oidcId
+        updatedBy: data.userId
       });
 
       if (!etrx) await trx.commit();

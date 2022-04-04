@@ -3,7 +3,7 @@ const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 
 const { AuthMode } = require('../components/constants');
 const errorToProblem = require('../components/errorToProblem');
-const { getAppAuthMode, getCurrentOidcId, getPath } = require('../components/utils');
+const { getAppAuthMode, getCurrentSubject, getPath } = require('../components/utils');
 const { objectService, storageService } = require('../services');
 
 const SERVICE = 'ObjectService';
@@ -48,7 +48,7 @@ const controller = {
     try {
       const bb = busboy({ headers: req.headers });
       const objects = [];
-      const oidcId = getCurrentOidcId(req.currentUser);
+      const userId = getCurrentSubject(req.currentUser);
 
       bb.on('file', (name, stream, info) => {
         const objId = uuidv4();
@@ -63,7 +63,7 @@ const controller = {
         };
         objects.push({
           data: data,
-          dbResponse: objectService.create({ ...data, oidcId, path: getPath(objId) }),
+          dbResponse: objectService.create({ ...data, userId, path: getPath(objId) }),
           s3Response: storageService.putObject({ ...data, stream })
         });
       });
@@ -132,7 +132,7 @@ const controller = {
 
   /** List and search for all objects */
   // TODO: Consider metadata/tagging query parameter design
-  // TODO: Consider accepting oidcId as a query parameter
+  // TODO: Consider accepting userId as a query parameter
   // TODO: Add support for filtering by set of permissions
   async listObjects(req, res, next) {
     try {
@@ -140,8 +140,8 @@ const controller = {
       if (authMode === AuthMode.NOAUTH || authMode === AuthMode.BASICAUTH) {
         response = await objectService.listObjects();
       } else if (authMode === AuthMode.OIDCAUTH || authMode === AuthMode.FULLAUTH) {
-        const oidcId = getCurrentOidcId(req.currentUser);
-        response = await objectService.fetchAllForUser(oidcId);
+        const userId = getCurrentSubject(req.currentUser);
+        response = await objectService.fetchAllForUser(userId);
       }
       res.status(201).json(response);
     } catch (error) {
@@ -225,7 +225,7 @@ const controller = {
   async updateObject(req, res, next) {
     try {
       const bb = busboy({ headers: req.headers, limits: { files: 1 } });
-      const oidcId = getCurrentOidcId(req.currentUser);
+      const userId = getCurrentSubject(req.currentUser);
       let object = undefined;
 
       bb.on('file', (name, stream, info) => {
@@ -241,7 +241,7 @@ const controller = {
         };
         object = {
           data: data,
-          dbResponse: objectService.update({ ...data, oidcId, path: getPath(objId) }),
+          dbResponse: objectService.update({ ...data, userId, path: getPath(objId) }),
           s3Response: storageService.putObject({ ...data, stream })
         };
       });
@@ -270,11 +270,11 @@ const controller = {
    */
   async togglePublic(req, res, next) {
     try {
-      const oidcId = getCurrentOidcId(req.currentUser, SYSTEM_USER);
+      const userId = getCurrentSubject(req.currentUser, SYSTEM_USER);
       const data = {
         id: req.params.objId,
         public: req.body.public,
-        updatedBy: oidcId
+        updatedBy: userId
       };
 
       const response = await objectService.update(data);

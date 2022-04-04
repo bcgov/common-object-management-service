@@ -6,16 +6,27 @@ const DELIMITER = '/';
 
 const utils = {
   /**
+   * @function addDashesToUuid
+   * Yields a lowercase uuid `str` that has dashes inserted, or `str` if not a string.
+   * @param {string} str The input string uuid
+   * @returns {string} The string `str` but with dashes inserted, or `str` if not a string.
+   */
+  addDashesToUuid(str) {
+    if ((typeof str === 'string' || str instanceof String) && str.length === 32) {
+      return `${str.slice(0,8)}-${str.slice(8,12)}-${str.slice(12,16)}-${str.slice(16,20)}-${str.slice(20)}`.toLowerCase();
+    }
+    else return str;
+  },
+
+  /**
    * @function delimit
    * Yields a string `s` that will always have a trailing delimiter. Returns an empty string if falsy.
    * @param {string} s The input string
    * @returns {string} The string `s` with the trailing delimiter, or an empty string.
    */
   delimit(s) {
-    if (s) {
-      return s.endsWith(DELIMITER) ? s : `${s}${DELIMITER}`;
-    }
-    return '';
+    if (s) return s.endsWith(DELIMITER) ? s : `${s}${DELIMITER}`;
+    else return '';
   },
 
   /**
@@ -28,21 +39,48 @@ const utils = {
     const oidcAuth = config.has('keycloak.enabled');
 
     if (!basicAuth && !oidcAuth) return AuthMode.NOAUTH;
-    if (basicAuth && !oidcAuth) return AuthMode.BASICAUTH;
-    if (!basicAuth && oidcAuth) return AuthMode.OIDCAUTH;
-    if (basicAuth && oidcAuth) return AuthMode.FULLAUTH;
+    else if (basicAuth && !oidcAuth) return AuthMode.BASICAUTH;
+    else if (!basicAuth && oidcAuth) return AuthMode.OIDCAUTH;
+    else return AuthMode.FULLAUTH; // basicAuth && oidcAuth
   },
 
   /**
-   * @function getCurrentOidcId
-   * Attempts to acquire current user oidcId. Yields `defaultValue` otherwise
+   * @function getCurrentIdentity
+   * Attempts to acquire current identity value.
+   * Always takes first non-default value available. Yields `defaultValue` otherwise.
    * @param {object} currentUser The express request currentUser object
    * @param {string} [defaultValue=undefined] An optional default return value
-   * @returns {string} The current user oidcId if applicable, or `defaultValue`
+   * @returns {string} The current user identifier if applicable, or `defaultValue`
    */
-  getCurrentOidcId(currentUser, defaultValue = undefined) {
+  getCurrentIdentity(currentUser, defaultValue = undefined) {
+    return utils.parseIdentityKeyClaims()
+      .map(claim => utils.getCurrentTokenClaim(currentUser, claim, undefined))
+      .filter(value => value) // Drop falsy values from array
+      .concat(defaultValue)[0]; // Add defaultValue as last element of array
+  },
+
+  /**
+   * @function getCurrentSubject
+   * Attempts to acquire current subject id. Yields `defaultValue` otherwise
+   * @param {object} currentUser The express request currentUser object
+   * @param {string} [defaultValue=undefined] An optional default return value
+   * @returns {string} The current subject id if applicable, or `defaultValue`
+   */
+  getCurrentSubject(currentUser, defaultValue = undefined) {
+    return utils.getCurrentTokenClaim(currentUser, 'sub', defaultValue);
+  },
+
+  /**
+   * @function getCurrentTokenClaim
+   * Attempts to acquire a specific current token claim. Yields `defaultValue` otherwise
+   * @param {object} currentUser The express request currentUser object
+   * @param {string} claim The requested token claim
+   * @param {string} [defaultValue=undefined] An optional default return value
+   * @returns {object} The requested current token claim if applicable, or `defaultValue`
+   */
+  getCurrentTokenClaim(currentUser, claim, defaultValue = undefined) {
     return (currentUser && currentUser.authType === AuthType.BEARER)
-      ? currentUser.tokenPayload.sub
+      ? currentUser.tokenPayload[claim]
       : defaultValue;
   },
 
@@ -75,7 +113,7 @@ const utils = {
       });
       return parts.join(DELIMITER);
     }
-    return '';
+    else return '';
   },
 
   /**
@@ -109,11 +147,25 @@ const utils = {
   },
 
   /**
+   * @function parseIdentityKeyClaims
+   * Returns an array of strings representing potential identity key claims
+   * Array will always end with the last value as 'sub'
+   * @returns {string[]} An array of string values, or `value` if it is not a string
+   */
+  parseIdentityKeyClaims() {
+    const claims = [];
+    if (config.has('keycloak.identityKey')) {
+      claims.push(...utils.parseCSV(config.get('keycloak.identityKey')));
+    }
+    return claims.concat('sub');
+  },
+
+  /**
    * @function streamToBuffer
    * Reads a Readable stream, writes to and returns an array buffer
    * @see https://github.com/aws/aws-sdk-js-v3/issues/1877#issuecomment-755446927
    * @param {Readable} stream A readable stream object
-   * @returns {array} A buffer usually formatted as an Uint8Array
+   * @returns {Buffer} A buffer usually formatted as an Uint8Array
    */
   streamToBuffer(stream) { // Readable
     return new Promise((resolve, reject) => {

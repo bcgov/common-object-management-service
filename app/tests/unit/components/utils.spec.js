@@ -7,29 +7,77 @@ const utils = require('../../../src/components/utils');
 jest.mock('config');
 
 beforeEach(() => {
-  config.get.mockReset();
-  config.has.mockReset();
+  jest.resetAllMocks();
+});
+
+afterAll(() => {
+  jest.restoreAllMocks();
+});
+
+describe('addDashesToUuid', () => {
+  it.each([
+    [undefined, undefined],
+    [null, null],
+    [123, 123],
+    [{}, {}],
+    ['123456789012345678901234567890', '123456789012345678901234567890'],
+    ['e0603b59-2edc-45f7-acc7-b0cccd6656e1', 'e0603b592edc45f7acc7b0cccd6656e1'],
+    ['e0603b59-2edc-45f7-acc7-b0cccd6656e1', 'E0603B592EDC45F7ACC7B0CCCD6656E1']
+  ])('should return %o given %j', (expected, str) => {
+    expect(utils.addDashesToUuid(str)).toEqual(expected);
+  });
+});
+
+describe('getPath', () => {
+  const delimitSpy = jest.spyOn(utils, 'delimit');
+  const joinSpy = jest.spyOn(utils, 'join');
+
+  it('should return whatever join returns', () => {
+    const key = 'abc';
+    const osKey = 'key';
+    delimitSpy.mockReturnValue(key);
+    joinSpy.mockReturnValue('abc/obj');
+    config.get.mockReturnValueOnce(osKey); // objectStorage.key
+
+    expect(utils.getPath('obj')).toEqual('abc/obj');
+
+    expect(delimitSpy).toHaveBeenCalledTimes(1);
+    expect(delimitSpy).toHaveBeenCalledWith(osKey);
+    expect(joinSpy).toHaveBeenCalledTimes(1);
+    expect(joinSpy).toHaveBeenCalledWith(key, 'obj');
+  });
 });
 
 describe('delimit', () => {
-  it('should return blank if no input string', () => {
-    expect(utils.delimit(undefined)).toEqual('');
-    expect(utils.delimit('')).toEqual('');
-    expect(utils.delimit(null)).toEqual('');
+  beforeAll(() => {
+    if (jest.isMockFunction(utils.delimit)) {
+      utils.delimit.mockRestore();
+    }
   });
 
-  it('should return the input string if it already ends with delimiter', () => {
-    expect(utils.delimit('1234/')).toEqual('1234/');
-    expect(utils.delimit('/')).toEqual('/');
-  });
-
-  it('should return the input string plus the delimiter', () => {
-    expect(utils.delimit('1234')).toEqual('1234/');
-    expect(utils.delimit('    ')).toEqual('    /');
+  it.each([
+    // Should return empty string if falsy input
+    ['', undefined],
+    ['', null],
+    ['', ''],
+    // Strings with trailing delimiters should remain unchanged
+    ['1234/', '1234/'],
+    ['/', '/'],
+    // Strings without trailing delimiters should have delimiter appended
+    ['1234/', '1234'],
+    ['    /', '    ']
+  ])('should return %o given %j', (expected, str) => {
+    expect(utils.delimit(str)).toEqual(expected);
   });
 });
 
 describe('join', () => {
+  beforeAll(() => {
+    if (jest.isMockFunction(utils.join)) {
+      utils.join.mockRestore();
+    }
+  });
+
   it('should return blank if nothing supplied', () => {
     expect(utils.join()).toEqual('');
   });
@@ -46,72 +94,173 @@ describe('join', () => {
 });
 
 describe('getAppAuthMode', () => {
-  it('should return no auth', () => {
-    // define enabled flags basicAuth.enabled then keycloak.enabled
+  it.each([
+    [AuthMode.NOAUTH, false, false],
+    [AuthMode.BASICAUTH, true, false],
+    [AuthMode.OIDCAUTH, false, true],
+    [AuthMode.FULLAUTH, true, true]
+  ])('should return %s when basicAuth.enabled %s and keycloak.enabled %s', (expected, basicAuth, keycloak) => {
     config.has
-      .mockReturnValueOnce(false)
-      .mockReturnValueOnce(false);
-    // define enabled flags
-    expect(utils.getAppAuthMode()).toEqual(AuthMode.NOAUTH);
-    expect(config.has).toHaveBeenCalledTimes(2);
-  });
-  it('should return basic auth', () => {
-    // define enabled flags basicAuth.enabled then keycloak.enabled
-    config.has
-      .mockReturnValueOnce(true)
-      .mockReturnValueOnce(false);
-    expect(utils.getAppAuthMode()).toEqual(AuthMode.BASICAUTH);
-    expect(config.has).toHaveBeenCalledTimes(2);
-  });
-  it('should return oidc auth', () => {
-    // define enabled flags basicAuth.enabled then keycloak.enabled
-    config.has
-      .mockReturnValueOnce(false)
-      .mockReturnValueOnce(true);
-    expect(utils.getAppAuthMode()).toEqual(AuthMode.OIDCAUTH);
-    expect(config.has).toHaveBeenCalledTimes(2);
-  });
-  it('should return full auth', () => {
-    // define enabled flags basicAuth.enabled then keycloak.enabled
-    config.has
-      .mockReturnValueOnce(true)
-      .mockReturnValueOnce(true);
-    expect(utils.getAppAuthMode()).toEqual(AuthMode.FULLAUTH);
+      .mockReturnValueOnce(basicAuth) // basicAuth.enabled
+      .mockReturnValueOnce(keycloak); // keycloak.enabled
+
+    const result = utils.getAppAuthMode();
+
+    expect(result).toEqual(expected);
     expect(config.has).toHaveBeenCalledTimes(2);
   });
 });
 
-describe('getCurrentOidcId', () => {
-  it('should return the undefined defaul if no current user', () => {
-    expect(utils.getCurrentOidcId()).toBeUndefined();
-    expect(utils.getCurrentOidcId(null)).toBeUndefined();
-    expect(utils.getCurrentOidcId(undefined)).toBeUndefined();
-    expect(utils.getCurrentOidcId('')).toBeUndefined();
+describe('getCurrentIdentity', () => {
+  const getCurrentTokenClaimSpy = jest.spyOn(utils, 'getCurrentTokenClaim');
+  const parseIdentityKeyClaimsSpy = jest.spyOn(utils, 'parseIdentityKeyClaims');
+
+  const idirClaim = 'idir_user_guid';
+  const subClaim = 'sub';
+
+  beforeEach(() => {
+    getCurrentTokenClaimSpy.mockReset().mockImplementation(() => { });
+    parseIdentityKeyClaimsSpy.mockReset();
   });
 
-  it('should return the defined default if no current user', () => {
-    const def = 'abc-123';
-    expect(utils.getCurrentOidcId(null, def)).toEqual(def);
-    expect(utils.getCurrentOidcId(undefined, def)).toEqual(def);
-    expect(utils.getCurrentOidcId('', def)).toEqual(def);
+  it.each([
+    [undefined, [subClaim]],
+    [undefined, [idirClaim, subClaim]],
+    [null, [subClaim]],
+    [null, [idirClaim, subClaim]],
+    ['', [subClaim]],
+    ['', [idirClaim, subClaim]],
+    [[], [subClaim]],
+    [[], [idirClaim, subClaim]],
+    [{}, [subClaim]],
+    [{}, [idirClaim, subClaim]]
+  ])('should call functions correctly given %j', (currentUser, idKeys) => {
+    parseIdentityKeyClaimsSpy.mockReturnValue(idKeys);
+
+    utils.getCurrentIdentity(currentUser);
+
+    expect(getCurrentTokenClaimSpy).toHaveBeenCalledTimes(idKeys.length);
+    if (idKeys.length > 1) expect(getCurrentTokenClaimSpy).toHaveBeenCalledWith(currentUser, idirClaim, undefined);
+    expect(getCurrentTokenClaimSpy).toHaveBeenCalledWith(currentUser, subClaim, undefined);
+    expect(parseIdentityKeyClaimsSpy).toHaveBeenCalledTimes(1);
+    expect(parseIdentityKeyClaimsSpy).toHaveBeenCalledWith();
   });
 
-  it('should return the defined default if not BEARER auth type', () => {
-    const def = 'abc-123';
-    expect(utils.getCurrentOidcId({}, def)).toEqual(def);
-    expect(utils.getCurrentOidcId({ a: 1 }, def)).toEqual(def);
-    expect(utils.getCurrentOidcId({ authType: AuthType.BASIC }, def)).toEqual(def);
+  it.each([
+    [undefined, [subClaim]],
+    [undefined, [idirClaim, subClaim]],
+    [null, [subClaim]],
+    [null, [idirClaim, subClaim]],
+    ['', [subClaim]],
+    ['', [idirClaim, subClaim]],
+    [[], [subClaim]],
+    [[], [idirClaim, subClaim]],
+    [{}, [subClaim]],
+    [{}, [idirClaim, subClaim]]
+  ])('should call functions correctly given %j and defaultValue \'default\'', (currentUser, idKeys) => {
+    const defaultValue = 'default';
+    parseIdentityKeyClaimsSpy.mockReturnValue(idKeys);
+
+    utils.getCurrentIdentity(currentUser, defaultValue);
+
+    expect(getCurrentTokenClaimSpy).toHaveBeenCalledTimes(idKeys.length);
+    if (idKeys.length > 1) expect(getCurrentTokenClaimSpy).toHaveBeenCalledWith(currentUser, idirClaim, undefined);
+    expect(getCurrentTokenClaimSpy).toHaveBeenCalledWith(currentUser, subClaim, undefined);
+    expect(parseIdentityKeyClaimsSpy).toHaveBeenCalledTimes(1);
+    expect(parseIdentityKeyClaimsSpy).toHaveBeenCalledWith();
+  });
+});
+
+describe('getCurrentSubject', () => {
+  const getCurrentTokenClaimSpy = jest.spyOn(utils, 'getCurrentTokenClaim');
+
+  beforeEach(() => {
+    getCurrentTokenClaimSpy.mockReset().mockImplementation(() => { });
   });
 
-  it('should return the sub if it it BEARER', () => {
-    const currentUser = {
-      authType: AuthType.BEARER,
-      tokenPayload: {
-        sub: 'xyz-sub'
-      }
-    };
-    expect(utils.getCurrentOidcId(currentUser)).toEqual('xyz-sub');
-    expect(utils.getCurrentOidcId(currentUser, 'a default')).toEqual('xyz-sub');
+  it.each([undefined, null, '', [], {}])('should call getCurrentTokenClaim correctly given %j', (currentUser) => {
+    utils.getCurrentSubject(currentUser);
+
+    expect(getCurrentTokenClaimSpy).toHaveBeenCalledTimes(1);
+    expect(getCurrentTokenClaimSpy).toHaveBeenCalledWith(currentUser, 'sub', undefined);
+  });
+
+  it.each([undefined, null, '', [], {}])('should call getCurrentTokenClaim correctly given %j and defaultValue \'default\'', (currentUser) => {
+    const defaultValue = 'default';
+    utils.getCurrentSubject(currentUser, defaultValue);
+
+    expect(getCurrentTokenClaimSpy).toHaveBeenCalledTimes(1);
+    expect(getCurrentTokenClaimSpy).toHaveBeenCalledWith(currentUser, 'sub', defaultValue);
+  });
+});
+
+describe('getCurrentTokenClaim', () => {
+  const defaultValue = 'default';
+
+  beforeAll(() => {
+    if (jest.isMockFunction(utils.getCurrentTokenClaim)) {
+      utils.getCurrentTokenClaim.mockRestore();
+    }
+  });
+
+  it.each([
+    // Should return defaultValue if no currentUser
+    [undefined, undefined, undefined],
+    [undefined, undefined, 'bad'],
+    [undefined, undefined, 'sub'],
+    [undefined, null, undefined],
+    [undefined, null, 'bad'],
+    [undefined, null, 'sub'],
+    // Should return defaultValue if invalid currentUser
+    [undefined, '', undefined],
+    [undefined, '', 'bad'],
+    [undefined, '', 'sub'],
+    [undefined, {}, undefined],
+    [undefined, {}, 'bad'],
+    [undefined, {}, 'sub'],
+    [undefined, { a: 1 }, undefined],
+    [undefined, { a: 1 }, 'bad'],
+    [undefined, { a: 1 }, 'sub'],
+    // Should return defaultValue if not authType Bearer
+    [undefined, { authType: AuthType.BASIC }, undefined],
+    [undefined, { authType: AuthType.BASIC }, 'bad'],
+    [undefined, { authType: AuthType.BASIC }, 'sub'],
+    // Should return claim value if authType Bearer
+    [undefined, { authType: AuthType.BEARER, tokenPayload: { sub: 'foo' } }, undefined],
+    [undefined, { authType: AuthType.BEARER, tokenPayload: { sub: 'foo' } }, 'bad'],
+    ['foo', { authType: AuthType.BEARER, tokenPayload: { sub: 'foo' } }, 'sub'],
+  ])('should return %j given currentUser %j and claim %j', (expected, currentUser, claim) => {
+    expect(utils.getCurrentTokenClaim(currentUser, claim)).toBe(expected);
+  });
+
+  it.each([
+    // Should return defaultValue if no currentUser
+    [defaultValue, undefined, undefined],
+    [defaultValue, undefined, 'bad'],
+    [defaultValue, undefined, 'sub'],
+    [defaultValue, null, undefined],
+    [defaultValue, null, 'bad'],
+    [defaultValue, null, 'sub'],
+    // Should return defaultValue if invalid currentUser
+    [defaultValue, '', undefined],
+    [defaultValue, '', 'bad'],
+    [defaultValue, '', 'sub'],
+    [defaultValue, {}, undefined],
+    [defaultValue, {}, 'bad'],
+    [defaultValue, {}, 'sub'],
+    [defaultValue, { a: 1 }, undefined],
+    [defaultValue, { a: 1 }, 'bad'],
+    [defaultValue, { a: 1 }, 'sub'],
+    // Should return defaultValue if not authType Bearer
+    [defaultValue, { authType: AuthType.BASIC }, undefined],
+    [defaultValue, { authType: AuthType.BASIC }, 'bad'],
+    [defaultValue, { authType: AuthType.BASIC }, 'sub'],
+    // Should return claim value if authType Bearer
+    [undefined, { authType: AuthType.BEARER, tokenPayload: { sub: 'foo' } }, undefined],
+    [undefined, { authType: AuthType.BEARER, tokenPayload: { sub: 'foo' } }, 'bad'],
+    ['foo', { authType: AuthType.BEARER, tokenPayload: { sub: 'foo' } }, 'sub'],
+  ])('should return %j given currentUser %j, claim %j and defaultValue \'default\'', (expected, currentUser, claim) => {
+    expect(utils.getCurrentTokenClaim(currentUser, claim, defaultValue)).toBe(expected);
   });
 });
 
@@ -148,60 +297,39 @@ describe('mixedQueryToArray', () => {
 });
 
 describe('parseCSV', () => {
-  it('should return the input back if it is not a string', () => {
-    expect(utils.parseCSV(undefined)).toEqual(undefined);
-    expect(utils.parseCSV(12)).toEqual(12);
-    expect(utils.parseCSV(null)).toEqual(null);
-    expect(utils.parseCSV(['a', 'b'])).toEqual(['a', 'b']);
-    expect(utils.parseCSV({ a: 'a', b: 'b' })).toEqual({ a: 'a', b: 'b' });
-  });
-
-  it('should return an array of split trimmed strings for blanks', () => {
-    expect(utils.parseCSV('')).toEqual(['']);
-    expect(utils.parseCSV('   ,   ')).toEqual(['', '']);
-  });
-
-  it('should return an array of split trimmed strings for blanks', () => {
-    expect(utils.parseCSV('this, is , a,test  ')).toEqual(['this', 'is', 'a', 'test']);
-  });
-});
-
-describe('getPath', () => {
-  afterEach(() => {
-    jest.resetAllMocks();
-  });
-
-  const delimitSpy = jest.spyOn(utils, 'delimit');
-  const joinSpy = jest.spyOn(utils, 'join');
-
-  it('should return whatever join returns', () => {
-    // test actual join impl below
-    delimitSpy.mockReturnValue('abc');
-    joinSpy.mockReturnValue('abc/obj');
-    expect(utils.getPath('obj')).toEqual('abc/obj');
-    expect(delimitSpy).toHaveBeenCalledTimes(1);
-    expect(joinSpy).toHaveBeenCalledTimes(1);
-    expect(joinSpy).toHaveBeenCalledWith('abc', 'obj');
+  it.each([
+    // Should return back input if not a string
+    [undefined, undefined],
+    [12, 12],
+    [null, null],
+    [['a', 'b'], ['a', 'b']],
+    [{ a: 'a', b: 'b' }, { a: 'a', b: 'b' }],
+    // Should return an array of split trimmed strings for blanks
+    [[''], ''],
+    [['', ''], '   ,   '],
+    // Should return an array of split trimmed strings
+    [['this', 'is', 'a', 'test'], 'this, is , a,test  ']
+  ])('should return %j given %j', (expected, value) => {
+    expect(utils.parseCSV(value)).toEqual(expected);
   });
 });
 
 describe('streamToBuffer', () => {
-  it('should reject on a non stream input', async () => {
-    await expect(utils.streamToBuffer())
-      .rejects
-      .toThrow();
-    await expect(utils.streamToBuffer(123))
-      .rejects
-      .toThrow();
+  it('should reject on a non-stream input', () => {
+    expect(utils.streamToBuffer()).rejects.toThrow();
+    expect(utils.streamToBuffer(123)).rejects.toThrow();
   });
-  it('should return a buffer', async () => {
+
+  it('should return a buffer', () => {
     const Readable = require('stream').Readable;
     const s = new Readable();
     s._read = () => { }; // redundant? see update below
     s.push('your text here');
     s.push(null);
-    const res = await utils.streamToBuffer(s);
-    await expect(res).toBeTruthy();
-    await expect(res).toBeInstanceOf(Buffer);
+
+    const result = utils.streamToBuffer(s);
+
+    expect(result).resolves.toBeTruthy();
+    expect(result).resolves.toBeInstanceOf(Buffer);
   });
 });

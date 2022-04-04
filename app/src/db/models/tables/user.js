@@ -1,6 +1,8 @@
 const { Model } = require('objection');
+
+const { stamps } = require('../jsonSchema');
 const { Timestamps } = require('../mixins');
-const stamps = require('../jsonSchema').stamps;
+const { filterOneOrMany, filterILike } = require('../utils');
 
 class User extends Timestamps(Model) {
   static get tableName() {
@@ -8,7 +10,7 @@ class User extends Timestamps(Model) {
   }
 
   static get idColumn() {
-    return 'oidcId';
+    return 'userId';
   }
 
   static get relationMappings() {
@@ -28,9 +30,55 @@ class User extends Timestamps(Model) {
         relation: Model.HasManyRelation,
         modelClass: ObjectPermission,
         join: {
-          from: 'user.oidcId',
-          to: 'object_permission.oidcId'
+          from: 'user.userId',
+          to: 'object_permission.userId'
         }
+      }
+    };
+  }
+
+  static get modifiers() {
+    return {
+      filterUserId(query, value) {
+        filterOneOrMany(query, value, 'userId');
+      },
+      filterIdentityId(query, value) {
+        filterOneOrMany(query, value, 'identityId');
+      },
+      filterIdp(query, value) {
+        filterOneOrMany(query, value, 'idp');
+      },
+      filterUsername(query, value) {
+        filterILike(query, value, 'username');
+      },
+      filterEmail(query, value) {
+        filterILike(query, value, 'email');
+      },
+      filterFirstName(query, value) {
+        filterILike(query, value, 'firstName');
+      },
+      filterFullName(query, value) {
+        filterILike(query, value, 'fullName');
+      },
+      filterLastName(query, value) {
+        filterILike(query, value, 'lastName');
+      },
+      filterActive(query, value) {
+        if (value !== undefined) query.where('active', value);
+      },
+      /** General OR search across multiple fields */
+      filterSearch(query, value) {
+        // Must be written as subquery function to force parentheses grouping
+        if (value) {
+          query.where(subquery => {
+            subquery.where('username', 'ilike', `%${value}%`)
+              .orWhere('email', 'ilike', `%${value}%`)
+              .orWhere('fullName', 'ilike', `%${value}%`);
+          });
+        }
+      },
+      orderLastFirstAscending(builder) {
+        builder.orderByRaw('lower("lastName"), lower("firstName")');
       }
     };
   }
@@ -38,9 +86,10 @@ class User extends Timestamps(Model) {
   static get jsonSchema() {
     return {
       type: 'object',
-      required: ['oidcId', 'username'],
+      required: ['userId', 'username'],
       properties: {
-        oidcId: { type: 'string', maxLength: 255 },
+        userId: { type: 'string', maxLength: 255 },
+        identityId: { type: 'string', maxLength: 255 },
         idp: { type: 'string' },
         firstName: { type: 'string', maxLength: 255 },
         fullName: { type: 'string', maxLength: 255 },
