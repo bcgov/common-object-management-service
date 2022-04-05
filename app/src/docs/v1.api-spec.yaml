@@ -3,7 +3,7 @@ openapi: 3.0.3
 info:
   version: 1.0.0
   title: Common Object Management Service (COMS)
-  description: An API for managing S3 Objects
+  description: A microservice for managing access control to S3 Objects
   license:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0.html'
@@ -12,7 +12,7 @@ info:
     email: NR.CommonServiceShowcase@gov.bc.ca
 servers:
   - url: /api/v1
-    description: Your Server
+    description: This Server
 security:
   - BearerAuth: []
   - OpenID: []
