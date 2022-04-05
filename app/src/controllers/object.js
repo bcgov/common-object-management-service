@@ -3,7 +3,7 @@ const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 
 const { AuthMode } = require('../components/constants');
 const errorToProblem = require('../components/errorToProblem');
-const { getAppAuthMode, getCurrentSubject, getPath } = require('../components/utils');
+const { addDashesToUuid, getAppAuthMode, getCurrentSubject, getPath, mixedQueryToArray } = require('../components/utils');
 const { objectService, storageService } = require('../services');
 
 const SERVICE = 'ObjectService';
@@ -92,11 +92,12 @@ const controller = {
    */
   async deleteObject(req, res, next) {
     try {
+      const objId = addDashesToUuid(req.params.objId);
       const data = {
-        filePath: getPath(req.params.objId)
+        filePath: getPath(objId)
       };
 
-      await objectService.delete(req.params.objId);
+      await objectService.delete(objId);
       const response = await storageService.deleteObject(data); // Attempt deletion operation
       res.status(200).json(response);
     } catch (e) {
@@ -114,8 +115,9 @@ const controller = {
    */
   async headObject(req, res, next) {
     try {
+      const objId = addDashesToUuid(req.params.objId);
       const data = {
-        filePath: getPath(req.params.objId),
+        filePath: getPath(objId),
         versionId: req.query.versionId ? req.query.versionId.toString() : undefined
       };
 
@@ -130,19 +132,36 @@ const controller = {
     }
   },
 
-  /** List and search for all objects */
-  // TODO: Consider metadata/tagging query parameter design
-  // TODO: Consider accepting userId as a query parameter
-  // TODO: Add support for filtering by set of permissions
-  async listObjects(req, res, next) {
+  /**
+   * @function searchObjects
+   * Search and filter for specific objects
+   * @param {object} req Express request object
+   * @param {object} res Express response object
+   * @param {function} next The next callback function
+   * @returns {function} Express middleware function
+   */
+  async searchObjects(req, res, next) {
+    // TODO: Handle no database scenarios via S3 ListObjectsCommand?
+    // TODO: Consider metadata/tagging query parameter design here?
+    // TODO: Consider support for filtering by set of permissions?
     try {
-      let response = undefined;
-      if (authMode === AuthMode.NOAUTH || authMode === AuthMode.BASICAUTH) {
-        response = await objectService.listObjects();
-      } else if (authMode === AuthMode.OIDCAUTH || authMode === AuthMode.FULLAUTH) {
-        const userId = getCurrentSubject(req.currentUser);
-        response = await objectService.fetchAllForUser(userId);
+      const objIds = mixedQueryToArray(req.query.objId);
+      const params = {
+        id: objIds ? objIds.map(id => addDashesToUuid(id)) : objIds,
+        originalName: req.query.originalName,
+        path: req.query.path,
+        mimeType: req.query.mimeType,
+        // TODO: Consider more robust truthiness checks for 'true' and 'false' string cases
+        public: req.query.public,
+        active: req.query.active
+      };
+
+      // When using OIDC authentication, force populate current user as filter if available
+      if (authMode === AuthMode.OIDCAUTH || authMode === AuthMode.FULLAUTH) {
+        params.userId = getCurrentSubject(req.currentUser);
       }
+
+      const response = await objectService.searchObjects(params);
       res.status(201).json(response);
     } catch (error) {
       next(error);
@@ -159,8 +178,9 @@ const controller = {
    */
   async listObjectVersion(req, res, next) {
     try {
+      const objId = addDashesToUuid(req.params.objId);
       const data = {
-        filePath: getPath(req.params.objId)
+        filePath: getPath(objId)
       };
 
       const response = await storageService.listObjectVersion(data);
@@ -180,8 +200,9 @@ const controller = {
    */
   async readObject(req, res, next) {
     try {
+      const objId = addDashesToUuid(req.params.objId);
       const data = {
-        filePath: getPath(req.params.objId),
+        filePath: getPath(objId),
         versionId: req.query.versionId ? req.query.versionId.toString() : undefined
       };
 
@@ -229,7 +250,7 @@ const controller = {
       let object = undefined;
 
       bb.on('file', (name, stream, info) => {
-        const objId = req.params.objId;
+        const objId = addDashesToUuid(req.params.objId);
         const data = {
           id: objId,
           fieldName: name,
@@ -272,7 +293,7 @@ const controller = {
     try {
       const userId = getCurrentSubject(req.currentUser, SYSTEM_USER);
       const data = {
-        id: req.params.objId,
+        id: addDashesToUuid(req.params.objId),
         public: req.body.public,
         updatedBy: userId
       };

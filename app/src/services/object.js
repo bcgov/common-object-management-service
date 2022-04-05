@@ -77,10 +77,26 @@ const service = {
     }
   },
 
-  /** Get an object db record */
-  // TODO: Add modify logic to ObjectModel
-  listObjects: () => {
-    return ObjectModel.query();
+  /**
+   * @function searchObjects
+   * Search and filter for specific object records
+   * @param {string|string[]} [params.id] Optional string or array of uuids representing the object
+   * @param {string} [params.originalName] Optional filename string to match on
+   * @param {string} [params.path] Optional canonical S3 path string to match on
+   * @param {string} [params.mimeType] Optional mimeType string to match on
+   * @param {boolean} [params.public] Optional boolean on object public status
+   * @param {boolean} [params.active] Optional boolean on object active status
+   * @returns {Promise<object>} The result of running the find operation
+   */
+  searchObjects: (params) => {
+    return ObjectModel.query()
+      .modify('filterIds', params.id)
+      .modify('filterOriginalName', params.originalName)
+      .modify('filterPath', params.path)
+      .modify('filterMimeType', params.mimeType)
+      .modify('filterPublic', params.public)
+      .modify('filterActive', params.active)
+      .modify('filterUserId', params.userId);
   },
 
   /**

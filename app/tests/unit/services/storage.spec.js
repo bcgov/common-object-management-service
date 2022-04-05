@@ -3,6 +3,7 @@ const {
   GetObjectCommand,
   HeadBucketCommand,
   HeadObjectCommand,
+  ListObjectsCommand,
   ListObjectVersionsCommand,
   PutObjectCommand
 } = require('@aws-sdk/client-s3');
@@ -26,6 +27,10 @@ jest.mock('@aws-sdk/s3-request-presigner', () => ({
 // Mock config library - @see https://stackoverflow.com/a/64819698
 jest.mock('config');
 
+beforeEach(() => {
+  s3ClientMock.reset();
+});
+
 describe('_s3Client', () => {
   it('should be an object', () => {
     expect(service._s3Client).toBeTruthy();
@@ -35,7 +40,6 @@ describe('_s3Client', () => {
 
 describe('deleteObject', () => {
   beforeEach(() => {
-    s3ClientMock.reset();
     s3ClientMock.on(DeleteObjectCommand).resolves({});
   });
 
@@ -68,7 +72,6 @@ describe('deleteObject', () => {
 
 describe('headBucket', () => {
   beforeEach(() => {
-    s3ClientMock.reset();
     s3ClientMock.on(HeadBucketCommand).resolves({});
   });
 
@@ -85,7 +88,6 @@ describe('headBucket', () => {
 
 describe('headObject', () => {
   beforeEach(() => {
-    s3ClientMock.reset();
     s3ClientMock.on(HeadObjectCommand).resolves({});
   });
 
@@ -102,9 +104,41 @@ describe('headObject', () => {
   });
 });
 
+describe('listObjects', () => {
+  beforeEach(() => {
+    s3ClientMock.on(ListObjectsCommand).resolves({});
+  });
+
+  it('should send a list objects command with default 1000 maxKeys', () => {
+    const filePath = 'filePath';
+    const result = service.listObjects({ filePath });
+
+    expect(result).toBeTruthy();
+    expect(s3ClientMock.calls()).toHaveLength(1);
+    expect(s3ClientMock.commandCalls(ListObjectsCommand, {
+      Bucket: bucket,
+      Prefix: filePath,
+      MaxKeys: 1000
+    }, true)).toHaveLength(1);
+  });
+
+  it('should send a list objects command with 2000 maxKeys', () => {
+    const filePath = 'filePath';
+    const maxKeys = 2000;
+    const result = service.listObjects({ filePath, maxKeys });
+
+    expect(result).toBeTruthy();
+    expect(s3ClientMock.calls()).toHaveLength(1);
+    expect(s3ClientMock.commandCalls(ListObjectsCommand, {
+      Bucket: bucket,
+      Prefix: filePath,
+      MaxKeys: maxKeys
+    }, true)).toHaveLength(1);
+  });
+});
+
 describe('listObjectVersion', () => {
   beforeEach(() => {
-    s3ClientMock.reset();
     s3ClientMock.on(ListObjectVersionsCommand).resolves({});
   });
 
@@ -154,7 +188,6 @@ describe('presignUrl', () => {
 
 describe('putObject', () => {
   beforeEach(() => {
-    s3ClientMock.reset();
     s3ClientMock.on(PutObjectCommand).resolves({});
   });
 
@@ -232,7 +265,6 @@ describe('putObject', () => {
 
 describe('readObject', () => {
   beforeEach(() => {
-    s3ClientMock.reset();
     s3ClientMock.on(GetObjectCommand).resolves({});
   });
 
@@ -268,7 +300,6 @@ describe('readSignedUrl', () => {
   const presignUrlMock = jest.spyOn(service, 'presignUrl');
 
   beforeEach(() => {
-    presignUrlMock.mockReset();
     presignUrlMock.mockResolvedValue('url');
   });
 

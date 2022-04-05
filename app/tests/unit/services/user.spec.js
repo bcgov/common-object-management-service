@@ -36,7 +36,7 @@ beforeEach(() => {
 
 
 describe('_tokenToUser', () => {
-
+  // TODO: Add more edge case testing
   it('Transforms JWT payload contents into a User Model object', () => {
     const newUser = service._tokenToUser(token);
     expect(newUser).toEqual(user);

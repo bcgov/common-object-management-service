@@ -1,6 +1,6 @@
 const { NIL: SYSTEM_USER } = require('uuid');
 
-const { parseIdentityKeyClaims } = require('../components/utils');
+const { addDashesToUuid, parseIdentityKeyClaims } = require('../components/utils');
 const { IdentityProvider, User } = require('../db/models');
 
 /**
@@ -13,19 +13,23 @@ const service = {
    * @param {object} token The decoded JWT payload
    * @returns {object} An equivalent User model object
    */
-  _tokenToUser: (token) => ({
-    userId: token.sub,
-    identityId: parseIdentityKeyClaims()
+  _tokenToUser: (token) => {
+    const identityId = parseIdentityKeyClaims()
       .map(idKey => token[idKey])
       .filter(claims => claims) // Drop falsy values from array
-      .concat(undefined)[0], // Set undefined as last element of array
-    username: token.identity_provider_identity ? token.identity_provider_identity : token.preferred_username,
-    firstName: token.given_name,
-    fullName: token.name,
-    lastName: token.family_name,
-    email: token.email,
-    idp: token.identity_provider
-  }),
+      .concat(undefined)[0]; // Set undefined as last element of array
+
+    return {
+      userId: token.sub,
+      identityId: addDashesToUuid(identityId),
+      username: token.identity_provider_identity ? token.identity_provider_identity : token.preferred_username,
+      firstName: token.given_name,
+      fullName: token.name,
+      lastName: token.family_name,
+      email: token.email,
+      idp: token.identity_provider
+    };
+  },
 
   /**
    * @function createIdp

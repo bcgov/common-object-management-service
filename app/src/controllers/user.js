@@ -1,5 +1,5 @@
 const errorToProblem = require('../components/errorToProblem');
-const { mixedQueryToArray } = require('../components/utils');
+const { addDashesToUuid, mixedQueryToArray } = require('../components/utils');
 const { userService } = require('../services');
 
 const SERVICE = 'UserService';
@@ -38,9 +38,11 @@ const controller = {
    */
   async searchUsers(req, res, next) {
     try {
+      const userIds = mixedQueryToArray(req.query.userId);
+      const identityIds = mixedQueryToArray(req.query.identityId);
       const response = await userService.searchUsers({
-        userId: mixedQueryToArray(req.query.userId),
-        identityId: mixedQueryToArray(req.query.identityId),
+        userId: userIds ? userIds.map(id => addDashesToUuid(id)) : userIds,
+        identityId: identityIds ? identityIds.map(id => addDashesToUuid(id)) : identityIds,
         idp: mixedQueryToArray(req.query.idp),
         username: req.query.username,
         email: req.query.email,

@@ -26,6 +26,8 @@ class ObjectModel extends Timestamps(Model) {
   }
 
   static get modifiers() {
+    const ObjectPermission = require('./objectPermission');
+
     return {
       filterIds(query, value) {
         filterOneOrMany(query, value, 'id');
@@ -44,6 +46,13 @@ class ObjectModel extends Timestamps(Model) {
       },
       filterActive(query, value) {
         if (value !== undefined) query.where('active', value);
+      },
+      filterUserId(query, value) {
+        if (value) {
+          query.whereIn('id', ObjectPermission.query()
+            .distinct('objectId')
+            .where('userId', value));
+        }
       }
     };
   }

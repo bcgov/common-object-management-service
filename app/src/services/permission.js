@@ -1,24 +1,12 @@
 const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 
 const { Permissions } = require('../components/constants');
-const { ObjectModel, ObjectPermission } = require('../db/models');
+const { ObjectPermission } = require('../db/models');
 
 /**
  * The Permission DB Service
  */
 const service = {
-  /** For the given user, get the permissions they have */
-  // TODO: Determine if this function is still necessary
-  fetchAllForUser: (userId) => {
-    // TODO: Consider using ObjectPermission as top level instead for efficiency?
-    return ObjectModel.query()
-      .allowGraph('[objectPermission]')
-      .withGraphFetched('objectPermission')
-      .modifyGraph('objectPermission', builder => builder.where('userId', userId))
-      // TODO: Convert this filter to compute on DB query
-      .then(response => response.filter(r => r.objectPermission && r.objectPermission.length));
-  },
-
   /**
    * @function addPermissions
    * Grants object permissions to users
