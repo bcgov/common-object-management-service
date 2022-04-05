@@ -61,8 +61,8 @@ exports.up = function (knex) {
       table.string('updatedByUsername', 255);
       table.timestamp('actionTimestamp', { useTz: true }).defaultTo(knex.fn.now()).index();
       table.string('action', 255).notNullable().index();
-      table.jsonb('originalData');
-      table.jsonb('newData');
+      table.json('originalData');
+      table.json('newData');
     }))
 
     .then(() => knex.schema.raw(`CREATE OR REPLACE FUNCTION audit.if_modified_func() RETURNS trigger AS $body$
