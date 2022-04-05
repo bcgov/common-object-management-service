@@ -12,9 +12,9 @@ routes.post('/', (req, res, next) => {
   objectController.createObjects(req, res, next);
 });
 
-/** List and search for all objects */
+/** Search for objects */
 routes.get('/', (req, res, next) => {
-  objectController.listObjects(req, res, next);
+  objectController.searchObjects(req, res, next);
 });
 
 /** Returns object headers */

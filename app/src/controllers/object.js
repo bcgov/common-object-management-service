@@ -3,7 +3,7 @@ const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 
 const { AuthMode } = require('../components/constants');
 const errorToProblem = require('../components/errorToProblem');
-const { getAppAuthMode, getCurrentSubject, getPath } = require('../components/utils');
+const { getAppAuthMode, getCurrentSubject, getPath, mixedQueryToArray } = require('../components/utils');
 const { objectService, storageService } = require('../services');
 
 const SERVICE = 'ObjectService';
@@ -131,18 +131,26 @@ const controller = {
   },
 
   /** List and search for all objects */
+  // TODO: Handle no database scenarios
   // TODO: Consider metadata/tagging query parameter design
-  // TODO: Consider accepting userId as a query parameter
-  // TODO: Add support for filtering by set of permissions
-  async listObjects(req, res, next) {
+  // TODO: Consider support for filtering by set of permissions?
+  async searchObjects(req, res, next) {
     try {
-      let response = undefined;
-      if (authMode === AuthMode.NOAUTH || authMode === AuthMode.BASICAUTH) {
-        response = await objectService.listObjects();
-      } else if (authMode === AuthMode.OIDCAUTH || authMode === AuthMode.FULLAUTH) {
-        const userId = getCurrentSubject(req.currentUser);
-        response = await objectService.fetchAllForUser(userId);
+      const params = {
+        id: mixedQueryToArray(req.query.id),
+        originalName: req.query.originalName,
+        path: req.query.path,
+        mimeType: req.query.mimeType,
+        // TODO: Consider more robust truthiness checks for 'true' and 'false' string cases
+        public: req.query.public,
+        active: req.query.active
+      };
+
+      if (authMode === AuthMode.OIDCAUTH || authMode === AuthMode.FULLAUTH) {
+        params.userId = getCurrentSubject(req.currentUser);
       }
+
+      const response = await objectService.searchObjects(params);
       res.status(201).json(response);
     } catch (error) {
       next(error);

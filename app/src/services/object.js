@@ -78,9 +78,15 @@ const service = {
   },
 
   /** Get an object db record */
-  // TODO: Add modify logic to ObjectModel
-  listObjects: () => {
-    return ObjectModel.query();
+  searchObjects: (params) => {
+    return ObjectModel.query()
+      .modify('filterIds', params.id)
+      .modify('filterOriginalName', params.originalName)
+      .modify('filterPath', params.path)
+      .modify('filterMimeType', params.mimeType)
+      .modify('filterPublic', params.public)
+      .modify('filterActive', params.active)
+      .modify('filterUserId', params.userId);
   },
 
   /**
