@@ -1,7 +1,7 @@
 const Problem = require('api-problem');
 
 const errorToProblem = require('../components/errorToProblem');
-const { getCurrentSubject, mixedQueryToArray } = require('../components/utils');
+const { addDashesToUuid, getCurrentSubject, mixedQueryToArray } = require('../components/utils');
 const { permissionService } = require('../services');
 
 const SERVICE = 'PermissionService';
@@ -20,9 +20,11 @@ const controller = {
    */
   async searchPermissions(req, res, next) {
     try {
+      const objIds = mixedQueryToArray(req.query.objId);
+      const userIds = mixedQueryToArray(req.query.userId);
       const response = await permissionService.searchPermissions({
-        objId: mixedQueryToArray(req.query.objId),
-        userId: mixedQueryToArray(req.query.userId),
+        objId: objIds ? objIds.map(id => addDashesToUuid(id)) : objIds,
+        userId: userIds ? userIds.map(id => addDashesToUuid(id)) : userIds,
         permCode: mixedQueryToArray(req.query.permCode)
       });
       res.status(200).json(response);
@@ -41,9 +43,10 @@ const controller = {
    */
   async listPermissions(req, res, next) {
     try {
+      const userIds = mixedQueryToArray(req.query.userId);
       const response = await permissionService.searchPermissions({
-        objId: req.params.objId,
-        userId: mixedQueryToArray(req.query.userId),
+        objId: addDashesToUuid(req.params.objId),
+        userId: userIds ? userIds.map(id => addDashesToUuid(id)) : userIds,
         permCode: mixedQueryToArray(req.query.permCode)
       });
       res.status(200).json(response);
@@ -68,7 +71,7 @@ const controller = {
       }
 
       const userId = getCurrentSubject(req.currentUser);
-      const response = await permissionService.addPermissions(req.params.objId, req.body, userId);
+      const response = await permissionService.addPermissions(addDashesToUuid(req.params.objId), req.body, userId);
       res.status(201).json(response);
     } catch (e) {
       next(errorToProblem(SERVICE, e));
@@ -90,7 +93,8 @@ const controller = {
         return new Problem(422).send(res);
       }
 
-      const userIds = mixedQueryToArray(req.query.userId);
+      const userArray = mixedQueryToArray(req.query.userId);
+      const userIds = userArray ? userArray.map(id => addDashesToUuid(id)) : userArray;
       const permissions = mixedQueryToArray(req.query.permCode);
       const response = await permissionService.removePermissions(req.params.objId, userIds, permissions);
       res.status(200).json(response);
