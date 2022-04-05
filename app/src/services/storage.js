@@ -4,6 +4,7 @@ const {
   GetObjectCommand,
   HeadBucketCommand,
   HeadObjectCommand,
+  ListObjectsCommand,
   ListObjectVersionsCommand,
   PutObjectCommand,
   S3Client
@@ -45,8 +46,8 @@ const objectStorageService = {
   /**
    * @function deleteObject
    * Deletes the object at `filePath`
-   * @param {object} options.filePath The filePath of the object
-   * @param {object} [options.versionId] Optional specific versionId for the object
+   * @param {string} options.filePath The filePath of the object
+   * @param {number} [options.versionId] Optional specific versionId for the object
    * @returns {Promise<object>} The response of the delete object operation
    */
   deleteObject({ filePath, versionId }) {
@@ -75,7 +76,7 @@ const objectStorageService = {
   /**
    * @function headObject
    * Gets the object headers for the object at `filePath`
-   * @param {object} options.filePath The filePath of the object
+   * @param {string} options.filePath The filePath of the object
    * @returns {Promise<object>} The response of the head object operation
    */
   headObject({ filePath }) {
@@ -88,9 +89,26 @@ const objectStorageService = {
   },
 
   /**
+   * @function listObjects
+   * Lists the objects in the bucket with the prefix of `filePath`
+   * @param {string} options.filePath The filePath of the object
+   * @param {number} [options.maxKeys=1000] The maximum number of keys to return
+   * @returns {Promise<object>} The response of the list objects operation
+   */
+  listObjects({ filePath, maxKeys=1000 }) {
+    const params = {
+      Bucket: bucket,
+      Prefix: filePath, // Must filter via "prefix" - https://stackoverflow.com/a/56569856
+      MaxKeys: maxKeys
+    };
+
+    return this._s3Client.send(new ListObjectsCommand(params));
+  },
+
+  /**
    * @function ListObjectVerseion
    * Lists the versions for the object at `filePath`
-   * @param {object} options.filePath The filePath of the object
+   * @param {string} options.filePath The filePath of the object
    * @returns {Promise<object>} The response of the list object version operation
    */
   listObjectVersion({ filePath }) {
@@ -105,7 +123,7 @@ const objectStorageService = {
   /**
    * @function presignUrl
    * Generates a presigned url for the `command` with a limited expiration window
-   * @param {object} [expiresIn=300] The number of seconds this signed url will be valid for
+   * @param {number} [expiresIn=300] The number of seconds this signed url will be valid for
    * @returns {Promise<string>} A presigned url for the direct S3 REST `command` operation
    */
   presignUrl(command, expiresIn=defaultTempExpiresIn) { // Default expire to 5 minutes
@@ -149,8 +167,8 @@ const objectStorageService = {
   /**
    * @function readObject
    * Reads the object at `filePath`
-   * @param {object} options.filePath The filePath of the object
-   * @param {object} [options.versionId] Optional specific versionId for the object
+   * @param {string} options.filePath The filePath of the object
+   * @param {number} [options.versionId] Optional specific versionId for the object
    * @returns {Promise<object>} The response of the get object operation
    */
   readObject({ filePath, versionId }) {
@@ -166,9 +184,9 @@ const objectStorageService = {
   /**
    * @function readSignedUrl
    * Yields a presigned url for the get object operation with a limited expiration window
-   * @param {object} options.filePath The filePath of the object
-   * @param {object} [options.versionId] Optional specific versionId for the object
-   * @param {object} [options.expiresIn] The number of seconds this signed url will be valid for
+   * @param {string} options.filePath The filePath of the object
+   * @param {number} [options.versionId] Optional specific versionId for the object
+   * @param {number} [options.expiresIn] The number of seconds this signed url will be valid for
    * @returns {Promise<string>} A presigned url for the direct S3 REST `command` operation
    */
   readSignedUrl({ filePath, versionId, expiresIn }) {
