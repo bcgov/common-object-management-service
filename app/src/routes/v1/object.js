@@ -13,7 +13,7 @@ routes.post('/', (req, res, next) => {
 });
 
 /** Search for objects */
-routes.get('/', (req, res, next) => {
+routes.get('/', requireDb, (req, res, next) => {
   objectController.searchObjects(req, res, next);
 });
 

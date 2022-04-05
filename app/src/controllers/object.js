@@ -130,11 +130,21 @@ const controller = {
     }
   },
 
-  /** List and search for all objects */
-  // TODO: Handle no database scenarios
-  // TODO: Consider metadata/tagging query parameter design
-  // TODO: Consider support for filtering by set of permissions?
+  /**
+   * @function searchObjects
+   * Search and filter for specific objects
+   * @param {string|string[]} [params.id] Optional string or array of uuids representing the object
+   * @param {string} [params.originalName] Optional filename string to match on
+   * @param {string} [params.path] Optional canonical S3 path string to match on
+   * @param {string} [params.mimeType] Optional mimeType string to match on
+   * @param {boolean} [params.public] Optional boolean on object public status
+   * @param {boolean} [params.active] Optional boolean on object active status
+   * @returns {Promise<object>} The result of running the find operation
+   */
   async searchObjects(req, res, next) {
+    // TODO: Handle no database scenarios via S3 ListObjectsCommand?
+    // TODO: Consider metadata/tagging query parameter design here?
+    // TODO: Consider support for filtering by set of permissions?
     try {
       const params = {
         id: mixedQueryToArray(req.query.id),
@@ -146,6 +156,7 @@ const controller = {
         active: req.query.active
       };
 
+      // When using OIDC authentication, force populate current user as filter if available
       if (authMode === AuthMode.OIDCAUTH || authMode === AuthMode.FULLAUTH) {
         params.userId = getCurrentSubject(req.currentUser);
       }
