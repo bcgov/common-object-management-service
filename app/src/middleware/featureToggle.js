@@ -54,6 +54,25 @@ const requireDb = (_req, res, next) => {
   next();
 };
 
+/**
+ * @function requireSomeAuth
+ * Rejects the request if there is no authorization in the appropriate mode
+ * @param {object} req Express request object
+ * @param {object} res Express response object
+ * @param {function} next The next callback function
+ * @returns {function} Express middleware function
+ */
+const requireSomeAuth = (req, res, next) => {
+  const authMode = getAppAuthMode();
+  const authType = req.currentUser ? req.currentUser.authType : undefined;
+
+  if (authMode !== AuthMode.NOAUTH && (!authType || authType === AuthType.NONE)) {
+    return new Problem(403, { detail: 'User lacks permission to complete this action' }).send(res);
+  }
+
+  next();
+};
+
 module.exports = {
-  requireBasicAuth, requireDb
+  requireBasicAuth, requireDb, requireSomeAuth
 };

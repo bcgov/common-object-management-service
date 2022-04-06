@@ -24,7 +24,15 @@ let probeId;
 
 const app = express();
 app.use(compression());
-app.use(cors());
+app.use(cors({
+  exposedHeaders: [
+    'ETag',
+    'x-amz-meta-name',
+    'x-amz-meta-id',
+    'x-amz-server-side-encryption',
+    'x-amz-version-id'
+  ]
+}));
 app.use(express.json({ limit: config.get('server.bodyLimit') }));
 app.use(express.urlencoded({ extended: true }));
 
