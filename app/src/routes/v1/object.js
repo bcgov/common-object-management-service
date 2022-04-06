@@ -2,18 +2,18 @@ const routes = require('express').Router();
 
 const { Permissions } = require('../../components/constants');
 const { objectController } = require('../../controllers');
-const { requireDb } = require('../../middleware/featureToggle');
+const { requireDb, requireSomeAuth } = require('../../middleware/featureToggle');
 const { checkAppMode, currentObject, hasPermission } = require('../../middleware/authorization');
 
 routes.use(checkAppMode);
 
 /** Creates new objects */
-routes.post('/', (req, res, next) => {
+routes.post('/', requireSomeAuth, (req, res, next) => {
   objectController.createObjects(req, res, next);
 });
 
 /** Search for objects */
-routes.get('/', requireDb, (req, res, next) => {
+routes.get('/', requireDb, requireSomeAuth, (req, res, next) => {
   objectController.searchObjects(req, res, next);
 });
 

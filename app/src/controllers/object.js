@@ -1,8 +1,7 @@
-const Problem = require('api-problem');
 const busboy = require('busboy');
 const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 
-const { AuthMode, AuthType } = require('../components/constants');
+const { AuthMode } = require('../components/constants');
 const errorToProblem = require('../components/errorToProblem');
 const { addDashesToUuid, getAppAuthMode, getCurrentSubject, getPath, mixedQueryToArray } = require('../components/utils');
 const { objectService, storageService } = require('../services');
@@ -146,13 +145,6 @@ const controller = {
     // TODO: Consider metadata/tagging query parameter design here?
     // TODO: Consider support for filtering by set of permissions?
     try {
-      // Block requests without authentication if not running in NoAuth mode
-      // TODO: Consider making this a middleware function?
-      const authType = req.currentUser ? req.currentUser.authType : undefined;
-      if (authType === AuthType.NONE && authMode !== AuthMode.NOAUTH) {
-        return new Problem(403, { detail: 'User lacks permission to complete this action' }).send(res);
-      }
-
       const objIds = mixedQueryToArray(req.query.objId);
       const params = {
         id: objIds ? objIds.map(id => addDashesToUuid(id)) : objIds,
