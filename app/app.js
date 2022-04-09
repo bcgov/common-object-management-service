@@ -24,6 +24,7 @@ let probeId;
 const app = express();
 app.use(compression());
 app.use(cors({
+  // Consider specifying '*' to permit any arbitrary header to be exposed to other domains
   exposedHeaders: [
     'ETag',
     'x-amz-meta-name',

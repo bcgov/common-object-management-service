@@ -118,7 +118,7 @@ paths:
     head:
       summary: Returns object headers
       description: >-
-        This endpoint returns S3 and COMS headers for a single object
+        This endpoint returns S3 and COMS headers for a specific object
       operationId: headObject
       tags:
         - Object
@@ -129,57 +129,30 @@ paths:
         "204":
           description: Returns object headers
           headers:
-            ETag:
-              schema:
-                type: integer
-              description: >-
-                An entity tag (ETag) is an opaque identifier assigned by a web server to a specific version of a resource found at a URL
-            Last-Modified:
-              schema:
-                type: string
-                format: date-time
-              description: Creation date of the object
-            x-amz-server-side-encryption:
-              schema:
-                type: string
-              description: >-
-                If the object is stored using server-side encryption either with an AWS KMS key or an Amazon S3-managed encryption key, the response includes this header with the value of the server-side encryption algorithm used when storing this object in Amazon S3 (for example, AES256, aws:kms).
-            x-amz-version-id:
-              schema:
-                type: string
-              description: Version of the object
-            x-amz-meta-id:
-              schema:
-                type: string
-              description: The Object ID
-            x-amz-meta-name:
-              schema:
-                type: string
-              description: The original file name of the object when it was created
             Content-Disposition:
-              schema:
-                type: string
-              description: Specifies presentational information for the object
+              $ref: '#/components/headers/Content-Disposition'
             Content-Length:
-              schema:
-                type: integer
-              description: Size of the body in bytes
+              $ref: '#/components/headers/Content-Length'
             Content-Type:
-              schema:
-                type: string
-              description: A standard MIME type describing the format of the object data
+              $ref: '#/components/headers/Content-Type'
+            ETag:
+              $ref: '#/components/headers/ETag'
+            Last-Modified:
+              $ref: '#/components/headers/Last-Modified'
+            x-amz-server-side-encryption:
+              $ref: '#/components/headers/x-amz-server-side-encryption'
+            x-amz-version-id:
+              $ref: '#/components/headers/x-amz-version-id'
+            x-amz-meta-id:
+              $ref: '#/components/headers/x-amz-meta-id'
+            x-amz-meta-name:
+              $ref: '#/components/headers/x-amz-meta-name'
         "401":
           $ref: "#/components/responses/UnauthorizedError"
         "403":
           $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
         default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+          $ref: "#/components/responses/Error"
 
     get:
       summary: Returns a single object
@@ -603,6 +576,55 @@ paths:
                 $ref: "#/components/schemas/Error"
 
 components:
+  headers:
+    Content-Disposition:
+      description: Specifies presentational information for the object
+      schema:
+        type: string
+      example: 'attachment; filename="foobar.txt"'
+    Content-Length:
+      description: Size of the body in bytes
+      schema:
+        type: integer
+      example: 529
+    Content-Type:
+      description: A standard MIME type describing the format of the object data
+      schema:
+        type: string
+      example: text/plain; charset=utf-8
+    ETag:
+      description: >-
+        An entity tag (ETag) is an opaque identifier assigned by a web server to a specific version of a resource found at a URL
+      schema:
+        type: integer
+      example: '"9d1aaa54b84e1d6ccc6e0477c5717fe3"'
+    Last-Modified:
+      description: Creation date of the object
+      schema:
+        type: string
+        format: date-time
+      example: Fri March 11 2022 15:42:05 GMT-0700 (Pacific Daylight Time)
+    x-amz-server-side-encryption:
+      description: >-
+        If the object is stored using server-side encryption either with an AWS KMS key or an Amazon S3-managed encryption key, the response includes this header with the value of the server-side encryption algorithm used when storing this object in Amazon S3 (for example, AES256, aws:kms).
+      schema:
+        type: string
+      example: AES256
+    x-amz-version-id:
+      description: Version of the object
+      schema:
+        type: string
+      example: 1649457725874
+    x-amz-meta-id:
+      description: The Object ID
+      schema:
+        type: string
+      example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
+    x-amz-meta-name:
+      description: The original filename of the object
+      schema:
+        type: string
+      example: foobar.txt
   parameters:
     PathObjectId:
       in: path
@@ -846,8 +868,10 @@ components:
         ServerSideEncryption:
           type: string
           description: >-
-            Indicates whether S3 endpoint implements server side encryption for
-            this object
+            If the object is stored using server-side encryption either with an
+            AWS KMS key or an Amazon S3-managed encryption key, this field
+            specifies the server-side encryption algorithm used when storing this
+            object in Amazon S3 (for example, AES256, aws:kms).
           example: AES256
         VersionId:
           type: string
