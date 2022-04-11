@@ -73,7 +73,7 @@ const controller = {
           ...await object.dbResponse,
           ...await object.s3Response
         })));
-        res.status(200).json(result);
+        res.status(201).json(result);
       });
 
       req.pipe(bb);
@@ -129,42 +129,6 @@ const controller = {
       res.status(204).end();
     } catch (e) {
       next(errorToProblem(SERVICE, e));
-    }
-  },
-
-  /**
-   * @function searchObjects
-   * Search and filter for specific objects
-   * @param {object} req Express request object
-   * @param {object} res Express response object
-   * @param {function} next The next callback function
-   * @returns {function} Express middleware function
-   */
-  async searchObjects(req, res, next) {
-    // TODO: Handle no database scenarios via S3 ListObjectsCommand?
-    // TODO: Consider metadata/tagging query parameter design here?
-    // TODO: Consider support for filtering by set of permissions?
-    try {
-      const objIds = mixedQueryToArray(req.query.objId);
-      const params = {
-        id: objIds ? objIds.map(id => addDashesToUuid(id)) : objIds,
-        originalName: req.query.originalName,
-        path: req.query.path,
-        mimeType: req.query.mimeType,
-        // TODO: Consider more robust truthiness checks for 'true' and 'false' string cases
-        public: req.query.public,
-        active: req.query.active
-      };
-
-      // When using OIDC authentication, force populate current user as filter if available
-      if (authMode === AuthMode.OIDCAUTH || authMode === AuthMode.FULLAUTH) {
-        params.userId = getCurrentSubject(req.currentUser);
-      }
-
-      const response = await objectService.searchObjects(params);
-      res.status(201).json(response);
-    } catch (error) {
-      next(error);
     }
   },
 
@@ -236,6 +200,67 @@ const controller = {
   },
 
   /**
+   * @function searchObjects
+   * Search and filter for specific objects
+   * @param {object} req Express request object
+   * @param {object} res Express response object
+   * @param {function} next The next callback function
+   * @returns {function} Express middleware function
+   */
+  async searchObjects(req, res, next) {
+    // TODO: Handle no database scenarios via S3 ListObjectsCommand?
+    // TODO: Consider metadata/tagging query parameter design here?
+    // TODO: Consider support for filtering by set of permissions?
+    try {
+      const objIds = mixedQueryToArray(req.query.objId);
+      const params = {
+        id: objIds ? objIds.map(id => addDashesToUuid(id)) : objIds,
+        originalName: req.query.originalName,
+        path: req.query.path,
+        mimeType: req.query.mimeType,
+        // TODO: Consider more robust truthiness checks for 'true' and 'false' string cases
+        public: req.query.public,
+        active: req.query.active
+      };
+
+      // When using OIDC authentication, force populate current user as filter if available
+      if (authMode === AuthMode.OIDCAUTH || authMode === AuthMode.FULLAUTH) {
+        params.userId = getCurrentSubject(req.currentUser);
+      }
+
+      const response = await objectService.searchObjects(params);
+      res.status(201).json(response);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * @function togglePublic
+   * Sets the public flag of an object
+   * @param {object} req Express request object
+   * @param {object} res Express response object
+   * @param {function} next The next callback function
+   * @returns {function} Express middleware function
+   */
+  async togglePublic(req, res, next) {
+    try {
+      const userId = getCurrentSubject(req.currentUser, SYSTEM_USER);
+      const data = {
+        id: addDashesToUuid(req.params.objId),
+        public: req.body.public,
+        updatedBy: userId
+      };
+
+      const response = await objectService.update(data);
+
+      res.status(200).json(response);
+    } catch (e) {
+      next(errorToProblem(SERVICE, e));
+    }
+  },
+
+  /**
    * @function updateObject
    * Creates an updated version of the object via streaming
    * @param {object} req Express request object
@@ -279,32 +304,7 @@ const controller = {
     } catch (e) {
       next(errorToProblem(SERVICE, e));
     }
-  },
-
-  /**
-   * @function togglePublic
-   * Sets the public flag of an object
-   * @param {object} req Express request object
-   * @param {object} res Express response object
-   * @param {function} next The next callback function
-   * @returns {function} Express middleware function
-   */
-  async togglePublic(req, res, next) {
-    try {
-      const userId = getCurrentSubject(req.currentUser, SYSTEM_USER);
-      const data = {
-        id: addDashesToUuid(req.params.objId),
-        public: req.body.public,
-        updatedBy: userId
-      };
-
-      const response = await objectService.update(data);
-
-      res.status(200).json(response);
-    } catch (e) {
-      next(errorToProblem(SERVICE, e));
-    }
-  },
+  }
 };
 
 module.exports = controller;
