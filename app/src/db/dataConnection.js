@@ -2,7 +2,6 @@ const config = require('config');
 const Knex = require('knex');
 const { Model } = require('objection');
 
-const knexfile = require('../../knexfile');
 const log = require('../components/log')(module.filename);
 const models = require('./models');
 const { tableNames } = require('./models/utils');
@@ -15,6 +14,7 @@ class DataConnection {
   constructor() {
     if (!DataConnection.instance) {
       if (config.has('db.enabled')) {
+        const knexfile = require('../../knexfile');
         this.knex = Knex(knexfile);
       }
       DataConnection.instance = this;
