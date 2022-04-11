@@ -65,7 +65,6 @@ const service = {
     try {
       trx = etrx ? etrx : await ObjectModel.startTransaction();
 
-      await permissionService.removePermissions(objId, undefined, undefined, trx);
       await ObjectModel.query(trx)
         .deleteById(objId)
         .throwIfNotFound();
