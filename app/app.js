@@ -5,7 +5,6 @@ const express = require('express');
 const Problem = require('api-problem');
 
 const { AuthMode } = require('./src/components/constants');
-const keycloak = require('./src/components/keycloak');
 const log = require('./src/components/log')(module.filename);
 const httpLogger = require('./src/components/log').httpLogger;
 const { getAppAuthMode } = require('./src/components/utils');
@@ -76,6 +75,7 @@ if (state.authMode === AuthMode.OIDCAUTH || state.authMode === AuthMode.FULLAUTH
   }
 
   // Use Keycloak OIDC Middleware
+  const keycloak = require('./src/components/keycloak');
   app.use(keycloak.middleware());
 }
 

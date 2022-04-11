@@ -4,7 +4,6 @@ const basicAuth = require('express-basic-auth');
 const jwt = require('jsonwebtoken');
 
 const { AuthType } = require('../components/constants');
-const keycloak = require('../components/keycloak');
 const { userService } = require('../services');
 
 /**
@@ -75,6 +74,7 @@ const currentUser = async (req, res, next) => {
             issuer: `${config.get('keycloak.serverUrl')}/realms/${config.get('keycloak.realm')}`
           });
         } else {
+          const keycloak = require('../components/keycloak');
           isValid = await keycloak.grantManager.validateAccessToken(bearerToken);
         }
 
