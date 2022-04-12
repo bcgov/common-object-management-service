@@ -71,6 +71,20 @@ describe('delimit', () => {
   });
 });
 
+describe('isTruthy', () => {
+  it.each([
+    true, 1, 'true', 'TRUE', 't', 'T', 'yes', 'yEs', 'y', 'Y', '1', new String('true')
+  ])('should return true given %j', (value) => {
+    expect(utils.isTruthy(value)).toBeTruthy();
+  });
+
+  it.each([
+    false, 0, 'false', 'FALSE', 'f', 'F', 'no', 'nO', 'n', 'N', '0', new String('false'), {}
+  ])('should return false given %j', (value) => {
+    expect(utils.isTruthy(value)).toBeFalsy();
+  });
+});
+
 describe('joinPath', () => {
   beforeAll(() => {
     if (jest.isMockFunction(utils.joinPath)) {

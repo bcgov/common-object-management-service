@@ -3,7 +3,14 @@ const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 
 const { AuthMode } = require('../components/constants');
 const errorToProblem = require('../components/errorToProblem');
-const { addDashesToUuid, getAppAuthMode, getCurrentSubject, getPath, mixedQueryToArray } = require('../components/utils');
+const {
+  addDashesToUuid,
+  getAppAuthMode,
+  getCurrentSubject,
+  getPath,
+  isTruthy,
+  mixedQueryToArray
+} = require('../components/utils');
 const { objectService, storageService } = require('../services');
 
 const SERVICE = 'ObjectService';
@@ -220,9 +227,8 @@ const controller = {
         originalName: req.query.originalName,
         path: req.query.path,
         mimeType: req.query.mimeType,
-        // TODO: Consider more robust truthiness checks for 'true' and 'false' string cases
-        public: req.query.public,
-        active: req.query.active
+        public: isTruthy(req.query.public),
+        active: isTruthy(req.query.active)
       };
 
       // When using OIDC authentication, force populate current user as filter if available
@@ -250,8 +256,7 @@ const controller = {
       const userId = getCurrentSubject(req.currentUser, SYSTEM_USER);
       const data = {
         id: addDashesToUuid(req.params.objId),
-        // TODO: Consider more robust truthiness checks for 'true' and 'false' string cases
-        public: !!req.query.public,
+        public: isTruthy(req.query.public),
         updatedBy: userId
       };
 

@@ -1,5 +1,5 @@
 const errorToProblem = require('../components/errorToProblem');
-const { addDashesToUuid, mixedQueryToArray } = require('../components/utils');
+const { addDashesToUuid, isTruthy, mixedQueryToArray } = require('../components/utils');
 const { userService } = require('../services');
 
 const SERVICE = 'UserService';
@@ -19,8 +19,7 @@ const controller = {
   async listIdps(req, res, next) {
     try {
       const response = await userService.listIdps({
-        // TODO: Consider more robust truthiness checks for 'true' and 'false' string cases
-        active: req.query.active
+        active: isTruthy(req.query.active)
       });
       res.status(200).json(response);
     } catch (e) {
@@ -49,8 +48,7 @@ const controller = {
         firstName: req.query.firstName,
         fullName: req.query.fullName,
         lastName: req.query.lastName,
-        // TODO: Consider more robust truthiness checks for 'true' and 'false' string cases
-        active: req.query.active,
+        active: isTruthy(req.query.active),
         search: req.query.search
       });
       res.status(200).json(response);
