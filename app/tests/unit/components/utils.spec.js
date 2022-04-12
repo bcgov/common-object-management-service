@@ -3,7 +3,7 @@ const config = require('config');
 const { AuthMode, AuthType } = require('../../../src/components/constants');
 const utils = require('../../../src/components/utils');
 
-// Mock config library - @see https://stackoverflow.com/a/64819698
+// Mock config library - @see {@link https://stackoverflow.com/a/64819698}
 jest.mock('config');
 
 beforeEach(() => {
@@ -30,21 +30,21 @@ describe('addDashesToUuid', () => {
 
 describe('getPath', () => {
   const delimitSpy = jest.spyOn(utils, 'delimit');
-  const joinSpy = jest.spyOn(utils, 'join');
+  const joinPath = jest.spyOn(utils, 'joinPath');
 
-  it('should return whatever join returns', () => {
+  it('should return whatever joinPath returns', () => {
     const key = 'abc';
     const osKey = 'key';
     delimitSpy.mockReturnValue(key);
-    joinSpy.mockReturnValue('abc/obj');
+    joinPath.mockReturnValue('abc/obj');
     config.get.mockReturnValueOnce(osKey); // objectStorage.key
 
     expect(utils.getPath('obj')).toEqual('abc/obj');
 
     expect(delimitSpy).toHaveBeenCalledTimes(1);
     expect(delimitSpy).toHaveBeenCalledWith(osKey);
-    expect(joinSpy).toHaveBeenCalledTimes(1);
-    expect(joinSpy).toHaveBeenCalledWith(key, 'obj');
+    expect(joinPath).toHaveBeenCalledTimes(1);
+    expect(joinPath).toHaveBeenCalledWith(key, 'obj');
   });
 });
 
@@ -71,25 +71,25 @@ describe('delimit', () => {
   });
 });
 
-describe('join', () => {
+describe('joinPath', () => {
   beforeAll(() => {
-    if (jest.isMockFunction(utils.join)) {
-      utils.join.mockRestore();
+    if (jest.isMockFunction(utils.joinPath)) {
+      utils.joinPath.mockRestore();
     }
   });
 
   it('should return blank if nothing supplied', () => {
-    expect(utils.join()).toEqual('');
+    expect(utils.joinPath()).toEqual('');
   });
 
   it('should return multiple parts joined with the delimiter', () => {
-    expect(utils.join('my', 'file', 'path')).toEqual('my/file/path');
-    expect(utils.join('my', '', 'path')).toEqual('my/path');
-    expect(utils.join('my', 'file/path/123', 'abc')).toEqual('my/file/path/123/abc');
+    expect(utils.joinPath('my', 'file', 'path')).toEqual('my/file/path');
+    expect(utils.joinPath('my', '', 'path')).toEqual('my/path');
+    expect(utils.joinPath('my', 'file/path/123', 'abc')).toEqual('my/file/path/123/abc');
   });
 
   it('should handle no-length sections', () => {
-    expect(utils.join('my', 'file//123', 'abc')).toEqual('my/file/123/abc');
+    expect(utils.joinPath('my', 'file//123', 'abc')).toEqual('my/file/123/abc');
   });
 });
 

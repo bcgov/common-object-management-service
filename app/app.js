@@ -7,7 +7,7 @@ const Problem = require('api-problem');
 const { AuthMode } = require('./src/components/constants');
 const log = require('./src/components/log')(module.filename);
 const httpLogger = require('./src/components/log').httpLogger;
-const { getAppAuthMode } = require('./src/components/utils');
+const { getAppAuthMode, getGitRevision } = require('./src/components/utils');
 const v1Router = require('./src/routes/v1');
 
 const DataConnection = require('./src/db/dataConnection');
@@ -97,6 +97,13 @@ apiRouter.get('/', (_req, res) => {
     throw new Error('Server shutting down');
   } else {
     res.status(200).json({
+      app: {
+        authMode: state.authMode,
+        gitRev: getGitRevision(),
+        hasDb: config.has('db.enabled'),
+        name: process.env.npm_package_name,
+        version: process.env.npm_package_version
+      },
       endpoints: ['/api/v1'],
       versions: [1]
     });

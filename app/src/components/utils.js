@@ -1,6 +1,9 @@
 const config = require('config');
+const { readFileSync } = require('fs');
+const { join } = require('path');
 
 const { AuthMode, AuthType } = require('./constants');
+const log = require('./log')(module.filename);
 
 const DELIMITER = '/';
 
@@ -13,7 +16,7 @@ const utils = {
    */
   addDashesToUuid(str) {
     if ((typeof str === 'string' || str instanceof String) && str.length === 32) {
-      return `${str.slice(0,8)}-${str.slice(8,12)}-${str.slice(12,16)}-${str.slice(16,20)}-${str.slice(20)}`.toLowerCase();
+      return `${str.slice(0, 8)}-${str.slice(8, 12)}-${str.slice(12, 16)}-${str.slice(16, 20)}-${str.slice(20)}`.toLowerCase();
     }
     else return str;
   },
@@ -85,6 +88,25 @@ const utils = {
   },
 
   /**
+   * @function getGitRevision
+   * Gets the current git revision hash
+   * @see {@link https://stackoverflow.com/a/34518749}
+   * @returns {string} The git revision hash, or empty string
+   */
+  getGitRevision() {
+    try {
+      const gitDir = '../../../.git';
+      const head = readFileSync(join(__dirname, `${gitDir}/HEAD`)).toString().trim();
+      return (head.indexOf(':') === -1)
+        ? head
+        : readFileSync(join(__dirname, `${gitDir}/${head.substring(5)}`)).toString().trim();
+    } catch (err) {
+      log.error(err.message, { function: 'getGitRevision' });
+      return '';
+    }
+  },
+
+  /**
    * @function getPath
    * Gets the relative path of `objId`
    * @param {string} objId The object id
@@ -92,16 +114,16 @@ const utils = {
    */
   getPath(objId) {
     const key = utils.delimit(config.get('objectStorage.key'));
-    return utils.join(key, objId);
+    return utils.joinPath(key, objId);
   },
 
   /**
-   * @function join
+   * @function joinPath
    * Joins a set of string arguments to yield a string path
    * @param  {...string} items The strings to join on
    * @returns {string} A path string with the specified delimiter
    */
-  join(...items) {
+  joinPath(...items) {
     if (items && items.length) {
       const parts = [];
       items.map(p => {
@@ -163,7 +185,7 @@ const utils = {
   /**
    * @function streamToBuffer
    * Reads a Readable stream, writes to and returns an array buffer
-   * @see https://github.com/aws/aws-sdk-js-v3/issues/1877#issuecomment-755446927
+   * @see {@link https://github.com/aws/aws-sdk-js-v3/issues/1877#issuecomment-755446927}
    * @param {Readable} stream A readable stream object
    * @returns {Buffer} A buffer usually formatted as an Uint8Array
    */
