@@ -90,8 +90,8 @@ paths:
                             A unique form field chosen for the key for each file
                             in the multi-part form-data post
                           example: "file1"
-                    - $ref: "#/components/schemas/DBObject"
-                    - $ref: "#/components/schemas/S3Object"
+                    - $ref: "#/components/schemas/DB-Object"
+                    - $ref: "#/components/schemas/S3-Object"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -125,7 +125,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/DBObject"
+                  $ref: "#/components/schemas/DB-Object"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -267,8 +267,8 @@ paths:
                           A unique form field chosen for the key for each file
                           in the multi-part form-data post
                         example: "file1"
-                  - $ref: "#/components/schemas/DBObject"
-                  - $ref: "#/components/schemas/S3Object"
+                  - $ref: "#/components/schemas/DB-Object"
+                  - $ref: "#/components/schemas/S3-Object"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -293,7 +293,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ObjectDeleteResponse"
+                $ref: "#/components/schemas/Response-ObjectDeleted"
 
         "401":
           $ref: "#/components/responses/Unauthorized"
@@ -319,7 +319,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/S3VersionList"
+                $ref: "#/components/schemas/S3-VersionList"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -345,7 +345,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DBObject"
+                $ref: "#/components/schemas/DB-Object"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -377,7 +377,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Permission"
+                  $ref: "#/components/schemas/DB-ObjectPermission"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -405,7 +405,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Permission"
+                  $ref: "#/components/schemas/DB-ObjectPermission"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -426,7 +426,7 @@ paths:
             schema:
               type: array
               items:
-                $ref: "#/components/schemas/OidcPermission"
+                $ref: "#/components/schemas/Request-PermissionTuple"
       responses:
         "201":
           description: Returns the object information
@@ -445,7 +445,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Problem"
+                  $ref: "#/components/schemas/Response-Problem"
         default:
           $ref: "#/components/responses/Error"
 
@@ -464,7 +464,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PermissionResponse"
+                type: array
+                items:
+                  $ref: "#/components/schemas/DB-ObjectPermission"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -476,7 +478,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Problem"
+                  $ref: "#/components/schemas/Response-Problem"
         default:
           $ref: "#/components/responses/Error"
 
@@ -546,7 +548,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/User"
+                  $ref: "#/components/schemas/DB-User"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "422":
@@ -556,7 +558,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Problem"
+                  $ref: "#/components/schemas/Response-Problem"
         default:
           $ref: "#/components/responses/Error"
 
@@ -574,7 +576,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/IdentityProvider"
+                  $ref: "#/components/schemas/DB-IdentityProvider"
         "401":
           $ref: "#/components/responses/Unauthorized"
         default:
@@ -729,8 +731,7 @@ components:
       description: the permission type
       required: false
       schema:
-        type: string
-        example: UPDATE
+        $ref: "#/components/schemas/PermCode"
     QueryPublic:
       in: query
       name: public
@@ -758,204 +759,24 @@ components:
         example: 1647462569641
 
   schemas:
-    BadRequest:
+    DB-IdentityProvider:
       allOf:
-        - $ref: "#/components/schemas/Problem"
-        - type: object
-          properties:
-            status:
-              example: 400
-            title:
-              example: Bad Request
-            type:
-              example: "https://httpstatuses.com/400"
-    Conflict:
-      allOf:
-        - $ref: "#/components/schemas/Problem"
-        - type: object
-          properties:
-            status:
-              example: 409
-            title:
-              example: Conflict
-            type:
-              example: "https://httpstatuses.com/409"
-    Error:
-      allOf:
-        - $ref: "#/components/schemas/Problem"
-        - type: object
-          properties:
-            status:
-              example: 500
-            title:
-              example: Internal Server Error
-            type:
-              example: "https://httpstatuses.com/500"
-    Forbidden:
-      allOf:
-        - $ref: "#/components/schemas/Problem"
-        - type: object
-          properties:
-            type:
-              example: "https://httpstatuses.com/403"
-            title:
-              example: Forbidden
-            status:
-              example: 403
-            detail:
-              example: "User lacks permission to complete this action"
-    IdentityProvider:
-      type: array
-      items:
-        type: object
+      - type: object
+        required:
+          - idp
+          - active
         properties:
           idp:
             type: string
+            description: The identity provider string
             example: idir
           active:
             type: boolean
+            description: Determines whether this identity provider is considered active
+            default: true
             example: true
-    NotFound:
-      allOf:
-        - $ref: "#/components/schemas/Problem"
-        - type: object
-          properties:
-            status:
-              example: 404
-            title:
-              example: Not Found
-            type:
-              example: "https://httpstatuses.com/404"
-    NotImplemented:
-      allOf:
-        - $ref: "#/components/schemas/Problem"
-        - type: object
-          properties:
-            status:
-              example: 501
-            title:
-              example: This action is not supported in the current authentication mode
-            type:
-              example: "https://httpstatuses.com/501"
-    S3Object:
-      type: object
-      required:
-        - $metadata
-        - ETag
-        - VersionId
-      properties:
-        $metadata:
-          $ref: "#/components/schemas/S3Metadata"
-        ETag:
-          type: string
-          description: S3 Identifier for a specific version of this object
-          example: '"9d1aaa54b84e1d6ccc6e0477c5717fe3"'
-        ServerSideEncryption:
-          type: string
-          description: >-
-            If the object is stored using server-side encryption either with an
-            AWS KMS key or an Amazon S3-managed encryption key, this field
-            specifies the server-side encryption algorithm used when storing this
-            object in Amazon S3 (for example, AES256, aws:kms).
-          example: AES256
-        VersionId:
-          type: integer
-          format: int32
-          description: a version identifier created in S3
-          example: 1647462569641
-    S3Version:
-      type: object
-      required:
-        - ETag
-        - Size
-        - StorageClass
-        - VersionId
-        - IsLatest
-        - LastModified
-      properties:
-        ETag:
-          type: string
-          description: S3 Identifier for a specific version of this object
-          example: "9d1aaa54b84e1d6ccc6e0477c5717fe3"
-        Size:
-          type: integer
-          description: Size of the object in bytes
-          example: 529
-        StorageClass:
-          description: >-
-            S3 storage classes based on the data access, resiliency, and cost requirements of your workloads
-          example: STANDARD
-        key:
-          description: Key of the object
-        VersionId:
-          type: integer
-          format: int32
-          description: a version identifier created in S3
-          example: 1647462569641
-        IsLatest:
-          description: Specifies whether the object is (true) or is not (false) the latest version of an object.
-        LastModified:
-          type: string
-          format: date-time
-          example: "2022-03-11T23:19:16.343Z"
-        Owner:
-          $ref: "#/components/schemas/S3VersionOwner"
-    S3VersionList:
-      type: object
-      required:
-        - $metadata
-        - IsTruncated
-        - MaxKeys
-        - Name
-        - Prefix
-        - Versions
-      properties:
-        $metadata:
-          $ref: "#/components/schemas/S3Metadata"
-        IsTruncated:
-          type: boolean
-          description: Whether or not this object listing is complete
-          example: false
-        KeyMarker:
-          type: string
-          description: Marks the last key returned in a truncated response
-          example: ""
-        MaxKeys:
-          type: integer
-          format: int32
-          description: >-
-            Sets the maximum number of keys returned in the response. By default the action returns up to 1,000 key names. The response might contain fewer keys but will never contain more.
-          example: 1000
-        Name:
-          type: string
-          description: Name of the S3 bucket
-        Prefix:
-          type: string
-          description: Keys that begin with the indicated prefix
-          example: coms/env/ac246e31-c807-496c-bc93-cd8bc2f1b2b4
-        VersionIdMarker:
-          type: string
-          description: Marks the last version of the key returned in a truncated response
-          example: ""
-        Versions:
-          type: array
-          items:
-            $ref: "#/components/schemas/S3Version"
-    S3VersionOwner:
-      type: object
-      required:
-        - DisplayName
-        - ID
-      properties:
-        DisplayName:
-          type: string
-          description: The bucket accessKeyId/owner
-          example: abcdef
-        ID:
-          type: string
-          description: The bucket accessKeyId/owner
-          example: abcdef
-    DBObject:
+      - $ref: "#/components/schemas/DB-TimestampUserData"
+    DB-Object:
       allOf:
         - type: object
           required:
@@ -986,13 +807,42 @@ components:
             public:
               type: boolean
               description: Determines whether this object is publicly accessible
+              default: false
               example: false
             active:
               type: boolean
               description: Determines whether this object is considered active
+              default: true
               example: true
-        - $ref: "#/components/schemas/DBTimestampUserData"
-    DBTimestampUserData:
+        - $ref: "#/components/schemas/DB-TimestampUserData"
+    DB-ObjectPermission:
+      allOf:
+        - type: object
+          required:
+            - id
+            - objectId
+            - userId
+            - permCode
+          properties:
+            id:
+              type: string
+              format: uuid
+              description: The unique identifier for this permission tuple
+              example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
+            objectId:
+              type: string
+              format: uuid
+              description: The unique identifier for the object
+              example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
+            userId:
+              type: string
+              format: uuid
+              description: The unique identifier of the user
+              example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
+            permCode:
+              $ref: "#/components/schemas/PermCode"
+        - $ref: "#/components/schemas/DB-TimestampUserData"
+    DB-TimestampUserData:
       type: object
       required:
         - createdBy
@@ -1015,7 +865,9 @@ components:
           type: string
           format: uuid
           description: >-
-            The subject id of the current user if request was authenticated with a Bearer token (ex. JWT), or a 'nil' uuid if request was authenticated via Basic auth
+            The subject id of the current user if request was authenticated
+            with a Bearer token (ex. JWT), or a 'nil' uuid if request was
+            authenticated via Basic auth
           default: null
           example: 72cf13d7-aef7-4ad5-8ddd-0ff23eefb442
         updatedAt:
@@ -1023,87 +875,18 @@ components:
           format: date-time
           description: Time when this record was last updated
           example: "2022-03-11T23:19:16.343Z"
-    ObjectDeleteResponse:
+    DB-User:
       type: object
       properties:
-        $metadata:
-          $ref: "#/components/schemas/S3Metadata"
-        DeleteMarker:
-          type: boolean
-        VersionId:
-          type: integer
-          format: int32
-          description: a version identifier created in S3
-          example: 1647462569641
-    PermissionResponse:
-      type: array
-      items:
-        oneOf:
-          - $ref: "#/components/schemas/Permission"
-    Permission:
-      type: object
-      properties:
-        id:
+        userId:
           type: string
-          description: The primary identifier for this permission
-          format: uuid
-          example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
-        ObjectId:
+          description: Subject id of the user (Usually the sub claim in a JWT)
+          example: 5dad1ec9-d3c0-4b0f-8ead-cb4d9fa98987
+        identityId:
           type: string
-          format: uuid
-          example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
-        oidcId:
-          type: string
-          format: uuid
-          example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
-        permCode:
-          type: string
-          example: UPDATE
-        createdBy:
-          type: string
-          format: uuid
-          example: 72cf13d7-aef7-4ad5-8ddd-0ff23eefb442
-        createdAt:
-          type: string
-          format: date-time
-          example: "2022-03-11T23:19:16.343Z"
-        updatedBy:
-          type: string
-          format: uuid
-          example: 72cf13d7-aef7-4ad5-8ddd-0ff23eefb442
-          default: null
-        updatedAt:
-          type: string
-          format: date-time
-          example: "2022-03-11T23:19:16.343Z"
-    S3Metadata:
-      type: object
-      required:
-        - httpStatusCode
-        - extendedRequestId
-      properties:
-        httpStatusCode:
-          type: integer
-          description: S3 Endpoint internal HTTP code
-          example: 200
-        extendedRequestId:
-          type: string
-          description: S3 Endpoint unique internal request id
-          example: a0ec1be0a99a08aee6026ba9756da40327f2d3ce844499b7ee752082f3fb22e3
-        attempts:
-          type: integer
-          description: Number of attempts performed by S3
-          example: 1
-        totalRetryDelay:
-          type: integer
-          description: S3 delay for retries
-          example: 0
-    User:
-      type: object
-      properties:
-        oidcId:
-          type: string
-          description: ID of the user
+          description: >-
+            Identity id of the user (Usually the sub claim in a JWT but can be
+            redefined to a different claim with the `KC_IDENTITYKEY` env variable)
           example: 5dad1ec9-d3c0-4b0f-8ead-cb4d9fa98987
         idp:
           type: string
@@ -1124,38 +907,113 @@ components:
           example: jsmith@gov.bc.ca
         active:
           type: boolean
-        createdBy:
-          type: string
-          format: uuid
-          example: 72cf13d7-aef7-4ad5-8ddd-0ff23eefb442
-          description: >-
-            Either the OIDC ID of the current user if request was authenticated with a Bearer token (ex. JWT), or a 'nil' uuid if request was authenticated via Basic auth
-        createdAt:
-          type: string
-          format: date-time
-          example: "2022-03-11T23:19:16.343Z"
-        updatedBy:
-          type: string
-          format: uuid
-          example: 72cf13d7-aef7-4ad5-8ddd-0ff23eefb442
-          default: null
-        updatedAt:
-          type: string
-          format: date-time
-          example: "2022-03-11T23:19:16.343Z"
-    OidcPermission:
+          description: Determines whether this user is considered active
+          default: true
+          example: true
+    PermCode:
+      type: string
+      description: Permission code/type for an object
+      enum:
+        - CREATE
+        - READ
+        - UPDATE
+        - DELETE
+        - MANAGE
+      example: UPDATE
+    Request-PermissionTuple:
       type: object
+      required:
+        - permCode
+        - userId
       properties:
+        permCode:
+          $ref: "#/components/schemas/PermCode"
         oidcId:
           type: string
           description: The primary identifier for a user
           format: uuid
           example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
-        permCode:
-          type: string
-          description: a short name for the permission type
-          example: UPDATE
-    Problem:
+    Response-BadRequest:
+      allOf:
+        - $ref: "#/components/schemas/Response-Problem"
+        - type: object
+          properties:
+            status:
+              example: 400
+            title:
+              example: Bad Request
+            type:
+              example: "https://httpstatuses.com/400"
+    Response-Conflict:
+      allOf:
+        - $ref: "#/components/schemas/Response-Problem"
+        - type: object
+          properties:
+            status:
+              example: 409
+            title:
+              example: Conflict
+            type:
+              example: "https://httpstatuses.com/409"
+    Response-Error:
+      allOf:
+        - $ref: "#/components/schemas/Response-Problem"
+        - type: object
+          properties:
+            status:
+              example: 500
+            title:
+              example: Internal Server Error
+            type:
+              example: "https://httpstatuses.com/500"
+    Response-Forbidden:
+      allOf:
+        - $ref: "#/components/schemas/Response-Problem"
+        - type: object
+          properties:
+            type:
+              example: "https://httpstatuses.com/403"
+            title:
+              example: Forbidden
+            status:
+              example: 403
+            detail:
+              example: "User lacks permission to complete this action"
+    Response-NotFound:
+      allOf:
+        - $ref: "#/components/schemas/Response-Problem"
+        - type: object
+          properties:
+            status:
+              example: 404
+            title:
+              example: Not Found
+            type:
+              example: "https://httpstatuses.com/404"
+    Response-NotImplemented:
+      allOf:
+        - $ref: "#/components/schemas/Response-Problem"
+        - type: object
+          properties:
+            status:
+              example: 501
+            title:
+              example: This action is not supported in the current authentication mode
+            type:
+              example: "https://httpstatuses.com/501"
+    Response-ObjectDeleted:
+      type: object
+      properties:
+        $metadata:
+          $ref: "#/components/schemas/S3-Metadata"
+        DeleteMarker:
+          type: boolean
+        VersionId:
+          type: integer
+          format: int32
+          description: a version identifier created in S3
+          example: 1647462569641
+    Response-Problem:
       required:
         - type
         - title
@@ -1186,9 +1044,21 @@ components:
               message:
                 type: string
                 description: The error message for the field.
-    ValidationError:
+    Response-Unauthorized:
       allOf:
-        - $ref: "#/components/schemas/Problem"
+        - type: object
+          properties:
+            type:
+              example: "https://httpstatuses.com/401"
+            title:
+              example: Unauthorized
+            status:
+              example: 401
+            detail:
+              example: "Invalid authorization credentials"
+    Response-ValidationError:
+      allOf:
+        - $ref: "#/components/schemas/Response-Problem"
         - type: object
           required:
             - errors
@@ -1214,18 +1084,152 @@ components:
               example: Unprocessable Entity
             type:
               example: "https://httpstatuses.com/422"
-    Unauthorized:
-      allOf:
-        - type: object
-          properties:
-            type:
-              example: "https://httpstatuses.com/401"
-            title:
-              example: Unauthorized
-            status:
-              example: 401
-            detail:
-              example: "Invalid authorization credentials"
+    S3-Metadata:
+      type: object
+      required:
+        - httpStatusCode
+        - extendedRequestId
+      properties:
+        httpStatusCode:
+          type: integer
+          description: S3 Endpoint internal HTTP code
+          example: 200
+        extendedRequestId:
+          type: string
+          description: S3 Endpoint unique internal request id
+          example: a0ec1be0a99a08aee6026ba9756da40327f2d3ce844499b7ee752082f3fb22e3
+        attempts:
+          type: integer
+          description: Number of attempts performed by S3
+          example: 1
+        totalRetryDelay:
+          type: integer
+          description: S3 delay for retries
+          example: 0
+    S3-Object:
+      type: object
+      required:
+        - $metadata
+        - ETag
+        - VersionId
+      properties:
+        $metadata:
+          $ref: "#/components/schemas/S3-Metadata"
+        ETag:
+          type: string
+          description: S3 Identifier for a specific version of this object
+          example: '"9d1aaa54b84e1d6ccc6e0477c5717fe3"'
+        ServerSideEncryption:
+          type: string
+          description: >-
+            If the object is stored using server-side encryption either with an
+            AWS KMS key or an Amazon S3-managed encryption key, this field
+            specifies the server-side encryption algorithm used when storing this
+            object in Amazon S3 (for example, AES256, aws:kms).
+          example: AES256
+        VersionId:
+          type: integer
+          format: int32
+          description: a version identifier created in S3
+          example: 1647462569641
+    S3-Version:
+      type: object
+      required:
+        - ETag
+        - Size
+        - StorageClass
+        - VersionId
+        - IsLatest
+        - LastModified
+      properties:
+        ETag:
+          type: string
+          description: S3 Identifier for a specific version of this object
+          example: "9d1aaa54b84e1d6ccc6e0477c5717fe3"
+        Size:
+          type: integer
+          description: Size of the object in bytes
+          example: 529
+        StorageClass:
+          description: >-
+            S3 storage classes based on the data access, resiliency, and cost
+            requirements of your workloads
+          example: STANDARD
+        key:
+          description: Key of the object
+        VersionId:
+          type: integer
+          format: int32
+          description: a version identifier created in S3
+          example: 1647462569641
+        IsLatest:
+          description: >-
+            Specifies whether the object is (true) or is not (false) the latest
+            version of an object.
+        LastModified:
+          type: string
+          format: date-time
+          example: "2022-03-11T23:19:16.343Z"
+        Owner:
+          $ref: "#/components/schemas/S3-VersionOwner"
+    S3-VersionList:
+      type: object
+      required:
+        - $metadata
+        - IsTruncated
+        - MaxKeys
+        - Name
+        - Prefix
+        - Versions
+      properties:
+        $metadata:
+          $ref: "#/components/schemas/S3-Metadata"
+        IsTruncated:
+          type: boolean
+          description: Whether or not this object listing is complete
+          example: false
+        KeyMarker:
+          type: string
+          description: Marks the last key returned in a truncated response
+          example: ""
+        MaxKeys:
+          type: integer
+          format: int32
+          description: >-
+            Sets the maximum number of keys returned in the response. By
+            default the action returns up to 1,000 key names. The response
+            might contain fewer keys but will never contain more.
+          example: 1000
+        Name:
+          type: string
+          description: Name of the S3 bucket
+        Prefix:
+          type: string
+          description: Keys that begin with the indicated prefix
+          example: coms/env/ac246e31-c807-496c-bc93-cd8bc2f1b2b4
+        VersionIdMarker:
+          type: string
+          description: >-
+            Marks the last version of the key returned in a truncated response
+          example: ""
+        Versions:
+          type: array
+          items:
+            $ref: "#/components/schemas/S3-Version"
+    S3-VersionOwner:
+      type: object
+      required:
+        - DisplayName
+        - ID
+      properties:
+        DisplayName:
+          type: string
+          description: The bucket accessKeyId/owner
+          example: abcdef
+        ID:
+          type: string
+          description: The bucket accessKeyId/owner
+          example: abcdef
 
   responses:
     Accepted:
@@ -1235,19 +1239,19 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/BadRequest"
+            $ref: "#/components/schemas/Response-BadRequest"
     Conflict:
       description: Request conflicts with server state
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Conflict"
+            $ref: "#/components/schemas/Response-Conflict"
     Error:
       description: Internal Server Error
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: "#/components/schemas/Response-Error"
     Found:
       description: Resource requested has been temporarily moved
     Forbidden:
@@ -1255,7 +1259,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Forbidden"
+            $ref: "#/components/schemas/Response-Forbidden"
     NoContent:
       description: Accepted and no content
     NotFound:
@@ -1263,13 +1267,13 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/NotFound"
+            $ref: "#/components/schemas/Response-NotFound"
     NotImplemented:
       description: The server does not support the functionality required to fulfill the request.
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/NotImplemented"
+            $ref: "#/components/schemas/Response-NotImplemented"
     NotModified:
       description: Not Modified
     S3Found:
@@ -1282,7 +1286,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Unauthorized"
+            $ref: "#/components/schemas/Response-Unauthorized"
     UnprocessableEntity:
       description: >-
         The server was unable to process the contained instructions. Generally
@@ -1290,7 +1294,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ValidationError"
+            $ref: "#/components/schemas/Response-ValidationError"
 
   securitySchemes:
     BasicAuth:
