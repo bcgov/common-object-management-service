@@ -248,7 +248,8 @@ const controller = {
       const userId = getCurrentSubject(req.currentUser, SYSTEM_USER);
       const data = {
         id: addDashesToUuid(req.params.objId),
-        public: req.body.public,
+        // TODO: Consider more robust truthiness checks for 'true' and 'false' string cases
+        public: !!req.query.public,
         updatedBy: userId
       };
 
