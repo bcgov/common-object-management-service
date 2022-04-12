@@ -13,11 +13,13 @@
 
 A microservice for managing access control to S3 Objects
 
+To learn more about the **Common Services** available visit the [Common Services Showcase](https://bcgov.github.io/common-service-showcase/) page.
+
 ## Directory Structure
 
     .github/                   - PR and Issue templates
     app/                       - Application Root
-    ├── src/                   - Node.js web application
+    |── src/                   - Node.js web application
     │   ├── components/        - Components Layer
     │   ├── controllers/       - Controller Layer
     │   ├── db/                - Database Layer
@@ -36,7 +38,7 @@ A microservice for managing access control to S3 Objects
 ## Documentation
 
 * [Application Readme](app/README.md)
-* [API Specification](app/README.md#api-usage)
+* [API Specification](app/README.md#openapi-specification)
 * [Openshift Readme](openshift/README.md)
 * [Security Reporting](SECURITY.md)
 * [Showcase Team Roadmap](https://github.com/bcgov/nr-get-token/wiki/Product-Roadmap)
