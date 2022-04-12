@@ -97,9 +97,11 @@ const controller = {
         filePath: getPath(objId)
       };
 
-      await objectService.delete(objId);
-      const response = await storageService.deleteObject(data); // Attempt deletion operation
-      res.status(200).json(response);
+      const results = await Promise.all([
+        objectService.delete(objId),
+        storageService.deleteObject(data) // Attempt deletion operation
+      ]);
+      res.status(200).json(results[1]);
     } catch (e) {
       next(errorToProblem(SERVICE, e));
     }
