@@ -20,15 +20,35 @@ security:
   - BearerAuth: []
     OpenID: []
 
+tags:
+  - name: Object
+    description: >-
+      Operations directly influencing an S3 Object. Certain operations not
+      available without a database.
+    externalDocs:
+      url: https://github.com/bcgov/common-object-management-service/wiki
+  - name: Permission
+    description: >-
+      Operations for managing User Access Control to S3 Objects. Not available
+      without a database.
+    externalDocs:
+      url: https://github.com/bcgov/common-object-management-service/wiki
+  - name: User
+    description: >-
+      Operations to list valid queryable users and identity providers. Not
+      available without a database.
+    externalDocs:
+      url: https://github.com/bcgov/common-object-management-service/wiki
+
 paths:
   /object:
     post:
       summary: Creates new objects
       description: >-
-        This endpoint will create object(s) in the configured object storage.
-        If COMS is running in either 'OIDC' or 'Full' mode, any objects created
-        with OIDC user authentication will have all object permissions assigned
-        to them by default.
+        Create object(s) in the configured object storage. If COMS is running
+        in either 'OIDC' or 'Full' mode, any objects created with OIDC user
+        authentication will have all object permissions assigned to them by
+        default.
       operationId: createObjects
       tags:
         - Object
@@ -52,8 +72,8 @@ paths:
                     your custom defined keys.
                   format: binary
       responses:
-        "200":
-          description: Returns an array of the created objects
+        "201":
+          description: Returns an array of created object data
           content:
             application/json:
               schema:
@@ -72,9 +92,8 @@ paths:
                           example: "file1"
                     - $ref: "#/components/schemas/DBObject"
                     - $ref: "#/components/schemas/S3Object"
-
         "401":
-          $ref: "#/components/responses/UnauthorizedError"
+          $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
         default:
@@ -83,10 +102,10 @@ paths:
     get:
       summary: Search for objects
       description: >-
-        This endpoint returns a list of objects. If the request is BasicAuth
-        authenticated, all search and filtered results will appear. However, If
-        the request is BearerAuth authenticated, only objects the user has at least
-        one permission associated with them will appear in addition to their
+        Returns a list of objects. If the request is BasicAuth authenticated,
+        all search and filtered results will appear. However, If the request
+        is BearerAuth authenticated, only objects the user has at least one
+        permission associated with them will appear in addition to their
         filtering parameters.
       operationId: searchObjects
       tags:
@@ -108,7 +127,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/DBObject"
         "401":
-          $ref: "#/components/responses/UnauthorizedError"
+          $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
         default:
@@ -117,8 +136,7 @@ paths:
   /object/{objId}:
     head:
       summary: Returns object headers
-      description: >-
-        This endpoint returns S3 and COMS headers for a specific object
+      description: Returns S3 and COMS headers for a specific object
       operationId: headObject
       tags:
         - Object
@@ -130,96 +148,139 @@ paths:
           description: Returns object headers
           headers:
             Content-Disposition:
-              $ref: '#/components/headers/Content-Disposition'
+              $ref: "#/components/headers/Content-Disposition"
             Content-Length:
-              $ref: '#/components/headers/Content-Length'
+              $ref: "#/components/headers/Content-Length"
             Content-Type:
-              $ref: '#/components/headers/Content-Type'
+              $ref: "#/components/headers/Content-Type"
             ETag:
-              $ref: '#/components/headers/ETag'
+              $ref: "#/components/headers/ETag"
             Last-Modified:
-              $ref: '#/components/headers/Last-Modified'
+              $ref: "#/components/headers/Last-Modified"
             x-amz-server-side-encryption:
-              $ref: '#/components/headers/x-amz-server-side-encryption'
+              $ref: "#/components/headers/x-amz-server-side-encryption"
             x-amz-version-id:
-              $ref: '#/components/headers/x-amz-version-id'
+              $ref: "#/components/headers/x-amz-version-id"
             x-amz-meta-id:
-              $ref: '#/components/headers/x-amz-meta-id'
+              $ref: "#/components/headers/x-amz-meta-id"
             x-amz-meta-name:
-              $ref: '#/components/headers/x-amz-meta-name'
+              $ref: "#/components/headers/x-amz-meta-name"
         "401":
-          $ref: "#/components/responses/UnauthorizedError"
+          $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
         default:
           $ref: "#/components/responses/Error"
 
     get:
-      summary: Returns a single object
+      summary: Returns the object
       description: >-
-        This endpoint returns details of an object
+        Returns the object as either a direct binary stream or HTTP 302
+        redirect to a direct, temporary pre-signed S3 object URL location.
       operationId: readObject
       tags:
         - Object
       parameters:
         - $ref: "#/components/parameters/PathObjectId"
         - $ref: "#/components/parameters/QueryDownload"
+        - $ref: "#/components/parameters/QueryExpiresIn"
         - $ref: "#/components/parameters/QueryVersionId"
       responses:
         "200":
-          description: Returns the object information
-          # content:
-          #   application/json:
-          #     schema:
-          #       $ref: "#/components/schemas/ObjectDetails"
+          description: Returns the object
+          headers:
+            Content-Disposition:
+              $ref: "#/components/headers/Content-Disposition"
+            Content-Length:
+              $ref: "#/components/headers/Content-Length"
+            Content-Type:
+              $ref: "#/components/headers/Content-Type"
+            ETag:
+              $ref: "#/components/headers/ETag"
+            Last-Modified:
+              $ref: "#/components/headers/Last-Modified"
+            x-amz-server-side-encryption:
+              $ref: "#/components/headers/x-amz-server-side-encryption"
+            x-amz-version-id:
+              $ref: "#/components/headers/x-amz-version-id"
+            x-amz-meta-id:
+              $ref: "#/components/headers/x-amz-meta-id"
+            x-amz-meta-name:
+              $ref: "#/components/headers/x-amz-meta-name"
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
         "302":
-          $ref: "#/components/responses/Found"
+          $ref: "#/components/responses/S3Found"
         "304":
           $ref: "#/components/responses/NotModified"
         "401":
-          $ref: "#/components/responses/UnauthorizedError"
+          $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NoSuchKey"
         default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+          $ref: "#/components/responses/Error"
 
     post:
       summary: Updates an Object
-      description: Creates an updated version of the object via streaming.
+      description: >-
+        Updates the object in the configured object storage.
       operationId: updateObject
       tags:
         - Object
       parameters:
         - $ref: "#/components/parameters/PathObjectId"
+      requestBody:
+        description: Form-data containing files
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              description: foobar
+              properties:
+                anyKey:
+                  type: string
+                  description: >-
+                    This endpoint will accept only one arbitrary form-data key.
+                    That key shall contain a binary representation of the file
+                    to upload. In the response, the successfully uploaded file
+                    shall contain a 'fieldName' property corresponding to
+                    your custom defined key.
+                  format: binary
       responses:
-        "201":
-          description: Returns udpate Object response.
+        "200":
+          description: Returns the updated object data
           content:
             application/json:
               schema:
-                oneOf:
+                allOf:
+                  - type: object
+                    required:
+                      - fieldName
+                    properties:
+                      fieldName:
+                        type: string
+                        description: >-
+                          A unique form field chosen for the key for each file
+                          in the multi-part form-data post
+                        example: "file1"
                   - $ref: "#/components/schemas/DBObject"
                   - $ref: "#/components/schemas/S3Object"
         "401":
-          $ref: "#/components/responses/UnauthorizedError"
+          $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
         default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+          $ref: "#/components/responses/Error"
 
     delete:
       summary: Deletes the object
-      # description: This endpoint will delete the Object specific to the objId
+      description: >-
+        Completely deletes the object from S3 and clears all database
+        references to it. This is not a reversible operation.
       operationId: deleteObject
       tags:
         - Object
@@ -228,31 +289,25 @@ paths:
       responses:
         "200":
           description: >-
-            Object was deleted from object storage and COMS database as well as any permissions on this onbject
+            Object was deleted from object storage and COMS database
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ObjectDeleteResponse"
 
         "401":
-          $ref: "#/components/responses/UnauthorizedError"
+          $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
-        # '409':
-        #   $ref: '#/components/responses/Conflict'
+        # "409":
+        #   $ref: "#/components/responses/Conflict"
         default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+          $ref: "#/components/responses/Error"
 
   /object/{objId}/versions:
     get:
       summary: Returns the object version history
-      description: >-
-        This endpoint returns an array of the information related to
-        the object's version history.
+      description: Returns an array of an object's version history
       operationId: listObjectVersion
       tags:
         - Object
@@ -264,73 +319,45 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  $metadata:
-                    $ref: "#/components/schemas/S3Metadata"
-                  IsTruncated:
-                    type: boolean
-                    description: Whether or not this object listing is complete
-                  KeyMarker:
-                    description: Marks the last key returned in a truncated response
-                  MaxKeys:
-                    type: integer
-                    description: >-
-                      Sets the maximum number of keys returned in the response. By default the action returns up to 1,000 key names. The response might contain fewer keys but will never contain more.
-                  Name:
-                    description: Name of the S3 bucket
-                  Perfix:
-                    description: Keys that begin with the indicated prefix
-                  VersionIdMarker:
-                    description: Marks the last version of the key returned in a truncated response
-                  Versions:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Version"
+                $ref: "#/components/schemas/S3VersionList"
         "401":
-          $ref: "#/components/responses/UnauthorizedError"
+          $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
         default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+          $ref: "#/components/responses/Error"
 
   /object/{objId}/public:
-    get:
+    patch:
       summary: Sets the public flag of an object
-      # description: >-
-      #   This endpoint sets the public property for an Object
+      description: >-
+        Toggles the public property for an object. Sets public to false if
+        public query parameter is not specified.
       operationId: togglePublic
       tags:
         - Object
       parameters:
         - $ref: "#/components/parameters/PathObjectId"
+        - $ref: "#/components/parameters/QueryPublic"
       responses:
         "200":
           description: Returns the object information
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ObjectUpdated"
+                $ref: "#/components/schemas/DBObject"
         "401":
-          $ref: "#/components/responses/UnauthorizedError"
+          $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
         default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+          $ref: "#/components/responses/Error"
 
   /permission:
     get:
       summary: Search for object permissions
       description: >-
-        This endpoint returns an array of the permissions filtering by attributes in the provided parameters
+        Returns an array of permissions meeting the filtering parameters provided
       operationId: searchPermissions
       security:
         - BasicAuth: []
@@ -342,7 +369,9 @@ paths:
         - $ref: "#/components/parameters/QueryPermCode"
       responses:
         "200":
-          description: Returns a JSON object representation of each permission as defined in the database that match the provided parameters
+          description: >-
+            Returns a JSON object representation of each permission as defined in
+            the database that match the provided parameters
           content:
             application/json:
               schema:
@@ -350,17 +379,13 @@ paths:
                 items:
                   $ref: "#/components/schemas/Permission"
         "401":
-          $ref: "#/components/responses/UnauthorizedError"
+          $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
         "501":
           $ref: "#/components/responses/NotImplemented"
         default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+          $ref: "#/components/responses/Error"
 
   /permission/{objId}:
     get:
@@ -382,15 +407,11 @@ paths:
                 items:
                   $ref: "#/components/schemas/Permission"
         "401":
-          $ref: "#/components/responses/UnauthorizedError"
+          $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
         default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+          $ref: "#/components/responses/Error"
     put:
       summary: Grants object permissions to users
       operationId: addPermissions
@@ -414,7 +435,7 @@ paths:
           #     schema:
           #       $ref: "#/components/schemas/ObjectDetails"
         "401":
-          $ref: "#/components/responses/UnauthorizedError"
+          $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
         "422":
@@ -426,11 +447,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/Problem"
         default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+          $ref: "#/components/responses/Error"
 
     delete:
       summary: Deletes permissions for a user
@@ -449,7 +466,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/PermissionResponse"
         "401":
-          $ref: "#/components/responses/UnauthorizedError"
+          $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
         "422":
@@ -461,11 +478,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/Problem"
         default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+          $ref: "#/components/responses/Error"
 
   /user:
     get:
@@ -535,7 +548,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/User"
         "401":
-          $ref: "#/components/responses/UnauthorizedError"
+          $ref: "#/components/responses/Unauthorized"
         "422":
           description: The server was unable to process the contained instructions. Generally validation error(s).
           content:
@@ -545,11 +558,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/Problem"
         default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+          $ref: "#/components/responses/Error"
 
   /user/idpList:
     get:
@@ -567,13 +576,9 @@ paths:
                 items:
                   $ref: "#/components/schemas/IdentityProvider"
         "401":
-          $ref: "#/components/responses/UnauthorizedError"
+          $ref: "#/components/responses/Unauthorized"
         default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+          $ref: "#/components/responses/Error"
 
 components:
   headers:
@@ -594,7 +599,8 @@ components:
       example: text/plain; charset=utf-8
     ETag:
       description: >-
-        An entity tag (ETag) is an opaque identifier assigned by a web server to a specific version of a resource found at a URL
+        An entity tag (ETag) is an opaque identifier assigned by a web server
+        to a specific version of a resource found at a URL
       schema:
         type: integer
       example: '"9d1aaa54b84e1d6ccc6e0477c5717fe3"'
@@ -604,6 +610,11 @@ components:
         type: string
         format: date-time
       example: Fri March 11 2022 15:42:05 GMT-0700 (Pacific Daylight Time)
+    Location:
+      description: URL Location of the moved resource
+      schema:
+        type: string
+      example: https://your.objectstore.com/yourbucket/coms/env/00000000-0000-0000-0000-000000000000?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=credential%2F20220411%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20220411T204528Z&X-Amz-Expires=300&X-Amz-Signature=SIGNATURE&X-Amz-SignedHeaders=host&x-id=GetObject
     x-amz-server-side-encryption:
       description: >-
         If the object is stored using server-side encryption either with an AWS KMS key or an Amazon S3-managed encryption key, the response includes this header with the value of the server-side encryption algorithm used when storing this object in Amazon S3 (for example, AES256, aws:kms).
@@ -625,6 +636,7 @@ components:
       schema:
         type: string
       example: foobar.txt
+
   parameters:
     PathObjectId:
       in: path
@@ -648,8 +660,17 @@ components:
       description: Request to directly download the object as a binary stream
       schema:
         type: boolean
-        format: integer
-        example: 1
+        default: false
+        example: true
+    QueryExpiresIn:
+      in: query
+      name: expiresIn
+      description: How many seconds the pre-signed URL should remain valid for
+      schema:
+        type: integer
+        format: int32
+        default: 300
+        example: 300
     QueryIdentityId:
       in: query
       name: identityId
@@ -701,7 +722,7 @@ components:
       description: The canonical S3 path string of the object
       schema:
         type: string
-        example: coms/dev/ac246e31-c807-496c-bc93-cd8bc2f1b2b4
+        example: coms/env/ac246e31-c807-496c-bc93-cd8bc2f1b2b4
     QueryPermCode:
       in: query
       name: permCode
@@ -731,10 +752,11 @@ components:
       name: versionId
       description: request a specified version
       schema:
-        type: boolean
-        format: string
-        example: 1647462569641
+        type: integer
+        format: int32
         description: a version identifier created in S3
+        example: 1647462569641
+
   schemas:
     BadRequest:
       allOf:
@@ -769,9 +791,9 @@ components:
               example: Internal Server Error
             type:
               example: "https://httpstatuses.com/500"
-
     Forbidden:
       allOf:
+        - $ref: "#/components/schemas/Problem"
         - type: object
           properties:
             type:
@@ -782,19 +804,6 @@ components:
               example: 403
             detail:
               example: "User lacks permission to complete this action"
-
-    Found:
-      allOf:
-        - $ref: "#/components/schemas/Problem"
-        - type: object
-          properties:
-            status:
-              example: 302
-            title:
-              example: Resource requested has been temporarily moved
-            type:
-              example: "https://httpstatuses.com/302"
-
     IdentityProvider:
       type: array
       items:
@@ -806,18 +815,17 @@ components:
           active:
             type: boolean
             example: true
-
-    NoSuchKey:
+    NotFound:
       allOf:
+        - $ref: "#/components/schemas/Problem"
         - type: object
           properties:
             status:
               example: 404
             title:
-              example: Internal Server Error
+              example: Not Found
             type:
-              example: "https://httpstatuses.com/500"
-
+              example: "https://httpstatuses.com/404"
     NotImplemented:
       allOf:
         - $ref: "#/components/schemas/Problem"
@@ -829,29 +837,6 @@ components:
               example: This action is not supported in the current authentication mode
             type:
               example: "https://httpstatuses.com/501"
-
-    NotModified:
-      allOf:
-        - $ref: "#/components/schemas/Problem"
-        - type: object
-          properties:
-            status:
-              example: 302
-            title:
-              example: A conditional GET or HEAD request has been received
-            type:
-              example: "https://httpstatuses.com/304"
-
-    ObjectDeleteResponse:
-      type: object
-      properties:
-        $metadata:
-          $ref: "#/components/schemas/S3Metadata"
-        DeleteMarker:
-          type: boolean
-        VersionId:
-          type: string
-
     S3Object:
       type: object
       required:
@@ -874,12 +859,102 @@ components:
             object in Amazon S3 (for example, AES256, aws:kms).
           example: AES256
         VersionId:
+          type: integer
+          format: int32
+          description: a version identifier created in S3
+          example: 1647462569641
+    S3Version:
+      type: object
+      required:
+        - ETag
+        - Size
+        - StorageClass
+        - VersionId
+        - IsLatest
+        - LastModified
+      properties:
+        ETag:
           type: string
+          description: S3 Identifier for a specific version of this object
+          example: "9d1aaa54b84e1d6ccc6e0477c5717fe3"
+        Size:
+          type: integer
+          description: Size of the object in bytes
+          example: 529
+        StorageClass:
           description: >-
-            A numerical string representing the specific version id for this object
-          example: 1647022579353
-
-
+            S3 storage classes based on the data access, resiliency, and cost requirements of your workloads
+          example: STANDARD
+        key:
+          description: Key of the object
+        VersionId:
+          type: integer
+          format: int32
+          description: a version identifier created in S3
+          example: 1647462569641
+        IsLatest:
+          description: Specifies whether the object is (true) or is not (false) the latest version of an object.
+        LastModified:
+          type: string
+          format: date-time
+          example: "2022-03-11T23:19:16.343Z"
+        Owner:
+          $ref: "#/components/schemas/S3VersionOwner"
+    S3VersionList:
+      type: object
+      required:
+        - $metadata
+        - IsTruncated
+        - MaxKeys
+        - Name
+        - Prefix
+        - Versions
+      properties:
+        $metadata:
+          $ref: "#/components/schemas/S3Metadata"
+        IsTruncated:
+          type: boolean
+          description: Whether or not this object listing is complete
+          example: false
+        KeyMarker:
+          type: string
+          description: Marks the last key returned in a truncated response
+          example: ""
+        MaxKeys:
+          type: integer
+          format: int32
+          description: >-
+            Sets the maximum number of keys returned in the response. By default the action returns up to 1,000 key names. The response might contain fewer keys but will never contain more.
+          example: 1000
+        Name:
+          type: string
+          description: Name of the S3 bucket
+        Prefix:
+          type: string
+          description: Keys that begin with the indicated prefix
+          example: coms/env/ac246e31-c807-496c-bc93-cd8bc2f1b2b4
+        VersionIdMarker:
+          type: string
+          description: Marks the last version of the key returned in a truncated response
+          example: ""
+        Versions:
+          type: array
+          items:
+            $ref: "#/components/schemas/S3Version"
+    S3VersionOwner:
+      type: object
+      required:
+        - DisplayName
+        - ID
+      properties:
+        DisplayName:
+          type: string
+          description: The bucket accessKeyId/owner
+          example: abcdef
+        ID:
+          type: string
+          description: The bucket accessKeyId/owner
+          example: abcdef
     DBObject:
       allOf:
         - type: object
@@ -907,7 +982,7 @@ components:
             path:
               type: string
               description: The canonical S3 path string of the object
-              example: coms/dev/ac246e31-c807-496c-bc93-cd8bc2f1b2b4
+              example: coms/env/ac246e31-c807-496c-bc93-cd8bc2f1b2b4
             public:
               type: boolean
               description: Determines whether this object is publicly accessible
@@ -917,7 +992,6 @@ components:
               description: Determines whether this object is considered active
               example: true
         - $ref: "#/components/schemas/DBTimestampUserData"
-
     DBTimestampUserData:
       type: object
       required:
@@ -949,128 +1023,23 @@ components:
           format: date-time
           description: Time when this record was last updated
           example: "2022-03-11T23:19:16.343Z"
-
-    ObjectDetailsDb:
+    ObjectDeleteResponse:
       type: object
       properties:
-        fieldName:
-          type: string
-          description: >-
-            A unique form field chosen for the key for each file in the multi-part form-data post
-          example: "file1"
-        createdBy:
-          type: string
-          format: uuid
-          example: 72cf13d7-aef7-4ad5-8ddd-0ff23eefb442
-          description: >-
-            Either the OIDC ID of the current user if request was authenticated with a Bearer token (ex. JWT), or a 'nil' uuid if request was authenticated via Basic auth
-        createdAt:
-          type: string
-          format: date-time
-          example: "2022-03-11T23:19:16.343Z"
-        updatedBy:
-          type: string
-          format: uuid
-          example: 72cf13d7-aef7-4ad5-8ddd-0ff23eefb442
-          default: null
-        updatedAt:
-          type: string
-          format: date-time
-          example: "2022-03-11T23:19:16.343Z"
         $metadata:
           $ref: "#/components/schemas/S3Metadata"
-        ETag:
-          type: string
-          example: "9d1aaa54b84e1d6ccc6e0477c5717fe3"
-        ServerSideEncryption:
-          type: string
-          example: AES256
+        DeleteMarker:
+          type: boolean
         VersionId:
-          type: string
-          example: 1647022579353
-
-    ObjectUpdated:
-      type: object
-      properties:
-        id:
-          type: string
-          description: The primary identifier for this object
-          format: uuid
-          example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
-        mimeType:
-          type: string
-          description: the MIME Type of the object (file)
-          example: text/plain
-        originalName:
-          type: string
-          description: The original name of the file uploaded
-
-        public:
-          type: boolean
-          description: Is the object readable by anyone with the URI?
-        active:
-          type: boolean
-        createdBy:
-          type: string
-          format: uuid
-          example: 72cf13d7-aef7-4ad5-8ddd-0ff23eefb442
-          description: >-
-            Either the OIDC ID of the current user if request was authenticated with a Bearer token (ex. JWT), or a 'nil' uuid if request was authenticated via Basic auth
-        createdAt:
-          type: string
-          format: date-time
-          example: "2022-03-11T23:19:16.343Z"
-        updatedBy:
-          type: string
-          format: uuid
-          example: 72cf13d7-aef7-4ad5-8ddd-0ff23eefb442
-          default: null
-        updatedAt:
-          type: string
-          format: date-time
-          example: "2022-03-11T23:19:16.343Z"
-
-    Version:
-      type: object
-      properties:
-        ETag:
-          type: string
-          example: "9d1aaa54b84e1d6ccc6e0477c5717fe3"
-        Size:
           type: integer
-          description: Size of the object in bytes
-        StorageClass:
-          description: >-
-            S3 storage classes based on the data access, resiliency, and cost requirements of your workloads
-          example: STANDARD
-        key:
-          description: Key of the object
-        VersionId:
-          description: VersionId used to reference a specific version of the object.
-          type: string
-          example: 1647022579353
-        IsLatest:
-          description: Specifies whether the object is (true) or is not (false) the latest version of an object.
-        LastModified:
-          type: string
-          format: date-time
-          example: "2022-03-11T23:19:16.343Z"
-        Owner:
-          type: object
-          properties:
-            DisplayName:
-              type: string
-              example: Mr Bucket Owner
-            ID:
-              type: string
-              example: Mr Bucket Owner
-
+          format: int32
+          description: a version identifier created in S3
+          example: 1647462569641
     PermissionResponse:
       type: array
       items:
         oneOf:
           - $ref: "#/components/schemas/Permission"
-
     Permission:
       type: object
       properties:
@@ -1107,7 +1076,6 @@ components:
           type: string
           format: date-time
           example: "2022-03-11T23:19:16.343Z"
-
     S3Metadata:
       type: object
       required:
@@ -1130,7 +1098,6 @@ components:
           type: integer
           description: S3 delay for retries
           example: 0
-
     User:
       type: object
       properties:
@@ -1176,7 +1143,6 @@ components:
           type: string
           format: date-time
           example: "2022-03-11T23:19:16.343Z"
-
     OidcPermission:
       type: object
       properties:
@@ -1189,14 +1155,11 @@ components:
           type: string
           description: a short name for the permission type
           example: UPDATE
-
     Problem:
       required:
         - type
         - title
         - status
-        - detail
-        - errors
       properties:
         type:
           type: string
@@ -1223,7 +1186,6 @@ components:
               message:
                 type: string
                 description: The error message for the field.
-
     ValidationError:
       allOf:
         - $ref: "#/components/schemas/Problem"
@@ -1252,7 +1214,6 @@ components:
               example: Unprocessable Entity
             type:
               example: "https://httpstatuses.com/422"
-
     Unauthorized:
       allOf:
         - type: object
@@ -1269,14 +1230,12 @@ components:
   responses:
     Accepted:
       description: Accepted
-
     BadRequest:
       description: Request is missing content or is malformed
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/BadRequest"
-
     Conflict:
       description: Request conflicts with server state
       content:
@@ -1284,69 +1243,46 @@ components:
           schema:
             $ref: "#/components/schemas/Conflict"
     Error:
-      description: Unexpected error
+      description: Internal Server Error
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/Error"
-
     Found:
       description: Resource requested has been temporarily moved
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Found"
-
     Forbidden:
-      description: Lack required role to perform action
+      description: Forbidden
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/Forbidden"
-
     NoContent:
       description: Accepted and no content
-
     NotFound:
       description: Not Found
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Problem"
-
-    NotModified:
-      description: A conditional GET or HEAD request has been received
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/NotModified"
-
-    NoSuchKey:
-      description: Requester always has s3 permission on the bucket, so error indicates that no matching object has been found
-      content:
-        application/xml:
-          schema:
-            $ref: "#/components/schemas/NoSuchKey"
-          #examples:
-          #  Error:
-          #    Code: NoSuchKey
-          #    Message: The specified key does not exist.
-          #    Resource: <bucketID>/6ea0c4e9-9494-450c-885b-f701b477a856
-
-    UnauthorizedError:
-      description: Invalid authorization credentials
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Unauthorized"
-
+            $ref: "#/components/schemas/NotFound"
     NotImplemented:
       description: The server does not support the functionality required to fulfill the request.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/NotImplemented"
-
+    NotModified:
+      description: Not Modified
+    S3Found:
+      description: Returns a temporary pre-signed S3 object URL location header
+      headers:
+        Location:
+          $ref: "#/components/headers/Location"
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Unauthorized"
     UnprocessableEntity:
       description: >-
         The server was unable to process the contained instructions. Generally

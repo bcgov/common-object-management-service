@@ -30,7 +30,7 @@ describe(`GET ${basePath}/docs`, () => {
     const response = await request(app).get(`${basePath}/docs`);
 
     expect(response.statusCode).toBe(200);
-    expect(response.text).toContain('<title>Vue Skeleton API - Documentation');
+    expect(response.text).toContain('<title>Common Object Management Service API - Documentation');
   });
 });
 
