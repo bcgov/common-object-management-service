@@ -7,7 +7,7 @@ const { AuthType } = require('../../../src/components/constants');
 const keycloak = require('../../../src/components/keycloak');
 const { userService } = require('../../../src/services');
 
-// Mock config library - @see https://stackoverflow.com/a/64819698
+// Mock config library - @see {@link https://stackoverflow.com/a/64819698}
 jest.mock('config');
 // We need to create a higher order mock to properly intercept this library
 jest.mock('express-basic-auth', () => {

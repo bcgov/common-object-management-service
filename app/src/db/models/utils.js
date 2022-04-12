@@ -20,7 +20,7 @@ const filterOneOrMany = (query, value, column) => {
  * @function filterILike
  * Conditionally adds a where ilike clause to the `query` builder if `value` is not falsy
  * ilike is a Postgres keyword for case-insensitive matching
- * @see https://www.postgresql.org/docs/current/functions-matching.html
+ * @see {@link https://www.postgresql.org/docs/current/functions-matching.html}
  * @param {object} query The Objection Query Builder
  * @param {string} value The string value to match on
  * @param {string} column The table column to match on

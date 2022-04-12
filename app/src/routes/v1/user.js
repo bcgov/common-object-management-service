@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 const routes = require('express').Router();
 
 const { userController } = require('../../controllers');
