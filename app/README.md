@@ -1,76 +1,283 @@
-# Vue Scaffold Application
+# Common Object Management Service
 
-This node.js scaffold app hosts the Vue scaffold frontend. It implements a minimal endpoint to allow for Keycloak authentication.
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE) [![Lifecycle:Experimental](https://img.shields.io/badge/Lifecycle-Experimental-339999)](https://github.com/bcgov/repomountie/blob/master/doc/lifecycle-badges.md)
 
-## Configuration
+![Tests](https://github.com/bcgov/common-object-management-service/workflows/Tests/badge.svg)
+[![Maintainability](https://api.codeclimate.com/v1/badges/91d2b0aebc348a1d5d0a/maintainability)](https://codeclimate.com/github/bcgov/common-object-management-service/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/91d2b0aebc348a1d5d0a/test_coverage)](https://codeclimate.com/github/bcgov/common-object-management-service/test_coverage)
 
-The Vue scaffold app will require some configuration. The API will be locked down and require a valid JWT Token to access. We will need to configure the application to authenticate using the same Keycloak realm as the [frontend](frontend). Note that the Vue scaffold frontend is currently designed to expect all associated resources to be relative to the original access path.
+[![version](https://img.shields.io/docker/v/bcgovimages/common-object-management-service.svg?sort=semver)](https://hub.docker.com/r/bcgovimages/common-object-management-service)
+[![pulls](https://img.shields.io/docker/pulls/bcgovimages/common-object-management-service.svg)](https://hub.docker.com/r/bcgovimages/common-object-management-service)
+[![size](https://img.shields.io/docker/image-size/bcgovimages/common-object-management-service.svg)](https://hub.docker.com/r/bcgovimages/common-object-management-service)
 
-## Super Quickstart
+A microservice for managing access control to S3 Objects
 
-In general, most of these npm run scripts can be prepended with `all:` in order to run the same operation on both the application and the frontend sequentially.
+To learn more about the **Common Services** available visit the [Common Services Showcase](https://bcgov.github.io/common-service-showcase/) page.
 
-### Local Config Setup
+## Table of Contents
 
-Ensure that you have filled in all the appropriate configurations following [config/custom-environment-variables.json](config/custom-environment-variables.json) before proceeding.
+- [OpenAPI Specification](#openapi-specification)
+- [Environment Variables](#environment-variables)
+  - [Basic Auth Variables](#basic-auth-variables)
+  - [Keycloak Variables](#keycloak-variables)
+  - [Database Variables](#database-variables)
+  - [Object Storage Variables](#object-storage-variables)
+  - [Server Variables](#server-variables)
+- [Quick Start](#quick-start)
+  - [Docker](#docker)
+  - [Local Machine](#local-machine)
+- [License](#license)
 
-The [config/custom-environment-variables.json](config/custom-environment-variables.json) file provides a complete mapping of ENV variables to the config that the node application will see, and the [config/default.json](config/default.json)default.json provides generic defaults for all non-sensitive config values. If you do a search for `config.get(...)` on the repository, you'll get a sense of how the configuration variables are utilized in this project.
+## OpenAPI Specification
+
+This API is defined and described in OpenAPI 3.0 specification.
+
+When the API is running, you should be able to view the specification through ReDoc at <http://localhost:3000/api/v1/docs> (assuming you are running this microservice locally). The specification source file is [here](https://github.com/bcgov/common-object-management-service/blob/master/app/src/docs/v1.api-spec.yaml)
+
+## Environment Variables
+
+NOTE: See our [wiki](https://github.com/bcgov/common-object-management-service/wiki/Deployment-Guide#authentication-modes) for a description of the different **Authentication Modes**.
+
+### Basic Auth Variables
+
+The following variables configure the use of Basic Auth authentication of requests to COMS
+
+| Config Var | Env Var | Default | Notes |
+| --- | --- | --- | --- |
+| `enabled` | `BASICAUTH_ENABLED` | undefined | Whether to run COMS in Basic Auth mode |
+| `username` | `BASICAUTH_USERNAME` | undefined | An arbitrary Username provided in a Basic Auth header of requests from your COMS client application |
+| `password` | `BASICAUTH_PASSWORD` | undefined | An arbitrary Password provided in a Basic Auth header of requests from your COMS client application |
+
+### Keycloak Variables
+
+| Config Var | Env Var | Default | Notes |
+| --- | --- | --- | --- |
+| `clientId` | `KC_CLIENTID` | coms | Keycloak service client ID for COMS  |
+| `clientSecret` | `KC_CLIENTSECRET` | undefined | Keycloak service client secret |
+| `identityKey` | `KC_IDENTITYKEY` | undefined | The key in the JWT object for verifying a user's identity instead of the standard jwt.sub  |
+| `enabled` | `KC_ENABLED` | undefined | Whether to run COMS in OIDC mode, required for user-based access controls and integration with OIDC users |
+| `publicKey` | `KC_PUBLICKEY` | undefined | If specified, verify all incoming JWT signatures off of the provided public key |
+| `realm` | `KC_REALM` | undefined | Keycloak realm ID for COMS |
+| `serverUrl` | `KC_SERVERURL` | undefined | Keycloak server url for COMS authentication |
+
+### Database Variables
+
+| Config Var | Env Var | Default | Notes |
+| --- | --- | --- | --- |
+| `database` | `DB_DATABASE` | coms | COMS database name |
+| `enabled` | `DB_ENABLED` | undefined | Whether to use a database, rquired for OIDC Auth Mode as well as user-based access control, tagging and advanced features. |
+| `host` | `DB_HOST` | localhost | The hostname of the COMS database,  |
+| `username` | `DB_USERNAME` | app | Database account username |
+| `password` | `DB_PASSWORD` | undefined | Database account password |
+| `port` | `DB_PORT` | `5432` | The port that COMS database will bind to |
+
+### Object Storage Variables
+
+| Config Var | Env Var | Default | Notes |
+| --- | --- | --- | --- |
+| `accessKeyId` | `OBJECTSTORAGE_ACCESSKEYID` | undefined | The Access Key for your S3 compatible object storage account  |
+| `bucket` | `OBJECTSTORAGE_BUCKET` | undefined | The object storage bucket name. |
+| `defaultTempExpiresIn` | `OBJECTSTORAGE_TEMP_EXPIRESIN` | `300` | The expiry time for pre-signed URLs to objects in miliseconds.  |
+| `endpoint` | `OBJECTSTORAGE_ENDPOINT` | undefined | Object store URL. eg: `https://nrs.objectstore.gov.bc.ca` |
+| `key` | `OBJECTSTORAGE_KEY` | undefined | The base path for storage location |
+| `secretAccessKey` | `OBJECTSTORAGE_SECRETACCESSKEY` | undefined | The Secret Access Key for your S3 compatible object storage account |
+
+### Server Variables
+
+The following variables alter the general Express application behavior. For most situations, the defaults should be sufficient.
+
+| Config Var | Env Var | Default | Notes |
+| --- | --- | --- | --- |
+| `port` | `SERVER_PORT` | `3000` | The port that COMS application will bind to |
+
+## Quick Start
+
+The following sections provide you a quick way to get COMS set up and running.
+
+### Docker
+
+This section assumes you have a recent version of Docker available to work with on your environment. Make sure to have an understanding of what environment variables are passed into the application before proceeding.
+
+Note: change latest tag to specific version if needed. Avoid using the latest tag in Production to ensure consistency with your existing infrastructure.
+
+Get COMS image:
+
+```sh
+docker pull bcgovimages/common-object-management-service:latest
+```
+
+Run COMS in **Unauthenticated mode**
+
+```sh
+docker run -it --rm -p 3000:3000 \
+-e OBJECTSTORAGE_ACCESSKEYID=<Access Key ID for your S3 account> \
+-e OBJECTSTORAGE_BUCKET=<Object storage bucket name> \
+-e OBJECTSTORAGE_ENDPOINT=<Object store URL. eg: https://nrs.objectstore.gov.bc.ca> \
+-e OBJECTSTORAGE_KEY=<base path for storage location> \
+-e OBJECTSTORAGE_SECRETACCESSKEY=<Secret Access Key for your S3 compatible object storage account> \
+docker.io/bcgovimages/common-object-management-service:latest
+```
+
+Run COMS in **Basic Auth mode** (replace environment values as necessary)
+
+```sh
+docker run -it --rm -p 3000:3000 \
+-e OBJECTSTORAGE_ACCESSKEYID=<Access Key ID for your S3 account> \
+-e OBJECTSTORAGE_BUCKET=<Object storage bucket name> \
+-e OBJECTSTORAGE_ENDPOINT=<Object store URL. eg: https://nrs.objectstore.gov.bc.ca> \
+-e OBJECTSTORAGE_KEY=<base path for storage location> \
+-e OBJECTSTORAGE_SECRETACCESSKEY=<Secret Access Key for your S3 compatible object storage account> \
+-e BASICAUTH_USERNAME=<Your chosen Basic Auth Username> \
+-e BASICAUTH_PASSWORD=<Your chosen Basic Auth Password> \
+-e BASICAUTH_ENABLED=true \
+docker.io/bcgovimages/common-object-management-service:latest
+```
+
+Run COMS in **OIDC Auth Mode** (replace environment values as necessary)
+
+```sh
+docker run -it --rm -p 3000:3000 \
+-e OBJECTSTORAGE_ACCESSKEYID=<Access Key ID for your S3 account> \
+-e OBJECTSTORAGE_BUCKET=<Object storage bucket name> \
+-e OBJECTSTORAGE_ENDPOINT=<Object store URL. eg: https://nrs.objectstore.gov.bc.ca> \
+-e OBJECTSTORAGE_KEY=<base path for storage location> \
+-e OBJECTSTORAGE_SECRETACCESSKEY=<Secret Access Key for your S3 compatible object storage account> \
+-e KC_CLIENTID=<id> \
+-e KC_CLIENTSECRET=<secret> \
+-e KC_ENABLED=true \
+-e KC_PUBLICKEY=<publickey> \
+-e KC_REALM=<realm> \
+-e KC_SERVERURL=<url> \
+-e DB_ENABLED=true \
+-e DB_PASSWORD=<password> \
+-e DB_PORT=<your postgres database port> \
+docker.io/bcgovimages/common-object-management-service:latest
+```
+
+Run COMS in **Full Auth Mode** (replace environment values as necessary)
+
+```sh
+docker run -it --rm -p 3000:3000 \
+-e OBJECTSTORAGE_ACCESSKEYID=<Access Key ID for your S3 account> \
+-e OBJECTSTORAGE_BUCKET=<Object storage bucket name> \
+-e OBJECTSTORAGE_ENDPOINT=<Object store URL. eg: https://nrs.objectstore.gov.bc.ca> \
+-e OBJECTSTORAGE_KEY=<base path for storage location> \
+-e OBJECTSTORAGE_SECRETACCESSKEY=<Secret Access Key for your S3 compatible object storage account> \
+-e BASICAUTH_USERNAME=<Your chosen Basic Auth Username> \
+-e BASICAUTH_PASSWORD=<Your chosen Basic Auth Password> \
+-e BASICAUTH_ENABLED=true \
+-e KC_CLIENTID=<id> \
+-e KC_CLIENTSECRET=<secret> \
+-e KC_ENABLED=true \
+-e KC_PUBLICKEY=<publickey> \
+-e KC_REALM=<realm> \
+-e KC_SERVERURL=<url> \
+-e DB_ENABLED=true \
+-e DB_PASSWORD=<password> \
+-e DB_PORT=<your postgres database port> \
+docker.io/bcgovimages/common-object-management-service:latest
+```
+
+### Local Machine
+
+This section assumes you have a recent version of Node.js (12.x or higher) installed as well as Postgres (12.x or higher). Make sure to have an understanding of what environment variables are passed into the application before proceeding.
+
+#### Configuration
+
+Configuration management is done using the [config](https://www.npmjs.com/package/config) library. There are two ways to configure:
+
+1. Look at [custom-environment-variables.json](/app/config/custom-environment-variables.json) and ensure you have the environment variables locally set. Create a `local.json` file in the config folder. This file should never be added to source control. Consider creating a `local-test.json` file in the config folder if you want to use different configurations while running unit tests.
+2. Look at [custom-environment-variables.json](/app/config/custom-environment-variables.json) and use explicit environment variables in your environment as mentioned [above](#environment-variables) to configure your application behavior.
+
+For more details, please consult the config library [documentation](https://github.com/lorenwest/node-config/wiki/Configuration-Files).
 
 If you are running this on a local machine, you will need to create a `local.json` file in the `config` directory containing the values you want set. For more information on how the config library loads and searches for environment variables, take a look at this article: <https://github.com/lorenwest/node-config/wiki/Configuration-Files>.
 
-At an absolute bare minimum, we recommend that you will want your `local.json` to at least have the following values defined (replacing `REDACTED` with your own values as needed):
+At a minimum (when running COMS in 'Unauthenticated mode'), you are required to have configuration values for your Object Storage.
+To run COMS in Full Auth mode you will want your `local.json` to have the following values defined, with your own values as needed:
 
 ``` json
 {
-  "frontend": {
-    "keycloak": {
-      "clientId": "REDACTED",
-      "realm": "REDACTED",
-      "serverUrl": "REDACTED"
-    }
+  "basicAuth": {
+    "enabled": true,
+    "username": "<Your chosen Basic Auth Username>",
+    "password": "<Your chosen Basic Auth Password>"
+  },
+  "db": {
+    "enabled": true,
+    "username": "<COMS database username>",
+    "password": "<COMS database user password>",
+    "port": "<COMS database port. eg 5432>"
+  },
+  "keycloak": {
+    "enabled": true,
+    "clientId": "<OIDC client ID>",
+    "clientSecret": "<OIDC client secret>",
+    "realm": "<OIDC realm ID>",
+    "serverUrl": "<OIDC server auth URL>"
+  },
+  "objectStorage": {
+    "secretAccessKey": "<Secret Access Key for your S3 compatible object storage account>",
+    "key": "<base path for storage location>",
+    "accessKeyId": "<Access Key ID for your S3 account>",
+    "bucket": "<Object storage bucket name>",
+    "endpoint": "<Object store URL. eg: https://nrs.objectstore.gov.bc.ca>"
   },
   "server": {
-    "keycloak": {
-      "clientId": "REDACTED",
-      "clientSecret": "REDACTED",
-      "realm": "REDACTED",
-      "serverUrl": "REDACTED"
-    },
-    "logLevel": "debug",
-    "morganFormat": "dev",
-    "port": "8080"
+    "port": "<The port that COMS application will bind to>"
   }
 }
+
 ```
 
-### Production Build and Run
+#### Common Commands
 
-``` sh
-npm run all:fresh-start
-```
+Install node dependencies with either `npm ci` or `npm install`.
 
-### Development Run
+Run the server with hot-reloading for development
 
 ``` sh
 npm run serve
 ```
 
-Start a new terminal
+Run the server without hot-reloading
 
 ``` sh
-cd frontend
-npm run serve
+npm run start
 ```
 
-### Run application tests
+Migrate Database
+
+``` sh
+npm run migrate
+```
+
+Run your tests
 
 ``` sh
 npm run test
 ```
 
-### Lints and fixes application files
+Lint the codebase
 
 ``` sh
 npm run lint
-npm run lint-fix
+```
+
+## License
+
+```txt
+Copyright 2022 Province of British Columbia
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 ```
