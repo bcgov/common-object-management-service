@@ -121,9 +121,11 @@ const utils = {
    * @function isTruthy
    * Returns true if the element name in the object contains a truthy value
    * @param {object} value The object to evaluate
-   * @returns {boolean} True if truthy, false otherwise
+   * @returns {boolean} True if truthy, false if not, and undefined if undefined
    */
   isTruthy: (value) => {
+    if (value === undefined) return value;
+
     const isStr = typeof value === 'string' || value instanceof String;
     const trueStrings = ['true', 't', 'yes', 'y', '1'];
     return value === true || value === 1 || isStr && trueStrings.includes(value.toLowerCase());

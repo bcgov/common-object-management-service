@@ -72,6 +72,10 @@ describe('delimit', () => {
 });
 
 describe('isTruthy', () => {
+  it('should return undefined given undefined', () => {
+    expect(utils.isTruthy(undefined)).toBeUndefined();
+  });
+
   it.each([
     true, 1, 'true', 'TRUE', 't', 'T', 'yes', 'yEs', 'y', 'Y', '1', new String('true')
   ])('should return true given %j', (value) => {
