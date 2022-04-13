@@ -15,7 +15,9 @@ const dataConnection = new DataConnection();
 
 const apiRouter = express.Router();
 const state = {
+  authMode: getAppAuthMode(),
   connections: {},
+  gitRev: getGitRevision(),
   ready: false,
   shutdown: false
 };
@@ -52,7 +54,6 @@ if (config.has('db.enabled')) {
 }
 
 // Application authentication modes
-state.authMode = getAppAuthMode();
 switch (state.authMode) {
   case AuthMode.NOAUTH:
     log.info('Running COMS in public no-auth mode');
@@ -99,7 +100,7 @@ apiRouter.get('/', (_req, res) => {
     res.status(200).json({
       app: {
         authMode: state.authMode,
-        gitRev: getGitRevision(),
+        gitRev: state.gitRev,
         hasDb: config.has('db.enabled'),
         name: process.env.npm_package_name,
         version: process.env.npm_package_version
