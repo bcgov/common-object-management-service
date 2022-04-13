@@ -11,7 +11,7 @@ const mockResponse = () => {
   return res;
 };
 
-// Mock config library - @see https://stackoverflow.com/a/64819698
+// Mock config library - @see {@link https://stackoverflow.com/a/64819698}
 jest.mock('config');
 
 describe('searchPermissions', () => {

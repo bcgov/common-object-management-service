@@ -2,7 +2,7 @@ const docs = {
   getDocHTML: version => `<!DOCTYPE html>
   <html>
     <head>
-      <title>Vue Skeleton API - Documentation ${version}</title>
+      <title>Common Object Management Service API - Documentation ${version}</title>
       <!-- Needed for adaptive design -->
       <meta charset="utf-8"/>
       <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -14,7 +14,7 @@ const docs = {
       </style>
     </head>
     <body>
-      <redoc spec-url='/api/${version}/api-spec.yaml' />
+      <redoc spec-url='/api/${version}/docs/api-spec.yaml' />
       <script src="https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js"></script>
     </body>
   </html>`

@@ -7,7 +7,7 @@ const Problem = require('api-problem');
 const { AuthMode } = require('./src/components/constants');
 const log = require('./src/components/log')(module.filename);
 const httpLogger = require('./src/components/log').httpLogger;
-const { getAppAuthMode } = require('./src/components/utils');
+const { getAppAuthMode, getGitRevision } = require('./src/components/utils');
 const v1Router = require('./src/routes/v1');
 
 const DataConnection = require('./src/db/dataConnection');
@@ -15,7 +15,9 @@ const dataConnection = new DataConnection();
 
 const apiRouter = express.Router();
 const state = {
+  authMode: getAppAuthMode(),
   connections: {},
+  gitRev: getGitRevision(),
   ready: false,
   shutdown: false
 };
@@ -24,6 +26,7 @@ let probeId;
 const app = express();
 app.use(compression());
 app.use(cors({
+  // Consider specifying '*' to permit any arbitrary header to be exposed to other domains
   exposedHeaders: [
     'ETag',
     'x-amz-meta-name',
@@ -51,7 +54,6 @@ if (config.has('db.enabled')) {
 }
 
 // Application authentication modes
-state.authMode = getAppAuthMode();
 switch (state.authMode) {
   case AuthMode.NOAUTH:
     log.info('Running COMS in public no-auth mode');
@@ -96,6 +98,13 @@ apiRouter.get('/', (_req, res) => {
     throw new Error('Server shutting down');
   } else {
     res.status(200).json({
+      app: {
+        authMode: state.authMode,
+        gitRev: state.gitRev,
+        hasDb: config.has('db.enabled'),
+        name: process.env.npm_package_name,
+        version: process.env.npm_package_version
+      },
       endpoints: ['/api/v1'],
       versions: [1]
     });

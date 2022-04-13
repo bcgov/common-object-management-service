@@ -24,7 +24,7 @@ const s3ClientMock = mockClient(service._s3Client);
 jest.mock('@aws-sdk/s3-request-presigner', () => ({
   getSignedUrl: jest.fn()
 }));
-// Mock config library - @see https://stackoverflow.com/a/64819698
+// Mock config library - @see {@link https://stackoverflow.com/a/64819698}
 jest.mock('config');
 
 beforeEach(() => {
@@ -203,7 +203,7 @@ describe('putObject', () => {
     expect(s3ClientMock.commandCalls(PutObjectCommand, {
       Bucket: bucket,
       ContentType: mimeType,
-      Key: utils.join(key, id),
+      Key: utils.joinPath(key, id),
       Body: stream,
       Metadata: {
         name: originalName,
@@ -213,7 +213,7 @@ describe('putObject', () => {
     }, true)).toHaveLength(1);
   });
 
-  it('should send a get object command with custom metadata', () => {
+  it('should send a put object command with custom metadata', () => {
     const stream = new Readable();
     const id = 'id';
     const originalName = 'originalName';
@@ -226,7 +226,7 @@ describe('putObject', () => {
     expect(s3ClientMock.commandCalls(PutObjectCommand, {
       Bucket: bucket,
       ContentType: mimeType,
-      Key: utils.join(key, id),
+      Key: utils.joinPath(key, id),
       Body: stream,
       Metadata: {
         foo: 'foo',
@@ -238,7 +238,7 @@ describe('putObject', () => {
     }, true)).toHaveLength(1);
   });
 
-  it('should send a get object command with custom tags', () => {
+  it('should send a put object command with custom tags', () => {
     const stream = new Readable();
     const id = 'id';
     const originalName = 'originalName';
@@ -251,7 +251,7 @@ describe('putObject', () => {
     expect(s3ClientMock.commandCalls(PutObjectCommand, {
       Bucket: bucket,
       ContentType: mimeType,
-      Key: utils.join(key, id),
+      Key: utils.joinPath(key, id),
       Body: stream,
       Metadata: {
         name: originalName,

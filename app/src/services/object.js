@@ -14,7 +14,7 @@ const service = {
    * @param {string} data.userId The uploading user userId
    * @param {string} data.originalName The object's original name
    * @param {string} data.path The relative S3 key/path of the object
-   * @param {string} [data.public] The optional public flag - defaults to true if undefined
+   * @param {boolean} [data.public] The optional public flag - defaults to true if undefined
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<object>} The result of running the insert operation
    * @throws The error encountered upon db transaction failure
@@ -65,7 +65,6 @@ const service = {
     try {
       trx = etrx ? etrx : await ObjectModel.startTransaction();
 
-      await permissionService.removePermissions(objId, undefined, undefined, trx);
       await ObjectModel.query(trx)
         .deleteById(objId)
         .throwIfNotFound();
@@ -120,7 +119,7 @@ const service = {
    * @param {string} data.userId The uploading user userId
    * @param {string} data.originalName The object's original name
    * @param {string} data.path The relative S3 key/path of the object
-   * @param {string} [data.public] The optional public flag - defaults to true if undefined
+   * @param {boolean} [data.public] The optional public flag - defaults to true if undefined
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<object>} The result of running the patch operation
    * @throws The error encountered upon db transaction failure

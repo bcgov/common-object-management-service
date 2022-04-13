@@ -7,7 +7,7 @@ const { objectService, permissionService, storageService } = require('../../../s
 const { AuthMode, AuthType, Permissions } = require('../../../src/components/constants');
 const utils = require('../../../src/components/utils');
 
-// Mock config library - @see https://stackoverflow.com/a/64819698
+// Mock config library - @see {@link https://stackoverflow.com/a/64819698}
 jest.mock('config');
 // Mock out utils library and use a spy to observe behavior
 jest.mock('../../../src/components/utils');
