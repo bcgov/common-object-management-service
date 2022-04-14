@@ -19,7 +19,7 @@ To learn more about the **Common Services** available visit the [Common Services
 
     .github/                   - PR and Issue templates
     app/                       - Application Root
-    |── src/                   - Node.js web application
+    ├── src/                   - Node.js web application
     │   ├── components/        - Components Layer
     │   ├── controllers/       - Controller Layer
     │   ├── db/                - Database Layer
