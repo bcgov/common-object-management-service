@@ -5,18 +5,18 @@
     "password": "BASICAUTH_PASSWORD"
   },
   "db": {
-    "database": "DB_DATABASE",
     "enabled": "DB_ENABLED",
+    "database": "DB_DATABASE",
     "host": "DB_HOST",
     "username": "DB_USERNAME",
     "password": "DB_PASSWORD",
     "port": "DB_PORT"
   },
   "keycloak": {
+    "enabled": "KC_ENABLED",
     "clientId": "KC_CLIENTID",
     "clientSecret": "KC_CLIENTSECRET",
     "identityKey": "KC_IDENTITYKEY",
-    "enabled": "KC_ENABLED",
     "publicKey": "KC_PUBLICKEY",
     "realm": "KC_REALM",
     "serverUrl": "KC_SERVERURL"
