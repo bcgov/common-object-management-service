@@ -19,8 +19,8 @@ To learn more about the **Common Services** available visit the [Common Services
 - [OpenAPI Specification](#openapi-specification)
 - [Environment Variables](#environment-variables)
   - [Basic Auth Variables](#basic-auth-variables)
-  - [Keycloak Variables](#keycloak-variables)
   - [Database Variables](#database-variables)
+  - [Keycloak Variables](#keycloak-variables)
   - [Object Storage Variables](#object-storage-variables)
   - [Server Variables](#server-variables)
 - [Quick Start](#quick-start)
@@ -101,90 +101,90 @@ The following variables alter the general Express application behavior. For most
 
 ## Quick Start
 
-The following sections provide you a quick way to get COMS set up and running.
+The following sections provide you a quick way to get COMS set up and running either through Docker or directly as a node application.
 
 ### Docker
 
 This section assumes you have a recent version of Docker available to work with on your environment. Make sure to have an understanding of what environment variables are passed into the application before proceeding.
 
-Note: change latest tag to specific version if needed. Avoid using the latest tag in Production to ensure consistency with your existing infrastructure.
+Note: change the `latest` tag to specific version if needed. Avoid using the latest tag in Production to ensure consistency with your existing infrastructure.
 
 Get COMS image:
 
-```sh
-docker pull bcgovimages/common-object-management-service:latest
+``` sh
+docker pull docker.io/bcgovimages/common-object-management-service:latest
 ```
 
-Run COMS in **Unauthenticated mode**
+Run COMS in **Unauthenticated mode** (replace environment values as necessary)
 
-```sh
+``` sh
 docker run -it --rm -p 3000:3000 \
--e OBJECTSTORAGE_ACCESSKEYID=<Access Key ID for your S3 account> \
--e OBJECTSTORAGE_BUCKET=<Object storage bucket name> \
--e OBJECTSTORAGE_ENDPOINT=<Object store URL. eg: https://nrs.objectstore.gov.bc.ca> \
--e OBJECTSTORAGE_KEY=<base path for storage location> \
--e OBJECTSTORAGE_SECRETACCESSKEY=<Secret Access Key for your S3 compatible object storage account> \
-docker.io/bcgovimages/common-object-management-service:latest
+  -e OBJECTSTORAGE_ACCESSKEYID=<Access Key ID for your S3 account> \
+  -e OBJECTSTORAGE_BUCKET=<Object storage bucket name> \
+  -e OBJECTSTORAGE_ENDPOINT=<Object store URL. eg: https://nrs.objectstore.gov.bc.ca> \
+  -e OBJECTSTORAGE_KEY=<base path for storage location> \
+  -e OBJECTSTORAGE_SECRETACCESSKEY=<Secret Access Key for your S3 compatible object storage account> \
+  docker.io/bcgovimages/common-object-management-service:latest
 ```
 
 Run COMS in **Basic Auth mode** (replace environment values as necessary)
 
-```sh
+``` sh
 docker run -it --rm -p 3000:3000 \
--e OBJECTSTORAGE_ACCESSKEYID=<Access Key ID for your S3 account> \
--e OBJECTSTORAGE_BUCKET=<Object storage bucket name> \
--e OBJECTSTORAGE_ENDPOINT=<Object store URL. eg: https://nrs.objectstore.gov.bc.ca> \
--e OBJECTSTORAGE_KEY=<base path for storage location> \
--e OBJECTSTORAGE_SECRETACCESSKEY=<Secret Access Key for your S3 compatible object storage account> \
--e BASICAUTH_USERNAME=<Your chosen Basic Auth Username> \
--e BASICAUTH_PASSWORD=<Your chosen Basic Auth Password> \
--e BASICAUTH_ENABLED=true \
-docker.io/bcgovimages/common-object-management-service:latest
+  -e OBJECTSTORAGE_ACCESSKEYID=<Access Key ID for your S3 account> \
+  -e OBJECTSTORAGE_BUCKET=<Object storage bucket name> \
+  -e OBJECTSTORAGE_ENDPOINT=<Object store URL. eg: https://nrs.objectstore.gov.bc.ca> \
+  -e OBJECTSTORAGE_KEY=<base path for storage location> \
+  -e OBJECTSTORAGE_SECRETACCESSKEY=<Secret Access Key for your S3 compatible object storage account> \
+  -e BASICAUTH_ENABLED=true \
+  -e BASICAUTH_USERNAME=<Your chosen Basic Auth Username> \
+  -e BASICAUTH_PASSWORD=<Your chosen Basic Auth Password> \
+  docker.io/bcgovimages/common-object-management-service:latest
 ```
 
 Run COMS in **OIDC Auth Mode** (replace environment values as necessary)
 
-```sh
+``` sh
 docker run -it --rm -p 3000:3000 \
--e OBJECTSTORAGE_ACCESSKEYID=<Access Key ID for your S3 account> \
--e OBJECTSTORAGE_BUCKET=<Object storage bucket name> \
--e OBJECTSTORAGE_ENDPOINT=<Object store URL. eg: https://nrs.objectstore.gov.bc.ca> \
--e OBJECTSTORAGE_KEY=<base path for storage location> \
--e OBJECTSTORAGE_SECRETACCESSKEY=<Secret Access Key for your S3 compatible object storage account> \
--e KC_CLIENTID=<id> \
--e KC_CLIENTSECRET=<secret> \
--e KC_ENABLED=true \
--e KC_PUBLICKEY=<publickey> \
--e KC_REALM=<realm> \
--e KC_SERVERURL=<url> \
--e DB_ENABLED=true \
--e DB_PASSWORD=<password> \
--e DB_PORT=<your postgres database port> \
-docker.io/bcgovimages/common-object-management-service:latest
+  -e OBJECTSTORAGE_ACCESSKEYID=<Access Key ID for your S3 account> \
+  -e OBJECTSTORAGE_BUCKET=<Object storage bucket name> \
+  -e OBJECTSTORAGE_ENDPOINT=<Object store URL. eg: https://nrs.objectstore.gov.bc.ca> \
+  -e OBJECTSTORAGE_KEY=<base path for storage location> \
+  -e OBJECTSTORAGE_SECRETACCESSKEY=<Secret Access Key for your S3 compatible object storage account> \
+  -e KC_ENABLED=true \
+  -e KC_CLIENTID=<id> \
+  -e KC_CLIENTSECRET=<secret> \
+  -e KC_PUBLICKEY=<publickey> \
+  -e KC_REALM=<realm> \
+  -e KC_SERVERURL=<url> \
+  -e DB_ENABLED=true \
+  -e DB_PASSWORD=<password> \
+  -e DB_PORT=<your postgres database port> \
+  docker.io/bcgovimages/common-object-management-service:latest
 ```
 
 Run COMS in **Full Auth Mode** (replace environment values as necessary)
 
-```sh
+``` sh
 docker run -it --rm -p 3000:3000 \
--e OBJECTSTORAGE_ACCESSKEYID=<Access Key ID for your S3 account> \
--e OBJECTSTORAGE_BUCKET=<Object storage bucket name> \
--e OBJECTSTORAGE_ENDPOINT=<Object store URL. eg: https://nrs.objectstore.gov.bc.ca> \
--e OBJECTSTORAGE_KEY=<base path for storage location> \
--e OBJECTSTORAGE_SECRETACCESSKEY=<Secret Access Key for your S3 compatible object storage account> \
--e BASICAUTH_USERNAME=<Your chosen Basic Auth Username> \
--e BASICAUTH_PASSWORD=<Your chosen Basic Auth Password> \
--e BASICAUTH_ENABLED=true \
--e KC_CLIENTID=<id> \
--e KC_CLIENTSECRET=<secret> \
--e KC_ENABLED=true \
--e KC_PUBLICKEY=<publickey> \
--e KC_REALM=<realm> \
--e KC_SERVERURL=<url> \
--e DB_ENABLED=true \
--e DB_PASSWORD=<password> \
--e DB_PORT=<your postgres database port> \
-docker.io/bcgovimages/common-object-management-service:latest
+  -e OBJECTSTORAGE_ACCESSKEYID=<Access Key ID for your S3 account> \
+  -e OBJECTSTORAGE_BUCKET=<Object storage bucket name> \
+  -e OBJECTSTORAGE_ENDPOINT=<Object store URL. eg: https://nrs.objectstore.gov.bc.ca> \
+  -e OBJECTSTORAGE_KEY=<base path for storage location> \
+  -e OBJECTSTORAGE_SECRETACCESSKEY=<Secret Access Key for your S3 compatible object storage account> \
+  -e BASICAUTH_ENABLED=true \
+  -e BASICAUTH_USERNAME=<Your chosen Basic Auth Username> \
+  -e BASICAUTH_PASSWORD=<Your chosen Basic Auth Password> \
+  -e KC_ENABLED=true \
+  -e KC_CLIENTID=<id> \
+  -e KC_CLIENTSECRET=<secret> \
+  -e KC_PUBLICKEY=<publickey> \
+  -e KC_REALM=<realm> \
+  -e KC_SERVERURL=<url> \
+  -e DB_ENABLED=true \
+  -e DB_PASSWORD=<password> \
+  -e DB_PORT=<your postgres database port> \
+  docker.io/bcgovimages/common-object-management-service:latest
 ```
 
 ### Local Machine
@@ -195,12 +195,10 @@ This section assumes you have a recent version of Node.js (12.x or higher) insta
 
 Configuration management is done using the [config](https://www.npmjs.com/package/config) library. There are two ways to configure:
 
-1. Look at [custom-environment-variables.json](/app/config/custom-environment-variables.json) and ensure you have the environment variables locally set. Create a `local.json` file in the config folder. This file should never be added to source control. Consider creating a `local-test.json` file in the config folder if you want to use different configurations while running unit tests.
-2. Look at [custom-environment-variables.json](/app/config/custom-environment-variables.json) and use explicit environment variables in your environment as mentioned [above](#environment-variables) to configure your application behavior.
+1. Configure via `local.json` file. Look at [custom-environment-variables.json](/app/config/custom-environment-variables.json) and ensure you have the environment variables locally set. Create a `local.json` file in the config folder. This file should never be added to source control. Consider creating a `local-test.json` file in the config folder if you want to use different configurations while running unit tests.
+2. Configure via environment variables. Look at [custom-environment-variables.json](/app/config/custom-environment-variables.json) and use the explicit environment variables in your environment as mentioned [above](#environment-variables) to configure your application behavior.
 
-For more details, please consult the config library [documentation](https://github.com/lorenwest/node-config/wiki/Configuration-Files).
-
-If you are running this on a local machine, you will need to create a `local.json` file in the `config` directory containing the values you want set. For more information on how the config library loads and searches for environment variables, take a look at this article: <https://github.com/lorenwest/node-config/wiki/Configuration-Files>.
+For more information on how the config library loads and searches for environment variables, take a look [here](https://github.com/lorenwest/node-config/wiki/Configuration-Files).
 
 At a minimum (when running COMS in 'Unauthenticated mode'), you are required to have configuration values for your Object Storage.
 To run COMS in Full Auth mode you will want your `local.json` to have the following values defined, with your own values as needed:
@@ -236,12 +234,11 @@ To run COMS in Full Auth mode you will want your `local.json` to have the follow
     "port": "<The port that COMS application will bind to>"
   }
 }
-
 ```
 
 #### Common Commands
 
-Install node dependencies with either `npm ci` or `npm install`.
+Install node dependencies with `npm ci`. You may use `npm install` if you are updating or changing the dependencies instead. Once your application is configured, make sure to run a database migration before starting up the COMS application.
 
 Run the server with hot-reloading for development
 
@@ -249,7 +246,7 @@ Run the server with hot-reloading for development
 npm run serve
 ```
 
-Run the server without hot-reloading
+Run the server
 
 ``` sh
 npm run start
@@ -261,16 +258,16 @@ Migrate Database
 npm run migrate
 ```
 
-Run your tests
-
-``` sh
-npm run test
-```
-
 Lint the codebase
 
 ``` sh
 npm run lint
+```
+
+Run your tests
+
+``` sh
+npm run test
 ```
 
 ## License
