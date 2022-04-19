@@ -17,28 +17,31 @@ To learn more about the **Common Services** available visit the [Common Services
 
 ## Directory Structure
 
-    .github/                   - PR and Issue templates
-    app/                       - Application Root
-    ├── src/                   - Node.js web application
-    │   ├── components/        - Components Layer
-    │   ├── controllers/       - Controller Layer
-    │   ├── db/                - Database Layer
-    │   ├── docs/              - OpenAPI 3.0 Specification
-    │   ├── middleware/        - Middleware Layer
-    │   ├── routes/            - API Route Layer
-    │   └── services/          - Services Layer
-    └── tests/                 - Node.js web application tests
-    openshift/                 - OpenShift-deployment and shared pipeline files
-    CODE-OF-CONDUCT.md         - Code of Conduct
-    COMPLIANCE.yaml            - BCGov PIA/STRA compliance status
-    CONTRIBUTING.md            - Contributing Guidelines
-    LICENSE                    - License
-    SECURITY.md                - Security Policy and Reporting
+```txt
+.github/                   - PR and Issue templates
+app/                       - Application Root
+├── src/                   - Node.js web application
+│   ├── components/        - Components Layer
+│   ├── controllers/       - Controller Layer
+│   ├── db/                - Database Layer
+│   ├── docs/              - OpenAPI 3.0 Specification
+│   ├── middleware/        - Middleware Layer
+│   ├── routes/            - API Route Layer
+│   └── services/          - Services Layer
+└── tests/                 - Node.js web application tests
+openshift/                 - OpenShift-deployment and shared pipeline files
+CODE-OF-CONDUCT.md         - Code of Conduct
+COMPLIANCE.yaml            - BCGov PIA/STRA compliance status
+CONTRIBUTING.md            - Contributing Guidelines
+LICENSE                    - License
+SECURITY.md                - Security Policy and Reporting
+```
 
 ## Documentation
 
 * [Application Readme](app/README.md)
 * [API Specification](app/README.md#openapi-specification)
+* [COMS Wiki](https://github.com/bcgov/common-object-management-service/wiki)
 * [Openshift Readme](openshift/README.md)
 * [Security Reporting](SECURITY.md)
 * [Showcase Team Roadmap](https://github.com/bcgov/nr-get-token/wiki/Product-Roadmap)
@@ -55,16 +58,18 @@ Please note that this project is released with a [Contributor Code of Conduct](C
 
 ## License
 
-    Copyright 2022 Province of British Columbia
+```txt
+Copyright 2022 Province of British Columbia
 
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-2.0
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+```
