@@ -41,10 +41,10 @@ SECURITY.md                - Security Policy and Reporting
 
 * [Application Readme](app/README.md)
 * [API Specification](app/README.md#openapi-specification)
-* [COMS Wiki](https://github.com/bcgov/common-object-management-service/wiki)
 * [Openshift Readme](openshift/README.md)
+* [Product Roadmap](https://github.com/bcgov/common-object-management-service/wiki/Product-Roadmap)
+* [Product Wiki](https://github.com/bcgov/common-object-management-service/wiki)
 * [Security Reporting](SECURITY.md)
-* [Showcase Team Roadmap](https://github.com/bcgov/nr-get-token/wiki/Product-Roadmap)
 
 ## Getting Help or Reporting an Issue
 
