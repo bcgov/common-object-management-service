@@ -23,19 +23,19 @@ tags:
       Operations directly influencing an S3 Object. Certain operations not
       available without a database.
     externalDocs:
-      url: https://github.com/bcgov/common-object-management-service/wiki
+      url: https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#object
   - name: Permission
     description: >-
       Operations for managing User Access Control to S3 Objects. Not available
       without a database.
     externalDocs:
-      url: https://github.com/bcgov/common-object-management-service/wiki
+      url: https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#permission
   - name: User
     description: >-
       Operations to list valid queryable users and identity providers. Not
       available without a database.
     externalDocs:
-      url: https://github.com/bcgov/common-object-management-service/wiki
+      url: https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#user
 paths:
   /object:
     post:
