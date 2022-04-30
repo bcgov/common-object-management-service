@@ -1,5 +1,5 @@
 const config = require('config');
-const { readFileSync } = require('fs');
+const { existsSync, readFileSync } = require('fs');
 const { join } = require('path');
 
 const { AuthMode, AuthType } = require('./constants');
@@ -95,13 +95,21 @@ const utils = {
    */
   getGitRevision() {
     try {
-      const gitDir = '../../../.git';
+      const gitDir = (() => {
+        let dir = '.git', i = 0;
+        while (!existsSync(join(__dirname, dir)) && i < 5) {
+          dir = '../' + dir;
+          i++;
+        }
+        return dir;
+      })();
+
       const head = readFileSync(join(__dirname, `${gitDir}/HEAD`)).toString().trim();
       return (head.indexOf(':') === -1)
         ? head
         : readFileSync(join(__dirname, `${gitDir}/${head.substring(5)}`)).toString().trim();
     } catch (err) {
-      log.error(err.message, { function: 'getGitRevision' });
+      log.warn(err.message, { function: 'getGitRevision' });
       return '';
     }
   },
