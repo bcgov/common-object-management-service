@@ -46,7 +46,7 @@ spec:
           livenessProbe:
             failureThreshold: 3
             httpGet:
-              path: /api
+              path: {{ .Values.route.path }}
               port: {{ .Values.service.port }}
               scheme: HTTP
             initialDelaySeconds: 10
@@ -54,7 +54,7 @@ spec:
           readinessProbe:
             failureThreshold: 3
             httpGet:
-              path: /api
+              path: {{ .Values.route.path }}
               port: {{ .Values.service.port }}
               scheme: HTTP
             initialDelaySeconds: 10
@@ -69,50 +69,50 @@ spec:
               valueFrom:
                 secretKeyRef:
                   key: username
-                  name: {{ include "coms.fullname" . }}-basicauth-secret
+                  name: {{ include "coms.configname" . }}-basicauth-secret
             - name: BASICAUTH_PASSWORD
               valueFrom:
                 secretKeyRef:
                   key: password
-                  name: {{ include "coms.fullname" . }}-basicauth-secret
+                  name: {{ include "coms.configname" . }}-basicauth-secret
             {{- end }}
             {{- if .Values.config.configMap.DB_ENABLED }}
             - name: DB_USERNAME
               valueFrom:
                 secretKeyRef:
                   key: username
-                  name: {{ include "coms.fullname" . }}-db-secret
+                  name: {{ include "coms.configname" . }}-db-secret
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
                   key: password
-                  name: {{ include "coms.fullname" . }}-db-secret
+                  name: {{ include "coms.configname" . }}-db-secret
             {{- end }}
             {{- if .Values.config.configMap.KC_ENABLED }}
             - name: KC_CLIENTID
               valueFrom:
                 secretKeyRef:
                   key: username
-                  name: {{ include "coms.fullname" . }}-keycloak-secret
+                  name: {{ include "coms.configname" . }}-keycloak-secret
             - name: KC_CLIENTSECRET
               valueFrom:
                 secretKeyRef:
                   key: password
-                  name: {{ include "coms.fullname" . }}-keycloak-secret
+                  name: {{ include "coms.configname" . }}-keycloak-secret
             {{- end }}
             - name: OBJECTSTORAGE_ACCESSKEYID
               valueFrom:
                 secretKeyRef:
                   key: username
-                  name: {{ include "coms.fullname" . }}-objectstorage-secret
+                  name: {{ include "coms.configname" . }}-objectstorage-secret
             - name: OBJECTSTORAGE_SECRETACCESSKEY
               valueFrom:
                 secretKeyRef:
                   key: password
-                  name: {{ include "coms.fullname" . }}-objectstorage-secret
+                  name: {{ include "coms.configname" . }}-objectstorage-secret
           envFrom:
             - configMapRef:
-                name: {{ include "coms.fullname" . }}-config
+                name: {{ include "coms.configname" . }}-config
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
   test: false

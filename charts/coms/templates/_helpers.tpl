@@ -24,6 +24,17 @@ If release name contains chart name it will be used as a full name.
 {{- end }}
 
 {{/*
+Define the config pattern of the chart based on options.
+*/}}
+{{- define "coms.configname" -}}
+{{- if .Values.config.releaseScoped }}
+{{- include "coms.fullname" . }}
+{{- else }}
+{{- include "coms.name" . }}
+{{- end }}
+{{- end }}
+
+{{/*
 Create chart name and version as used by the chart label.
 */}}
 {{- define "coms.chart" -}}
