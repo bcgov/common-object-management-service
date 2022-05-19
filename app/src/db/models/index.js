@@ -5,6 +5,7 @@ const models = {
   ObjectPermission: require('./tables/objectPermission'),
   Permission: require('./tables/permission'),
   User: require('./tables/user'),
+  Version: require('./tables/version'),
 
   // Views
 };

@@ -32,14 +32,8 @@ class ObjectModel extends Timestamps(Model) {
       filterIds(query, value) {
         filterOneOrMany(query, value, 'id');
       },
-      filterOriginalName(query, value) {
-        filterILike(query, value, 'originalName');
-      },
       filterPath(query, value) {
         filterILike(query, value, 'path');
-      },
-      filterMimeType(query, value) {
-        filterILike(query, value, 'mimeType');
       },
       filterPublic(query, value) {
         if (value !== undefined) query.where('public', value);
@@ -60,12 +54,10 @@ class ObjectModel extends Timestamps(Model) {
   static get jsonSchema() {
     return {
       type: 'object',
-      required: ['id', 'originalName', 'path', 'mimeType'],
+      required: ['id', 'path',],
       properties: {
         id: { type: 'string', minLength: 1, maxLength: 255 },
-        originalName: { type: 'string', minLength: 1, maxLength: 255 },
         path: { type: 'string', minLength: 1, maxLength: 1024 },
-        mimeType: { type: 'string', minLength: 1, maxLength: 255 },
         public: { type: 'boolean' },
         active: { type: 'boolean' },
         ...stamps
