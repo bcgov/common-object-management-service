@@ -16,7 +16,7 @@ const service = {
    * @param {string} data.path The relative S3 key/path of the object
    * @param {boolean} [data.public] The optional public flag - defaults to true if undefined
    * @param {object} [etrx=undefined] An optional Objection Transaction object
-   * @returns {Promise<object>} The result of running the insert operation
+   * @returns {<object>} The result of running the insert operation
    * @throws The error encountered upon db transaction failure
    */
   create: async (data, etrx = undefined) => {
@@ -27,13 +27,11 @@ const service = {
       // Add file record to DB
       const obj = {
         id: data.id,
-        originalName: data.originalName,
         path: data.path,
-        mimeType: data.mimeType,
         public: data.public,
         createdBy: data.userId
       };
-      await ObjectModel.query(trx).insert(obj);
+      const objectInsert = await ObjectModel.query(trx).insert(obj);
 
       // Add all permission codes for the uploader
       if (data.userId) {
@@ -45,7 +43,7 @@ const service = {
       }
 
       if (!etrx) await trx.commit();
-      return await service.read(data.id);
+      return objectInsert;
     } catch (err) {
       if (!etrx && trx) await trx.rollback();
       throw err;

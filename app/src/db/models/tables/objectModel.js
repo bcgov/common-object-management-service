@@ -54,7 +54,7 @@ class ObjectModel extends Timestamps(Model) {
   static get jsonSchema() {
     return {
       type: 'object',
-      required: ['id', 'path',],
+      required: ['id', 'path'],
       properties: {
         id: { type: 'string', minLength: 1, maxLength: 255 },
         path: { type: 'string', minLength: 1, maxLength: 1024 },
