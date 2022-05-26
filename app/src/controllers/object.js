@@ -11,7 +11,7 @@ const {
   isTruthy,
   mixedQueryToArray
 } = require('../components/utils');
-const { objectService, storageService } = require('../services');
+const { objectService, storageService, versionService } = require('../services');
 
 const SERVICE = 'ObjectService';
 
@@ -75,12 +75,32 @@ const controller = {
         });
       });
       bb.on('close', async () => {
-        const result = await Promise.all(objects.map(async (object) => ({
-          ...object.data,
-          ...await object.dbResponse,
-          ...await object.s3Response
-        })));
-        res.status(201).json(result);
+
+        Promise.all(objects.map(async (object) => {
+          // wait for object and permission db update
+          object.dbResponse = await object.dbResponse;
+          // wait for file to finish uploading to S3
+          object.s3Response = await object.s3Response;
+          // add versionId to data for the file
+          object.data.versionId = object.s3Response.VersionId;
+        }))
+
+          .then(async () => {
+            // create version in db for each object
+            const objectVersionArray = objects.map((object) => {
+              return object.data;
+            });
+            await versionService.createVersionOfObjects(objectVersionArray, userId);
+          })
+
+          .then(() => {
+            const result = objects.map((object) => ({
+              ...object.data,
+              ...object.dbResponse,
+              ...object.s3Response
+            }));
+            res.status(201).json(result);
+          });
       });
 
       req.pipe(bb);

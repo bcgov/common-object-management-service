@@ -31,7 +31,7 @@ const service = {
         public: data.public,
         createdBy: data.userId
       };
-      const objectInsert = await ObjectModel.query(trx).insert(obj);
+      const objectInsert = await ObjectModel.query(trx).insert(obj).returning('*');
 
       // Add all permission codes for the uploader
       if (data.userId) {
