@@ -3,6 +3,7 @@ const config = require('config');
 const cors = require('cors');
 const express = require('express');
 const Problem = require('api-problem');
+const { ValidationError } = require('express-validation');
 
 const { AuthMode } = require('./src/components/constants');
 const log = require('./src/components/log')(module.filename);
@@ -117,12 +118,16 @@ apiRouter.use('/v1', v1Router);
 // Root level Router
 app.use(/(\/api)?/, apiRouter);
 
-// Handle 500
+// Handle ValidationError & 500
 // eslint-disable-next-line no-unused-vars
 app.use((err, _req, res, _next) => {
   if (err instanceof Problem) {
     err.send(res);
-  } else {
+  }
+  else if (err instanceof ValidationError) {
+    return res.status(err.statusCode).json(err);
+  }
+  else {
     // Only log unexpected errors
     if (err.stack) log.error(err);
 
@@ -138,6 +143,7 @@ app.use((req, res) => {
     detail: req.originalUrl
   }).send(res);
 });
+
 
 // Prevent unhandled errors from crashing application
 process.on('unhandledRejection', err => {
