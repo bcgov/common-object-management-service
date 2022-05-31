@@ -28,6 +28,9 @@ const { userController } = require('../../../../src/controllers');
 const basePath = '/api/v1/user';
 const app = expressHelper(basePath, router);
 
+// Mock config library - @see {@link https://stackoverflow.com/a/64819698}
+jest.mock('config');
+
 describe(`GET ${basePath}`, () => {
 });
 
