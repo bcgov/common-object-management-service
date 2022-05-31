@@ -28,11 +28,9 @@ const helper = {
     app.use((err, _req, res, _next) => {
       if (err instanceof Problem) {
         err.send(res);
-      }
-      else if (err instanceof ValidationError) {
+      } else if (err instanceof ValidationError) {
         return res.status(err.statusCode).json(err);
-      }
-      else {
+      } else {
         new Problem(500, {
           details: (err.message) ? err.message : err
         }).send(res);

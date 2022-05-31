@@ -123,11 +123,9 @@ app.use(/(\/api)?/, apiRouter);
 app.use((err, _req, res, _next) => {
   if (err instanceof Problem) {
     err.send(res);
-  }
-  else if (err instanceof ValidationError) {
+  } else if (err instanceof ValidationError) {
     return res.status(err.statusCode).json(err);
-  }
-  else {
+  } else {
     // Only log unexpected errors
     if (err.stack) log.error(err);
 

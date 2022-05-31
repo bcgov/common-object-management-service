@@ -1,6 +1,6 @@
 const routes = require('express').Router();
 
-const { searchValidation, idpListValidation } = require('../../validation/user');
+const { userValidator } = require('../../validator');
 const { userController } = require('../../controllers');
 const { checkAppMode } = require('../../middleware/authorization');
 const { requireDb, requireSomeAuth } = require('../../middleware/featureToggle');
@@ -11,13 +11,12 @@ routes.use(requireSomeAuth);
 
 
 /** Search for users */
-routes.get('/', searchValidation, (req, res, next) => {
+routes.get('/', userValidator.searchUsers, (req, res, next) => {
   userController.searchUsers(req, res, next);
 });
 
 /** List all identity providers */
-// eslint-disable-next-line no-unused-vars
-routes.get('/idpList', idpListValidation, (req, res, next) => {
+routes.get('/idpList', userValidator.listIdps, (req, res, next) => {
   userController.listIdps(req, res, next);
 });
 
