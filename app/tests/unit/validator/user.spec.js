@@ -8,6 +8,17 @@ describe('searchUsers', () => {
   describe('query', () => {
     const query = schema.searchUsers.query.describe();
 
+    it('requires at least 1 parameter', () => {
+      expect(query.rules).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          name: 'min',
+          args: {
+            limit: 1
+          }
+        })
+      ]));
+    });
+
     describe('active', () => {
       const active = query.keys.active;
 

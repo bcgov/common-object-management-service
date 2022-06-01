@@ -32,6 +32,31 @@ const app = expressHelper(basePath, router);
 jest.mock('config');
 
 describe(`GET ${basePath}`, () => {
+  // TODO: Ensure other middleware funcs are called once
+  const validatorSearchUserSpy = jest.spyOn(validator, 'searchUsers');
+  const ctrlrSearchUserSpy = jest.spyOn(userController, 'searchUsers');
+
+  beforeEach(() => {
+    validatorSearchUserSpy.mockReset();
+    ctrlrSearchUserSpy.mockReset();
+  });
+
+  it('should call controller with known query params', async () => {
+    // eslint-disable-next-line no-unused-vars
+    validatorSearchUserSpy.mockImplementation((_req, _res, next) => next());
+    // eslint-disable-next-line no-unused-vars
+    ctrlrSearchUserSpy.mockImplementation((req, res, next) => res.status(200).end());
+
+    const response = await request(app).get(`${basePath}`).query({
+      userId: ['11bf5b37-e0b8-42e0-8dcf-dc8c4aefc000'],
+      idp: ['IDIR'],
+      active: 'true'
+    });
+
+    expect(validatorSearchUserSpy).toHaveBeenCalledTimes(1);
+    expect(ctrlrSearchUserSpy).toHaveBeenCalledTimes(1);
+    expect(response.statusCode).toBe(200);
+  });
 });
 
 describe(`GET ${basePath}/idpList`, () => {
