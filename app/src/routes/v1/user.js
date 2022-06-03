@@ -1,6 +1,6 @@
 const routes = require('express').Router();
 
-const { userValidator } = require('../../validator');
+const { userValidator } = require('../../validators');
 const { userController } = require('../../controllers');
 const { checkAppMode } = require('../../middleware/authorization');
 const { requireDb, requireSomeAuth } = require('../../middleware/featureToggle');
@@ -8,7 +8,6 @@ const { requireDb, requireSomeAuth } = require('../../middleware/featureToggle')
 routes.use(checkAppMode);
 routes.use(requireDb);
 routes.use(requireSomeAuth);
-
 
 /** Search for users */
 routes.get('/', userValidator.searchUsers, (req, res, next) => {

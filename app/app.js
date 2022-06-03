@@ -142,7 +142,6 @@ app.use((req, res) => {
   }).send(res);
 });
 
-
 // Prevent unhandled errors from crashing application
 process.on('unhandledRejection', err => {
   if (err && err.stack) {
