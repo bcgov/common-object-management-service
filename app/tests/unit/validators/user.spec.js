@@ -149,15 +149,12 @@ describe('searchUsers', () => {
         expect(firstName.type).toEqual('string');
       });
 
-      it('is a regex', () => {
+      it('is an alphanum', () => {
         expect(Array.isArray(firstName.rules)).toBeTruthy();
         expect(firstName.rules).toHaveLength(2);
         expect(firstName.rules).toEqual(expect.arrayContaining([
           expect.objectContaining({
-            'args': {
-              'regex': '/^[\\w\\-\\s]+$/'
-            },
-            'name': 'pattern'
+            'name': 'alphanum'
           })
         ]));
       });
@@ -465,15 +462,12 @@ describe('searchUsers', () => {
         expect(lastName.type).toEqual('string');
       });
 
-      it('is a regex', () => {
+      it('is an alphanum', () => {
         expect(Array.isArray(lastName.rules)).toBeTruthy();
         expect(lastName.rules).toHaveLength(2);
         expect(lastName.rules).toEqual(expect.arrayContaining([
           expect.objectContaining({
-            'args': {
-              'regex': '/^[\\w\\-\\s]+$/'
-            },
-            'name': 'pattern'
+            'name': 'alphanum'
           })
         ]));
       });
@@ -642,15 +636,12 @@ describe('searchUsers', () => {
         expect(username.type).toEqual('string');
       });
 
-      it('is a regex', () => {
+      it('is an alphanum', () => {
         expect(Array.isArray(username.rules)).toBeTruthy();
         expect(username.rules).toHaveLength(2);
         expect(username.rules).toEqual(expect.arrayContaining([
           expect.objectContaining({
-            'args': {
-              'regex': '/^[\\w\\-\\s]+$/'
-            },
-            'name': 'pattern'
+            'name': 'alphanum'
           })
         ]));
       });
