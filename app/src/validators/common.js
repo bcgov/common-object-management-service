@@ -1,6 +1,11 @@
 const { Joi } = require('express-validation');
 const { Permissions } = require('../components/constants');
 
+const alphanumModel = Joi.string().alphanum().max(255);
+
+const truthyModel = Joi.boolean()
+  .truthy('true', 1, '1', 't', 'yes', 'y', 'false', 0, '0', 'f', 'no', 'n');
+
 const uuidv4 = Joi.string().guid({
   version: 'uuidv4'
 });
@@ -32,4 +37,4 @@ const permCodeMultiModel = Joi.alternatives().try(
   )
 );
 
-module.exports = { uuidv4, uuidv4MultiModel, stringMultiModel, permCodeMultiModel };
+module.exports = { alphanumModel, truthyModel, uuidv4, uuidv4MultiModel, stringMultiModel, permCodeMultiModel };

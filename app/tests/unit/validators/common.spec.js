@@ -1,8 +1,71 @@
+const crypto = require('crypto');
 const jestJoi = require('jest-joi');
 expect.extend(jestJoi.matchers);
 
 const { Permissions } = require('../../../src/components/constants');
-const { uuidv4, uuidv4MultiModel, stringMultiModel, permCodeMultiModel } = require('../../../src/validators/common');
+const { alphanumModel, truthyModel, uuidv4, uuidv4MultiModel, stringMultiModel, permCodeMultiModel } = require('../../../src/validators/common');
+
+describe('alphanumModel', () => {
+  const model = alphanumModel.describe();
+
+  it('is a string', () => {
+    expect(model).toBeTruthy();
+    expect(model.type).toEqual('string');
+  });
+
+  it('is an alphanum', () => {
+    expect(Array.isArray(model.rules)).toBeTruthy();
+    expect(model.rules).toHaveLength(2);
+    expect(model.rules).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        'name': 'alphanum'
+      })
+    ]));
+  });
+
+  it('has a max length of 255', () => {
+    expect(Array.isArray(model.rules)).toBeTruthy();
+    expect(model.rules).toHaveLength(2);
+    expect(model.rules).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        'args': {
+          'limit': 255
+        },
+        'name': 'max'
+      }),
+    ]));
+  });
+
+  it('matches the schema', () => {
+    expect('someuser').toMatchSchema(alphanumModel);
+  });
+
+  it('must be less than or equal to 255 characters long', () => {
+    const longStr = crypto.randomBytes(256).toString('hex');
+    expect(longStr).not.toMatchSchema(alphanumModel);
+  });
+});
+
+describe('truthyModel', () => {
+  const model = truthyModel.describe();
+
+  it('is a boolean', () => {
+    expect(model).toBeTruthy();
+    expect(model.type).toEqual('boolean');
+  });
+
+  it('contains truthy array', () => {
+    expect(Array.isArray(model.truthy)).toBeTruthy();
+    expect(model.truthy).toHaveLength(12);
+  });
+
+  it.each([
+    true, 1, 'true', 'TRUE', 't', 'T', 'yes', 'yEs', 'y', 'Y', '1',
+    false, 0, 'false', 'FALSE', 'f', 'F', 'no', 'nO', 'n', 'N', '0'
+  ])('accepts the schema given %j', (value) => {
+    expect(value).toMatchSchema(truthyModel);
+  });
+});
 
 describe('uuidv4', () => {
   const model = uuidv4.describe();

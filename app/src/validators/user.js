@@ -1,36 +1,18 @@
 const { validate, Joi } = require('express-validation');
+const { alphanumModel, stringMultiModel, truthyModel, uuidv4MultiModel } = require('./common');
 
-const truthyModel = Joi.boolean()
-  .truthy('true', 1, '1', 't', 'yes', 'y', 'false', 0, '0', 'f', 'no', 'n');
 
 const schema = {
   searchUsers: {
     query: Joi.object({
-      userId: Joi.alternatives().try(
-        Joi.array().items(Joi.string().guid({
-          version: 'uuidv4'
-        })),
-        Joi.string().guid({
-          version: 'uuidv4'
-        })
-      ),
-      identityId: Joi.alternatives().try(
-        Joi.array().items(Joi.string().guid({
-          version: 'uuidv4'
-        })),
-        Joi.string().guid({
-          version: 'uuidv4'
-        })
-      ),
-      idp: Joi.alternatives().try(
-        Joi.array().items(Joi.string().max(255)),
-        Joi.string().max(255)
-      ),
-      username: Joi.string().alphanum().max(255),
+      userId: uuidv4MultiModel,
+      identityId: uuidv4MultiModel,
+      idp: stringMultiModel,
+      username: alphanumModel,
       email: Joi.string().max(255).email(),
-      firstName: Joi.string().alphanum().max(255),
+      firstName: alphanumModel,
       fullName: Joi.string().pattern(/^[\w\-\s]+$/).max(255),
-      lastName: Joi.string().alphanum().max(255),
+      lastName: alphanumModel,
       active: truthyModel,
       search: Joi.string()
     }).min(1)
