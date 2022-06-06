@@ -1,12 +1,13 @@
 const { validate, Joi } = require('express-validation');
-const { uuidv4, uuidv4MultiModel, stringMultiModel } = require('./common');
+const { uuidv4, uuidv4MultiModel, permCodeMultiModel } = require('./common');
+const { Permissions } = require('../components/constants');
 
 const schema = {
   searchPermissions: {
     query: Joi.object({
       userId: uuidv4MultiModel,
       objId: uuidv4MultiModel,
-      permCode: stringMultiModel
+      permCode: permCodeMultiModel
     }).min(1)
   },
 
@@ -14,7 +15,7 @@ const schema = {
     query: Joi.object({
       userId: uuidv4MultiModel,
       objId: uuidv4MultiModel,
-      permCode: stringMultiModel
+      permCode: permCodeMultiModel
     })
   },
 
@@ -24,10 +25,14 @@ const schema = {
     }),
     body: Joi.array().items(
       Joi.object().keys({
-        userId: Joi.string().guid({
-          version: 'uuidv4'
-        }).required(),
-        permCode: Joi.string().max(255).required(),
+        userId: uuidv4.required(),
+        permCode: Joi.string().max(255).required().valid(
+          Permissions.CREATE,
+          Permissions.READ,
+          Permissions.UPDATE,
+          Permissions.DELETE,
+          Permissions.MANAGE
+        ),
       })
     ).required(),
   },
@@ -38,7 +43,7 @@ const schema = {
     }),
     query: Joi.object({
       userId: uuidv4MultiModel,
-      permCode: stringMultiModel,
+      permCode: permCodeMultiModel,
     })
   },
 

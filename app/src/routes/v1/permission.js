@@ -1,8 +1,8 @@
 const routes = require('express').Router();
 
-const { permissionValidator } = require('../../validators');
 const { Permissions } = require('../../components/constants');
 const { permissionController } = require('../../controllers');
+const { permissionValidator } = require('../../validators');
 const { checkAppMode, currentObject, hasPermission } = require('../../middleware/authorization');
 const { requireBasicAuth, requireDb } = require('../../middleware/featureToggle');
 

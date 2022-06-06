@@ -3,6 +3,7 @@ expect.extend(jestJoi.matchers);
 
 const schema = require('../../../src/validators/permission').schema;
 const { uuidv4, uuidv4MultiModel, stringMultiModel } = require('../../../src/validators/common');
+const { Permissions } = require('../../../src/components/constants');
 
 
 describe('searchPermissions', () => {
@@ -127,7 +128,7 @@ describe('addPermissions', () => {
       ]));
     });
 
-    it('should contain permCode', () => {
+    it('should contain a valid permCode', () => {
       expect(body.items).toEqual(expect.arrayContaining([
         expect.objectContaining({
           keys: expect.objectContaining({
@@ -141,6 +142,13 @@ describe('addPermissions', () => {
                     limit: 255
                   }
                 })
+              ]),
+              allow: expect.arrayContaining([
+                Permissions.CREATE,
+                Permissions.READ,
+                Permissions.UPDATE,
+                Permissions.DELETE,
+                Permissions.MANAGE
               ])
             })
           })

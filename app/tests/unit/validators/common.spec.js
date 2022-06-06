@@ -1,7 +1,8 @@
 const jestJoi = require('jest-joi');
 expect.extend(jestJoi.matchers);
 
-const { uuidv4, uuidv4MultiModel, stringMultiModel } = require('../../../src/validators/common');
+const { Permissions } = require('../../../src/components/constants');
+const { uuidv4, uuidv4MultiModel, stringMultiModel, permCodeMultiModel } = require('../../../src/validators/common');
 
 describe('uuidv4', () => {
   const model = uuidv4.describe();
@@ -33,7 +34,7 @@ describe('uuidv4', () => {
 describe('uuidv4MultiModel', () => {
   const model = uuidv4MultiModel.describe();
 
-  it('is an alternatives', () => {
+  it('is of type alternatives', () => {
     expect(model).toBeTruthy();
     expect(model.type).toEqual('alternatives');
     expect(Array.isArray(model.matches)).toBeTruthy();
@@ -106,7 +107,7 @@ describe('uuidv4MultiModel', () => {
 describe('stringMultiModel', () => {
   const model = stringMultiModel.describe();
 
-  it('is an alternatives', () => {
+  it('is of type alternatives', () => {
     expect(model).toBeTruthy();
     expect(model.type).toEqual('alternatives');
     expect(Array.isArray(model.matches)).toBeTruthy();
@@ -160,18 +161,105 @@ describe('stringMultiModel', () => {
   });
 
   it('matches the schema with array', () => {
-    expect(['UPDATE', 'DELETE']).toMatchSchema(stringMultiModel);
+    expect(['STRING A', 'STRING B']).toMatchSchema(stringMultiModel);
   });
 
   it('rejects the schema with array containing non string', () => {
-    expect(['11bf5b37-e0b8-42e0-8dcf-dc8c4aefc000', 1234]).not.toMatchSchema(stringMultiModel);
+    expect(['STRING A', 1234]).not.toMatchSchema(stringMultiModel);
   });
 
   it('matches the schema with single string', () => {
-    expect('UPDATE').toMatchSchema(stringMultiModel);
+    expect('STRING A').toMatchSchema(stringMultiModel);
   });
 
   it('rejects the schema with non string value', () => {
     expect(1234).not.toMatchSchema(stringMultiModel);
+  });
+});
+
+describe('permCodeMultiModel', () => {
+  const model = permCodeMultiModel.describe();
+
+  it('is of type alternatives', () => {
+    expect(model).toBeTruthy();
+    expect(model.type).toEqual('alternatives');
+    expect(Array.isArray(model.matches)).toBeTruthy();
+    expect(model.matches).toHaveLength(2);
+  });
+
+  it('allows array containing valid permCodes', () => {
+    expect(model.matches).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        schema: expect.objectContaining({
+          type: 'array',
+          items: expect.arrayContaining([
+            expect.objectContaining({
+              type: 'string',
+              rules: expect.arrayContaining([
+                expect.objectContaining({
+                  args: {
+                    limit: 255
+                  },
+                  name: 'max'
+                })
+              ]),
+              allow: expect.arrayContaining([
+                Permissions.CREATE,
+                Permissions.READ,
+                Permissions.UPDATE,
+                Permissions.DELETE,
+                Permissions.MANAGE
+              ])
+            })
+          ])
+        })
+      })
+    ]));
+  });
+
+  it('allows a single valid permCode ', () => {
+    expect(model.matches).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        schema: expect.objectContaining({
+          type: 'array',
+          items: expect.arrayContaining([
+            expect.objectContaining({
+              type: 'string',
+              rules: expect.arrayContaining([
+                expect.objectContaining({
+                  args: {
+                    limit: 255
+                  },
+                  name: 'max'
+                })
+              ]),
+              allow: expect.arrayContaining([
+                Permissions.CREATE,
+                Permissions.READ,
+                Permissions.UPDATE,
+                Permissions.DELETE,
+                Permissions.MANAGE
+              ])
+            })
+          ])
+        })
+      })
+    ]));
+  });
+
+  it('matches the schema with valid permissions array', () => {
+    expect([Permissions.UPDATE, Permissions.READ]).toMatchSchema(permCodeMultiModel);
+  });
+
+  it('rejects the schema with invalid permissions array', () => {
+    expect([Permissions.UPDATE, 'BADPERM']).not.toMatchSchema(permCodeMultiModel);
+  });
+
+  it('matches the schema with single permission', () => {
+    expect(Permissions.UPDATE).toMatchSchema(permCodeMultiModel);
+  });
+
+  it('rejects the schema with single invalid permission', () => {
+    expect('BADPERM').not.toMatchSchema(permCodeMultiModel);
   });
 });

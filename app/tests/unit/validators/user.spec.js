@@ -252,7 +252,7 @@ describe('searchUsers', () => {
     describe('identityId', () => {
       const identityId = query.keys.identityId;
 
-      it('is an alternatives', () => {
+      it('is of type alternatives', () => {
         expect(identityId).toBeTruthy();
         expect(identityId.type).toEqual('alternatives');
         expect(Array.isArray(identityId.matches)).toBeTruthy();
@@ -354,7 +354,7 @@ describe('searchUsers', () => {
     describe('idp', () => {
       const idp = query.keys.idp;
 
-      it('is an alternatives', () => {
+      it('is of type alternatives', () => {
         expect(idp).toBeTruthy();
         expect(idp.type).toEqual('alternatives');
         expect(Array.isArray(idp.matches)).toBeTruthy();
@@ -529,7 +529,7 @@ describe('searchUsers', () => {
     describe('userId', () => {
       const userId = query.keys.userId;
 
-      it('is an alternatives', () => {
+      it('is of type alternatives', () => {
         expect(userId).toBeTruthy();
         expect(userId.type).toEqual('alternatives');
         expect(Array.isArray(userId.matches)).toBeTruthy();
