@@ -2,7 +2,7 @@ const jestJoi = require('jest-joi');
 expect.extend(jestJoi.matchers);
 
 const schema = require('../../../src/validators/permission').schema;
-const { uuidv4, uuidv4MultiModel, permCodeMultiModel } = require('../../../src/validators/common');
+const { scheme, type } = require('../../../src/validators/common');
 const { Permissions } = require('../../../src/components/constants');
 
 
@@ -26,7 +26,7 @@ describe('searchPermissions', () => {
       const userId = query.keys.userId;
 
       it('is the expected schema', () => {
-        expect(userId).toEqual(uuidv4MultiModel.describe());
+        expect(userId).toEqual(scheme.guid.describe());
       });
     });
 
@@ -34,7 +34,7 @@ describe('searchPermissions', () => {
       const objId = query.keys.objId;
 
       it('is the expected schema', () => {
-        expect(objId).toEqual(uuidv4MultiModel.describe());
+        expect(objId).toEqual(scheme.guid.describe());
       });
     });
 
@@ -42,7 +42,7 @@ describe('searchPermissions', () => {
       const permCode = query.keys.permCode;
 
       it('is the expected schema', () => {
-        expect(permCode).toEqual(permCodeMultiModel.describe());
+        expect(permCode).toEqual(scheme.permCode.describe());
       });
     });
   });
@@ -58,7 +58,7 @@ describe('listPermissions', () => {
       const userId = query.keys.userId;
 
       it('is the expected schema', () => {
-        expect(userId).toEqual(uuidv4MultiModel.describe());
+        expect(userId).toEqual(scheme.guid.describe());
       });
     });
 
@@ -66,7 +66,7 @@ describe('listPermissions', () => {
       const objId = params.keys.objId;
 
       it('is the expected schema', () => {
-        expect(objId).toEqual(uuidv4MultiModel.describe());
+        expect(objId).toEqual(scheme.guid.describe());
       });
     });
 
@@ -74,7 +74,7 @@ describe('listPermissions', () => {
       const permCode = query.keys.permCode;
 
       it('is the expected schema', () => {
-        expect(permCode).toEqual(permCodeMultiModel.describe());
+        expect(permCode).toEqual(scheme.permCode.describe());
       });
     });
   });
@@ -89,7 +89,7 @@ describe('addPermissions', () => {
       const objId = params.keys.objId;
 
       it('is the expected schema', () => {
-        expect(objId).toEqual(uuidv4.describe());
+        expect(objId).toEqual(type.uuidv4.describe());
       });
     });
   });
@@ -105,7 +105,7 @@ describe('addPermissions', () => {
 
     it('is required', () => {
       expect(body.flags).toBeTruthy();
-      expect(body.flags).toEqual(expect.objectContaining({presence: 'required'}));
+      expect(body.flags).toEqual(expect.objectContaining({ presence: 'required' }));
     });
 
     it('should contain userId', () => {
@@ -114,12 +114,12 @@ describe('addPermissions', () => {
           keys: expect.objectContaining({
             userId: expect.objectContaining({
               type: 'string',
-              flags: expect.objectContaining({presence: 'required'}),
+              flags: expect.objectContaining({ presence: 'required' }),
               rules: expect.arrayContaining([
                 expect.objectContaining({
                   name: 'guid',
                   args: {
-                    options: { version: 'uuidv4'}
+                    options: { version: 'uuidv4' }
                   }
                 })
               ])
@@ -135,7 +135,7 @@ describe('addPermissions', () => {
           keys: expect.objectContaining({
             permCode: expect.objectContaining({
               type: 'string',
-              flags: expect.objectContaining({presence: 'required'}),
+              flags: expect.objectContaining({ presence: 'required' }),
               rules: expect.arrayContaining([
                 expect.objectContaining({
                   name: 'max',
@@ -144,7 +144,7 @@ describe('addPermissions', () => {
                   }
                 })
               ]),
-              allow: expect.arrayContaining([...Object.values(Permissions)])
+              allow: expect.arrayContaining(Object.values(Permissions))
             })
           })
         })
@@ -162,7 +162,7 @@ describe('removePermissions', () => {
       const objId = params.keys.objId;
 
       it('is the expected schema', () => {
-        expect(objId).toEqual(uuidv4.describe());
+        expect(objId).toEqual(type.uuidv4.describe());
       });
     });
   });
@@ -174,7 +174,7 @@ describe('removePermissions', () => {
       const userId = query.keys.userId;
 
       it('is the expected schema', () => {
-        expect(userId).toEqual(uuidv4MultiModel.describe());
+        expect(userId).toEqual(scheme.guid.describe());
       });
     });
 
@@ -182,7 +182,7 @@ describe('removePermissions', () => {
       const permCode = query.keys.permCode;
 
       it('is the expected schema', () => {
-        expect(permCode).toEqual(permCodeMultiModel.describe());
+        expect(permCode).toEqual(scheme.permCode.describe());
       });
     });
   });

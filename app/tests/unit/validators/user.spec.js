@@ -3,12 +3,7 @@ const jestJoi = require('jest-joi');
 expect.extend(jestJoi.matchers);
 
 const schema = require('../../../src/validators/user').schema;
-const {
-  alphanumModel,
-  truthyModel,
-  uuidv4MultiModel,
-  stringMultiModel
-} = require('../../../src/validators/common');
+const { scheme, type } = require('../../../src/validators/common');
 
 
 describe('listIdps', () => {
@@ -33,7 +28,7 @@ describe('listIdps', () => {
         true, 1, 'true', 'TRUE', 't', 'T', 'yes', 'yEs', 'y', 'Y', '1',
         false, 0, 'false', 'FALSE', 'f', 'F', 'no', 'nO', 'n', 'N', '0'
       ])('accepts the schema given %j', (value) => {
-        const req =  {
+        const req = {
           query: {
             active: value
           }
@@ -66,72 +61,19 @@ describe('searchUsers', () => {
       const active = query.keys.active;
 
       it('is the expected schema', () => {
-        expect(active).toEqual(truthyModel.describe());
+        expect(active).toEqual(type.truthy.describe());
       });
     });
 
     describe('email', () => {
-      const email = query.keys.email;
-
-      it('is a string', () => {
-        expect(email).toBeTruthy();
-        expect(email.type).toEqual('string');
-      });
-
-      it('is an email', () => {
-        expect(Array.isArray(email.rules)).toBeTruthy();
-        expect(email.rules).toHaveLength(2);
-        expect(email.rules).toEqual(expect.arrayContaining([
-          expect.objectContaining(
-            {
-              'args': {
-                'limit': 255
-              },
-              'name': 'max'
-            },
-            {'name': 'email'})
-        ]));
-      });
-
-      it('is a string', () => {
-        expect(email).toBeTruthy();
-        expect(email.type).toEqual('string');
-      });
-
-      it('matches the schema', () => {
-        const req =  {
-          query: {
-            email: 'test@test.com'
-          }
-        };
-
-        expect(req).toMatchSchema(schema.searchUsers);
-      });
-
-      it('rejects the schema when not a valid email', () => {
-        const req =  {
-          query: {
-            email: 'test_at_test_dot_com'
-          }
-        };
-
-        expect(req).not.toMatchSchema(schema.searchUsers);
-      });
-
-      it('is not greater than 255 characters', () => {
-        const req =  {
-          query: {
-            email: longStr
-          }
-        };
-
-        expect(req).not.toMatchSchema(schema.searchUsers);
+      it('is the expected schema', () => {
+        expect(query.keys.email).toEqual(type.email.describe());
       });
     });
 
     describe('firstName', () => {
       it('is the expected schema', () => {
-        expect(query.keys.firstName).toEqual(alphanumModel.describe());
+        expect(query.keys.firstName).toEqual(type.alphanum.describe());
       });
     });
 
@@ -171,7 +113,7 @@ describe('searchUsers', () => {
       });
 
       it('matches the schema', () => {
-        const req =  {
+        const req = {
           query: {
             fullName: 'Bob Smith'
           }
@@ -181,7 +123,7 @@ describe('searchUsers', () => {
       });
 
       it('must be less than or equal to 255 characters long', () => {
-        const req =  {
+        const req = {
           query: {
             fullName: longStr
           }
@@ -193,19 +135,19 @@ describe('searchUsers', () => {
 
     describe('identityId', () => {
       it('is the expected schema', () => {
-        expect(query.keys.identityId).toEqual(uuidv4MultiModel.describe());
+        expect(query.keys.identityId).toEqual(scheme.guid.describe());
       });
     });
 
     describe('idp', () => {
       it('is the expected schema', () => {
-        expect(query.keys.idp).toEqual(stringMultiModel.describe());
+        expect(query.keys.idp).toEqual(scheme.string.describe());
       });
     });
 
     describe('lastName', () => {
       it('is the expected schema', () => {
-        expect(query.keys.lastName).toEqual(alphanumModel.describe());
+        expect(query.keys.lastName).toEqual(type.alphanum.describe());
       });
     });
 
@@ -218,7 +160,7 @@ describe('searchUsers', () => {
       });
 
       it('matches the schema', () => {
-        const req =  {
+        const req = {
           query: {
             search: 'someMatcher'
           }
@@ -232,13 +174,13 @@ describe('searchUsers', () => {
       const userId = query.keys.userId;
 
       it('is the expected schema', () => {
-        expect(userId).toEqual(uuidv4MultiModel.describe());
+        expect(userId).toEqual(scheme.guid.describe());
       });
     });
 
     describe('username', () => {
       it('is the expected schema', () => {
-        expect(query.keys.username).toEqual(alphanumModel.describe());
+        expect(query.keys.username).toEqual(type.alphanum.describe());
       });
     });
   });

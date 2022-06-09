@@ -1,26 +1,26 @@
 const { validate, Joi } = require('express-validation');
-const { alphanumModel, stringMultiModel, truthyModel, uuidv4MultiModel } = require('./common');
+const { scheme, type } = require('./common');
 
 
 const schema = {
   searchUsers: {
     query: Joi.object({
-      userId: uuidv4MultiModel,
-      identityId: uuidv4MultiModel,
-      idp: stringMultiModel,
-      username: alphanumModel,
-      email: Joi.string().max(255).email(),
-      firstName: alphanumModel,
+      userId: scheme.guid,
+      identityId: scheme.guid,
+      idp: scheme.string,
+      username: type.alphanum,
+      email: type.email,
+      firstName: type.alphanum,
       fullName: Joi.string().pattern(/^[\w\-\s]+$/).max(255),
-      lastName: alphanumModel,
-      active: truthyModel,
+      lastName: type.alphanum,
+      active: type.truthy,
       search: Joi.string()
     }).min(1)
   },
 
   listIdps: {
     query: Joi.object({
-      active: truthyModel
+      active: type.truthy
     })
   }
 };

@@ -1,33 +1,33 @@
 const { validate, Joi } = require('express-validation');
-const { uuidv4, uuidv4MultiModel, permCodeMultiModel } = require('./common');
+const { scheme, type } = require('./common');
 const { Permissions } = require('../components/constants');
 
 const schema = {
   searchPermissions: {
     query: Joi.object({
-      userId: uuidv4MultiModel,
-      objId: uuidv4MultiModel,
-      permCode: permCodeMultiModel
+      userId: scheme.guid,
+      objId: scheme.guid,
+      permCode: scheme.permCode
     }).min(1)
   },
 
   listPermissions: {
     params: Joi.object({
-      objId: uuidv4MultiModel
+      objId: scheme.guid
     }),
     query: Joi.object({
-      userId: uuidv4MultiModel,
-      permCode: permCodeMultiModel
+      userId: scheme.guid,
+      permCode: scheme.permCode
     })
   },
 
   addPermissions: {
     params: Joi.object({
-      objId: uuidv4
+      objId: type.uuidv4
     }),
     body: Joi.array().items(
       Joi.object().keys({
-        userId: uuidv4.required(),
+        userId: type.uuidv4.required(),
         permCode: Joi.string().max(255).required().valid(...Object.values(Permissions)),
       })
     ).required(),
@@ -35,11 +35,11 @@ const schema = {
 
   removePermissions: {
     params: Joi.object({
-      objId: uuidv4
+      objId: type.uuidv4
     }),
     query: Joi.object({
-      userId: uuidv4MultiModel,
-      permCode: permCodeMultiModel,
+      userId: scheme.guid,
+      permCode: scheme.permCode,
     })
   },
 

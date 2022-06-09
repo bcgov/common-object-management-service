@@ -124,6 +124,7 @@ app.use((err, _req, res, _next) => {
   if (err instanceof Problem) {
     err.send(res);
   } else if (err instanceof ValidationError) {
+    log.debug(err);
     return res.status(err.statusCode).json(err);
   } else {
     // Only log unexpected errors

@@ -1,28 +1,46 @@
 const { Joi } = require('express-validation');
 const { Permissions } = require('../components/constants');
 
-const alphanumModel = Joi.string().alphanum().max(255);
+/**
+ * @function oneOrMany
+ * Permits either a model or an array of models
+ * @param {any|any[]} param The model to process
+ * @returns {object} A Joi object
+ */
+function oneOrMany(param) {
+  return Joi.alternatives().try(
+    Joi.array().items(param),
+    param
+  );
+}
 
-const truthyModel = Joi.boolean()
-  .truthy('true', 1, '1', 't', 'yes', 'y', 'false', 0, '0', 'f', 'no', 'n');
+/**
+ * @constant type
+ * Base Joi model definitions
+ */
+const type = {
+  alphanum: Joi.string().alphanum().max(255),
 
-const uuidv4 = Joi.string().guid({
-  version: 'uuidv4'
-});
+  truthy: Joi.boolean()
+    .truthy('true', 1, '1', 't', 'yes', 'y', 'false', 0, '0', 'f', 'no', 'n'),
 
-const uuidv4MultiModel =  Joi.alternatives().try(
-  Joi.array().items(uuidv4),
-  uuidv4
-);
+  email: Joi.string().max(255).email(),
 
-const stringMultiModel = Joi.alternatives().try(
-  Joi.array().items(Joi.string().max(255)),
-  Joi.string().max(255)
-);
+  uuidv4: Joi.string().guid({
+    version: 'uuidv4'
+  }),
+};
 
-const permCodeMultiModel = Joi.alternatives().try(
-  Joi.array().items(Joi.string().max(255).valid(...Object.values(Permissions))),
-  Joi.string().max(255).valid(...Object.values(Permissions))
-);
+/**
+ * @constant scheme
+ * Composite Joi model definitions
+ */
+const scheme = {
+  guid: oneOrMany(type.uuidv4),
 
-module.exports = { alphanumModel, truthyModel, uuidv4, uuidv4MultiModel, stringMultiModel, permCodeMultiModel };
+  string: oneOrMany(Joi.string().max(255)),
+
+  permCode: oneOrMany(Joi.string().max(255).valid(...Object.values(Permissions)))
+};
+
+module.exports = { oneOrMany, scheme, type };
