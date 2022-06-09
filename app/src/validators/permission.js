@@ -12,9 +12,11 @@ const schema = {
   },
 
   listPermissions: {
+    params: Joi.object({
+      objId: uuidv4MultiModel
+    }),
     query: Joi.object({
       userId: uuidv4MultiModel,
-      objId: uuidv4MultiModel,
       permCode: permCodeMultiModel
     })
   },
@@ -26,13 +28,7 @@ const schema = {
     body: Joi.array().items(
       Joi.object().keys({
         userId: uuidv4.required(),
-        permCode: Joi.string().max(255).required().valid(
-          Permissions.CREATE,
-          Permissions.READ,
-          Permissions.UPDATE,
-          Permissions.DELETE,
-          Permissions.MANAGE
-        ),
+        permCode: Joi.string().max(255).required().valid(...Object.values(Permissions)),
       })
     ).required(),
   },

@@ -3,7 +3,12 @@ const jestJoi = require('jest-joi');
 expect.extend(jestJoi.matchers);
 
 const schema = require('../../../src/validators/user').schema;
-const { alphanumModel, truthyModel, uuidv4MultiModel, stringMultiModel } = require('../../../src/validators/common');
+const {
+  alphanumModel,
+  truthyModel,
+  uuidv4MultiModel,
+  stringMultiModel
+} = require('../../../src/validators/common');
 
 
 describe('listIdps', () => {

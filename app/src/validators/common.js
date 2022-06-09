@@ -21,20 +21,8 @@ const stringMultiModel = Joi.alternatives().try(
 );
 
 const permCodeMultiModel = Joi.alternatives().try(
-  Joi.array().items(Joi.string().max(255).valid(
-    Permissions.CREATE,
-    Permissions.READ,
-    Permissions.UPDATE,
-    Permissions.DELETE,
-    Permissions.MANAGE
-  )),
-  Joi.string().max(255).valid(
-    Permissions.CREATE,
-    Permissions.READ,
-    Permissions.UPDATE,
-    Permissions.DELETE,
-    Permissions.MANAGE
-  )
+  Joi.array().items(Joi.string().max(255).valid(...Object.values(Permissions))),
+  Joi.string().max(255).valid(...Object.values(Permissions))
 );
 
 module.exports = { alphanumModel, truthyModel, uuidv4, uuidv4MultiModel, stringMultiModel, permCodeMultiModel };

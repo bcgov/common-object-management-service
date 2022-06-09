@@ -51,6 +51,7 @@ describe('searchPermissions', () => {
 describe('listPermissions', () => {
 
   describe('query', () => {
+    const params = schema.listPermissions.params.describe();
     const query = schema.listPermissions.query.describe();
 
     describe('userId', () => {
@@ -62,7 +63,7 @@ describe('listPermissions', () => {
     });
 
     describe('objId', () => {
-      const objId = query.keys.objId;
+      const objId = params.keys.objId;
 
       it('is the expected schema', () => {
         expect(objId).toEqual(uuidv4MultiModel.describe());
@@ -143,13 +144,7 @@ describe('addPermissions', () => {
                   }
                 })
               ]),
-              allow: expect.arrayContaining([
-                Permissions.CREATE,
-                Permissions.READ,
-                Permissions.UPDATE,
-                Permissions.DELETE,
-                Permissions.MANAGE
-              ])
+              allow: expect.arrayContaining([...Object.values(Permissions)])
             })
           })
         })

@@ -3,7 +3,14 @@ const jestJoi = require('jest-joi');
 expect.extend(jestJoi.matchers);
 
 const { Permissions } = require('../../../src/components/constants');
-const { alphanumModel, truthyModel, uuidv4, uuidv4MultiModel, stringMultiModel, permCodeMultiModel } = require('../../../src/validators/common');
+const {
+  alphanumModel,
+  truthyModel,
+  uuidv4,
+  uuidv4MultiModel,
+  stringMultiModel,
+  permCodeMultiModel
+} = require('../../../src/validators/common');
 
 describe('alphanumModel', () => {
   const model = alphanumModel.describe();
