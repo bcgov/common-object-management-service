@@ -10,6 +10,8 @@ exports.up = function (knex) {
       table.uuid('objectId').references('id').inTable('object').notNullable().onUpdate('CASCADE').onDelete('CASCADE');
       table.string('originalName', 255);
       table.string('mimeType', 255);
+      table.boolean('isLatest').notNullable().defaultTo(true);
+      table.boolean('deleteMarker').notNullable().defaultTo(false);
       stamps(knex, table);
     }))
 
@@ -26,7 +28,9 @@ exports.up = function (knex) {
         objectId: o.id,
         originalName: o.originalName,
         mimeType: o.mimeType,
-        createdBy: SYSTEM_USER
+        createdBy: SYSTEM_USER,
+        createdAt: o.createdAt,
+        updatedAt: o.updatedAt
       }));
 
       return versions.length ? knex('version').insert(versions) : Promise.resolve();
@@ -51,19 +55,33 @@ exports.down = function (knex) {
     }))
 
     // move originalName and mimeType values back to object table
-    .then(() => knex('version'))
+    .then(() => knex.select('*')
+      .distinctOn('objectId')
+      .from('version')
+      .orderBy([
+        { column: 'objectId' },
+        { column: 'createdAt', order: 'desc' }
+      ])
+    )
     .then((rows) => {
       const data = rows.map(row => ({
         id: row.objectId,
         originalName: row.originalName,
         mimeType: row.mimeType,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt
       }));
 
       if(data && data.length){
         return Promise.all(data.map((row) => {
           return knex('object')
             .where({ 'id': row.id })
-            .update({'originalName': row.originalName, 'mimeType': row.mimeType});
+            .update({
+              'originalName': row.originalName,
+              'mimeType': row.mimeType,
+              'createdAt': row.createdAt,
+              'updatedAt': row.updatedAt
+            });
         }));
       }
     })
