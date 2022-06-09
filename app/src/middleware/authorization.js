@@ -49,7 +49,7 @@ const currentObject = async (req, _res, next) => {
     if (req.params.objId) {
       req.currentObject = Object.freeze({
         ...await objectService.read(req.params.objId),
-        ...await storageService.headObject({ filePath: getPath(req.params.objId) })
+        ...await storageService.listObjectVersion({ filePath: getPath(req.params.objId) })
       });
     }
   } catch (err) {

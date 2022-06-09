@@ -67,7 +67,7 @@ describe('checkAppMode', () => {
 
 describe('currentObject', () => {
   const objectReadSpy = jest.spyOn(objectService, 'read');
-  const storageHeadObjectSpy = jest.spyOn(storageService, 'headObject');
+  const storageListObjectVersionSpy = jest.spyOn(storageService, 'listObjectVersion');
 
   let req, res, next;
 
@@ -87,7 +87,7 @@ describe('currentObject', () => {
 
     expect(req.currentObject).toBeUndefined();
     expect(objectReadSpy).toHaveBeenCalledTimes(0);
-    expect(storageHeadObjectSpy).toHaveBeenCalledTimes(0);
+    expect(storageListObjectVersionSpy).toHaveBeenCalledTimes(0);
     expect(utils.getPath).toHaveBeenCalledTimes(0);
     expect(next).toHaveBeenCalledTimes(1);
     expect(next).toHaveBeenCalledWith();
@@ -97,14 +97,14 @@ describe('currentObject', () => {
     const objId = '1234';
     req.params = { objId: objId };
     objectReadSpy.mockImplementation(() => { throw new Error('test'); });
-    storageHeadObjectSpy.mockResolvedValue({});
+    storageListObjectVersionSpy.mockResolvedValue({});
 
     currentObject(req, res, next);
 
     expect(req.currentObject).toBeUndefined();
     expect(objectReadSpy).toHaveBeenCalledTimes(1);
     expect(objectReadSpy).toHaveBeenCalledWith(objId);
-    expect(storageHeadObjectSpy).toHaveBeenCalledTimes(0);
+    expect(storageListObjectVersionSpy).toHaveBeenCalledTimes(0);
     expect(utils.getPath).toHaveBeenCalledTimes(0);
     expect(next).toHaveBeenCalledTimes(1);
     expect(next).toHaveBeenCalledWith();
@@ -116,7 +116,7 @@ describe('currentObject', () => {
     const testStorage = { b: 2 };
     req.params = { objId: objId };
     objectReadSpy.mockResolvedValue(testRecord);
-    storageHeadObjectSpy.mockResolvedValue(testStorage);
+    storageListObjectVersionSpy.mockResolvedValue(testStorage);
     utils.getPath.mockReturnValue(`/path/${objId}`);
 
     await currentObject(req, res, next);
@@ -126,8 +126,8 @@ describe('currentObject', () => {
     expect(req.currentObject).toEqual(expect.objectContaining(testStorage));
     expect(objectReadSpy).toHaveBeenCalledTimes(1);
     expect(objectReadSpy).toHaveBeenCalledWith(objId);
-    expect(storageHeadObjectSpy).toHaveBeenCalledTimes(1);
-    expect(storageHeadObjectSpy).toHaveBeenCalledWith({
+    expect(storageListObjectVersionSpy).toHaveBeenCalledTimes(1);
+    expect(storageListObjectVersionSpy).toHaveBeenCalledWith({
       filePath: expect.stringMatching(`/path/${objId}`)
     });
     expect(utils.getPath).toHaveBeenCalledTimes(1);
