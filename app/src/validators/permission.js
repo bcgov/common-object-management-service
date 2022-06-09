@@ -41,8 +41,7 @@ const schema = {
       userId: scheme.guid,
       permCode: scheme.permCode,
     })
-  },
-
+  }
 };
 
 const validator = {
