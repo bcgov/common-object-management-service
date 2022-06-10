@@ -12,6 +12,7 @@ class ObjectModel extends Timestamps(Model) {
 
   static get relationMappings() {
     const ObjectPermission = require('./objectPermission');
+    const Version = require('./version');
 
     return {
       objectPermission: {
@@ -21,12 +22,21 @@ class ObjectModel extends Timestamps(Model) {
           from: 'object.id',
           to: 'object_permission.objectId'
         }
-      }
+      },
+      versions: {
+        relation: Model.HasManyRelation,
+        modelClass: Version,
+        join: {
+          from: 'object.id',
+          to: 'version.objectId',
+        }
+      },
     };
   }
 
   static get modifiers() {
     const ObjectPermission = require('./objectPermission');
+    const Version = require('./version');
 
     return {
       filterIds(query, value) {
@@ -46,6 +56,20 @@ class ObjectModel extends Timestamps(Model) {
           query.whereIn('id', ObjectPermission.query()
             .distinct('objectId')
             .where('userId', value));
+        }
+      },
+      filterMimeType(query, value) {
+        if (value) {
+          query.whereIn('id', Version.query()
+            .distinct('objectId')
+            .where('mimeType', value));
+        }
+      },
+      filterOriginalName(query, value) {
+        if (value) {
+          query.whereIn('id', Version.query()
+            .distinct('objectId')
+            .where('originalName', value));
         }
       }
     };

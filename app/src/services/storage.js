@@ -3,6 +3,7 @@ const {
   DeleteObjectCommand,
   GetBucketVersioningCommand,
   GetObjectCommand,
+  GetObjectAttributesCommand,
   HeadBucketCommand,
   HeadObjectCommand,
   ListObjectsCommand,
@@ -45,6 +46,14 @@ const objectStorageService = {
   }),
 
   /**
+   * @private
+   * @property _s3Versioning
+   * @type {Boolean} true if enabled, false if disabled or suspended
+   * A 'global variable on the storage class to determine if versioning is enabled on the connected object stroage bucket
+   */
+  _s3Versioning: undefined,
+
+  /**
    * @function deleteObject
    * Deletes the object at `filePath`
    * @param {string} options.filePath The filePath of the object
@@ -61,16 +70,35 @@ const objectStorageService = {
     return this._s3Client.send(new DeleteObjectCommand(params));
   },
 
-
+  /**
+   * @function getBucketVersioning
+   * Checks if versioning of objects is enabled on bucket
+   * @returns {Boolean} true if versioning enabled otherwise false
+   */
   async getBucketVersioning() {
     if (this._s3Versioning === undefined) {
       const params = {
         Bucket: bucket
       };
       const response = await this._s3Client.send(new GetBucketVersioningCommand(params));
-      this._s3Versioning = response.Status === 'Enabled' ? true : false;
+      this._s3Versioning = response.Status === 'Enabled';
     }
     return this._s3Versioning;
+  },
+
+  /**
+   * @function headObject
+   * Gets the object headers for the object at `filePath`
+   * @param {string} options.filePath The filePath of the object
+   * @returns {Promise<object>} The response of the head object operation
+   */
+  getObjectAttributes({ filePath }) {
+    const params = {
+      Bucket: bucket,
+      Key: filePath,
+      ObjectAttributes: [ 'DeleteMarker' ],
+    };
+    return this._s3Client.send(new GetObjectAttributesCommand(params));
   },
 
 
@@ -98,7 +126,6 @@ const objectStorageService = {
       Bucket: bucket,
       Key: filePath
     };
-
     return this._s3Client.send(new HeadObjectCommand(params));
   },
 
@@ -175,10 +202,7 @@ const objectStorageService = {
       }).join('&');
     }
 
-    console.log('storage service put');
     return this._s3Client.send(new PutObjectCommand(params));
-    // return Promise.reject(new Error('fail'));
-
   },
 
   /**

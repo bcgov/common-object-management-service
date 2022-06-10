@@ -16,7 +16,7 @@ const service = {
    * @param {string} data.path The relative S3 key/path of the object
    * @param {boolean} [data.public] The optional public flag - defaults to true if undefined
    * @param {object} [etrx=undefined] An optional Objection Transaction object
-   * @returns {<object>} The result of running the insert operation
+   * @returns {object} The result of running the insert operation
    * @throws The error encountered upon db transaction failure
    */
   create: async (data, etrx = undefined) => {
@@ -24,14 +24,14 @@ const service = {
     try {
       trx = etrx ? etrx : await ObjectModel.startTransaction();
 
-      // Add file record to DB
+      // Add object record to DB
       const obj = {
         id: data.id,
         path: data.path,
         public: data.public,
         createdBy: data.userId
       };
-      const objectInsert = await ObjectModel.query(trx).insert(obj).returning('*');
+      const response = await ObjectModel.query(trx).insert(obj).returning('*');
 
       // Add all permission codes for the uploader
       if (data.userId) {
@@ -43,7 +43,7 @@ const service = {
       }
 
       if (!etrx) await trx.commit();
-      return objectInsert;
+      return response;
     } catch (err) {
       if (!etrx && trx) await trx.rollback();
       throw err;
@@ -63,11 +63,12 @@ const service = {
     try {
       trx = etrx ? etrx : await ObjectModel.startTransaction();
 
-      await ObjectModel.query(trx)
+      const response = await ObjectModel.query(trx)
         .deleteById(objId)
         .throwIfNotFound();
 
       if (!etrx) await trx.commit();
+      return response;
     } catch (err) {
       if (!etrx && trx) await trx.rollback();
       throw err;
@@ -88,12 +89,13 @@ const service = {
   searchObjects: (params) => {
     return ObjectModel.query()
       .modify('filterIds', params.id)
-      .modify('filterOriginalName', params.originalName)
       .modify('filterPath', params.path)
-      .modify('filterMimeType', params.mimeType)
       .modify('filterPublic', params.public)
       .modify('filterActive', params.active)
-      .modify('filterUserId', params.userId);
+      .modify('filterUserId', params.userId)
+      // TODO: optimize sql query when joining versions table
+      .modify('filterOriginalName', params.originalName)
+      .modify('filterMimeType', params.mimeType);
   },
 
   /**
@@ -127,11 +129,9 @@ const service = {
     try {
       trx = etrx ? etrx : await ObjectModel.startTransaction();
 
-      // Add file record to DB
+      // Update object record in DB
       const response = await ObjectModel.query(trx).patchAndFetchById(data.id, {
-        originalName: data.originalName,
         path: data.path,
-        mimeType: data.mimeType,
         public: data.public,
         updatedBy: data.userId
       });

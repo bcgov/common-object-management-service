@@ -41,13 +41,15 @@ class Version extends Timestamps(Model) {
   static get jsonSchema() {
     return {
       type: 'object',
-      required: ['id', 'versionId', 'objectId', 'originalName', 'mimeType'],
+      required: ['objectId', 'originalName', 'mimeType'],
       properties: {
         id: { type: 'string', maxLength: 255 },
-        versionId: { type: 'string', maxLength: 1024 },
+        versionId: { type: ['string', 'null'], maxLength: 1024 },
         objectId: { type: 'string', maxLength: 255 },
-        originalName: { type: 'string', minLength: 1, maxLength: 255 },
-        mimeType: { type: 'string', minLength: 1, maxLength: 255 },
+        originalName: { type: ['string', 'null'], minLength: 1, maxLength: 255 },
+        mimeType: { type: ['string', 'null'], minLength: 1, maxLength: 255 },
+        isLatest: {type: 'boolean' },
+        deleteMarker: {type: 'boolean' },
         ...stamps
       },
       additionalProperties: false

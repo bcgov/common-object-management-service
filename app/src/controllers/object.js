@@ -76,31 +76,27 @@ const controller = {
       });
       bb.on('close', async () => {
 
-        Promise.all(objects.map(async (object) => {
+        await Promise.all(objects.map(async (object) => {
           // wait for object and permission db update
           object.dbResponse = await object.dbResponse;
           // wait for file to finish uploading to S3
           object.s3Response = await object.s3Response;
-          // add versionId to data for the file
-          object.data.versionId = object.s3Response.VersionId;
-        }))
+          // add VersionId to data for the file. If versioning not enabled on bucket. VersionId is undefined
+          object.data.VersionId = object.s3Response.VersionId;
+        }));
 
-          .then(async () => {
-            // create version in db for each object
-            const objectVersionArray = objects.map((object) => {
-              return object.data;
-            });
-            await versionService.createVersionOfObjects(objectVersionArray, userId);
-          })
+        // create version in DB
+        const objectVersionArray = objects.map((object) => object.data);
+        await versionService.createManyObjects(objectVersionArray, userId);
 
-          .then(() => {
-            const result = objects.map((object) => ({
-              ...object.data,
-              ...object.dbResponse,
-              ...object.s3Response
-            }));
-            res.status(201).json(result);
-          });
+        // merge returned responses into a result
+        const result = objects.map((object) => ({
+          ...object.data,
+          ...object.dbResponse,
+          ...object.s3Response
+        }));
+
+        res.status(201).json(result);
       });
 
       req.pipe(bb);
@@ -120,15 +116,48 @@ const controller = {
   async deleteObject(req, res, next) {
     try {
       const objId = addDashesToUuid(req.params.objId);
-      const data = {
-        filePath: getPath(objId)
-      };
+      const versionId = req.query.versionId;
+      const filePath = getPath(objId);
+      const userId = getCurrentSubject(req.currentUser);
 
-      const results = await Promise.all([
-        objectService.delete(objId),
-        storageService.deleteObject(data) // Attempt deletion operation
-      ]);
-      res.status(200).json(results[1]);
+      // if request is to delete a version
+      if (versionId) {
+        // delete version on S3
+        const s3Response = await storageService.deleteObject({ filePath, versionId });
+        const objectVersionId = s3Response.VersionId;
+        // delete version in DB
+        const remainingVersions = await versionService.delete(objId, objectVersionId);
+        // if no other versions in DB, delete object
+        // TODO: synch with versions in S3
+        if (remainingVersions === 0) {
+          await objectService.delete(objId);
+        }
+
+        res.status(200).json(s3Response);
+      }
+
+      // else deleting the object
+      else {
+        // delete version on S3
+        const s3Response = await storageService.deleteObject({ filePath });
+        // if versioning enabled s3Response will contain DeleteMarker: true
+        if (s3Response.DeleteMarker) {
+          // create DeleteMarker version in DB
+          const deleteMarker = {
+            id: objId,
+            DeleteMarker: true,
+            VersionId: s3Response.VersionId,
+            mimeType: null,
+            originalName: null
+          };
+          await versionService.create(deleteMarker, userId);
+        }
+        // else object in bucket is not versioned
+        else {
+          await objectService.delete(objId);
+        }
+        res.status(200).json(s3Response);
+      }
     } catch (e) {
       next(errorToProblem(SERVICE, e));
     }
@@ -320,12 +349,27 @@ const controller = {
         };
       });
       bb.on('close', async () => {
+        // wait for object DB update
+        const dbResponse = await object.dbResponse;
+        // wait for file to finish uploading to S3
+        const s3Response = await object.s3Response;
+
+        // if versioning enabled, create new version in DB
+        if (s3Response.VersionId) {
+          object.data.VersionId = s3Response.VersionId;
+          await versionService.create(object.data, userId);
+        } else {
+          // else update existing null-version
+          await versionService.update(object.data, userId);
+        }
+
+        // merge returned responses into a result
         const result = {
           ...object.data,
-          ...await object.dbResponse,
-          ...await object.s3Response
+          ...dbResponse,
+          ...s3Response
         };
-        res.status(200).json(result);
+        res.status(201).json(result);
       });
 
       req.pipe(bb);
