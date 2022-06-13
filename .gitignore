@@ -12,6 +12,10 @@ node_modules
 # Ignore only top-level package-lock.json
 /package-lock.json
 
+# Ignore Helm subcharts
+charts/**/charts
+Chart.lock
+
 # local env files
 local.*
 local-*.*
