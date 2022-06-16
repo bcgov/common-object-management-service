@@ -87,7 +87,7 @@ const controller = {
 
         // create version in DB
         const objectVersionArray = objects.map((object) => object.data);
-        await versionService.createManyObjects(objectVersionArray, userId);
+        await versionService.create(objectVersionArray, userId);
 
         // merge returned responses into a result
         const result = objects.map((object) => ({
@@ -125,13 +125,16 @@ const controller = {
         // delete version on S3
         const s3Response = await storageService.deleteObject({ filePath, versionId });
         const objectVersionId = s3Response.VersionId;
+
         // delete version in DB
-        const remainingVersions = await versionService.delete(objId, objectVersionId);
-        // if no other versions in DB, delete object
+        await versionService.delete(objId, objectVersionId);
+
+        // if other versions in DB, delete object record
         // TODO: synch with versions in S3
-        if (remainingVersions === 0) {
-          await objectService.delete(objId);
-        }
+        const remainingVersions = await versionService.list(objId);
+        console.log('remainingVersions:', remainingVersions, remainingVersions.length);
+
+        if (remainingVersions.length === 0) await objectService.delete(objId);
 
         res.status(200).json(s3Response);
       }
@@ -150,10 +153,11 @@ const controller = {
             mimeType: null,
             originalName: null
           };
-          await versionService.create(deleteMarker, userId);
+          await versionService.create([deleteMarker], userId);
         }
         // else object in bucket is not versioned
         else {
+          // delete object record from DB
           await objectService.delete(objId);
         }
         res.status(200).json(s3Response);
@@ -277,7 +281,9 @@ const controller = {
         path: req.query.path,
         mimeType: req.query.mimeType,
         public: isTruthy(req.query.public),
-        active: isTruthy(req.query.active)
+        active: isTruthy(req.query.active),
+        // handle deleteMarker parameter as a string (true|false|latest|notLatest)
+        deleteMarker: req.query.deleteMarker
       };
 
       // When using OIDC authentication, force populate current user as filter if available
@@ -357,7 +363,7 @@ const controller = {
         // if versioning enabled, create new version in DB
         if (s3Response.VersionId) {
           object.data.VersionId = s3Response.VersionId;
-          await versionService.create(object.data, userId);
+          await versionService.create([object.data], userId);
         } else {
           // else update existing null-version
           await versionService.update(object.data, userId);
@@ -369,7 +375,7 @@ const controller = {
           ...dbResponse,
           ...s3Response
         };
-        res.status(201).json(result);
+        res.status(200).json(result);
       });
 
       req.pipe(bb);

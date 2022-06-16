@@ -10,7 +10,6 @@ exports.up = function (knex) {
       table.uuid('objectId').references('id').inTable('object').notNullable().onUpdate('CASCADE').onDelete('CASCADE');
       table.string('originalName', 255);
       table.string('mimeType', 255);
-      table.boolean('isLatest').notNullable().defaultTo(true);
       table.boolean('deleteMarker').notNullable().defaultTo(false);
       stamps(knex, table);
     }))
@@ -45,9 +44,6 @@ exports.up = function (knex) {
 
 exports.down = function (knex) {
   return Promise.resolve()
-    // Drop audit trigger
-    .then(() => knex.schema.raw('DROP TRIGGER IF EXISTS audit_version_trigger ON version'))
-
     // re-add columns originalName and mimeType to object table
     .then(() => knex.schema.alterTable('object', table => {
       table.string('originalName', 255);
@@ -72,7 +68,7 @@ exports.down = function (knex) {
         updatedAt: row.updatedAt
       }));
 
-      if(data && data.length){
+      if (data && data.length) {
         return Promise.all(data.map((row) => {
           return knex('object')
             .where({ 'id': row.id })
@@ -85,6 +81,9 @@ exports.down = function (knex) {
         }));
       }
     })
+
+    // Drop audit trigger
+    .then(() => knex.schema.raw('DROP TRIGGER IF EXISTS audit_version_trigger ON version'))
 
     // Drop tables
     .then(() => knex.schema.dropTableIfExists('version'));

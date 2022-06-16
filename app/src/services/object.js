@@ -16,7 +16,7 @@ const service = {
    * @param {string} data.path The relative S3 key/path of the object
    * @param {boolean} [data.public] The optional public flag - defaults to true if undefined
    * @param {object} [etrx=undefined] An optional Objection Transaction object
-   * @returns {object} The result of running the insert operation
+   * @returns {Promise<object>} The result of running the insert operation
    * @throws The error encountered upon db transaction failure
    */
   create: async (data, etrx = undefined) => {
@@ -43,7 +43,7 @@ const service = {
       }
 
       if (!etrx) await trx.commit();
-      return response;
+      return Promise.resolve(response);
     } catch (err) {
       if (!etrx && trx) await trx.rollback();
       throw err;
@@ -65,7 +65,10 @@ const service = {
 
       const response = await ObjectModel.query(trx)
         .deleteById(objId)
-        .throwIfNotFound();
+        .throwIfNotFound()
+        // Returns array of deleted rows instead of count
+        // https://vincit.github.io/objection.js/recipes/returning-tricks.html
+        .returning('*');
 
       if (!etrx) await trx.commit();
       return response;
@@ -84,6 +87,7 @@ const service = {
    * @param {string} [params.mimeType] Optional mimeType string to match on
    * @param {boolean} [params.public] Optional boolean on object public status
    * @param {boolean} [params.active] Optional boolean on object active status
+   * @param {boolean} [params.deleteMarker] Optional boolean, is object soft-deleted
    * @returns {Promise<object>} The result of running the find operation
    */
   searchObjects: (params) => {
@@ -93,9 +97,9 @@ const service = {
       .modify('filterPublic', params.public)
       .modify('filterActive', params.active)
       .modify('filterUserId', params.userId)
-      // TODO: optimize sql query when joining versions table
       .modify('filterOriginalName', params.originalName)
-      .modify('filterMimeType', params.mimeType);
+      .modify('filterMimeType', params.mimeType)
+      .modify('filterDeleteMarker', params.deleteMarker);
   },
 
   /**

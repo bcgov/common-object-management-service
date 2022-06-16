@@ -8,64 +8,31 @@ const { Version } = require('../db/models');
 const service = {
   /**
    * @function create
-   * Saves a version of an object
-   * @param {object[]} data array of object attributes and `versionId` from S3 object
-   * @param {string} uuid of the current user
-   * @param {object} [etrx=undefined] An optional Objection Transaction object
-   * @returns {Promise<object>} The result of running the insert operation
-   * @throws The error encountered upon db transaction failure
-   */
-  create: async (data = {}, currentUserId = SYSTEM_USER, etrx = undefined) => {
-
-    if (!data.id) {
-      throw new Error('Invalid objectId supplied');
-    }
-
-    let trx;
-    try {
-      trx = etrx ? etrx : await Version.startTransaction();
-
-      const version = {
-        id: uuidv4(),
-        versionId: data.VersionId,
-        objectId: data.id,
-        createdBy: currentUserId,
-        mimeType: data.mimeType,
-        originalName: data.originalName,
-        isLatest: data.isLatest,
-        deleteMarker: data.DeleteMarker
-      };
-      // insert version record
-      await Version.query(trx).insert(version);
-
-      // make version latest
-      const response = await service.makeLatest(data.id, data.VersionId, trx);
-
-      if (!etrx) await trx.commit();
-      return response;
-    } catch (err) {
-      if (!etrx && trx) await trx.rollback();
-      throw err;
-    }
-  },
-
-  /**
-   * @function createManyObjects
    * Saves a version of each object in an array
    * @param {object[]} data array of objects each with an `objectId` and version data
-   * @param {string} uuid of the current user
+   * @param {string} userId uuid of the current user
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<object>} The result of calling the create() method for all objects
    * @throws The error encountered upon db transaction failure
    */
-  createManyObjects: async (data = [], userId, etrx = undefined) => {
+  create: async (data = [], userId, etrx = undefined) => {
     let trx;
     try {
       trx = etrx ? etrx : await Version.startTransaction();
-      // wait for all create version calls
-      const response = await Promise.all(data.map(async (object) => {
-        await service.create(object, userId, trx);
-      }));
+      // build array for multi-row insert
+      const insertArray = data.map(obj => {
+        return {
+          id: uuidv4(),
+          versionId: obj.VersionId,
+          objectId: obj.id,
+          createdBy: userId,
+          mimeType: obj.mimeType,
+          originalName: obj.originalName,
+          deleteMarker: obj.DeleteMarker
+        };
+      });
+      const response = await Version.query(trx).insert(insertArray);
+
       if (!etrx) await trx.commit();
       return response;
     } catch (err) {
@@ -87,22 +54,16 @@ const service = {
     let trx;
     try {
       trx = etrx ? etrx : await Version.startTransaction();
-      await Version.query(trx)
+      const response = await Version.query(trx)
         .delete()
         .where('objectId', objId)
         .where('versionId', versionId)
+        // Returns array of deleted rows instead of count
+        // https://vincit.github.io/objection.js/recipes/returning-tricks.html
+        .returning('*')
         .throwIfNotFound();
-
-      // if other versions exist, make next most recent version current
-      const versionCount = await Version.query(trx)
-        .count('id as CNT')
-        .where({ objectId: objId });
-      const count = parseInt(versionCount[0].CNT);
-
-      if (count > 0) await service.makeLatest(objId, undefined, trx);
-
       if (!etrx) await trx.commit();
-      return count;
+      return response;
     } catch (err) {
       if (!etrx && trx) await trx.rollback();
       throw err;
@@ -110,46 +71,20 @@ const service = {
   },
 
   /**
-   * @function makeLatest
-   * Updates most recent or provided version with isLatest = true and all other versions of object with isLatest = false
-   * @param {string} objId The object uuid
-   * @param {string} versionId The version ID
+   * @function list
+   * list versions of an object.
+   * @param {string} uuid of an object
    * @param {object} [etrx=undefined] An optional Objection Transaction object
-   * @returns {Promise<object>} The result of running the update operation
+   * @returns {Promise<array>} Array of rows returned from the database
    * @throws The error encountered upon db transaction failure
    */
-  makeLatest: async (objId, versionId = undefined, etrx = undefined) => {
+  list: async (objId, etrx = undefined) => {
     let trx;
     try {
       trx = etrx ? etrx : await Version.startTransaction();
-
-      const response = versionId ?
-        // update provided version
-        await Version.query(trx)
-          .patch({ isLatest: true })
-          .where('objectId', objId)
-          .where('versionId', versionId)
-          .returning('versionId')
-        :
-        // update most recent version
-        await Version.query(trx)
-          .returning('objectId', 'versionId', 'isLatest')
-          .where('objectId', objId)
-          .orderBy('createdAt', 'desc')
-          .limit(1)
-          .patch({ isLatest: true })
-          .returning('versionId');
-
-      // if a version was found and made latest
-      // response may be an empty array if last version was deleted
-      if (response.length) {
-        // make all other versions isLatest = false
-        await Version.query(trx)
-          .patch({ isLatest: false })
-          .whereNot('versionId', response[0].versionId)
-          .andWhere('objectId', objId);
-      }
-
+      // update version record
+      const response = await Version.query(trx)
+        .where({ objectId: objId });
       if (!etrx) await trx.commit();
       return response;
     } catch (err) {
@@ -164,12 +99,12 @@ const service = {
    * Typically happens when updating the 'null-version' created for an object
    * on a non-versioned or version-suspnded bucket.
    * @param {object[]} data array of object attributes
-   * @param {string} currentUserId uuid of the current user
+   * @param {string} userId uuid of the current user
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<integer>} The number of updated rows returned by db operation
    * @throws The error encountered upon db transaction failure
    */
-  update: async (data = {}, currentUserId = SYSTEM_USER, etrx = undefined) => {
+  update: async (data = {}, userId = SYSTEM_USER, etrx = undefined) => {
     let trx;
     try {
       trx = etrx ? etrx : await Version.startTransaction();
@@ -178,7 +113,7 @@ const service = {
         .where({ objectId: data.id })
         .update({
           objectId: data.id,
-          updatedBy: currentUserId,
+          updatedBy: userId,
           mimeType: data.mimeType,
           originalName: data.originalName
         });
