@@ -8,11 +8,14 @@ image:
   repository: docker.io/bcgovimages
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: ""
+  tag: ~
 
 imagePullSecrets: []
-nameOverride: ""
-fullnameOverride: ""
+nameOverride: ~
+fullnameOverride: ~
+
+# DeploymentConfig pre-hook failure behavior
+failurePolicy: Retry
 
 podAnnotations: {}
 
@@ -53,12 +56,15 @@ autoscaling:
 
 serviceAccount:
   # Specifies whether a service account should be created
-  create: false
+  enabled: false
   # Annotations to add to the service account
   annotations: {}
   # The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template
-  name: ""
+  name: ~
+
+networkPolicy:
+  enabled: true
 
 service:
   type: ClusterIP
@@ -107,28 +113,34 @@ config:
     # BASICAUTH_ENABLED: "true"
 
     # DB_ENABLED: "true"
-    # DB_DATABASE: "coms"
-    # DB_HOST: ""
     # DB_PORT: "5432"
 
     # KC_ENABLED: "true"
-    # KC_IDENTITYKEY:
-    # KC_PUBLICKEY: ""
-    # KC_REALM: ""
-    # KC_SERVERURL: ""
+    # KC_IDENTITYKEY: ~
+    # KC_PUBLICKEY: ~
+    # KC_REALM: ~
+    # KC_SERVERURL: ~
 
-    OBJECTSTORAGE_BUCKET: ""
+    OBJECTSTORAGE_BUCKET: ~
     OBJECTSTORAGE_TEMP_EXPIRESIN: "300"
-    OBJECTSTORAGE_ENDPOINT: ""
-    OBJECTSTORAGE_KEY: ""
+    OBJECTSTORAGE_ENDPOINT: ~
+    OBJECTSTORAGE_KEY: ~
 
     SERVER_BODYLIMIT: "30mb"
-    # SERVER_LOGFILE:
+    # SERVER_LOGFILE: ~
     SERVER_LOGLEVEL: "http"
     SERVER_PORT: "3000"
 
 # Modify the following variables if you need to acquire secret values from a custom-named resource
-basicAuthSecretOverride: ""
-dbSecretOverride: ""
-keycloakSecretOverride: ""
-objectStorageSecretOverride: ""
+basicAuthSecretOverride: ~
+dbSecretOverride: ~
+keycloakSecretOverride: ~
+objectStorageSecretOverride: ~
+
+# Patroni subchart configuration overrides
+patroni:
+  # Controls whether to enable managing a Patroni db dependency as a part of the helm release
+  enabled: true
+
+  # replicaCount: 3
+  # resources: {}

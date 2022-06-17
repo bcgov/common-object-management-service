@@ -26,7 +26,15 @@ keywords:
 home: https://bcgov.github.io/common-object-management-service
 sources:
   - https://github.com/bcgov/common-object-management-service
-dependencies: [] # TODO: Add Patroni
+dependencies:
+  - name: patroni
+    version: ~0.0.2
+    repository: https://bcgov.github.io/nr-patroni-chart
+    condition: patroni.enabled
+    tags:
+      - patroni
+    # by default, the object created will be named <your-app>-patroni. You can use an alias to override the -patroni suffix
+    # alias: postgres
 maintainers:
   - name: NR Common Service Showcase Team
     email: NR.CommonServiceShowcase@gov.bc.ca

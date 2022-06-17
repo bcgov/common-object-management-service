@@ -1,0 +1,35 @@
+{{- if and .Values.networkPolicy.enabled .Values.patroni.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-{{ include "coms.fullname" . }}-app-to-{{ include "patroni.fullname" .Subcharts.patroni }}-cluster
+  labels: {{ include "patroni.labels" . | nindent 4 }}
+spec:
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels: {{ include "coms.selectorLabels" . | nindent 14 }}
+      ports:
+        - port: {{ default "5432" .Values.config.configMap.DB_PORT | atoi }}
+          protocol: TCP
+  podSelector:
+    matchLabels: {{ include "patroni.selectorLabels" .Subcharts.patroni | nindent 6 }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-pre-hook-to-{{ include "patroni.fullname" .Subcharts.patroni }}-cluster
+  labels: {{ include "patroni.labels" . | nindent 4 }}
+spec:
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              openshift.io/deployer-pod.type: hook-pre
+      ports:
+        - port: {{ default "5432" .Values.config.configMap.DB_PORT | atoi }}
+          protocol: TCP
+  podSelector:
+    matchLabels: {{ include "patroni.selectorLabels" .Subcharts.patroni | nindent 6 }}
+{{- end }}

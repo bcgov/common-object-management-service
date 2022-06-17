@@ -53,7 +53,7 @@ app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/component: backend
 app.kubernetes.io/managed-by: {{ .Release.Service }}
-app.kubernetes.io/part-of: {{ include "coms.fullname" . }}
+app.kubernetes.io/part-of: {{ .Release.Name }}
 app.openshift.io/runtime: nodejs
 {{- end }}
 
