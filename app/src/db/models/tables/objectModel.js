@@ -74,66 +74,6 @@ class ObjectModel extends Timestamps(Model) {
           query.whereIn('id', subquery);
         }
       },
-      filterDeleteMarker(query, value) {
-
-        // if ?deleteMarker=latest
-        if (value.toString() == 'latest') {
-          console.log('latest');
-          // where latest version is a delete marker
-          // returns currently deleted objects
-          query.whereIn('id', Version.query()
-            .select('v.objectId')
-            .from(Version.query()
-              .select('objectId', 'deleteMarker')
-              .distinctOn('objectId')
-              .orderBy([
-                { column: 'objectId' },
-                { column: 'version.createdAt', order: 'desc' }
-              ]).as('v')
-            )
-            .where('v.deleteMarker', true)
-          );
-        }
-
-        // if ?deleteMarker=true
-        if (value.toString() === 'true') {
-          console.log('t');
-          // where at least any one version is a delete marker
-          // retunrs objects that were at any time deleted
-          query.whereIn('id', Version.query()
-            .distinct('objectId')
-            .where('deleteMarker', value));
-        }
-
-        // if ?deleteMarker=false
-        if (value.toString() === 'false') {
-          console.log('f');
-          // where has no delete markers
-          // returns objects that were never deleted
-          query.whereNotIn('id', Version.query()
-            .distinct('objectId')
-            .where('deleteMarker', true));
-        }
-
-        // if ?deleteMarker=notLatest
-        if (value.toString() == 'notLatest') {
-          // where latest version is not a delete marker
-          // returns currently 'not-deleted' objects
-          query.whereIn('id', Version.query()
-            .select('v.objectId')
-            .from(Version.query()
-              .select('objectId', 'deleteMarker')
-              .distinctOn('objectId')
-              .orderBy([
-                { column: 'objectId' },
-                { column: 'version.createdAt', order: 'desc' }
-              ]).as('v')
-            )
-            .where('v.deleteMarker', false)
-          );
-        }
-      }
-
       // TODO: consider chaining Version modifiers in a way that they are combined. Example:
       // Version.modifiers.filterDeleteMarker(query.joinRelated('version'), value);
       // Version.modifiers.filterLatest(query.joinRelated('version'), value);

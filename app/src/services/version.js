@@ -20,17 +20,16 @@ const service = {
     try {
       trx = etrx ? etrx : await Version.startTransaction();
       // build array for multi-row insert
-      const insertArray = data.map(obj => {
-        return {
-          id: uuidv4(),
-          versionId: obj.VersionId,
-          objectId: obj.id,
-          createdBy: userId,
-          mimeType: obj.mimeType,
-          originalName: obj.originalName,
-          deleteMarker: obj.DeleteMarker
-        };
-      });
+      const insertArray = data.map(obj => ({
+        id: uuidv4(),
+        versionId: obj.VersionId,
+        objectId: obj.id,
+        createdBy: userId,
+        mimeType: obj.mimeType,
+        originalName: obj.originalName,
+        deleteMarker: obj.DeleteMarker
+      }));
+
       const response = await Version.query(trx).insert(insertArray);
 
       if (!etrx) await trx.commit();

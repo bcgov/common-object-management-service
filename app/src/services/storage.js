@@ -3,7 +3,6 @@ const {
   DeleteObjectCommand,
   GetBucketVersioningCommand,
   GetObjectCommand,
-  GetObjectAttributesCommand,
   HeadBucketCommand,
   HeadObjectCommand,
   ListObjectsCommand,
@@ -46,14 +45,6 @@ const objectStorageService = {
   }),
 
   /**
-   * @private
-   * @property _s3Versioning
-   * @type {Boolean} true if enabled, false if disabled or suspended
-   * A 'global variable on the storage class to determine if versioning is enabled on the connected object stroage bucket
-   */
-  _s3Versioning: undefined,
-
-  /**
    * @function deleteObject
    * Deletes the object at `filePath`
    * @param {string} options.filePath The filePath of the object
@@ -76,31 +67,12 @@ const objectStorageService = {
    * @returns {Boolean} true if versioning enabled otherwise false
    */
   async getBucketVersioning() {
-    if (this._s3Versioning === undefined) {
-      const params = {
-        Bucket: bucket
-      };
-      const response = await this._s3Client.send(new GetBucketVersioningCommand(params));
-      this._s3Versioning = response.Status === 'Enabled';
-    }
-    return this._s3Versioning;
-  },
-
-  /**
-   * @function headObject
-   * Gets the object headers for the object at `filePath`
-   * @param {string} options.filePath The filePath of the object
-   * @returns {Promise<object>} The response of the head object operation
-   */
-  getObjectAttributes({ filePath }) {
     const params = {
-      Bucket: bucket,
-      Key: filePath,
-      ObjectAttributes: [ 'DeleteMarker' ],
+      Bucket: bucket
     };
-    return this._s3Client.send(new GetObjectAttributesCommand(params));
+    const response = await this._s3Client.send(new GetBucketVersioningCommand(params));
+    return response.Status === 'Enabled';
   },
-
 
   /**
    * @function headBucket

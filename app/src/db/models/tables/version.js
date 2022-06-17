@@ -34,25 +34,7 @@ class Version extends Timestamps(Model) {
       },
       filterMimeType(query, value) {
         filterILike(query, value, 'mimeType');
-      },
-      filterLatest(query, value) {
-        if (value) {
-          query
-            // .where('versionId', '1655418336985');
-            .select('objectId')
-            .distinctOn('objectId')
-            .orderBy([
-              { column: 'objectId' },
-              { column: 'version.createdAt', order: 'desc' }
-            ]);
-        }
-      },
-      filterDeleteMarker(query, value) {
-        if (value !== undefined) {
-          query.andWhere('deleteMarker', value);
-        }
-      },
-
+      }
     };
   }
 
@@ -61,12 +43,11 @@ class Version extends Timestamps(Model) {
       type: 'object',
       required: ['objectId', 'originalName', 'mimeType'],
       properties: {
-        id: { type: 'string', maxLength: 255 },
+        id: { type: 'string', minLength: 1, maxLength: 255 },
         versionId: { type: ['string', 'null'], maxLength: 1024 },
-        objectId: { type: 'string', maxLength: 255 },
+        objectId:{ type: 'string', minLength: 1, maxLength: 255 },
         originalName: { type: ['string', 'null'], minLength: 1, maxLength: 255 },
         mimeType: { type: ['string', 'null'], minLength: 1, maxLength: 255 },
-        isLatest: { type: 'boolean' },
         deleteMarker: { type: 'boolean' },
         ...stamps
       },

@@ -75,7 +75,6 @@ const controller = {
         });
       });
       bb.on('close', async () => {
-
         await Promise.all(objects.map(async (object) => {
           // wait for object and permission db update
           object.dbResponse = await object.dbResponse;
@@ -84,18 +83,15 @@ const controller = {
           // add VersionId to data for the file. If versioning not enabled on bucket. VersionId is undefined
           object.data.VersionId = object.s3Response.VersionId;
         }));
-
         // create version in DB
         const objectVersionArray = objects.map((object) => object.data);
         await versionService.create(objectVersionArray, userId);
-
         // merge returned responses into a result
         const result = objects.map((object) => ({
           ...object.data,
           ...object.dbResponse,
           ...object.s3Response
         }));
-
         res.status(201).json(result);
       });
 
@@ -116,33 +112,27 @@ const controller = {
   async deleteObject(req, res, next) {
     try {
       const objId = addDashesToUuid(req.params.objId);
-      const versionId = req.query.versionId;
-      const filePath = getPath(objId);
+      const data = {
+        filePath: getPath(objId),
+        versionId: req.query.versionId
+      };
       const userId = getCurrentSubject(req.currentUser);
 
-      // if request is to delete a version
-      if (versionId) {
-        // delete version on S3
-        const s3Response = await storageService.deleteObject({ filePath, versionId });
-        const objectVersionId = s3Response.VersionId;
+      // delete version on S3
+      const s3Response = await storageService.deleteObject(data);
 
+      // if request is to delete a version
+      if (data.versionId) {
+        const objectVersionId = s3Response.VersionId;
         // delete version in DB
         await versionService.delete(objId, objectVersionId);
-
         // if other versions in DB, delete object record
         // TODO: synch with versions in S3
         const remainingVersions = await versionService.list(objId);
-        console.log('remainingVersions:', remainingVersions, remainingVersions.length);
-
         if (remainingVersions.length === 0) await objectService.delete(objId);
-
-        res.status(200).json(s3Response);
       }
-
       // else deleting the object
       else {
-        // delete version on S3
-        const s3Response = await storageService.deleteObject({ filePath });
         // if versioning enabled s3Response will contain DeleteMarker: true
         if (s3Response.DeleteMarker) {
           // create DeleteMarker version in DB
@@ -160,8 +150,8 @@ const controller = {
           // delete object record from DB
           await objectService.delete(objId);
         }
-        res.status(200).json(s3Response);
       }
+      res.status(200).json(s3Response);
     } catch (e) {
       next(errorToProblem(SERVICE, e));
     }
@@ -182,9 +172,7 @@ const controller = {
         filePath: getPath(objId),
         versionId: req.query.versionId ? req.query.versionId.toString() : undefined
       };
-
       const response = await storageService.headObject(data);
-
       // Set Headers
       // TODO: Consider adding 'x-coms-public' and 'x-coms-path' headers into API spec?
       controller._setS3Headers(response, res);
@@ -273,6 +261,7 @@ const controller = {
     // TODO: Handle no database scenarios via S3 ListObjectsCommand?
     // TODO: Consider metadata/tagging query parameter design here?
     // TODO: Consider support for filtering by set of permissions?
+    // TODO: handle additional parameters. Eg: deleteMarker, latest
     try {
       const objIds = mixedQueryToArray(req.query.objId);
       const params = {
@@ -282,8 +271,6 @@ const controller = {
         mimeType: req.query.mimeType,
         public: isTruthy(req.query.public),
         active: isTruthy(req.query.active),
-        // handle deleteMarker parameter as a string (true|false|latest|notLatest)
-        deleteMarker: req.query.deleteMarker
       };
 
       // When using OIDC authentication, force populate current user as filter if available
@@ -355,10 +342,10 @@ const controller = {
         };
       });
       bb.on('close', async () => {
-        // wait for object DB update
-        const dbResponse = await object.dbResponse;
-        // wait for file to finish uploading to S3
-        const s3Response = await object.s3Response;
+        const [dbResponse, s3Response] = await Promise.all([
+          object.dbResponse,
+          object.s3Response
+        ]);
 
         // if versioning enabled, create new version in DB
         if (s3Response.VersionId) {
