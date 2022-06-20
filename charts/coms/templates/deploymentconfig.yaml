@@ -1,0 +1,161 @@
+{{- define "coms.connectsTo" -}}
+apiVersion: apps/v1
+kind: StatefulSet
+name: {{ include "patroni.fullname" .Subcharts.patroni }}
+{{- end }}
+---
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  name: {{ include "coms.fullname" . }}
+  labels:
+    {{- include "coms.labels" . | nindent 4 }}
+  {{- if .Values.patroni.enabled }}
+  annotations:
+    app.openshift.io/connects-to: '[{{ include "coms.connectsTo" . | fromYaml | toJson }}]'
+  {{- end }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: 10
+  selector:
+    {{- include "coms.selectorLabels" . | nindent 4 }}
+  strategy:
+    resources:
+      {{- toYaml .Values.resources | nindent 6 }}
+    rollingParams:
+      timeoutSeconds: 600
+      {{- if .Values.config.configMap.DB_ENABLED }}
+      pre:
+        failurePolicy: {{ .Values.failurePolicy }}
+        execNewPod:
+          command:
+            - npm
+            - run
+            - migrate
+          containerName: app
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: DB_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  key: app-db-name
+                  name: {{ include "patroni.fullname" .Subcharts.patroni }}
+            - name: DB_HOST
+              value: {{ include "patroni.fullname" .Subcharts.patroni }}
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  key: app-db-username
+                  name: {{ include "patroni.fullname" .Subcharts.patroni }}
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: app-db-password
+                  name: {{ include "patroni.fullname" .Subcharts.patroni }}
+      {{- end }}
+    type: Rolling
+  template:
+    metadata:
+      labels: {{ include "coms.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets: {{ toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.serviceAccount.create }}
+      serviceAccountName: {{ include "coms.serviceAccountName" . }}
+      {{- end }}
+      {{- with .Values.podSecurityContext }}
+      securityContext: {{ toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: app
+          {{- with .Values.securityContext }}
+          securityContext: {{ toYaml . | nindent 12 }}
+          {{- end }}
+          image: "{{ .Values.image.repository }}/{{ .Chart.Name }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: {{ .Values.route.path }}
+              port: {{ .Values.service.port }}
+              scheme: HTTP
+            initialDelaySeconds: 10
+            timeoutSeconds: 1
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: {{ .Values.route.path }}
+              port: {{ .Values.service.port }}
+              scheme: HTTP
+            initialDelaySeconds: 10
+            timeoutSeconds: 1
+          resources: {{ toYaml .Values.resources | nindent 12 }}
+          env:
+            - name: NODE_ENV
+              value: production
+            {{- if .Values.config.configMap.BASICAUTH_ENABLED }}
+            - name: BASICAUTH_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  key: username
+                  name: {{ include "coms.configname" . }}-basicauth
+            - name: BASICAUTH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: password
+                  name: {{ include "coms.configname" . }}-basicauth
+            {{- end }}
+            {{- if .Values.config.configMap.DB_ENABLED }}
+            - name: DB_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  key: app-db-name
+                  name: {{ include "patroni.fullname" .Subcharts.patroni }}
+            - name: DB_HOST
+              value: {{ include "patroni.fullname" .Subcharts.patroni }}
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  key: app-db-username
+                  name: {{ include "patroni.fullname" .Subcharts.patroni }}
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: app-db-password
+                  name: {{ include "patroni.fullname" .Subcharts.patroni }}
+            {{- end }}
+            {{- if .Values.config.configMap.KC_ENABLED }}
+            - name: KC_CLIENTID
+              valueFrom:
+                secretKeyRef:
+                  key: username
+                  name: {{ include "coms.configname" . }}-keycloak
+            - name: KC_CLIENTSECRET
+              valueFrom:
+                secretKeyRef:
+                  key: password
+                  name: {{ include "coms.configname" . }}-keycloak
+            {{- end }}
+            - name: OBJECTSTORAGE_ACCESSKEYID
+              valueFrom:
+                secretKeyRef:
+                  key: username
+                  name: {{ include "coms.configname" . }}-objectstorage
+            - name: OBJECTSTORAGE_SECRETACCESSKEY
+              valueFrom:
+                secretKeyRef:
+                  key: password
+                  name: {{ include "coms.configname" . }}-objectstorage
+          envFrom:
+            - configMapRef:
+                name: {{ include "coms.configname" . }}-config
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+  test: false
+  triggers:
+    - type: ConfigChange
