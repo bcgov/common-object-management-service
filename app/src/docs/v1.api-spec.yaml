@@ -276,13 +276,16 @@ paths:
         - Object
       parameters:
         - $ref: "#/components/parameters/Path-ObjectId"
+        - $ref: "#/components/parameters/Query-VersionId-Delete"
       responses:
         "200":
-          description: Object was deleted from object storage and COMS database
+          description: Object or version was deleted from object storage and COMS database
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response-ObjectDeleted"
+                oneOf:
+                  - $ref: "#/components/schemas/Response-ObjectDeleted"
+                  - $ref: "#/components/schemas/Response-VersionDeleted"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -778,6 +781,15 @@ components:
         format: int32
         description: a version identifier created in S3
         example: 1647462569641
+    Query-VersionId-Delete:
+      in: query
+      name: versionId
+      description: delete a specified version
+      schema:
+        type: integer
+        format: int32
+        description: a version identifier created in S3
+        example: 1647462569641
   schemas:
     DB-IdentityProvider:
       allOf:
@@ -1112,6 +1124,15 @@ components:
               example: Unprocessable Entity
             type:
               example: https://httpstatuses.com/422
+    Response-VersionDeleted:
+      type: object
+      properties:
+        $metadata:
+          $ref: "#/components/schemas/S3-Metadata"
+        VersionId:
+          type: string
+          description: a version identifier created in S3
+          example: 1647462569641
     S3-Metadata:
       type: object
       required:
@@ -1139,7 +1160,6 @@ components:
       required:
         - $metadata
         - ETag
-        - VersionId
       properties:
         $metadata:
           $ref: "#/components/schemas/S3-Metadata"
@@ -1156,8 +1176,7 @@ components:
             this object in Amazon S3 (for example, AES256, aws:kms).
           example: AES256
         VersionId:
-          type: integer
-          format: int32
+          type: string
           description: a version identifier created in S3
           example: 1647462569641
     S3-Version:
@@ -1186,8 +1205,7 @@ components:
         key:
           description: Key of the object
         VersionId:
-          type: integer
-          format: int32
+          type: string
           description: a version identifier created in S3
           example: 1647462569641
         IsLatest:

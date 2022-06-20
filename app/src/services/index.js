@@ -28,4 +28,5 @@ module.exports = {
   permissionService: featureNoDb(require('./permission')),
   storageService: require('./storage'),
   userService: featureNoDb(require('./user')),
+  versionService: featureNoDb(require('./version')),
 };

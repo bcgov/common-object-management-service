@@ -11,7 +11,7 @@ const {
   isTruthy,
   mixedQueryToArray
 } = require('../components/utils');
-const { objectService, storageService } = require('../services');
+const { objectService, storageService, versionService } = require('../services');
 
 const SERVICE = 'ObjectService';
 
@@ -75,11 +75,23 @@ const controller = {
         });
       });
       bb.on('close', async () => {
-        const result = await Promise.all(objects.map(async (object) => ({
+        await Promise.all(objects.map(async (object) => {
+          // wait for object and permission db update
+          object.dbResponse = await object.dbResponse;
+          // wait for file to finish uploading to S3
+          object.s3Response = await object.s3Response;
+          // add VersionId to data for the file. If versioning not enabled on bucket. VersionId is undefined
+          object.data.VersionId = object.s3Response.VersionId;
+        }));
+        // create version in DB
+        const objectVersionArray = objects.map((object) => object.data);
+        await versionService.create(objectVersionArray, userId);
+        // merge returned responses into a result
+        const result = objects.map((object) => ({
           ...object.data,
-          ...await object.dbResponse,
-          ...await object.s3Response
-        })));
+          ...object.dbResponse,
+          ...object.s3Response
+        }));
         res.status(201).json(result);
       });
 
@@ -101,14 +113,45 @@ const controller = {
     try {
       const objId = addDashesToUuid(req.params.objId);
       const data = {
-        filePath: getPath(objId)
+        filePath: getPath(objId),
+        versionId: req.query.versionId
       };
+      const userId = getCurrentSubject(req.currentUser);
 
-      const results = await Promise.all([
-        objectService.delete(objId),
-        storageService.deleteObject(data) // Attempt deletion operation
-      ]);
-      res.status(200).json(results[1]);
+      // delete version on S3
+      const s3Response = await storageService.deleteObject(data);
+
+      // if request is to delete a version
+      if (data.versionId) {
+        const objectVersionId = s3Response.VersionId;
+        // delete version in DB
+        await versionService.delete(objId, objectVersionId);
+        // if other versions in DB, delete object record
+        // TODO: synch with versions in S3
+        const remainingVersions = await versionService.list(objId);
+        if (remainingVersions.length === 0) await objectService.delete(objId);
+      }
+      // else deleting the object
+      else {
+        // if versioning enabled s3Response will contain DeleteMarker: true
+        if (s3Response.DeleteMarker) {
+          // create DeleteMarker version in DB
+          const deleteMarker = {
+            id: objId,
+            DeleteMarker: true,
+            VersionId: s3Response.VersionId,
+            mimeType: null,
+            originalName: null
+          };
+          await versionService.create([deleteMarker], userId);
+        }
+        // else object in bucket is not versioned
+        else {
+          // delete object record from DB
+          await objectService.delete(objId);
+        }
+      }
+      res.status(200).json(s3Response);
     } catch (e) {
       next(errorToProblem(SERVICE, e));
     }
@@ -129,9 +172,7 @@ const controller = {
         filePath: getPath(objId),
         versionId: req.query.versionId ? req.query.versionId.toString() : undefined
       };
-
       const response = await storageService.headObject(data);
-
       // Set Headers
       // TODO: Consider adding 'x-coms-public' and 'x-coms-path' headers into API spec?
       controller._setS3Headers(response, res);
@@ -220,6 +261,7 @@ const controller = {
     // TODO: Handle no database scenarios via S3 ListObjectsCommand?
     // TODO: Consider metadata/tagging query parameter design here?
     // TODO: Consider support for filtering by set of permissions?
+    // TODO: handle additional parameters. Eg: deleteMarker, latest
     try {
       const objIds = mixedQueryToArray(req.query.objId);
       const params = {
@@ -228,7 +270,7 @@ const controller = {
         path: req.query.path,
         mimeType: req.query.mimeType,
         public: isTruthy(req.query.public),
-        active: isTruthy(req.query.active)
+        active: isTruthy(req.query.active),
       };
 
       // When using OIDC authentication, force populate current user as filter if available
@@ -300,10 +342,25 @@ const controller = {
         };
       });
       bb.on('close', async () => {
+        const [dbResponse, s3Response] = await Promise.all([
+          object.dbResponse,
+          object.s3Response
+        ]);
+
+        // if versioning enabled, create new version in DB
+        if (s3Response.VersionId) {
+          object.data.VersionId = s3Response.VersionId;
+          await versionService.create([object.data], userId);
+        } else {
+          // else update existing null-version
+          await versionService.update(object.data, userId);
+        }
+
+        // merge returned responses into a result
         const result = {
           ...object.data,
-          ...await object.dbResponse,
-          ...await object.s3Response
+          ...dbResponse,
+          ...s3Response
         };
         res.status(200).json(result);
       });

@@ -1,6 +1,7 @@
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const {
   DeleteObjectCommand,
+  GetBucketVersioningCommand,
   GetObjectCommand,
   HeadBucketCommand,
   HeadObjectCommand,
@@ -61,6 +62,19 @@ const objectStorageService = {
   },
 
   /**
+   * @function getBucketVersioning
+   * Checks if versioning of objects is enabled on bucket
+   * @returns {Boolean} true if versioning enabled otherwise false
+   */
+  async getBucketVersioning() {
+    const params = {
+      Bucket: bucket
+    };
+    const response = await this._s3Client.send(new GetBucketVersioningCommand(params));
+    return response.Status === 'Enabled';
+  },
+
+  /**
    * @function headBucket
    * Checks if a bucket exists and if the S3Client has correct access permissions
    * @returns {Promise<object>} The response of the head bucket operation
@@ -84,7 +98,6 @@ const objectStorageService = {
       Bucket: bucket,
       Key: filePath
     };
-
     return this._s3Client.send(new HeadObjectCommand(params));
   },
 

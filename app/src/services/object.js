@@ -24,16 +24,14 @@ const service = {
     try {
       trx = etrx ? etrx : await ObjectModel.startTransaction();
 
-      // Add file record to DB
+      // Add object record to DB
       const obj = {
         id: data.id,
-        originalName: data.originalName,
         path: data.path,
-        mimeType: data.mimeType,
         public: data.public,
         createdBy: data.userId
       };
-      await ObjectModel.query(trx).insert(obj);
+      const response = await ObjectModel.query(trx).insert(obj).returning('*');
 
       // Add all permission codes for the uploader
       if (data.userId) {
@@ -45,7 +43,7 @@ const service = {
       }
 
       if (!etrx) await trx.commit();
-      return await service.read(data.id);
+      return Promise.resolve(response);
     } catch (err) {
       if (!etrx && trx) await trx.rollback();
       throw err;
@@ -65,11 +63,15 @@ const service = {
     try {
       trx = etrx ? etrx : await ObjectModel.startTransaction();
 
-      await ObjectModel.query(trx)
+      const response = await ObjectModel.query(trx)
         .deleteById(objId)
-        .throwIfNotFound();
+        .throwIfNotFound()
+        // Returns array of deleted rows instead of count
+        // https://vincit.github.io/objection.js/recipes/returning-tricks.html
+        .returning('*');
 
       if (!etrx) await trx.commit();
+      return response;
     } catch (err) {
       if (!etrx && trx) await trx.rollback();
       throw err;
@@ -85,17 +87,18 @@ const service = {
    * @param {string} [params.mimeType] Optional mimeType string to match on
    * @param {boolean} [params.public] Optional boolean on object public status
    * @param {boolean} [params.active] Optional boolean on object active status
+   * @param {boolean} [params.deleteMarker] Optional boolean, is object soft-deleted
    * @returns {Promise<object>} The result of running the find operation
    */
   searchObjects: (params) => {
     return ObjectModel.query()
       .modify('filterIds', params.id)
-      .modify('filterOriginalName', params.originalName)
       .modify('filterPath', params.path)
-      .modify('filterMimeType', params.mimeType)
       .modify('filterPublic', params.public)
       .modify('filterActive', params.active)
-      .modify('filterUserId', params.userId);
+      .modify('filterUserId', params.userId)
+      .modify('filterOriginalName', params.originalName)
+      .modify('filterMimeType', params.mimeType);
   },
 
   /**
@@ -129,11 +132,9 @@ const service = {
     try {
       trx = etrx ? etrx : await ObjectModel.startTransaction();
 
-      // Add file record to DB
+      // Update object record in DB
       const response = await ObjectModel.query(trx).patchAndFetchById(data.id, {
-        originalName: data.originalName,
         path: data.path,
-        mimeType: data.mimeType,
         public: data.public,
         updatedBy: data.userId
       });
