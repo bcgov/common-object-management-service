@@ -10,27 +10,23 @@ const mockResponse = () => {
   res.json = jest.fn().mockReturnValue(res);
   return res;
 };
-
 // Mock config library - @see {@link https://stackoverflow.com/a/64819698}
 jest.mock('config');
 
-const storageDeleteObjectSpy = jest.spyOn(storageService, 'deleteObject');
-const objectDeleteSpy = jest.spyOn(objectService, 'delete');
-const versionCreateSpy = jest.spyOn(versionService, 'create');
-const versionDeleteSpy = jest.spyOn(versionService, 'delete');
-const versionListSpy = jest.spyOn(versionService, 'list');
-
-
 const res = mockResponse();
 
-
 describe('deleteObject', () => {
+  // mock service calls
+  const storageDeleteObjectSpy = jest.spyOn(storageService, 'deleteObject');
+  const objectDeleteSpy = jest.spyOn(objectService, 'delete');
+  const versionCreateSpy = jest.spyOn(versionService, 'create');
+  const versionDeleteSpy = jest.spyOn(versionService, 'delete');
+  const versionListSpy = jest.spyOn(versionService, 'list');
 
-  // request is to delete an object (no versionId query parameter passed)
+  // request object
   const req = {
     currentUser: { authType: AuthType.BEARER, tokenPayload: { sub: 'testsub' } },
-    params: { objId: 'xyz-789' },
-    query: {}
+    params: { objId: 'xyz-789' }
   };
   const next = jest.fn();
 
@@ -41,6 +37,9 @@ describe('deleteObject', () => {
   };
 
   it('should call version service to create a delete marker in db', async () => {
+    // request is to delete an object (no versionId query parameter passed)
+    req.query = {};
+    // storage response is a DeleteMarker
     storageDeleteObjectSpy.mockReturnValue(DeleteMarker);
 
     await controller.deleteObject(req, res, next);
@@ -56,7 +55,8 @@ describe('deleteObject', () => {
   });
 
   it('should delete object if versioning not enabled', async () => {
-    // if versioning disabled, S3 delete response does not include a DeleteMarker
+    req.query = {};
+    // storage response has no version properties
     storageDeleteObjectSpy.mockReturnValue({});
 
     await controller.deleteObject(req, res, next);
@@ -67,6 +67,7 @@ describe('deleteObject', () => {
   });
 
   it('should return the storage service response', async () => {
+    req.query = {};
     storageDeleteObjectSpy.mockReturnValue(DeleteMarker);
     versionCreateSpy.mockReturnValue({});
 
@@ -79,10 +80,9 @@ describe('deleteObject', () => {
 
 
   it('should call version service to delete a version', async () => {
-
-    // --- version delete request includes versionId query param
+    // version delete request includes versionId query param
     req.query = { versionId: '123' };
-
+    // S3 returns version that was deleted
     storageDeleteObjectSpy.mockReturnValue({
       VersionId: '123'
     });
@@ -93,7 +93,13 @@ describe('deleteObject', () => {
   });
 
   it('should delete object if object has no other remaining versions', async () => {
+    req.query = { versionId: '123' };
+    storageDeleteObjectSpy.mockReturnValue({
+      VersionId: '123'
+    });
+    // list all versions returns empty array
     versionListSpy.mockReturnValue([]);
+
     await controller.deleteObject(req, res, next);
 
     expect(versionListSpy).toHaveBeenCalledTimes(1);

@@ -96,13 +96,11 @@ paths:
           $ref: "#/components/responses/Error"
     get:
       summary: Search for objects
-      description: |
-        Returns a list of objects. If the request is BasicAuth authenticated,
-        all search and filtered results will appear. However, If the request is
-        BearerAuth authenticated, only objects the user has at least one
-        permission associated with them will appear in addition to their
-        filtering parameters.\
-        Search will look for a match in all versions of an object.
+      description: >-
+        Returns a list of objects matching all search criteria across all known versions of objects.
+        If the request is BasicAuth authenticated, all search and filtered results will appear.
+        However, If the request is BearerAuth authenticated, only objects that the user has at least one
+        permission associated with, will appear in addition to their filtering parameters.
       operationId: searchObjects
       tags:
         - Object
@@ -218,9 +216,10 @@ paths:
           $ref: "#/components/responses/Error"
     post:
       summary: Updates an Object
-      description: |
-        Updates the object in the configured object storage.\
-        Create a new version if object storage has versioning enabled
+      description: >-
+        Updates the object in the configured object storage. If the object storage
+        supports versioning, a new version will be generated instead
+        of overwriting the existing contents.
       operationId: updateObject
       tags:
         - Object
@@ -271,12 +270,12 @@ paths:
           $ref: "#/components/responses/Error"
     delete:
       summary: Deletes an object or a version of object
-      description: |
-        This endpoint can be used to:
-        * delete an object (and remove record in COMS database)
-        * delete a specific version of an object
-        * soft-delete an object
-        * restore a soft-deleted object
+      description: >-
+        Deletes the specified object (or version) from S3. If the object storage supports
+        versioning, precise S3 version stack manipulation is supported, including
+        soft-deletion and soft-restore. Hard-deletions on S3 are also supported. For more
+        details on general S3 version behavior, visit
+        https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeletingObjectVersions.html
       operationId: deleteObject
       tags:
         - Object
