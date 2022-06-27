@@ -5,7 +5,6 @@ const schema = require('../../../src/validators/permission').schema;
 const { scheme, type } = require('../../../src/validators/common');
 const { Permissions } = require('../../../src/components/constants');
 
-
 describe('searchPermissions', () => {
 
   describe('query', () => {

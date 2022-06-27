@@ -2,6 +2,7 @@ const routes = require('express').Router();
 
 const { Permissions } = require('../../components/constants');
 const { objectController } = require('../../controllers');
+const { objectValidator } = require('../../validators');
 const { requireDb, requireSomeAuth } = require('../../middleware/featureToggle');
 const { checkAppMode, currentObject, hasPermission } = require('../../middleware/authorization');
 
@@ -13,19 +14,19 @@ routes.post('/', requireSomeAuth, (req, res, next) => {
 });
 
 /** Search for objects */
-routes.get('/', requireDb, requireSomeAuth, (req, res, next) => {
+routes.get('/', requireDb, requireSomeAuth, objectValidator.searchObjects, (req, res, next) => {
   // TODO: Add validation to reject unexpected query parameters
   objectController.searchObjects(req, res, next);
 });
 
 /** Returns object headers */
-routes.head('/:objId', currentObject, hasPermission(Permissions.READ), (req, res, next) => {
+routes.head('/:objId', objectValidator.headObject, currentObject, hasPermission(Permissions.READ), (req, res, next) => {
   // TODO: Add validation to reject unexpected query parameters
   objectController.headObject(req, res, next);
 });
 
 /** Returns the object */
-routes.get('/:objId', currentObject, hasPermission(Permissions.READ), (req, res, next) => {
+routes.get('/:objId', objectValidator.readObject, currentObject, hasPermission(Permissions.READ), (req, res, next) => {
   // TODO: Add validation to reject unexpected query parameters
   objectController.readObject(req, res, next);
 });
@@ -36,17 +37,17 @@ routes.post('/:objId', currentObject, hasPermission(Permissions.UPDATE), (req, r
 });
 
 /** Deletes the object */
-routes.delete('/:objId', currentObject, hasPermission(Permissions.DELETE), async (req, res, next) => {
+routes.delete('/:objId', objectValidator.deleteObject, currentObject, hasPermission(Permissions.DELETE), async (req, res, next) => {
   objectController.deleteObject(req, res, next);
 });
 
 /** Returns the object version history */
-routes.get('/:objId/versions', currentObject, hasPermission(Permissions.READ), async (req, res, next) => {
+routes.get('/:objId/versions', objectValidator.listObjectVersion, currentObject, hasPermission(Permissions.READ), async (req, res, next) => {
   objectController.listObjectVersion(req, res, next);
 });
 
 /** Sets the public flag of an object */
-routes.patch('/:objId/public', requireDb, currentObject, hasPermission(Permissions.MANAGE), (req, res, next) => {
+routes.patch('/:objId/public', objectValidator.togglePublic, requireDb, currentObject, hasPermission(Permissions.MANAGE), (req, res, next) => {
   // TODO: Add validation to reject unexpected query parameters
   objectController.togglePublic(req, res, next);
 });
