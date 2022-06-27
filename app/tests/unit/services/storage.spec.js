@@ -1,5 +1,6 @@
 const {
   DeleteObjectCommand,
+  GetBucketVersioningCommand,
   GetObjectCommand,
   HeadBucketCommand,
   HeadObjectCommand,
@@ -75,12 +76,28 @@ describe('headBucket', () => {
     s3ClientMock.on(HeadBucketCommand).resolves({});
   });
 
-  it('should send a head object command', () => {
+  it('should send a head bucket command', () => {
     const result = service.headBucket();
 
     expect(result).toBeTruthy();
     expect(s3ClientMock.calls()).toHaveLength(1);
     expect(s3ClientMock.commandCalls(HeadBucketCommand, {
+      Bucket: bucket
+    }, true)).toHaveLength(1);
+  });
+});
+
+describe('getBucketVersioning', () => {
+  beforeEach(() => {
+    s3ClientMock.on(GetBucketVersioningCommand).resolves({});
+  });
+
+  it('should send a get bucket versioning command', () => {
+    const result = service.getBucketVersioning();
+
+    expect(result).toBeTruthy();
+    expect(s3ClientMock.calls()).toHaveLength(1);
+    expect(s3ClientMock.commandCalls(GetBucketVersioningCommand, {
       Bucket: bucket
     }, true)).toHaveLength(1);
   });
