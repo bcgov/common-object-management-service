@@ -6,37 +6,6 @@ expect.extend(jestJoi.matchers);
 const schema = require('../../../src/validators/object').schema;
 const { scheme, type } = require('../../../src/validators/common');
 
-describe('createObjects', () => {
-
-  describe('headers', () => {
-    const headers = schema.createObjects.headers.describe();
-
-    describe('name', () => {
-      const name = headers.keys.name;
-
-      it('is the expected schema', () => {
-        expect(name).toEqual(type.alphanum.describe());
-      });
-    });
-
-    describe('stream', () => {
-      const stream = headers.keys.stream;
-
-      it('is the expected schema', () => {
-        expect(stream).toEqual(type.alphanum.describe());
-      });
-    });
-
-    describe('info', () => {
-      const info = headers.keys.info;
-
-      it('is the expected schema', () => {
-        expect(info).toEqual(type.alphanum.describe());
-      });
-    });
-  });
-});
-
 describe('deleteObject', () => {
 
   describe('params', () => {
@@ -238,7 +207,6 @@ describe('searchObjects', () => {
   });
 });
 
-
 describe('togglePublic', () => {
 
   describe('params', () => {
@@ -261,50 +229,6 @@ describe('togglePublic', () => {
 
       it('is the expected schema', () => {
         expect(publicKey).toEqual(type.truthy.describe());
-      });
-    });
-  });
-});
-
-
-describe('updateObject', () => {
-
-  describe('params', () => {
-    const params = schema.togglePublic.params.describe();
-
-    describe('objId', () => {
-      const objId = params.keys.objId;
-
-      it('is the expected schema', () => {
-        expect(objId).toEqual(type.uuidv4.describe());
-      });
-    });
-  });
-
-  describe('headers', () => {
-    const headers = schema.updateObject.headers.describe();
-
-    describe('name', () => {
-      const name = headers.keys.name;
-
-      it('is the expected schema', () => {
-        expect(name).toEqual(type.alphanum.describe());
-      });
-    });
-
-    describe('stream', () => {
-      const stream = headers.keys.stream;
-
-      it('is the expected schema', () => {
-        expect(stream).toEqual(type.alphanum.describe());
-      });
-    });
-
-    describe('info', () => {
-      const info = headers.keys.info;
-
-      it('is the expected schema', () => {
-        expect(info).toEqual(type.alphanum.describe());
       });
     });
   });

@@ -2,14 +2,6 @@ const { validate, Joi } = require('express-validation');
 const { scheme, type } = require('./common');
 
 const schema = {
-  createObjects: {
-    headers: Joi.object({
-      name: type.alphanum,
-      stream: type.alphanum,
-      info: type.alphanum
-    })
-  },
-
   deleteObject: {
     params: Joi.object({
       objId: type.uuidv4
@@ -61,28 +53,15 @@ const schema = {
       public: type.truthy
     })
   },
-
-  updateObject: {
-    params: Joi.object({
-      objId: type.uuidv4
-    }),
-    headers: Joi.object({
-      name: type.alphanum,
-      stream: type.alphanum,
-      info: type.alphanum
-    })
-  }
 };
 
 const validator = {
-  createObjects: validate(schema.createObjects, { statusCode: 422 }),
   deleteObject: validate(schema.deleteObject, { statusCode: 422 }),
   headObject: validate(schema.headObject, { statusCode: 422 }),
   listObjectVersion: validate(schema.listObjectVersion, { statusCode: 422 }),
   readObject: validate(schema.readObject, { statusCode: 422 }),
   searchObjects: validate(schema.searchObjects, { statusCode: 422 }),
   togglePublic: validate(schema.togglePublic, { statusCode: 422 }),
-  updateObject: validate(schema.updateObject, { statusCode: 422 }),
 };
 
 module.exports = validator;

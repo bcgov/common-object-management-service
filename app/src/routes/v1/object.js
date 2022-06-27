@@ -9,7 +9,7 @@ const { checkAppMode, currentObject, hasPermission } = require('../../middleware
 routes.use(checkAppMode);
 
 /** Creates new objects */
-routes.post('/', requireSomeAuth, objectValidator.createObjects, (req, res, next) => {
+routes.post('/', requireSomeAuth, (req, res, next) => {
   objectController.createObjects(req, res, next);
 });
 
@@ -32,7 +32,7 @@ routes.get('/:objId', objectValidator.readObject, currentObject, hasPermission(P
 });
 
 /** Updates an object */
-routes.post('/:objId', objectValidator.updateObject, currentObject, hasPermission(Permissions.UPDATE), (req, res, next) => {
+routes.post('/:objId', currentObject, hasPermission(Permissions.UPDATE), (req, res, next) => {
   objectController.updateObject(req, res, next);
 });
 
