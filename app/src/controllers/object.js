@@ -61,7 +61,7 @@ const controller = {
         throw new Error('Cannot copy an object larger than 5GB');
       }
       else {
-        if (!Object.keys(req.query).length || Object.keys(req.query).length && req.query.versionId) {
+        if (!Object.keys(req.query).length || Object.keys(req.query).length === 1 && req.query.versionId) {
           // 422 when no keys given
           res.status(422).end();
         }
