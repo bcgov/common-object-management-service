@@ -52,4 +52,19 @@ routes.patch('/:objId/public', objectValidator.togglePublic, requireDb, currentO
   objectController.togglePublic(req, res, next);
 });
 
+/** Add metadata to an object */
+routes.patch('/:objId/metadata', currentObject, requireSomeAuth, (req, res, next) => {
+  objectController.addMetadata(req, res, next);
+});
+
+/** Replace metadata on an object */
+routes.put('/:objId/metadata', currentObject, requireSomeAuth, (req, res, next) => {
+  objectController.replaceMetadata(req, res, next);
+});
+
+/** Deletes an objects metadata */
+routes.delete('/:objId/metadata', currentObject, requireSomeAuth, (req, res, next) => {
+  objectController.deleteMetadata(req, res, next);
+});
+
 module.exports = routes;

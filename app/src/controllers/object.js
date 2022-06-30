@@ -44,6 +44,57 @@ const controller = {
   },
 
   /**
+   * @function addMetadata
+   * Creates a new version of the object via copy with the new metadata added
+   * @param {object} req Express request object
+   * @param {object} res Express response object
+   * @param {function} next The next callback function
+   * @returns {function} Express middleware function
+  */
+  async addMetadata(req, res, next) {
+    try {
+      const objId = addDashesToUuid(req.params.objId);
+      const objPath = getPath(objId)
+
+      const latest = await storageService.headObject({ filePath: objPath });
+      if (latest.ContentLength > 5368709120) {
+        throw new Error('Cannot copy an object larger than 5GB');
+      }
+      else {
+        if (Object.keys(req.query).length <= 0 ||
+          Object.keys(req.query).length === 1 && req.query.hasOwnProperty('versionId')) {
+          // 422 when no keys given
+          res.status(422).end();
+        }
+        else {
+          const metadataToAppend = req.query;
+
+          if (metadataToAppend.hasOwnProperty('versionId')) delete metadataToAppend['versionId'];
+
+          const data = {
+            copySource: objPath,
+            filePath: objPath,
+            metadata: {
+              ...latest.Metadata,  // Take existing metadata first
+              ...metadataToAppend, // Append new metadata
+              name: latest.Metadata.name,  // Always enforce name and id key behavior
+              id: latest.Metadata.id
+            },
+            metadataDirective: 'REPLACE',
+            versionId: req.query.versionId ? req.query.versionId.toString() : undefined
+          };
+
+          const response = await storageService.copyObject(data);
+          controller._setS3Headers(response, res);
+          res.status(204).end();
+        }
+      }
+    } catch (e) {
+      next(errorToProblem(SERVICE, e));
+    }
+  },
+
+  /**
    * @function createObjects
    * Creates new objects
    * @param {object} req Express request object
@@ -243,6 +294,109 @@ const controller = {
           ...data
         });
         res.status(302).set('Location', response).end();
+      }
+    } catch (e) {
+      next(errorToProblem(SERVICE, e));
+    }
+  },
+
+  /**
+   * @function deleteMetadata
+   * Creates a new version of the object via copy with the given metadata removed
+   * @param {object} req Express request object
+   * @param {object} res Express response object
+   * @param {function} next The next callback function
+   * @returns {function} Express middleware function
+  */
+  async deleteMetadata(req, res, next) {
+    try {
+      const objId = addDashesToUuid(req.params.objId);
+      const objPath = getPath(objId)
+
+      const latest = await storageService.headObject({ filePath: objPath });
+      if (latest.ContentLength > 5368709120) {
+        throw new Error('Cannot copy an object larger than 5GB');
+      }
+      else {
+        const keysToRemove = mixedQueryToArray(req.query.key);
+        let metadata = latest.Metadata;
+
+        if (keysToRemove.hasOwnProperty('versionId')) delete keysToRemove['versionId'];
+
+        if (keysToRemove !== undefined && keysToRemove.length > 0) {
+          keysToRemove.forEach(x => {
+            if (metadata.hasOwnProperty(x)) delete metadata[x];
+          });
+        } else {
+          metadata = undefined;
+        }
+
+        // TODO: if keys is empty remove all but default
+
+        const data = {
+          copySource: objPath,
+          filePath: objPath,
+          metadata: {
+            ...metadata,
+            name: latest.Metadata.name,  // Always enforce name and id key behavior
+            id: latest.Metadata.id
+          },
+          metadataDirective: 'REPLACE',
+          versionId: req.query.versionId ? req.query.versionId.toString() : undefined
+        };
+
+        const response = await storageService.copyObject(data);
+        controller._setS3Headers(response, res);
+        res.status(204).end();
+      }
+    } catch (e) {
+      next(errorToProblem(SERVICE, e));
+    }
+  },
+
+  /**
+ * @function replaceMetadata
+ * Creates a new version of the object via copy with the new metadata replacing the previous
+ * @param {object} req Express request object
+ * @param {object} res Express response object
+ * @param {function} next The next callback function
+ * @returns {function} Express middleware function
+*/
+  async replaceMetadata(req, res, next) {
+    try {
+      const objId = addDashesToUuid(req.params.objId);
+      const objPath = getPath(objId)
+
+      const latest = await storageService.headObject({ filePath: objPath });
+      if (latest.ContentLength > 5368709120) {
+        throw new Error('Cannot copy an object larger than 5GB');
+      }
+      else {
+        if (Object.keys(req.query).length <= 0) {
+          // 422 when no parameters
+          res.status(422).end();
+        }
+        else {
+          const newMetadata = req.query;
+
+          if (newMetadata.hasOwnProperty('versionId')) delete newMetadata['versionId'];
+
+          const data = {
+            copySource: objPath,
+            filePath: objPath,
+            metadata: {
+              ...newMetadata, // Add new metadata
+              name: latest.Metadata.name,  // Always enforce name and id key behavior
+              id: latest.Metadata.id
+            },
+            metadataDirective: 'REPLACE',
+            versionId: req.query.versionId ? req.query.versionId.toString() : undefined
+          };
+
+          const response = await storageService.copyObject(data);
+          controller._setS3Headers(response, res);
+          res.status(204).end();
+        }
       }
     } catch (e) {
       next(errorToProblem(SERVICE, e));
