@@ -54,7 +54,7 @@ const controller = {
   async addMetadata(req, res, next) {
     try {
       const objId = addDashesToUuid(req.params.objId);
-      const objPath = getPath(objId)
+      const objPath = getPath(objId);
 
       const latest = await storageService.headObject({ filePath: objPath });
       if (latest.ContentLength > S3.MAXCOPYOBJECTLENGTH) {
@@ -307,7 +307,7 @@ const controller = {
   async deleteMetadata(req, res, next) {
     try {
       const objId = addDashesToUuid(req.params.objId);
-      const objPath = getPath(objId)
+      const objPath = getPath(objId);
 
       const latest = await storageService.headObject({ filePath: objPath });
       if (latest.ContentLength > S3.MAXCOPYOBJECTLENGTH) {
@@ -324,7 +324,7 @@ const controller = {
           metadata = Object.fromEntries(
             Object.entries(latest.Metadata)
               .filter(([key]) => !keysToRemove.includes(key))
-          )
+          );
         }
 
         const data = {
@@ -336,7 +336,7 @@ const controller = {
             id: latest.Metadata.id
           },
           metadataDirective: 'REPLACE',
-          versionId: req.query.versionId ? req.query.versionId.toString() : undefined
+          versionId: versionId ? versionId.toString() : undefined
         };
 
         const response = await storageService.copyObject(data);
@@ -359,7 +359,7 @@ const controller = {
   async replaceMetadata(req, res, next) {
     try {
       const objId = addDashesToUuid(req.params.objId);
-      const objPath = getPath(objId)
+      const objPath = getPath(objId);
 
       const latest = await storageService.headObject({ filePath: objPath });
       if (latest.ContentLength > S3.MAXCOPYOBJECTLENGTH) {
