@@ -56,9 +56,7 @@ const objectStorageService = {
       Bucket: bucket,
       CopySource: `${bucket}/${copySource}`,
       Key: filePath,
-      Metadata: {
-        ...metadata
-      },
+      Metadata: metadata,
       MetadataDirective: metadataDirective
     };
 

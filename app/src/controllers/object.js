@@ -1,7 +1,7 @@
 const busboy = require('busboy');
 const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 
-const { AuthMode } = require('../components/constants');
+const { AuthMode, S3 } = require('../components/constants');
 const errorToProblem = require('../components/errorToProblem');
 const {
   addDashesToUuid,
@@ -57,19 +57,16 @@ const controller = {
       const objPath = getPath(objId)
 
       const latest = await storageService.headObject({ filePath: objPath });
-      if (latest.ContentLength > 5368709120) {
+      if (latest.ContentLength > S3.MAXCOPYOBJECTLENGTH) {
         throw new Error('Cannot copy an object larger than 5GB');
       }
       else {
-        if (Object.keys(req.query).length <= 0 ||
-          Object.keys(req.query).length === 1 && req.query.hasOwnProperty('versionId')) {
+        if (!Object.keys(req.query).length || Object.keys(req.query).length && req.query.versionId) {
           // 422 when no keys given
           res.status(422).end();
         }
         else {
-          const metadataToAppend = req.query;
-
-          if (metadataToAppend.hasOwnProperty('versionId')) delete metadataToAppend['versionId'];
+          const { versionId, ...metadataToAppend } = req.query;
 
           const data = {
             copySource: objPath,
@@ -77,11 +74,10 @@ const controller = {
             metadata: {
               ...latest.Metadata,  // Take existing metadata first
               ...metadataToAppend, // Append new metadata
-              name: latest.Metadata.name,  // Always enforce name and id key behavior
-              id: latest.Metadata.id
+              id: latest.Metadata.id // Always enforce id key behavior
             },
             metadataDirective: 'REPLACE',
-            versionId: req.query.versionId ? req.query.versionId.toString() : undefined
+            versionId: versionId ? versionId.toString() : undefined
           };
 
           const response = await storageService.copyObject(data);
@@ -314,24 +310,22 @@ const controller = {
       const objPath = getPath(objId)
 
       const latest = await storageService.headObject({ filePath: objPath });
-      if (latest.ContentLength > 5368709120) {
+      if (latest.ContentLength > S3.MAXCOPYOBJECTLENGTH) {
         throw new Error('Cannot copy an object larger than 5GB');
       }
       else {
-        const keysToRemove = mixedQueryToArray(req.query.key);
-        let metadata = latest.Metadata;
+        const { versionId, ...newMetadata } = req.query;
+        const keysToRemove = mixedQueryToArray(newMetadata.key);
 
-        if (keysToRemove.hasOwnProperty('versionId')) delete keysToRemove['versionId'];
+        let metadata = undefined;
 
-        if (keysToRemove !== undefined && keysToRemove.length > 0) {
-          keysToRemove.forEach(x => {
-            if (metadata.hasOwnProperty(x)) delete metadata[x];
-          });
-        } else {
-          metadata = undefined;
+        // Generate object subset by subtracting/omitting defined keys via filter/inclusion
+        if (keysToRemove && keysToRemove.length) {
+          metadata = Object.fromEntries(
+            Object.entries(latest.Metadata)
+              .filter(([key]) => !keysToRemove.includes(key))
+          )
         }
-
-        // TODO: if keys is empty remove all but default
 
         const data = {
           copySource: objPath,
@@ -368,18 +362,16 @@ const controller = {
       const objPath = getPath(objId)
 
       const latest = await storageService.headObject({ filePath: objPath });
-      if (latest.ContentLength > 5368709120) {
+      if (latest.ContentLength > S3.MAXCOPYOBJECTLENGTH) {
         throw new Error('Cannot copy an object larger than 5GB');
       }
       else {
-        if (Object.keys(req.query).length <= 0) {
+        if (!Object.keys(req.query).length) {
           // 422 when no parameters
           res.status(422).end();
         }
         else {
-          const newMetadata = req.query;
-
-          if (newMetadata.hasOwnProperty('versionId')) delete newMetadata['versionId'];
+          const { versionId, ...newMetadata } = req.query;
 
           const data = {
             copySource: objPath,
@@ -390,7 +382,7 @@ const controller = {
               id: latest.Metadata.id
             },
             metadataDirective: 'REPLACE',
-            versionId: req.query.versionId ? req.query.versionId.toString() : undefined
+            versionId: versionId ? versionId.toString() : undefined
           };
 
           const response = await storageService.copyObject(data);

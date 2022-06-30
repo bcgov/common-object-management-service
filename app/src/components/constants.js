@@ -34,4 +34,10 @@ module.exports = Object.freeze({
     /** Grants object permission management */
     MANAGE: 'MANAGE'
   },
+
+  /** S3 API constants */
+  S3: {
+    /** Maximum Content Length supported by S3 CopyObjectCommand */
+    MAXCOPYOBJECTLENGTH: 5 * 1024 * 1024 * 1024
+  }
 });
