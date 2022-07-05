@@ -21,6 +21,18 @@ module.exports = Object.freeze({
     NONE: 'NONE'
   },
 
+  /** Maximum Content Length supported by S3 CopyObjectCommand */
+  MAXCOPYOBJECTLENGTH: 5 * 1024 * 1024 * 1024,
+  MAXKEYS: 1000,
+
+  /** Allowable values for the Metadata Directive parameter */
+  MetadataDirective: {
+    /** The metadata, except for the version ID, remains unchanged. */
+    COPY: 'COPY',
+    /** All original metadata is replaced by the metadata you specify. */
+    REPLACE: 'REPLACE'
+  },
+
   /** Object permissions */
   Permissions: {
     /** Grants object creation permission */
@@ -34,10 +46,4 @@ module.exports = Object.freeze({
     /** Grants object permission management */
     MANAGE: 'MANAGE'
   },
-
-  /** S3 API constants */
-  S3: {
-    /** Maximum Content Length supported by S3 CopyObjectCommand */
-    MAXCOPYOBJECTLENGTH: 5 * 1024 * 1024 * 1024
-  }
 });

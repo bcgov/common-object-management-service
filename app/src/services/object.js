@@ -85,6 +85,7 @@ const service = {
    * @param {string} [params.originalName] Optional filename string to match on
    * @param {string} [params.path] Optional canonical S3 path string to match on
    * @param {string} [params.mimeType] Optional mimeType string to match on
+   * @param {string} [params.metadata] Optional metadata string to match on
    * @param {boolean} [params.public] Optional boolean on object public status
    * @param {boolean} [params.active] Optional boolean on object active status
    * @param {boolean} [params.deleteMarker] Optional boolean, is object soft-deleted
@@ -98,7 +99,8 @@ const service = {
       .modify('filterActive', params.active)
       .modify('filterUserId', params.userId)
       .modify('filterOriginalName', params.originalName)
-      .modify('filterMimeType', params.mimeType);
+      .modify('filterMimeType', params.mimeType)
+    // .modify('filterMetadata', params.metadata);
   },
 
   /**
