@@ -349,15 +349,14 @@ paths:
       summary: Adds metadata to an object
       description: >-
         Creates a copy and new version of the object with the given metadata
-        added to the object. <br />
-        Multiple Key/Value pairs can be provided in the query for the metadata. <br />
-        eg: ?foo=bar&baz=qux
+        added to the object. Multiple Key/Value pairs can be provided in the header for the metadata.
       operationId: addMetadata
       tags:
         - Object
       parameters:
         - $ref: "#/components/parameters/Path-ObjectId"
-        - $ref: "#/components/parameters/Query-KeyValue"
+        - $ref: "#/components/parameters/Query-VersionId"
+        - $ref: "#/components/parameters/Header-Metadata"
       responses:
         "204": 
           description: The resource was added successfully.
@@ -370,15 +369,14 @@ paths:
     put:
       summary: Replaces metadata of an object
       description: >-
-        Creates a copy and new version of the object with the given metadata replacing the existing. <br />
-        Multiple Key/Value pairs can be provided in the query for the metadata. <br />
-        eg: ?foo=bar&baz=qux
+        Creates a copy and new version of the object with the given metadata replacing the existing. Multiple Key/Value pairs can be provided in the header for the metadata.
       operationId: replaceMetadata
       tags:
         - Object
       parameters:
         - $ref: "#/components/parameters/Path-ObjectId"
-        - $ref: "#/components/parameters/Query-KeyValue"
+        - $ref: "#/components/parameters/Query-VersionId"
+        - $ref: "#/components/parameters/Header-Metadata"
       responses:
         "204": 
           description: The resource was added successfully.
@@ -391,16 +389,13 @@ paths:
     delete:
       summary: Delete metadata of an object.
       description: >-
-        Creates a copy and new version of the object with the given metadata removed. If no query parameters
-        are given then all metadata will be removed. <br />
-        Multiple Key/Value pairs can be provided in the query for the metadata. <br />
-        eg: ?foo=bar&baz=qux
+        Creates a copy and new version of the object with the given metadata removed. Multiple Key/Value pairs can be provided in the header for the metadata. If no metadata headers are given then all metadata will be removed. 
       operationId: deleteMetadata
       tags:
         - Object
       parameters:
         - $ref: "#/components/parameters/Path-ObjectId"
-        - $ref: "#/components/parameters/Query-KeyValue"
+        - $ref: "#/components/parameters/Query-VersionId"
       responses:
         "204": 
           description: The resource was deleted successfully.
@@ -663,6 +658,13 @@ components:
         type: string
       example: foobar.txt
   parameters:
+    Header-Metadata:
+      in: header
+      name: metadata
+      description: Metadata key/value pair. Must contain the x-amz-meta- prefix to be valid.
+      schema:
+        type: string
+        example: x-amz-meta-foo
     Path-ObjectId:
       in: path
       name: objId
@@ -747,13 +749,6 @@ components:
             items:
               type: string
               example: idir
-    Query-KeyValue:
-      in: query
-      name: keyValue
-      description: Key/Value Pair
-      schema:
-        type: string
-        example: foo=bar
     Query-LastName:
       in: query
       name: lastName
