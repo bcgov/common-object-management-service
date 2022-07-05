@@ -99,7 +99,7 @@ const service = {
       .modify('filterActive', params.active)
       .modify('filterUserId', params.userId)
       .modify('filterOriginalName', params.originalName)
-      .modify('filterMimeType', params.mimeType)
+      .modify('filterMimeType', params.mimeType);
     // .modify('filterMetadata', params.metadata);
   },
 

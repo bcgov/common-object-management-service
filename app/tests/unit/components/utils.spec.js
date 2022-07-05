@@ -28,6 +28,21 @@ describe('addDashesToUuid', () => {
   });
 });
 
+describe.only('getMetadata', () => {
+  const headers = {
+    'Content-Length': 1234,
+    'x-amz-meta-foo': 'bar',
+    'x-amz-meta-baz': 'quz',
+  };
+
+  it('should return new object containing metadata headers without x-amz-meta- prefix', () => {
+    expect(utils.getMetadata(headers)).toEqual({
+      foo: 'bar',
+      baz: 'quz'
+    });
+  });
+});
+
 describe('getPath', () => {
   const delimitSpy = jest.spyOn(utils, 'delimit');
   const joinPath = jest.spyOn(utils, 'joinPath');

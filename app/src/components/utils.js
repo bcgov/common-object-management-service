@@ -128,8 +128,6 @@ const utils = {
     );
   },
 
-
-
   /**
    * @function getPath
    * Gets the relative path of `objId`
