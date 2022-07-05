@@ -344,6 +344,73 @@ paths:
           $ref: "#/components/responses/Forbidden"
         default:
           $ref: "#/components/responses/Error"
+  /object/{objId}/metadata:
+    patch:
+      summary: Adds metadata to an object
+      description: >-
+        Creates a copy and new version of the object with the given metadata
+        added to the object. <br />
+        Multiple Key/Value pairs can be provided in the query for the metadata. <br />
+        eg: ?foo=bar&baz=qux
+      operationId: addMetadata
+      tags:
+        - Object
+      parameters:
+        - $ref: "#/components/parameters/Path-ObjectId"
+        - $ref: "#/components/parameters/Query-KeyValue"
+      responses:
+        "204": 
+          description: The resource was added successfully.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        default:
+          $ref: "#/components/responses/Error"
+    put:
+      summary: Replaces metadata of an object
+      description: >-
+        Creates a copy and new version of the object with the given metadata replacing the existing. <br />
+        Multiple Key/Value pairs can be provided in the query for the metadata. <br />
+        eg: ?foo=bar&baz=qux
+      operationId: replaceMetadata
+      tags:
+        - Object
+      parameters:
+        - $ref: "#/components/parameters/Path-ObjectId"
+        - $ref: "#/components/parameters/Query-KeyValue"
+      responses:
+        "204": 
+          description: The resource was added successfully.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        default:
+          $ref: "#/components/responses/Error"
+    delete:
+      summary: Delete metadata of an object.
+      description: >-
+        Creates a copy and new version of the object with the given metadata removed. If no query parameters
+        are given then all metadata will be removed. <br />
+        Multiple Key/Value pairs can be provided in the query for the metadata. <br />
+        eg: ?foo=bar&baz=qux
+      operationId: deleteMetadata
+      tags:
+        - Object
+      parameters:
+        - $ref: "#/components/parameters/Path-ObjectId"
+        - $ref: "#/components/parameters/Query-KeyValue"
+      responses:
+        "204": 
+          description: The resource was deleted successfully.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        default:
+          $ref: "#/components/responses/Error"
+    
   /permission:
     get:
       summary: Search for object permissions
@@ -680,6 +747,13 @@ components:
             items:
               type: string
               example: idir
+    Query-KeyValue:
+      in: query
+      name: keyValue
+      description: Key/Value Pair
+      schema:
+        type: string
+        example: foo=bar
     Query-LastName:
       in: query
       name: lastName
