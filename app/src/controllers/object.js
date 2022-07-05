@@ -7,6 +7,7 @@ const {
   addDashesToUuid,
   getAppAuthMode,
   getCurrentSubject,
+  getMetadata,
   getPath,
   isTruthy,
   mixedQueryToArray
@@ -61,12 +62,13 @@ const controller = {
         throw new Error('Cannot copy an object larger than 5GB');
       }
       else {
-        if (!Object.keys(req.query).length || Object.keys(req.query).length === 1 && req.query.versionId) {
-          // 422 when no keys given
+        const metadataToAppend = getMetadata(req.headers);
+        if (!Object.keys(metadataToAppend).length) {
+          // 422 when no keys present
           res.status(422).end();
         }
         else {
-          const { versionId, ...metadataToAppend } = req.query;
+          const { versionId } = req.query;
 
           const data = {
             copySource: objPath,
@@ -110,9 +112,9 @@ const controller = {
           id: objId,
           fieldName: name,
           mimeType: info.mimeType,
-          originalName: info.filename
+          originalName: info.filename,
           // TODO: Implement metadata and tag support - request shape TBD
-          // metadata: { foo: 'bar', baz: 'bam' }
+          metadata: getMetadata(req.headers),
           // tags: { foo: 'bar', baz: 'bam' }
         };
         objects.push({
@@ -166,12 +168,11 @@ const controller = {
         throw new Error('Cannot copy an object larger than 5GB');
       }
       else {
-        const { versionId, ...newMetadata } = req.query;
-        const keysToRemove = mixedQueryToArray(newMetadata.key);
-
-        let metadata = undefined;
+        const { versionId } = req.query;
+        const keysToRemove = Object.keys(getMetadata(req.headers));
 
         // Generate object subset by subtracting/omitting defined keys via filter/inclusion
+        let metadata = undefined;
         if (keysToRemove && keysToRemove.length) {
           metadata = Object.fromEntries(
             Object.entries(latest.Metadata)
@@ -366,12 +367,13 @@ const controller = {
         throw new Error('Cannot copy an object larger than 5GB');
       }
       else {
-        if (!Object.keys(req.query).length || Object.keys(req.query).length === 1 && req.query.versionId) {
-          // 422 when no parameters
+        const newMetadata = getMetadata(req.headers);
+        if (!Object.keys(newMetadata).length) {
+          // 422 when no keys present
           res.status(422).end();
         }
         else {
-          const { versionId, ...newMetadata } = req.query;
+          const { versionId } = req.query;
 
           const data = {
             copySource: objPath,
@@ -477,9 +479,9 @@ const controller = {
           id: objId,
           fieldName: name,
           mimeType: info.mimeType,
-          originalName: info.filename
+          originalName: info.filename,
           // TODO: Implement metadata and tag support - request shape TBD
-          // metadata: { foo: 'bar', baz: 'bam' }
+          metadata: getMetadata(req.headers)
           // tags: { foo: 'bar', baz: 'bam' }
         };
         object = {
