@@ -111,8 +111,11 @@ const controller = {
           id: objId,
           fieldName: name,
           mimeType: info.mimeType,
-          originalName: info.filename,
-          metadata: getMetadata(req.headers),
+          metadata: {
+            name: info.filename,  // provide a default of `name: <file name>`
+            ...getMetadata(req.headers),
+            id: objId
+          }
           // TODO: Implement tag support - request shape TBD
           // tags: { foo: 'bar', baz: 'bam' }
         };
@@ -134,6 +137,7 @@ const controller = {
         // create version in DB
         const objectVersionArray = objects.map((object) => object.data);
         await versionService.create(objectVersionArray, userId);
+
         // merge returned responses into a result
         const result = objects.map((object) => ({
           ...object.data,
@@ -236,8 +240,7 @@ const controller = {
             id: objId,
             DeleteMarker: true,
             VersionId: s3Response.VersionId,
-            mimeType: null,
-            originalName: null
+            mimeType: null
           };
           await versionService.create([deleteMarker], userId);
         }
@@ -408,7 +411,7 @@ const controller = {
       const objIds = mixedQueryToArray(req.query.objId);
       const params = {
         id: objIds ? objIds.map(id => addDashesToUuid(id)) : objIds,
-        originalName: req.query.originalName,
+        name: req.query.name,
         path: req.query.path,
         mimeType: req.query.mimeType,
         public: isTruthy(req.query.public),
@@ -472,8 +475,11 @@ const controller = {
           id: objId,
           fieldName: name,
           mimeType: info.mimeType,
-          originalName: info.filename,
-          metadata: getMetadata(req.headers)
+          metadata: {
+            name: info.filename,
+            ...getMetadata(req.headers),
+            id: objId
+          }
           // TODO: Implement tag support - request shape TBD
           // tags: { foo: 'bar', baz: 'bam' }
         };

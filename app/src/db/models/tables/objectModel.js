@@ -65,7 +65,7 @@ class ObjectModel extends Timestamps(Model) {
             .where('mimeType', 'ilike', `%${value}%`));
         }
       },
-      filterOriginalName(query, value) {
+      filterName(query, value) {
         if (value) {
           query.whereIn('id', Version.query()
             .distinct('version.objectId')

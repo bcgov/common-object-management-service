@@ -173,24 +173,21 @@ const objectStorageService = {
    * Puts the object `stream` at the `id` path
    * @param {stream} options.stream The binary stream of the object
    * @param {string} options.id The filePath id of the object
-   * @param {string} options.originalName The original filename of the object
    * @param {string} options.mimeType The mime type of the object
    * @param {object} [options.metadata] Optional object containing key/value pairs for metadata
    * @param {object} [options.tags] Optional object containing key/value pairs for tags
    * @returns {Promise<object>} The response of the put object operation
    */
-  putObject({ stream, id, originalName, mimeType, metadata, tags }) {
+  putObject({ stream, id, mimeType, metadata, tags }) {
     const params = {
       Bucket: bucket,
-      ContentType: mimeType,
       Key: getPath(id),
       Body: stream,
+      ContentType: mimeType,
       Metadata: {
-        ...metadata, // Take input metadata first, but always enforce name and id key behavior
-        name: originalName,
-        id: id
+        ...metadata,
+        id: id // enforce metadata `id: <object ID>`
       },
-      ServerSideEncryption: 'AES256'
     };
 
     if (tags) {

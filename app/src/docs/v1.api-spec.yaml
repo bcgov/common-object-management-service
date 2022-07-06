@@ -92,6 +92,7 @@ paths:
                             in the multi-part form-data post
                           example: file1
                     - $ref: "#/components/schemas/DB-Object"
+                    - $ref: "#/components/schemas/DB-Metadata"
                     - $ref: "#/components/schemas/S3-Object"
         "401":
           $ref: "#/components/responses/Unauthorized"
@@ -111,7 +112,7 @@ paths:
         - Object
       parameters:
         - $ref: "#/components/parameters/Query-ObjectId"
-        - $ref: "#/components/parameters/Query-OriginalName"
+        - $ref: "#/components/parameters/Query-Name"
         - $ref: "#/components/parameters/Query-Path"
         - $ref: "#/components/parameters/Query-MimeType"
         - $ref: "#/components/parameters/Query-Active"
@@ -266,6 +267,7 @@ paths:
                           in the multi-part form-data post
                         example: file1
                   - $ref: "#/components/schemas/DB-Object"
+                  - $ref: "#/components/schemas/DB-Metadata"
                   - $ref: "#/components/schemas/S3-Object"
         "401":
           $ref: "#/components/responses/Unauthorized"
@@ -354,7 +356,7 @@ paths:
       summary: Adds metadata to an object
       description: >-
         Creates a copy and new version of the object with the given metadata
-        added to the object. 
+        added to the object.
         Multiple Key/Value pairs can be provided in the header for the metadata.
       operationId: addMetadata
       tags:
@@ -362,9 +364,9 @@ paths:
       parameters:
         - $ref: "#/components/parameters/Header-Metadata"
         - $ref: "#/components/parameters/Path-ObjectId"
-        - $ref: "#/components/parameters/Query-VersionId"        
+        - $ref: "#/components/parameters/Query-VersionId"
       responses:
-        "204": 
+        "204":
           description: The resource was added successfully.
         "401":
           $ref: "#/components/responses/Unauthorized"
@@ -377,7 +379,7 @@ paths:
     put:
       summary: Replaces metadata of an object
       description: >-
-        Creates a copy and new version of the object with the given metadata replacing the existing. 
+        Creates a copy and new version of the object with the given metadata replacing the existing.
         Multiple Key/Value pairs can be provided in the header for the metadata.
       operationId: replaceMetadata
       tags:
@@ -385,9 +387,9 @@ paths:
       parameters:
         - $ref: "#/components/parameters/Header-Metadata"
         - $ref: "#/components/parameters/Path-ObjectId"
-        - $ref: "#/components/parameters/Query-VersionId"        
+        - $ref: "#/components/parameters/Query-VersionId"
       responses:
-        "204": 
+        "204":
           description: The resource was added successfully.
         "401":
           $ref: "#/components/responses/Unauthorized"
@@ -400,9 +402,9 @@ paths:
     delete:
       summary: Delete metadata of an object.
       description: >-
-        Creates a copy and new version of the object with the given metadata removed. 
-        Multiple Key/Value pairs can be provided in the header for the metadata. 
-        If no metadata headers are given then all metadata will be removed. 
+        Creates a copy and new version of the object with the given metadata removed.
+        Multiple Key/Value pairs can be provided in the header for the metadata.
+        If no metadata headers are given then all metadata will be removed.
       operationId: deleteMetadata
       tags:
         - Metadata
@@ -411,7 +413,7 @@ paths:
         - $ref: "#/components/parameters/Path-ObjectId"
         - $ref: "#/components/parameters/Query-VersionId"
       responses:
-        "204": 
+        "204":
           description: The resource was deleted successfully.
         "401":
           $ref: "#/components/responses/Unauthorized"
@@ -419,7 +421,6 @@ paths:
           $ref: "#/components/responses/Forbidden"
         default:
           $ref: "#/components/responses/Error"
-    
   /permission:
     get:
       summary: Search for object permissions
@@ -799,10 +800,12 @@ components:
               type: string
               format: uuid
               example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
-    Query-OriginalName:
+    Query-Name:
       in: query
-      name: originalName
-      description: The original filename of the object
+      name: name
+      description: >-
+        the `name` metadata for the object
+        Typically a descriptive title or original filename
       schema:
         type: string
         example: foobar.txt
@@ -902,7 +905,6 @@ components:
           required:
             - id
             - mimeType
-            - originalName
             - path
             - public
             - active
@@ -916,10 +918,6 @@ components:
               type: string
               description: the MIME Type of the object
               example: application/octet-stream
-            originalName:
-              type: string
-              description: The original filename of the object
-              example: foobar.txt
             path:
               type: string
               description: The canonical S3 path string of the object
@@ -935,6 +933,20 @@ components:
               default: true
               example: true
         - $ref: "#/components/schemas/DB-TimestampUserData"
+    DB-Metadata:
+      allOf:
+        - type: object
+          required:
+            - id
+            - objectId
+            - userId
+            - permCode
+          properties:
+            metadata:
+              type: object
+              format: uuid
+              description: User-defined metadata
+              example: {'name': 'report.xls'}
     DB-ObjectPermission:
       allOf:
         - type: object
