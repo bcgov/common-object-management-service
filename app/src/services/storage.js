@@ -130,7 +130,7 @@ const objectStorageService = {
    * @function listObjects
    * Lists the objects in the bucket with the prefix of `filePath`
    * @param {string} options.filePath The filePath of the object
-   * @param {number} [options.maxKeys=1000] The maximum number of keys to return
+   * @param {number} [options.maxKeys=2^31-1] The maximum number of keys to return
    * @returns {Promise<object>} The response of the list objects operation
    */
   listObjects({ filePath, maxKeys = MAXKEYS }) {
