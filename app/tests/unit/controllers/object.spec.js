@@ -1,5 +1,5 @@
 const Problem = require('api-problem');
-const { AuthType } = require('../../../src/components/constants');
+const { AuthType, MAXCOPYOBJECTLENGTH, MetadataDirective } = require('../../../src/components/constants');
 
 const controller = require('../../../src/controllers/object');
 const { storageService, objectService, versionService } = require('../../../src/services');
@@ -8,12 +8,160 @@ const mockResponse = () => {
   const res = {};
   res.status = jest.fn().mockReturnValue(res);
   res.json = jest.fn().mockReturnValue(res);
+  res.end = jest.fn().mockReturnValue(res);
   return res;
 };
 // Mock config library - @see {@link https://stackoverflow.com/a/64819698}
 jest.mock('config');
 
 const res = mockResponse();
+
+describe('addMetadata', () => {
+  // mock service calls
+  const storageHeadObjectSpy = jest.spyOn(storageService, 'headObject');
+  const storageCopyObjectSpy = jest.spyOn(storageService, 'copyObject');
+
+  const next = jest.fn();
+
+  // response from S3
+  const GoodResponse = {
+    ContentLength: 1234,
+    Metadata: { id: 1, foo: 'bar' }
+  };
+  const BadResponse = {
+    MontentLength: MAXCOPYOBJECTLENGTH + 1
+  };
+
+  it('should error when Content-Length is greater than 5GB', async () => {
+    // request object
+    const req = {};
+
+    storageHeadObjectSpy.mockReturnValue(BadResponse);
+    await controller.addMetadata(req, res, next);
+    expect(next).toHaveBeenCalledWith(new Problem(502, 'Unknown ObjectService Error'));
+  });
+
+  it('responds 422 when no keys are present', async () => {
+    // request object
+    const req = {
+      headers: {},
+      params: { objId: 'xyz-789' },
+      query: {}
+    };
+
+    storageHeadObjectSpy.mockReturnValue(GoodResponse);
+
+    await controller.addMetadata(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(422);
+  });
+
+  it('should add the metadata', async () => {
+    // request object
+    const req = {
+      headers: { 'x-amz-meta-baz': 'quz' },
+      params: { objId: 'xyz-789' },
+      query: {}
+    };
+
+    storageHeadObjectSpy.mockReturnValue(GoodResponse);
+    storageCopyObjectSpy.mockReturnValue({});
+
+    await controller.addMetadata(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(204);
+    expect(storageCopyObjectSpy).toHaveBeenCalledWith({
+      copySource: 'xyz-789',
+      filePath: 'xyz-789',
+      metadata: {
+        foo: 'bar',
+        baz: 'quz',
+        id: 1
+      },
+      metadataDirective: MetadataDirective.REPLACE,
+      versionId: undefined
+    });
+  });
+});
+
+describe('deleteMetadata', () => {
+  // mock service calls
+  const storageHeadObjectSpy = jest.spyOn(storageService, 'headObject');
+  const storageCopyObjectSpy = jest.spyOn(storageService, 'copyObject');
+
+  const next = jest.fn();
+
+  // response from S3
+  const GoodResponse = {
+    ContentLength: 1234,
+    Metadata: { id: 1, name: 'test', foo: 'bar', baz: 'quz' }
+  };
+  const BadResponse = {
+    ContentLength: MAXCOPYOBJECTLENGTH + 1
+  };
+
+  it('should error when Content-Length is greater than 5GB', async () => {
+    // request object
+    const req = {};
+
+    storageHeadObjectSpy.mockReturnValue(BadResponse);
+    await controller.deleteMetadata(req, res, next);
+    expect(next).toHaveBeenCalledWith(new Problem(502, 'Unknown ObjectService Error'));
+  });
+
+  it('should delete the requested metadata', async () => {
+    // request object
+    const req = {
+      headers: { 'x-amz-meta-foo': 'bar' },
+      params: { objId: 'xyz-789' },
+      query: {}
+    };
+
+    storageHeadObjectSpy.mockReturnValue(GoodResponse);
+    storageCopyObjectSpy.mockReturnValue({});
+
+    await controller.deleteMetadata(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(204);
+    expect(storageCopyObjectSpy).toHaveBeenCalledWith({
+      copySource: 'xyz-789',
+      filePath: 'xyz-789',
+      metadata: {
+        baz: 'quz',
+        id: 1,
+        name: 'test',
+      },
+      metadataDirective: MetadataDirective.REPLACE,
+      versionId: undefined
+    });
+  });
+
+  it('should delete all the metadata when none provided', async () => {
+    // request object
+    const req = {
+      headers: {},
+      params: { objId: 'xyz-789' },
+      query: {}
+    };
+
+    storageHeadObjectSpy.mockReturnValue(GoodResponse);
+    storageCopyObjectSpy.mockReturnValue({});
+
+    await controller.deleteMetadata(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(204);
+    expect(storageCopyObjectSpy).toHaveBeenCalledWith({
+      copySource: 'xyz-789',
+      filePath: 'xyz-789',
+      metadata: {
+        id: 1,
+        name: 'test'
+      },
+      metadataDirective: MetadataDirective.REPLACE,
+      versionId: undefined
+    });
+  });
+});
 
 describe('deleteObject', () => {
   // mock service calls
@@ -114,5 +262,101 @@ describe('deleteObject', () => {
     expect(storageDeleteObjectSpy).toHaveBeenCalledTimes(1);
     expect(next).toHaveBeenCalledTimes(1);
     expect(next).toHaveBeenCalledWith(new Problem(502, 'Unknown ObjectService Error'));
+  });
+});
+
+
+describe('replaceMetadata', () => {
+  // mock service calls
+  const storageHeadObjectSpy = jest.spyOn(storageService, 'headObject');
+  const storageCopyObjectSpy = jest.spyOn(storageService, 'copyObject');
+
+  const next = jest.fn();
+
+  // response from S3
+  const GoodResponse = {
+    ContentLength: 1234,
+    Metadata: { id: 1, name: 'test', foo: 'bar' }
+  };
+  const BadResponse = {
+    ContentLength: MAXCOPYOBJECTLENGTH + 1
+  };
+
+  it('should error when Content-Length is greater than 5GB', async () => {
+    // request object
+    const req = {};
+
+    storageHeadObjectSpy.mockReturnValue(BadResponse);
+    await controller.replaceMetadata(req, res, next);
+    expect(next).toHaveBeenCalledWith(new Problem(502, 'Unknown ObjectService Error'));
+  });
+
+  it('responds 422 when no keys are present', async () => {
+    // request object
+    const req = {
+      headers: {},
+      params: { objId: 'xyz-789' },
+      query: {}
+    };
+
+    storageHeadObjectSpy.mockReturnValue(GoodResponse);
+
+    await controller.replaceMetadata(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(422);
+  });
+
+  it('should replace the metadata', async () => {
+    // request object
+    const req = {
+      headers: { 'x-amz-meta-baz': 'quz' },
+      params: { objId: 'xyz-789' },
+      query: {}
+    };
+
+    storageHeadObjectSpy.mockReturnValue(GoodResponse);
+    storageCopyObjectSpy.mockReturnValue({});
+
+    await controller.replaceMetadata(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(204);
+    expect(storageCopyObjectSpy).toHaveBeenCalledWith({
+      copySource: 'xyz-789',
+      filePath: 'xyz-789',
+      metadata: {
+        id: 1,
+        name: 'test',
+        baz: 'quz'
+      },
+      metadataDirective: MetadataDirective.REPLACE,
+      versionId: undefined
+    });
+  });
+
+  it('should replace replace the name', async () => {
+    // request object
+    const req = {
+      headers: { 'x-amz-meta-name': 'newName', 'x-amz-meta-baz': 'quz' },
+      params: { objId: 'xyz-789' },
+      query: {}
+    };
+
+    storageHeadObjectSpy.mockReturnValue(GoodResponse);
+    storageCopyObjectSpy.mockReturnValue({});
+
+    await controller.replaceMetadata(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(204);
+    expect(storageCopyObjectSpy).toHaveBeenCalledWith({
+      copySource: 'xyz-789',
+      filePath: 'xyz-789',
+      metadata: {
+        id: 1,
+        name: 'newName',
+        baz: 'quz'
+      },
+      metadataDirective: MetadataDirective.REPLACE,
+      versionId: undefined
+    });
   });
 });

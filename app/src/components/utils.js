@@ -115,6 +115,19 @@ const utils = {
   },
 
   /**
+   * @function getMetadata
+   * Derives metadata from a request header object
+   * @param {object} obj The request headers to get key/value pairs from
+   * @returns {object} An object with metadata key/value pair attributes
+   */
+  getMetadata(obj) {
+    return Object.fromEntries(Object.keys(obj)
+      .filter((key) => key.toLowerCase().startsWith('x-amz-meta-'))
+      .map((key) => ([key.substring(11), obj[key]]))
+    );
+  },
+
+  /**
    * @function getPath
    * Gets the relative path of `objId`
    * @param {string} objId The object id

@@ -18,6 +18,11 @@ security:
   - BearerAuth: []
     OpenID: []
 tags:
+  - name: Metadata
+    description: >-
+      Operations directly influencing the Metadata S3 Object.
+    externalDocs:
+      url: https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#metadata
   - name: Object
     description: >-
       Operations directly influencing an S3 Object. Certain operations not
@@ -344,6 +349,77 @@ paths:
           $ref: "#/components/responses/Forbidden"
         default:
           $ref: "#/components/responses/Error"
+  /object/{objId}/metadata:
+    patch:
+      summary: Adds metadata to an object
+      description: >-
+        Creates a copy and new version of the object with the given metadata
+        added to the object. 
+        Multiple Key/Value pairs can be provided in the header for the metadata.
+      operationId: addMetadata
+      tags:
+        - Metadata
+      parameters:
+        - $ref: "#/components/parameters/Header-Metadata"
+        - $ref: "#/components/parameters/Path-ObjectId"
+        - $ref: "#/components/parameters/Query-VersionId"        
+      responses:
+        "204": 
+          description: The resource was added successfully.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        default:
+          $ref: "#/components/responses/Error"
+    put:
+      summary: Replaces metadata of an object
+      description: >-
+        Creates a copy and new version of the object with the given metadata replacing the existing. 
+        Multiple Key/Value pairs can be provided in the header for the metadata.
+      operationId: replaceMetadata
+      tags:
+        - Metadata
+      parameters:
+        - $ref: "#/components/parameters/Header-Metadata"
+        - $ref: "#/components/parameters/Path-ObjectId"
+        - $ref: "#/components/parameters/Query-VersionId"        
+      responses:
+        "204": 
+          description: The resource was added successfully.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        default:
+          $ref: "#/components/responses/Error"
+    delete:
+      summary: Delete metadata of an object.
+      description: >-
+        Creates a copy and new version of the object with the given metadata removed. 
+        Multiple Key/Value pairs can be provided in the header for the metadata. 
+        If no metadata headers are given then all metadata will be removed. 
+      operationId: deleteMetadata
+      tags:
+        - Metadata
+      parameters:
+        - $ref: "#/components/parameters/Header-Metadata"
+        - $ref: "#/components/parameters/Path-ObjectId"
+        - $ref: "#/components/parameters/Query-VersionId"
+      responses:
+        "204": 
+          description: The resource was deleted successfully.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        default:
+          $ref: "#/components/responses/Error"
+    
   /permission:
     get:
       summary: Search for object permissions
@@ -596,6 +672,13 @@ components:
         type: string
       example: foobar.txt
   parameters:
+    Header-Metadata:
+      in: header
+      name: metadata
+      description: Metadata key/value pair. Must contain the x-amz-meta- prefix to be valid.
+      schema:
+        type: string
+        example: x-amz-meta-foo
     Path-ObjectId:
       in: path
       name: objId

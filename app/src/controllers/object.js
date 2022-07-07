@@ -1,12 +1,13 @@
 const busboy = require('busboy');
 const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 
-const { AuthMode } = require('../components/constants');
+const { AuthMode, MAXCOPYOBJECTLENGTH, MetadataDirective } = require('../components/constants');
 const errorToProblem = require('../components/errorToProblem');
 const {
   addDashesToUuid,
   getAppAuthMode,
   getCurrentSubject,
+  getMetadata,
   getPath,
   isTruthy,
   mixedQueryToArray
@@ -44,6 +45,53 @@ const controller = {
   },
 
   /**
+   * @function addMetadata
+   * Creates a new version of the object via copy with the new metadata added
+   * @param {object} req Express request object
+   * @param {object} res Express response object
+   * @param {function} next The next callback function
+   * @returns {function} Express middleware function
+  */
+  async addMetadata(req, res, next) {
+    try {
+      const objId = addDashesToUuid(req.params.objId);
+      const objPath = getPath(objId);
+
+      const latest = await storageService.headObject({ filePath: objPath });
+      if (latest.ContentLength > MAXCOPYOBJECTLENGTH) {
+        throw new Error('Cannot copy an object larger than 5GB');
+      }
+
+      const metadataToAppend = getMetadata(req.headers);
+      if (!Object.keys(metadataToAppend).length) {
+        // TODO: Validation level logic. To be moved.
+        // 422 when no keys present
+        res.status(422).end();
+      }
+      else {
+
+        const data = {
+          copySource: objPath,
+          filePath: objPath,
+          metadata: {
+            ...latest.Metadata,  // Take existing metadata first
+            ...metadataToAppend, // Append new metadata
+            id: latest.Metadata.id // Always enforce id key behavior
+          },
+          metadataDirective: MetadataDirective.REPLACE,
+          versionId: req.query.versionId ? req.query.versionId.toString() : undefined
+        };
+
+        const response = await storageService.copyObject(data);
+        controller._setS3Headers(response, res);
+        res.status(204).end();
+      }
+    } catch (e) {
+      next(errorToProblem(SERVICE, e));
+    }
+  },
+
+  /**
    * @function createObjects
    * Creates new objects
    * @param {object} req Express request object
@@ -63,9 +111,9 @@ const controller = {
           id: objId,
           fieldName: name,
           mimeType: info.mimeType,
-          originalName: info.filename
-          // TODO: Implement metadata and tag support - request shape TBD
-          // metadata: { foo: 'bar', baz: 'bam' }
+          originalName: info.filename,
+          metadata: getMetadata(req.headers),
+          // TODO: Implement tag support - request shape TBD
           // tags: { foo: 'bar', baz: 'bam' }
         };
         objects.push({
@@ -96,6 +144,54 @@ const controller = {
       });
 
       req.pipe(bb);
+    } catch (e) {
+      next(errorToProblem(SERVICE, e));
+    }
+  },
+
+  /**
+   * @function deleteMetadata
+   * Creates a new version of the object via copy with the given metadata removed
+   * @param {object} req Express request object
+   * @param {object} res Express response object
+   * @param {function} next The next callback function
+   * @returns {function} Express middleware function
+  */
+  async deleteMetadata(req, res, next) {
+    try {
+      const objId = addDashesToUuid(req.params.objId);
+      const objPath = getPath(objId);
+
+      const latest = await storageService.headObject({ filePath: objPath });
+      if (latest.ContentLength > MAXCOPYOBJECTLENGTH) {
+        throw new Error('Cannot copy an object larger than 5GB');
+      }
+
+      // Generate object subset by subtracting/omitting defined keys via filter/inclusion
+      const keysToRemove = Object.keys(getMetadata(req.headers));
+      let metadata = undefined;
+      if (keysToRemove.length) {
+        metadata = Object.fromEntries(
+          Object.entries(latest.Metadata)
+            .filter(([key]) => !keysToRemove.includes(key))
+        );
+      }
+
+      const data = {
+        copySource: objPath,
+        filePath: objPath,
+        metadata: {
+          ...metadata,
+          name: latest.Metadata.name,  // Always enforce name and id key behavior
+          id: latest.Metadata.id
+        },
+        metadataDirective: MetadataDirective.REPLACE,
+        versionId: req.query.versionId ? req.query.versionId.toString() : undefined
+      };
+
+      const response = await storageService.copyObject(data);
+      controller._setS3Headers(response, res);
+      res.status(204).end();
     } catch (e) {
       next(errorToProblem(SERVICE, e));
     }
@@ -250,6 +346,52 @@ const controller = {
   },
 
   /**
+ * @function replaceMetadata
+ * Creates a new version of the object via copy with the new metadata replacing the previous
+ * @param {object} req Express request object
+ * @param {object} res Express response object
+ * @param {function} next The next callback function
+ * @returns {function} Express middleware function
+*/
+  async replaceMetadata(req, res, next) {
+    try {
+      const objId = addDashesToUuid(req.params.objId);
+      const objPath = getPath(objId);
+
+      const latest = await storageService.headObject({ filePath: objPath });
+      if (latest.ContentLength > MAXCOPYOBJECTLENGTH) {
+        throw new Error('Cannot copy an object larger than 5GB');
+      }
+
+      const newMetadata = getMetadata(req.headers);
+      if (!Object.keys(newMetadata).length) {
+        // TODO: Validation level logic. To be moved.
+        // 422 when no keys present
+        res.status(422).end();
+      }
+      else {
+        const data = {
+          copySource: objPath,
+          filePath: objPath,
+          metadata: {
+            name: latest.Metadata.name,  // Always enforce name and id key behavior
+            ...newMetadata, // Add new metadata
+            id: latest.Metadata.id
+          },
+          metadataDirective: MetadataDirective.REPLACE,
+          versionId: req.query.versionId ? req.query.versionId.toString() : undefined
+        };
+
+        const response = await storageService.copyObject(data);
+        controller._setS3Headers(response, res);
+        res.status(204).end();
+      }
+    } catch (e) {
+      next(errorToProblem(SERVICE, e));
+    }
+  },
+
+  /**
    * @function searchObjects
    * Search and filter for specific objects
    * @param {object} req Express request object
@@ -270,7 +412,7 @@ const controller = {
         path: req.query.path,
         mimeType: req.query.mimeType,
         public: isTruthy(req.query.public),
-        active: isTruthy(req.query.active),
+        active: isTruthy(req.query.active)
       };
 
       // When using OIDC authentication, force populate current user as filter if available
@@ -330,9 +472,9 @@ const controller = {
           id: objId,
           fieldName: name,
           mimeType: info.mimeType,
-          originalName: info.filename
-          // TODO: Implement metadata and tag support - request shape TBD
-          // metadata: { foo: 'bar', baz: 'bam' }
+          originalName: info.filename,
+          metadata: getMetadata(req.headers)
+          // TODO: Implement tag support - request shape TBD
           // tags: { foo: 'bar', baz: 'bam' }
         };
         object = {

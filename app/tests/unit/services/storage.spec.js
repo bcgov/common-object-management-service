@@ -126,7 +126,7 @@ describe('listObjects', () => {
     s3ClientMock.on(ListObjectsCommand).resolves({});
   });
 
-  it('should send a list objects command with default 1000 maxKeys', () => {
+  it('should send a list objects command with default 2^31-1 maxKeys', () => {
     const filePath = 'filePath';
     const result = service.listObjects({ filePath });
 
@@ -135,7 +135,7 @@ describe('listObjects', () => {
     expect(s3ClientMock.commandCalls(ListObjectsCommand, {
       Bucket: bucket,
       Prefix: filePath,
-      MaxKeys: 1000
+      MaxKeys: (2 ** 31) - 1
     }, true)).toHaveLength(1);
   });
 

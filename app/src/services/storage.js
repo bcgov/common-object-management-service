@@ -1,5 +1,6 @@
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const {
+  CopyObjectCommand,
   DeleteObjectCommand,
   GetBucketVersioningCommand,
   GetObjectCommand,
@@ -13,6 +14,7 @@ const {
 const config = require('config');
 
 const { getPath } = require('../components/utils');
+const { MAXKEYS, MetadataDirective } = require('../components/constants');
 
 // Get app configuration
 const endpoint = config.get('objectStorage.endpoint');
@@ -43,6 +45,29 @@ const objectStorageService = {
     forcePathStyle: true,
     region: 'us-east-1' // Need to specify valid AWS region or it'll explode ('us-east-1' is default, 'ca-central-1' for Canada)
   }),
+
+  /**
+   * @function copyObject
+   * Creates a copy of the object at `copySource`
+   * @param {string} options.copySource Specifies the source object for the copy operation, excluding the bucket name
+   * @param {string} options.filePath The filePath of the object
+   * @param {string} [options.metadata] Optional metadata to store with the object
+   * @param {string} [options.metadataDirective=COPY] Optional operation directive
+   * @param {string} [options.versionId=undefined] Optional versionId to copy from
+   * @returns {Promise<object>} The response of the delete object operation
+   */
+  copyObject({ copySource, filePath, metadata, metadataDirective = MetadataDirective.COPY, versionId = undefined }) {
+    const params = {
+      Bucket: bucket,
+      CopySource: `${bucket}/${copySource}`,
+      Key: filePath,
+      Metadata: metadata,
+      MetadataDirective: metadataDirective,
+      VersionId: versionId
+    };
+
+    return this._s3Client.send(new CopyObjectCommand(params));
+  },
 
   /**
    * @function deleteObject
@@ -105,10 +130,10 @@ const objectStorageService = {
    * @function listObjects
    * Lists the objects in the bucket with the prefix of `filePath`
    * @param {string} options.filePath The filePath of the object
-   * @param {number} [options.maxKeys=1000] The maximum number of keys to return
+   * @param {number} [options.maxKeys=2^31-1] The maximum number of keys to return
    * @returns {Promise<object>} The response of the list objects operation
    */
-  listObjects({ filePath, maxKeys=1000 }) {
+  listObjects({ filePath, maxKeys = MAXKEYS }) {
     const params = {
       Bucket: bucket,
       Prefix: filePath, // Must filter via "prefix" - https://stackoverflow.com/a/56569856
@@ -139,7 +164,7 @@ const objectStorageService = {
    * @param {number} [expiresIn=300] The number of seconds this signed url will be valid for
    * @returns {Promise<string>} A presigned url for the direct S3 REST `command` operation
    */
-  presignUrl(command, expiresIn=defaultTempExpiresIn) { // Default expire to 5 minutes
+  presignUrl(command, expiresIn = defaultTempExpiresIn) { // Default expire to 5 minutes
     return getSignedUrl(this._s3Client, command, { expiresIn });
   },
 
