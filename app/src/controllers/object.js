@@ -61,31 +61,30 @@ const controller = {
       if (latest.ContentLength > MAXCOPYOBJECTLENGTH) {
         throw new Error('Cannot copy an object larger than 5GB');
       }
+
+      const metadataToAppend = getMetadata(req.headers);
+      if (!Object.keys(metadataToAppend).length) {
+        // TODO: Validation level logic. To be moved.
+        // 422 when no keys present
+        res.status(422).end();
+      }
       else {
-        const metadataToAppend = getMetadata(req.headers);
-        if (!Object.keys(metadataToAppend).length) {
-          // 422 when no keys present
-          res.status(422).end();
-        }
-        else {
-          const { versionId } = req.query;
 
-          const data = {
-            copySource: objPath,
-            filePath: objPath,
-            metadata: {
-              ...latest.Metadata,  // Take existing metadata first
-              ...metadataToAppend, // Append new metadata
-              id: latest.Metadata.id // Always enforce id key behavior
-            },
-            metadataDirective: MetadataDirective.REPLACE,
-            versionId: versionId ? versionId.toString() : undefined
-          };
+        const data = {
+          copySource: objPath,
+          filePath: objPath,
+          metadata: {
+            ...latest.Metadata,  // Take existing metadata first
+            ...metadataToAppend, // Append new metadata
+            id: latest.Metadata.id // Always enforce id key behavior
+          },
+          metadataDirective: MetadataDirective.REPLACE,
+          versionId: req.query.versionId ? req.query.versionId.toString() : undefined
+        };
 
-          const response = await storageService.copyObject(data);
-          controller._setS3Headers(response, res);
-          res.status(204).end();
-        }
+        const response = await storageService.copyObject(data);
+        controller._setS3Headers(response, res);
+        res.status(204).end();
       }
     } catch (e) {
       next(errorToProblem(SERVICE, e));
@@ -113,8 +112,8 @@ const controller = {
           fieldName: name,
           mimeType: info.mimeType,
           originalName: info.filename,
-          // TODO: Implement metadata and tag support - request shape TBD
           metadata: getMetadata(req.headers),
+          // TODO: Implement tag support - request shape TBD
           // tags: { foo: 'bar', baz: 'bam' }
         };
         objects.push({
@@ -167,35 +166,32 @@ const controller = {
       if (latest.ContentLength > MAXCOPYOBJECTLENGTH) {
         throw new Error('Cannot copy an object larger than 5GB');
       }
-      else {
-        const { versionId } = req.query;
-        const keysToRemove = Object.keys(getMetadata(req.headers));
 
-        // Generate object subset by subtracting/omitting defined keys via filter/inclusion
-        let metadata = undefined;
-        if (keysToRemove && keysToRemove.length) {
-          metadata = Object.fromEntries(
-            Object.entries(latest.Metadata)
-              .filter(([key]) => !keysToRemove.includes(key))
-          );
-        }
-
-        const data = {
-          copySource: objPath,
-          filePath: objPath,
-          metadata: {
-            ...metadata,
-            name: latest.Metadata.name,  // Always enforce name and id key behavior
-            id: latest.Metadata.id
-          },
-          metadataDirective: MetadataDirective.REPLACE,
-          versionId: versionId ? versionId.toString() : undefined
-        };
-
-        const response = await storageService.copyObject(data);
-        controller._setS3Headers(response, res);
-        res.status(204).end();
+      // Generate object subset by subtracting/omitting defined keys via filter/inclusion
+      const keysToRemove = Object.keys(getMetadata(req.headers));
+      let metadata = undefined;
+      if (keysToRemove.length) {
+        metadata = Object.fromEntries(
+          Object.entries(latest.Metadata)
+            .filter(([key]) => !keysToRemove.includes(key))
+        );
       }
+
+      const data = {
+        copySource: objPath,
+        filePath: objPath,
+        metadata: {
+          ...metadata,
+          name: latest.Metadata.name,  // Always enforce name and id key behavior
+          id: latest.Metadata.id
+        },
+        metadataDirective: MetadataDirective.REPLACE,
+        versionId: req.query.versionId ? req.query.versionId.toString() : undefined
+      };
+
+      const response = await storageService.copyObject(data);
+      controller._setS3Headers(response, res);
+      res.status(204).end();
     } catch (e) {
       next(errorToProblem(SERVICE, e));
     }
@@ -366,31 +362,29 @@ const controller = {
       if (latest.ContentLength > MAXCOPYOBJECTLENGTH) {
         throw new Error('Cannot copy an object larger than 5GB');
       }
+
+      const newMetadata = getMetadata(req.headers);
+      if (!Object.keys(newMetadata).length) {
+        // TODO: Validation level logic. To be moved.
+        // 422 when no keys present
+        res.status(422).end();
+      }
       else {
-        const newMetadata = getMetadata(req.headers);
-        if (!Object.keys(newMetadata).length) {
-          // 422 when no keys present
-          res.status(422).end();
-        }
-        else {
-          const { versionId } = req.query;
+        const data = {
+          copySource: objPath,
+          filePath: objPath,
+          metadata: {
+            name: latest.Metadata.name,  // Always enforce name and id key behavior
+            ...newMetadata, // Add new metadata
+            id: latest.Metadata.id
+          },
+          metadataDirective: MetadataDirective.REPLACE,
+          versionId: req.query.versionId ? req.query.versionId.toString() : undefined
+        };
 
-          const data = {
-            copySource: objPath,
-            filePath: objPath,
-            metadata: {
-              ...newMetadata, // Add new metadata
-              name: latest.Metadata.name,  // Always enforce name and id key behavior
-              id: latest.Metadata.id
-            },
-            metadataDirective: MetadataDirective.REPLACE,
-            versionId: versionId ? versionId.toString() : undefined
-          };
-
-          const response = await storageService.copyObject(data);
-          controller._setS3Headers(response, res);
-          res.status(204).end();
-        }
+        const response = await storageService.copyObject(data);
+        controller._setS3Headers(response, res);
+        res.status(204).end();
       }
     } catch (e) {
       next(errorToProblem(SERVICE, e));
@@ -418,8 +412,7 @@ const controller = {
         path: req.query.path,
         mimeType: req.query.mimeType,
         public: isTruthy(req.query.public),
-        active: isTruthy(req.query.active),
-        // metadata: mixedQueryToArray(req.query.metadata),
+        active: isTruthy(req.query.active)
       };
 
       // When using OIDC authentication, force populate current user as filter if available
@@ -480,8 +473,8 @@ const controller = {
           fieldName: name,
           mimeType: info.mimeType,
           originalName: info.filename,
-          // TODO: Implement metadata and tag support - request shape TBD
           metadata: getMetadata(req.headers)
+          // TODO: Implement tag support - request shape TBD
           // tags: { foo: 'bar', baz: 'bam' }
         };
         object = {

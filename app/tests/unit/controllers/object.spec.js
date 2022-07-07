@@ -29,7 +29,7 @@ describe('addMetadata', () => {
     Metadata: { id: 1, foo: 'bar' }
   };
   const BadResponse = {
-    ContentLength: MAXCOPYOBJECTLENGTH + 1
+    MontentLength: MAXCOPYOBJECTLENGTH + 1
   };
 
   it('should error when Content-Length is greater than 5GB', async () => {
@@ -94,7 +94,7 @@ describe('deleteMetadata', () => {
   // response from S3
   const GoodResponse = {
     ContentLength: 1234,
-    Metadata: { id: 1, foo: 'bar', baz: 'quz' }
+    Metadata: { id: 1, name: 'test', foo: 'bar', baz: 'quz' }
   };
   const BadResponse = {
     ContentLength: MAXCOPYOBJECTLENGTH + 1
@@ -128,7 +128,8 @@ describe('deleteMetadata', () => {
       filePath: 'xyz-789',
       metadata: {
         baz: 'quz',
-        id: 1
+        id: 1,
+        name: 'test',
       },
       metadataDirective: MetadataDirective.REPLACE,
       versionId: undefined
@@ -153,7 +154,8 @@ describe('deleteMetadata', () => {
       copySource: 'xyz-789',
       filePath: 'xyz-789',
       metadata: {
-        id: 1
+        id: 1,
+        name: 'test'
       },
       metadataDirective: MetadataDirective.REPLACE,
       versionId: undefined
@@ -274,7 +276,7 @@ describe('replaceMetadata', () => {
   // response from S3
   const GoodResponse = {
     ContentLength: 1234,
-    Metadata: { id: 1, foo: 'bar' }
+    Metadata: { id: 1, name: 'test', foo: 'bar' }
   };
   const BadResponse = {
     ContentLength: MAXCOPYOBJECTLENGTH + 1
@@ -322,8 +324,36 @@ describe('replaceMetadata', () => {
       copySource: 'xyz-789',
       filePath: 'xyz-789',
       metadata: {
-        baz: 'quz',
-        id: 1
+        id: 1,
+        name: 'test',
+        baz: 'quz'
+      },
+      metadataDirective: MetadataDirective.REPLACE,
+      versionId: undefined
+    });
+  });
+
+  it('should replace replace the name', async () => {
+    // request object
+    const req = {
+      headers: { 'x-amz-meta-name': 'newName', 'x-amz-meta-baz': 'quz' },
+      params: { objId: 'xyz-789' },
+      query: {}
+    };
+
+    storageHeadObjectSpy.mockReturnValue(GoodResponse);
+    storageCopyObjectSpy.mockReturnValue({});
+
+    await controller.replaceMetadata(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(204);
+    expect(storageCopyObjectSpy).toHaveBeenCalledWith({
+      copySource: 'xyz-789',
+      filePath: 'xyz-789',
+      metadata: {
+        id: 1,
+        name: 'newName',
+        baz: 'quz'
       },
       metadataDirective: MetadataDirective.REPLACE,
       versionId: undefined

@@ -28,17 +28,21 @@ describe('addDashesToUuid', () => {
   });
 });
 
-describe.only('getMetadata', () => {
+describe('getMetadata', () => {
   const headers = {
     'Content-Length': 1234,
     'x-amz-meta-foo': 'bar',
     'x-amz-meta-baz': 'quz',
+    'X-Amz-Meta-Bam': 'blam',
+    'x-AmZ-mEtA-rUn': 'ran',
   };
 
   it('should return new object containing metadata headers without x-amz-meta- prefix', () => {
     expect(utils.getMetadata(headers)).toEqual({
       foo: 'bar',
-      baz: 'quz'
+      baz: 'quz',
+      bam: 'blam',
+      run: 'ran'
     });
   });
 });

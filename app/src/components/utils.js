@@ -116,14 +116,13 @@ const utils = {
 
   /**
    * @function getMetadata
-   * Gets metadata from an object
-   * @param {object} obj The object to get key/value pairs from
-   * @returns {object} Object with the metadata key/value pairs
+   * Derives metadata from a request header object
+   * @param {object} obj The request headers to get key/value pairs from
+   * @returns {object} An object with metadata key/value pair attributes
    */
   getMetadata(obj) {
-    // TODO: case sensitivity?
     return Object.fromEntries(Object.keys(obj)
-      .filter((key) => key.startsWith('x-amz-meta-'))
+      .filter((key) => key.toLowerCase().startsWith('x-amz-meta-'))
       .map((key) => ([key.substring(11), obj[key]]))
     );
   },

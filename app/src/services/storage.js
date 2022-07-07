@@ -62,10 +62,9 @@ const objectStorageService = {
       CopySource: `${bucket}/${copySource}`,
       Key: filePath,
       Metadata: metadata,
-      MetadataDirective: metadataDirective
+      MetadataDirective: metadataDirective,
+      VersionId: versionId
     };
-
-    if (versionId) params.VersionId = versionId;
 
     return this._s3Client.send(new CopyObjectCommand(params));
   },

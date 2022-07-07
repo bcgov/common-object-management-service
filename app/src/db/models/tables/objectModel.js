@@ -73,15 +73,7 @@ class ObjectModel extends Timestamps(Model) {
             .where('originalName', 'ilike', `%${value}%`);
           query.whereIn('id', subquery);
         }
-      },
-      // filterMetadata(query, value) {
-      //   if (value) {
-      //     const subquery = Metadata.query()
-      //       .distinct('objectId')
-      //       .whereIn('value', value);
-      //     query.whereIn('id', subquery);
-      //   }
-      // },
+      }
       // TODO: consider chaining Version modifiers in a way that they are combined. Example:
       // Version.modifiers.filterDeleteMarker(query.joinRelated('version'), value);
       // Version.modifiers.filterLatest(query.joinRelated('version'), value);

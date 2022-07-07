@@ -18,6 +18,11 @@ security:
   - BearerAuth: []
     OpenID: []
 tags:
+  - name: Metadata
+    description: >-
+      Operations directly influencing the Metadata S3 Object.
+    externalDocs:
+      url: https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#metadata
   - name: Object
     description: >-
       Operations directly influencing an S3 Object. Certain operations not
@@ -352,11 +357,11 @@ paths:
         added to the object. Multiple Key/Value pairs can be provided in the header for the metadata.
       operationId: addMetadata
       tags:
-        - Object
+        - Metadata
       parameters:
-        - $ref: "#/components/parameters/Path-ObjectId"
-        - $ref: "#/components/parameters/Query-VersionId"
         - $ref: "#/components/parameters/Header-Metadata"
+        - $ref: "#/components/parameters/Path-ObjectId"
+        - $ref: "#/components/parameters/Query-VersionId"        
       responses:
         "204": 
           description: The resource was added successfully.
@@ -372,11 +377,11 @@ paths:
         Creates a copy and new version of the object with the given metadata replacing the existing. Multiple Key/Value pairs can be provided in the header for the metadata.
       operationId: replaceMetadata
       tags:
-        - Object
+        - Metadata
       parameters:
-        - $ref: "#/components/parameters/Path-ObjectId"
-        - $ref: "#/components/parameters/Query-VersionId"
         - $ref: "#/components/parameters/Header-Metadata"
+        - $ref: "#/components/parameters/Path-ObjectId"
+        - $ref: "#/components/parameters/Query-VersionId"        
       responses:
         "204": 
           description: The resource was added successfully.
@@ -392,8 +397,9 @@ paths:
         Creates a copy and new version of the object with the given metadata removed. Multiple Key/Value pairs can be provided in the header for the metadata. If no metadata headers are given then all metadata will be removed. 
       operationId: deleteMetadata
       tags:
-        - Object
+        - Metadata
       parameters:
+        - $ref: "#/components/parameters/Header-Metadata"
         - $ref: "#/components/parameters/Path-ObjectId"
         - $ref: "#/components/parameters/Query-VersionId"
       responses:
