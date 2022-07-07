@@ -23,8 +23,8 @@ module.exports = Object.freeze({
 
   /** Maximum Content Length supported by S3 CopyObjectCommand */
   MAXCOPYOBJECTLENGTH: 5 * 1024 * 1024 * 1024,
-  /** Default maximum number of keys to list */
-  MAXKEYS: 1000,
+  /** Default maximum number of keys to list. S3 default cap is 1000*/
+  MAXKEYS: Number.MAX_SAFE_INTEGER,
 
   /** Allowable values for the Metadata Directive parameter */
   MetadataDirective: {
