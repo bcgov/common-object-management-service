@@ -41,8 +41,8 @@ describe('getMetadata', () => {
     expect(utils.getMetadata(headers)).toEqual({
       foo: 'bar',
       baz: 'quz',
-      bam: 'blam',
-      run: 'ran'
+      Bam: 'blam',
+      rUn: 'ran'
     });
   });
 });
