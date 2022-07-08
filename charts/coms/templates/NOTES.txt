@@ -1,4 +1,6 @@
-1. Get the application URL by running these commands:
+{{- $configMapName := printf "%s-%s" (include "coms.configname" .) "config" }}
+{{- $configMap := (lookup "v1" "ConfigMap" .Release.Namespace $configMapName ) }}
+Get the application URL by running these commands:
 {{- if .Values.route.enabled }}
   http{{ if $.Values.route.tls }}s{{ end }}://{{ .Values.route.host }}{{ .Values.route.path }}
 {{- else if contains "NodePort" .Values.service.type }}
@@ -15,4 +17,8 @@
   export CONTAINER_PORT=$(kubectl get pod --namespace {{ .Release.Namespace }} $POD_NAME -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
   echo "Visit http://127.0.0.1:8080 to use your application"
   kubectl --namespace {{ .Release.Namespace }} port-forward $POD_NAME 8080:$CONTAINER_PORT
+{{- end }}
+{{- if not $configMap }}
+
+Make sure that ConfigMap "{{ $configMapName }}" is defined in the namespace; the deployment will fail to run without it!
 {{- end }}

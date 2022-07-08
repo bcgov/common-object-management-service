@@ -24,7 +24,7 @@ spec:
       {{- toYaml .Values.resources | nindent 6 }}
     rollingParams:
       timeoutSeconds: 600
-      {{- if .Values.config.configMap.DB_ENABLED }}
+      {{- if or .Values.patroni.enabled .Values.config.configMap.DB_ENABLED }}
       pre:
         failurePolicy: {{ .Values.failurePolicy }}
         execNewPod:
@@ -98,7 +98,7 @@ spec:
           env:
             - name: NODE_ENV
               value: production
-            {{- if .Values.config.configMap.BASICAUTH_ENABLED }}
+            {{- if or .Values.features.basicAuth .Values.config.configMap.BASICAUTH_ENABLED }}
             - name: BASICAUTH_USERNAME
               valueFrom:
                 secretKeyRef:
@@ -110,7 +110,7 @@ spec:
                   key: password
                   name: {{ include "coms.configname" . }}-basicauth
             {{- end }}
-            {{- if .Values.config.configMap.DB_ENABLED }}
+            {{- if or .Values.patroni.enabled .Values.config.configMap.DB_ENABLED }}
             - name: DB_DATABASE
               valueFrom:
                 secretKeyRef:
@@ -129,7 +129,7 @@ spec:
                   key: app-db-password
                   name: {{ include "patroni.fullname" .Subcharts.patroni }}
             {{- end }}
-            {{- if .Values.config.configMap.KC_ENABLED }}
+            {{- if or .Values.features.oidcAuth .Values.config.configMap.KC_ENABLED }}
             - name: KC_CLIENTID
               valueFrom:
                 secretKeyRef:
