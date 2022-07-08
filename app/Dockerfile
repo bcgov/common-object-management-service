@@ -1,4 +1,4 @@
-FROM docker.io/node:16.15.1-alpine
+FROM docker.io/node:16.15.0-alpine
 
 ARG APP_ROOT=/opt/app-root/src
 ENV NO_UPDATE_NOTIFIER=true \
