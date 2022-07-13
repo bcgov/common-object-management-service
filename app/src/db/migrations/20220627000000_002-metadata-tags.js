@@ -50,10 +50,10 @@ exports.up = function (knex) {
     AFTER UPDATE OR DELETE ON version_tag
     FOR EACH ROW EXECUTE PROCEDURE audit.if_modified_func();`))
 
-  /**
-   * for each version, move originalName and objectId to records in metadata table
-   * and create joining version_metadata records
-   */
+    /**
+     * for each version, move originalName and objectId to records in metadata table
+     * and create joining version_metadata records
+     */
     .then(() => knex('version').where('deleteMarker', false))
     .then((rows) => {
       const versions = rows.map(v => ({

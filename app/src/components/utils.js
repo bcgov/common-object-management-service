@@ -180,7 +180,7 @@ const utils = {
    * @param {object[]} inputArray array of objects like `{<key>:<value>}`
    * @returns {object[]} array of objects like `{key: <key>, value: <value>}`
    */
-  labelMetadata(inputArray){
+  labelMetadata(inputArray) {
     const array = [];
     for (const [key, val] of Object.entries(inputArray)) {
       const meta = { key: key, value: val };
