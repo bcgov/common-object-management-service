@@ -211,9 +211,9 @@ describe('putObject', () => {
   it('should send a put object command', () => {
     const stream = new Readable();
     const id = 'id';
-    const originalName = 'originalName';
     const mimeType = 'mimeType';
-    const result = service.putObject({ stream, id, originalName, mimeType });
+    const metadata =  { name: 'originalName', id: id };
+    const result = service.putObject({ stream, id, mimeType, metadata });
 
     expect(result).toBeTruthy();
     expect(s3ClientMock.calls()).toHaveLength(1);
@@ -222,21 +222,16 @@ describe('putObject', () => {
       ContentType: mimeType,
       Key: utils.joinPath(key, id),
       Body: stream,
-      Metadata: {
-        name: originalName,
-        id: id
-      },
-      ServerSideEncryption: 'AES256'
+      Metadata: metadata,
     }, true)).toHaveLength(1);
   });
 
   it('should send a put object command with custom metadata', () => {
     const stream = new Readable();
     const id = 'id';
-    const originalName = 'originalName';
     const mimeType = 'mimeType';
-    const metadata = { foo: 'foo', bar: 'bar' };
-    const result = service.putObject({ stream, id, originalName, mimeType, metadata });
+    const metadata = { name: 'originalName', id: id, foo: 'foo', bar: 'bar' };
+    const result = service.putObject({ stream, id, mimeType, metadata });
 
     expect(result).toBeTruthy();
     expect(s3ClientMock.calls()).toHaveLength(1);
@@ -245,23 +240,17 @@ describe('putObject', () => {
       ContentType: mimeType,
       Key: utils.joinPath(key, id),
       Body: stream,
-      Metadata: {
-        foo: 'foo',
-        bar: 'bar',
-        name: originalName,
-        id: id
-      },
-      ServerSideEncryption: 'AES256'
+      Metadata: metadata
     }, true)).toHaveLength(1);
   });
 
   it('should send a put object command with custom tags', () => {
     const stream = new Readable();
     const id = 'id';
-    const originalName = 'originalName';
     const mimeType = 'mimeType';
+    const metadata =  { name: 'originalName', id: id };
     const tags = { foo: 'foo', bar: 'bar' };
-    const result = service.putObject({ stream, id, originalName, mimeType, tags });
+    const result = service.putObject({ stream, id, mimeType, metadata, tags });
 
     expect(result).toBeTruthy();
     expect(s3ClientMock.calls()).toHaveLength(1);
@@ -270,11 +259,7 @@ describe('putObject', () => {
       ContentType: mimeType,
       Key: utils.joinPath(key, id),
       Body: stream,
-      Metadata: {
-        name: originalName,
-        id: id
-      },
-      ServerSideEncryption: 'AES256',
+      Metadata: metadata,
       Tagging: 'foo=foo&bar=bar'
     }, true)).toHaveLength(1);
   });

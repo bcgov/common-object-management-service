@@ -234,22 +234,6 @@ const utils = {
   },
 
   /**
-   * @function pushOrUpdateObjectInArray
-   * Adds an object to an array or updates an existing object in array with same value for given property
-   * @param {Object[]} array the array of existing objects
-   * @param {Object[]} new object to add or update
-   * @param {String} prop the discriminating object property
-   */
-  pushOrUpdateObjectInArray(arr, obj, prop) {
-    const index = arr.findIndex((e) => e[prop] === obj[prop]);
-    if (index === -1) {
-      arr.push(obj);
-    } else {
-      arr[index] = obj;
-    }
-  },
-
-  /**
    * @function streamToBuffer
    * Reads a Readable stream, writes to and returns an array buffer
    * @see {@link https://github.com/aws/aws-sdk-js-v3/issues/1877#issuecomment-755446927}

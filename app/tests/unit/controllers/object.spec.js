@@ -198,7 +198,6 @@ describe('deleteObject', () => {
       DeleteMarker: true,
       VersionId: '1234',
       mimeType: null,
-      originalName: null
     }], 'testsub');
   });
 

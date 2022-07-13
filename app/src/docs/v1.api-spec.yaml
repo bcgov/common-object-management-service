@@ -937,16 +937,12 @@ components:
       allOf:
         - type: object
           required:
-            - id
-            - objectId
-            - userId
-            - permCode
+            - metadata
           properties:
             metadata:
               type: object
-              format: uuid
               description: User-defined metadata
-              example: {'name': 'report.xls'}
+              example: {'name': 'report.xls', 'department': 'finance', 'id': 'ac246e31-c807-496c-bc93-cd8bc2f1b2b4'}
     DB-ObjectPermission:
       allOf:
         - type: object

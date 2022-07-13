@@ -3,24 +3,23 @@ const stamps = require('../stamps');
 exports.up = function (knex) {
   return Promise.resolve()
 
-    // // create metadata table
+    // create metadata table
     .then(() => knex.schema.createTable('metadata', table => {
       table.specificType(
         'id',
         'integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY'
       );
-      table.string('key').index();
-      table.string('value').index();
+      table.string('key', 255).index();
+      table.string('value', 255).index();
       table.unique(['key', 'value']);
-
     }))
 
     // create version_metadata table
     .then(() => knex.schema.createTable('version_metadata', table => {
+      table.primary(['versionId', 'metadataId']);
       table.uuid('versionId').notNullable().references('id').inTable('version');
       table.integer('metadataId').notNullable().references('id').inTable('metadata');
       stamps(knex, table);
-      table.primary(['versionId', 'metadataId']);
     }))
 
     // create tag table
@@ -29,19 +28,18 @@ exports.up = function (knex) {
         'id',
         'integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY'
       );
-      table.string('key').index();
-      table.string('value').index();
+      table.string('key', 255).index();
+      table.string('value', 255).index();
       table.unique(['key', 'value']);
     }))
 
     // create version_tag table
     .then(() => knex.schema.createTable('version_tag', table => {
+      table.primary(['versionId', 'tagId']);
       table.uuid('versionId').notNullable().references('id').inTable('version');
       table.integer('tagId').notNullable().references('id').inTable('tag');
       stamps(knex, table);
-      table.primary(['versionId', 'tagId']);
     }))
-
 
     // Create metadata audit trigger
     .then(() => knex.schema.raw(`CREATE TRIGGER audit_version_metadata_trigger
@@ -57,27 +55,30 @@ exports.up = function (knex) {
    * and create joining version_metadata records
    */
     .then(() => knex('version').where('deleteMarker', false))
-    .then(async (rows) => {
+    .then((rows) => {
       const versions = rows.map(v => ({
         value: v.originalName,
         versionId: v.id,
         objectId: v.objectId
       }));
-      let promises = versions.map(async (row) => {
-        // insert into metadata table, returning [metadata.id]
-        const insertIdArray = await knex('metadata').insert([
+
+      return Promise.all(versions.map((row) => {
+        // insert into metadata table
+        knex('metadata').insert([
           { key: 'name', value: row.value },
           { key: 'id', value: row.objectId }
         ]).onConflict(['key', 'value'])
           .merge()
-          .returning('id');
-        // add joining records
-        return knex('version_metadata').insert([
-          { versionId: row.versionId, metadataId: insertIdArray[0].id },
-          { versionId: row.versionId, metadataId: insertIdArray[1].id }
-        ]);
-      });
-      await Promise.all(promises);
+          // Return just id column
+          .returning('id')
+          // add joining records
+          .then((result) => {
+            return knex('version_metadata').insert(result.map((metadata) => ({
+              metadataId: metadata.id,
+              versionId: row.versionId
+            })));
+          });
+      }));
     })
 
     // remove column originalName from version table
@@ -101,13 +102,12 @@ exports.down = function (knex) {
       .select('version_metadata.versionId', 'metadata.value')
       .where('metadata.key', 'name')
     )
-    .then(async (versionMetadata) => {
-      const promises = versionMetadata.map((vm) => {
+    .then((versionMetadata) => {
+      return Promise.all(versionMetadata.map((vm) => {
         return knex('version')
           .update({ originalName: vm.value })
           .where({ id: vm.versionId });
-      });
-      await Promise.all(promises);
+      }));
     })
 
     // Drop audit triggers
