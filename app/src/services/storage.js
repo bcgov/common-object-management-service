@@ -188,6 +188,8 @@ const objectStorageService = {
         ...metadata,
         id: id // enforce metadata `id: <object ID>`
       },
+      // TODO: Consider adding API param support for Server Side Encryption
+      // ServerSideEncryption: 'AES256'
     };
 
     if (tags) {

@@ -37,7 +37,7 @@ const schema = {
   searchObjects: {
     query: Joi.object({
       objId: scheme.guid,
-      name: type.alphanum,
+      name: Joi.string(),
       path: Joi.string().max(1024),
       mimeType: Joi.string().max(255),
       public: type.truthy,

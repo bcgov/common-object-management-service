@@ -123,7 +123,7 @@ describe('searchObjects', () => {
       const name = query.keys.name;
 
       it('is the expected schema', () => {
-        expect(name).toEqual(type.alphanum.describe());
+        expect(name.type).toEqual('string');
       });
     });
 

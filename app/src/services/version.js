@@ -20,24 +20,28 @@ const service = {
     try {
       trx = etrx ? etrx : await Version.startTransaction();
 
-      // for each object version we are creating
-      const response = await Promise.all(data.map(async v => {
-        // insert version record
-        const insertVersion = await Version.query(trx)
-          .insert({
-            id: uuidv4(),
-            versionId: v.VersionId,
-            mimeType: v.mimeType,
-            objectId: v.id,
-            createdBy: userId,
-            deleteMarker: v.DeleteMarker,
-          });
-        //  Add metadata
-        if(v.metadata) await metadataService.addMetadata(insertVersion.id, v.metadata, data.userId, trx);
+      // multi-row version insert
+      const versionArray = data.map((v) => ({
+        id: uuidv4(),
+        versionId: v.VersionId,
+        mimeType: v.mimeType,
+        objectId: v.id,
+        createdBy: userId,
+        deleteMarker: v.DeleteMarker,
+      }));
+      const response = await Version.query(trx)
+        .insert(versionArray)
+        .returning('id', 'objectId');
+
+      // call metadata service for each version that was inserted
+      await Promise.all(response.map((v) => {
+        // get metadata from original incoming data array
+        const metadata = data.filter(obj => obj.id === v.objectId)[0].metadata;
+        if (metadata) return metadataService.addMetadata(v.id, metadata, data.userId, trx);
       }));
 
       if (!etrx) await trx.commit();
-      return response;
+      return Promise.resolve(response);
     } catch (err) {
       if (!etrx && trx) await trx.rollback();
       throw err;
@@ -66,7 +70,7 @@ const service = {
         .returning('*')
         .throwIfNotFound();
       if (!etrx) await trx.commit();
-      return response;
+      return Promise.resolve(response);
     } catch (err) {
       if (!etrx && trx) await trx.rollback();
       throw err;
@@ -89,7 +93,7 @@ const service = {
       const response = await Version.query(trx)
         .where({ objectId: objId });
       if (!etrx) await trx.commit();
-      return response;
+      return Promise.resolve(response);
     } catch (err) {
       if (!etrx && trx) await trx.rollback();
       throw err;
@@ -101,11 +105,11 @@ const service = {
    * Updates a version of an object.
    * Typically happens when updating the 'null-version' created for an object
    * on a non-versioned or version-suspnded bucket.
-   * Replaces metadta that already exists on this version by default
+   * Replaces metadata that already exists on this version by default
    * @param {object[]} data array of object attributes
    * @param {string} userId uuid of the current user
    * @param {object} [etrx=undefined] An optional Objection Transaction object
-   * @returns {Promise<integer>} The number of updated rows returned by db operation
+   * @returns {Promise<integer>} id of version updated in db
    * @throws The error encountered upon db transaction failure
    */
   update: async (data = {}, userId = SYSTEM_USER, etrx = undefined) => {
@@ -113,7 +117,7 @@ const service = {
     try {
       trx = etrx ? etrx : await Version.startTransaction();
       // update version record
-      const version = await Version.query(trx)
+      const response = await Version.query(trx)
         .where({ objectId: data.id })
         .update({
           objectId: data.id,
@@ -123,10 +127,10 @@ const service = {
         .first()
         .returning('id');
 
-      if(data.metadata) await metadataService.addMetadata(version.id, data.metadata, data.userId, trx);
+      if(data.metadata) await metadataService.addMetadata(response.id, data.metadata, data.userId, trx);
 
       if (!etrx) await trx.commit();
-      return version;
+      return Promise.resolve(response);
     } catch (err) {
       if (!etrx && trx) await trx.rollback();
       throw err;

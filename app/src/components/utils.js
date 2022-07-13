@@ -174,19 +174,14 @@ const utils = {
   },
 
   /**
-   * @function labelMetadata
+   * @function getKeyValue
    * Transforms array of {<key>:<value>} objects to {key: <key>, value: <value>}
    * @param {any}
-   * @param {object[]} inputArray array of objects like `{<key>:<value>}`
+   * @param {object} input of key value tuples like `<key>:<value>`
    * @returns {object[]} array of objects like `{key: <key>, value: <value>}`
    */
-  labelMetadata(inputArray) {
-    const array = [];
-    for (const [key, val] of Object.entries(inputArray)) {
-      const meta = { key: key, value: val };
-      array.push(meta);
-    }
-    return array;
+  getKeyValue(input) {
+    return Object.entries(input).map(([k, v]) => ({ key: k, value: v }));
   },
 
   /**

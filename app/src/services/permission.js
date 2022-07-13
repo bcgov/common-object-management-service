@@ -54,7 +54,7 @@ const service = {
       }
 
       if (!etrx) await trx.commit();
-      return response;
+      return Promise.resolve(response);
     } catch (err) {
       if (!etrx && trx) await trx.rollback();
       throw err;

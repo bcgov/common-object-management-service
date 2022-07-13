@@ -17,7 +17,7 @@ exports.up = function (knex) {
     // create version_metadata table
     .then(() => knex.schema.createTable('version_metadata', table => {
       table.primary(['versionId', 'metadataId']);
-      table.uuid('versionId').notNullable().references('id').inTable('version');
+      table.uuid('versionId').notNullable().references('id').inTable('version').onDelete('CASCADE').onUpdate('CASCADE');
       table.integer('metadataId').notNullable().references('id').inTable('metadata');
       stamps(knex, table);
     }))
@@ -36,7 +36,7 @@ exports.up = function (knex) {
     // create version_tag table
     .then(() => knex.schema.createTable('version_tag', table => {
       table.primary(['versionId', 'tagId']);
-      table.uuid('versionId').notNullable().references('id').inTable('version');
+      table.uuid('versionId').notNullable().references('id').inTable('version').onDelete('CASCADE').onUpdate('CASCADE');
       table.integer('tagId').notNullable().references('id').inTable('tag');
       stamps(knex, table);
     }))
