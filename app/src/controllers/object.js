@@ -1,7 +1,7 @@
 const busboy = require('busboy');
 const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 
-const { AuthMode, MAXCOPYOBJECTLENGTH, MetadataDirective, TaggingDirective } = require('../components/constants');
+const { AuthMode, MAXCOPYOBJECTLENGTH, MetadataDirective } = require('../components/constants');
 const errorToProblem = require('../components/errorToProblem');
 const {
   addDashesToUuid,
@@ -156,7 +156,7 @@ const controller = {
             name: info.filename,  // provide a default of `name: <file name>`
             ...getMetadata(req.headers),
             id: objId
-          }
+          },
           tags: newTags,
         };
         objects.push({
@@ -312,7 +312,7 @@ const controller = {
       const objectTagging = await storageService.getObjectTagging({ filePath: objPath, versionId });
 
       // Generate object subset by subtracting/omitting defined keys via filter/inclusion
-      const keysToRemove = mixedQueryToArray(req.query.key);
+      const keysToRemove = mixedQueryToArray(req.query.keys);
       let newTags = undefined;
       if (keysToRemove && objectTagging.TagSet) {
         newTags = objectTagging.TagSet.filter(x => !keysToRemove.includes(x.Key));
@@ -598,7 +598,7 @@ const controller = {
             name: info.filename,
             ...getMetadata(req.headers),
             id: objId
-          }
+          },
           tags: newTags
         };
         object = {

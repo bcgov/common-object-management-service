@@ -52,7 +52,8 @@ describe('deleteObject', () => {
     expect(s3ClientMock.calls()).toHaveLength(1);
     expect(s3ClientMock.commandCalls(DeleteObjectCommand, {
       Bucket: bucket,
-      Key: filePath
+      Key: filePath,
+      VersionId: undefined
     }, true)).toHaveLength(1);
   });
 
@@ -212,7 +213,7 @@ describe('putObject', () => {
     const stream = new Readable();
     const id = 'id';
     const mimeType = 'mimeType';
-    const metadata =  { name: 'originalName', id: id };
+    const metadata = { name: 'originalName', id: id };
     const result = service.putObject({ stream, id, mimeType, metadata });
 
     expect(result).toBeTruthy();
@@ -248,7 +249,7 @@ describe('putObject', () => {
     const stream = new Readable();
     const id = 'id';
     const mimeType = 'mimeType';
-    const metadata =  { name: 'originalName', id: id };
+    const metadata = { name: 'originalName', id: id };
     const tags = { foo: 'foo', bar: 'bar' };
     const result = service.putObject({ stream, id, mimeType, metadata, tags });
 
@@ -278,7 +279,8 @@ describe('readObject', () => {
     expect(s3ClientMock.calls()).toHaveLength(1);
     expect(s3ClientMock.commandCalls(GetObjectCommand, {
       Bucket: bucket,
-      Key: filePath
+      Key: filePath,
+      VersionId: undefined
     }, true)).toHaveLength(1);
   });
 
