@@ -1,7 +1,7 @@
 const busboy = require('busboy');
 const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 
-const { AuthMode, MAXCOPYOBJECTLENGTH, MetadataDirective } = require('../components/constants');
+const { AuthMode, MAXCOPYOBJECTLENGTH, MetadataDirective, TaggingDirective } = require('../components/constants');
 const errorToProblem = require('../components/errorToProblem');
 const {
   addDashesToUuid,
@@ -69,7 +69,6 @@ const controller = {
         res.status(422).end();
       }
       else {
-
         const data = {
           copySource: objPath,
           filePath: objPath,
@@ -92,6 +91,47 @@ const controller = {
   },
 
   /**
+   * @function addTags
+   * Adds the tag set to the requested object
+   * @param {object} req Express request object
+   * @param {object} res Express response object
+   * @param {function} next The next callback function
+   * @returns {function} Express middleware function
+  */
+  async addTags(req, res, next) {
+    try {
+      const objId = addDashesToUuid(req.params.objId);
+      const objPath = getPath(objId);
+      const { versionId, ...newTags } = req.query;
+      const objectTagging = await storageService.getObjectTagging({ filePath: objPath, versionId });
+
+      // Join new and existing tags then filter duplicates
+      let newSet = Object.entries(newTags).map(([k, v]) => ({ Key: k, Value: v }));
+      if (objectTagging.TagSet) newSet = newSet.concat(objectTagging.TagSet);
+      newSet = newSet.filter((v, i, a) => a.findIndex(v2 => (v2.Key === v.Key)) === i);
+
+      if (!Object.keys(newTags).length || newSet.length > 10) {
+        // TODO: Validation level logic. To be moved.
+        // 422 when no new tags or when tag limit will be exceeded
+        res.status(422).end();
+      }
+      else {
+        const data = {
+          filePath: objPath,
+          tags: newSet,
+          versionId: versionId ? versionId.toString() : undefined
+        };
+
+        const response = await storageService.putObjectTagging(data);
+        controller._setS3Headers(response, res);
+        res.status(204).end();
+      }
+    } catch (e) {
+      next(errorToProblem(SERVICE, e));
+    }
+  },
+
+  /**
    * @function createObjects
    * Creates new objects
    * @param {object} req Express request object
@@ -104,6 +144,7 @@ const controller = {
       const bb = busboy({ headers: req.headers });
       const objects = [];
       const userId = getCurrentSubject(req.currentUser);
+      const { ...newTags } = req.query;
 
       bb.on('file', (name, stream, info) => {
         const objId = uuidv4();
@@ -116,8 +157,7 @@ const controller = {
             ...getMetadata(req.headers),
             id: objId
           }
-          // TODO: Implement tag support - request shape TBD
-          // tags: { foo: 'bar', baz: 'bam' }
+          tags: newTags,
         };
         objects.push({
           data: data,
@@ -257,6 +297,45 @@ const controller = {
   },
 
   /**
+     * @function deleteTags
+     * Deletes the tag set on the requested object
+     * @param {object} req Express request object
+     * @param {object} res Express response object
+     * @param {function} next The next callback function
+     * @returns {function} Express middleware function
+    */
+  async deleteTags(req, res, next) {
+    try {
+      const objId = addDashesToUuid(req.params.objId);
+      const objPath = getPath(objId);
+      const { versionId } = req.query;
+      const objectTagging = await storageService.getObjectTagging({ filePath: objPath, versionId });
+
+      // Generate object subset by subtracting/omitting defined keys via filter/inclusion
+      const keysToRemove = mixedQueryToArray(req.query.key);
+      let newTags = undefined;
+      if (keysToRemove && objectTagging.TagSet) {
+        newTags = objectTagging.TagSet.filter(x => !keysToRemove.includes(x.Key));
+      }
+
+      const data = {
+        filePath: objPath,
+        tags: newTags,
+        versionId: versionId ? versionId.toString() : undefined
+      };
+
+      let response = await storageService.deleteObjectTagging(data);
+      if (newTags) {
+        response = await storageService.putObjectTagging(data);
+      }
+      controller._setS3Headers(response, res);
+      res.status(204).end();
+    } catch (e) {
+      next(errorToProblem(SERVICE, e));
+    }
+  },
+
+  /**
    * @function headObject
    * Returns object headers
    * @param {object} req Express request object
@@ -349,13 +428,13 @@ const controller = {
   },
 
   /**
- * @function replaceMetadata
- * Creates a new version of the object via copy with the new metadata replacing the previous
- * @param {object} req Express request object
- * @param {object} res Express response object
- * @param {function} next The next callback function
- * @returns {function} Express middleware function
-*/
+  * @function replaceMetadata
+  * Creates a new version of the object via copy with the new metadata replacing the previous
+  * @param {object} req Express request object
+  * @param {object} res Express response object
+  * @param {function} next The next callback function
+  * @returns {function} Express middleware function
+  */
   async replaceMetadata(req, res, next) {
     try {
       const objId = addDashesToUuid(req.params.objId);
@@ -386,6 +465,41 @@ const controller = {
         };
 
         const response = await storageService.copyObject(data);
+        controller._setS3Headers(response, res);
+        res.status(204).end();
+      }
+    } catch (e) {
+      next(errorToProblem(SERVICE, e));
+    }
+  },
+
+  /**
+   * @function replaceTags
+   * Replaces the tag set on the requested object
+   * @param {object} req Express request object
+   * @param {object} res Express response object
+   * @param {function} next The next callback function
+   * @returns {function} Express middleware function
+  */
+  async replaceTags(req, res, next) {
+    try {
+      const objId = addDashesToUuid(req.params.objId);
+      const objPath = getPath(objId);
+      const { versionId, ...newTags } = req.query;
+
+      if (!Object.keys(newTags).length || Object.keys(newTags).length > 10) {
+        // TODO: Validation level logic. To be moved.
+        // 422 when no new tags or when tag limit will be exceeded
+        res.status(422).end();
+      }
+      else {
+        const data = {
+          filePath: objPath,
+          tags: Object.entries(newTags).map(([k, v]) => ({ Key: k, Value: v })),
+          versionId: versionId ? versionId.toString() : undefined
+        };
+
+        const response = await storageService.putObjectTagging(data);
         controller._setS3Headers(response, res);
         res.status(204).end();
       }
@@ -467,6 +581,7 @@ const controller = {
     try {
       const bb = busboy({ headers: req.headers, limits: { files: 1 } });
       const userId = getCurrentSubject(req.currentUser);
+      const { ...newTags } = req.query;
       let object = undefined;
 
       bb.on('file', (name, stream, info) => {
@@ -480,8 +595,7 @@ const controller = {
             ...getMetadata(req.headers),
             id: objId
           }
-          // TODO: Implement tag support - request shape TBD
-          // tags: { foo: 'bar', baz: 'bam' }
+          tags: newTags
         };
         object = {
           data: data,

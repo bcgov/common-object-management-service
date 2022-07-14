@@ -2,19 +2,24 @@ const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const {
   CopyObjectCommand,
   DeleteObjectCommand,
+  DeleteObjectTaggingCommand,
+  GetBucketEncryptionCommand,
   GetBucketVersioningCommand,
   GetObjectCommand,
+  GetObjectTaggingCommand,
   HeadBucketCommand,
   HeadObjectCommand,
   ListObjectsCommand,
   ListObjectVersionsCommand,
+  PutBucketEncryptionCommand,
   PutObjectCommand,
-  S3Client
+  PutObjectTaggingCommand,
+  S3Client,
 } = require('@aws-sdk/client-s3');
 const config = require('config');
 
 const { getPath } = require('../components/utils');
-const { MAXKEYS, MetadataDirective } = require('../components/constants');
+const { MAXKEYS, MetadataDirective, TaggingDirective } = require('../components/constants');
 
 // Get app configuration
 const endpoint = config.get('objectStorage.endpoint');
@@ -56,13 +61,14 @@ const objectStorageService = {
    * @param {string} [options.versionId=undefined] Optional versionId to copy from
    * @returns {Promise<object>} The response of the delete object operation
    */
-  copyObject({ copySource, filePath, metadata, metadataDirective = MetadataDirective.COPY, versionId = undefined }) {
+  copyObject({ copySource, filePath, metadata, metadataDirective = MetadataDirective.COPY, taggingDirective = TaggingDirective.COPY, versionId = undefined }) {
     const params = {
       Bucket: bucket,
       CopySource: `${bucket}/${copySource}`,
       Key: filePath,
       Metadata: metadata,
       MetadataDirective: metadataDirective,
+      TaggingDirective: taggingDirective,
       VersionId: versionId
     };
 
@@ -87,6 +93,34 @@ const objectStorageService = {
   },
 
   /**
+   * @function deleteObjectTagging
+   * Deletes the tags of the object at `filePath`
+   * @param {string} options.filePath The filePath of the object
+   * @param {number} [options.versionId] Optional specific versionId for the object
+   */
+  async deleteObjectTagging({ filePath, tags, versionId }) {
+    const params = {
+      Bucket: bucket,
+      Key: filePath,
+    };
+
+    if (versionId) params.VersionId = versionId;
+
+    return this._s3Client.send(new DeleteObjectTaggingCommand(params));
+  },
+
+  /**
+   * @function getBucketEncryption
+   */
+  async getBucketEncryption() {
+    const params = {
+      Bucket: bucket
+    };
+
+    return await this._s3Client.send(new GetBucketEncryptionCommand(params));
+  },
+
+  /**
    * @function getBucketVersioning
    * Checks if versioning of objects is enabled on bucket
    * @returns {Boolean} true if versioning enabled otherwise false
@@ -97,6 +131,36 @@ const objectStorageService = {
     };
     const response = await this._s3Client.send(new GetBucketVersioningCommand(params));
     return response.Status === 'Enabled';
+  },
+
+  /**
+   * @function headBucket
+   * Checks if a bucket exists and if the S3Client has correct access permissions
+   * @returns {Promise<object>} The response of the head bucket operation
+   */
+  headBucket() {
+    const params = {
+      Bucket: bucket,
+    };
+
+    return this._s3Client.send(new HeadBucketCommand(params));
+  },
+
+  /**
+   * @function getObjectTagging
+   * Gets the tags of the object at `filePath`
+   * @param {string} options.filePath The filePath of the object
+   * @param {number} [options.versionId] Optional specific versionId for the object
+   */
+  async getObjectTagging({ filePath, versionId }) {
+    const params = {
+      Bucket: bucket,
+      Key: filePath
+    };
+
+    if (versionId) params.VersionId = versionId;
+
+    return this._s3Client.send(new GetObjectTaggingCommand(params));
   },
 
   /**
@@ -169,6 +233,24 @@ const objectStorageService = {
   },
 
   /**
+   * @function putBucketEncryption
+   */
+  async putBucketEncryption() {
+    const params = {
+      Bucket: bucket,
+      ServerSideEncryptionConfiguration: {
+        Rules: [{
+          ApplyServerSideEncryptionByDefault: {
+            SSEAlgorithm: 'AES256'
+          }
+        }]
+      }
+    };
+
+    return await this._s3Client.send(new PutBucketEncryptionCommand(params));
+  },
+
+  /**
    * @function putObject
    * Puts the object `stream` at the `id` path
    * @param {stream} options.stream The binary stream of the object
@@ -199,6 +281,28 @@ const objectStorageService = {
     }
 
     return this._s3Client.send(new PutObjectCommand(params));
+  },
+
+  /**
+   * @function putObjectTagging
+   * Gets the tags of the object at `filePath`
+   * @param {string} options.filePath The filePath of the object
+   * @param {string} options.tags Array of key/value pairs
+   * @param {number} [options.versionId] Optional specific versionId for the object
+   */
+  async putObjectTagging({ filePath, tags, versionId }) {
+    const params = {
+      Bucket: bucket,
+      Key: filePath,
+      Tagging: {
+        TagSet:
+          tags
+      }
+    };
+
+    if (versionId) params.VersionId = versionId;
+
+    return this._s3Client.send(new PutObjectTaggingCommand(params));
   },
 
   /**
