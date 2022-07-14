@@ -79,15 +79,15 @@ const objectStorageService = {
    * @function deleteObject
    * Deletes the object at `filePath`
    * @param {string} options.filePath The filePath of the object
-   * @param {number} [options.versionId] Optional specific versionId for the object
+   * @param {number} [options.versionId = undefined] Optional specific versionId for the object
    * @returns {Promise<object>} The response of the delete object operation
    */
-  deleteObject({ filePath, versionId }) {
+  deleteObject({ filePath, versionId = undefined }) {
     const params = {
       Bucket: bucket,
-      Key: filePath
+      Key: filePath,
+      VersionId: versionId
     };
-    if (versionId) params.VersionId = versionId;
 
     return this._s3Client.send(new DeleteObjectCommand(params));
   },
@@ -96,28 +96,29 @@ const objectStorageService = {
    * @function deleteObjectTagging
    * Deletes the tags of the object at `filePath`
    * @param {string} options.filePath The filePath of the object
-   * @param {number} [options.versionId] Optional specific versionId for the object
+   * @param {number} [options.versionId=undefined] Optional specific versionId for the object
+   * @returns {Promise<object>} The response of the delete object tagging operation
    */
-  async deleteObjectTagging({ filePath, tags, versionId }) {
+  deleteObjectTagging({ filePath, versionId = undefined }) {
     const params = {
       Bucket: bucket,
       Key: filePath,
+      VersionId: versionId
     };
-
-    if (versionId) params.VersionId = versionId;
 
     return this._s3Client.send(new DeleteObjectTaggingCommand(params));
   },
 
   /**
    * @function getBucketEncryption
+   * @returns {Promise<object>} The response of the get bucket encryption operation
    */
-  async getBucketEncryption() {
+  getBucketEncryption() {
     const params = {
       Bucket: bucket
     };
 
-    return await this._s3Client.send(new GetBucketEncryptionCommand(params));
+    return this._s3Client.send(new GetBucketEncryptionCommand(params));
   },
 
   /**
@@ -134,31 +135,18 @@ const objectStorageService = {
   },
 
   /**
-   * @function headBucket
-   * Checks if a bucket exists and if the S3Client has correct access permissions
-   * @returns {Promise<object>} The response of the head bucket operation
-   */
-  headBucket() {
-    const params = {
-      Bucket: bucket,
-    };
-
-    return this._s3Client.send(new HeadBucketCommand(params));
-  },
-
-  /**
    * @function getObjectTagging
    * Gets the tags of the object at `filePath`
    * @param {string} options.filePath The filePath of the object
-   * @param {number} [options.versionId] Optional specific versionId for the object
+   * @param {number} [options.versionId=undefined] Optional specific versionId for the object
+   * @returns {Promise<object>} The response of the get object tagging operation
    */
-  async getObjectTagging({ filePath, versionId }) {
+  getObjectTagging({ filePath, versionId = undefined }) {
     const params = {
       Bucket: bucket,
-      Key: filePath
+      Key: filePath,
+      VersionId: versionId
     };
-
-    if (versionId) params.VersionId = versionId;
 
     return this._s3Client.send(new GetObjectTaggingCommand(params));
   },
@@ -234,8 +222,9 @@ const objectStorageService = {
 
   /**
    * @function putBucketEncryption
+   * @returns {Promise<object>} The response of the put bucket encryption operation
    */
-  async putBucketEncryption() {
+  putBucketEncryption() {
     const params = {
       Bucket: bucket,
       ServerSideEncryptionConfiguration: {
@@ -247,7 +236,7 @@ const objectStorageService = {
       }
     };
 
-    return await this._s3Client.send(new PutBucketEncryptionCommand(params));
+    return this._s3Client.send(new PutBucketEncryptionCommand(params));
   },
 
   /**
@@ -288,19 +277,18 @@ const objectStorageService = {
    * Gets the tags of the object at `filePath`
    * @param {string} options.filePath The filePath of the object
    * @param {string} options.tags Array of key/value pairs
-   * @param {number} [options.versionId] Optional specific versionId for the object
+   * @param {number} [options.versionId=undefined] Optional specific versionId for the object
+   * @returns {Promise<object>} The response of the put object tagging operation
    */
-  async putObjectTagging({ filePath, tags, versionId }) {
+  putObjectTagging({ filePath, tags, versionId = undefined }) {
     const params = {
       Bucket: bucket,
       Key: filePath,
       Tagging: {
-        TagSet:
-          tags
-      }
+        TagSet: tags
+      },
+      VersionId: versionId
     };
-
-    if (versionId) params.VersionId = versionId;
 
     return this._s3Client.send(new PutObjectTaggingCommand(params));
   },
@@ -309,15 +297,15 @@ const objectStorageService = {
    * @function readObject
    * Reads the object at `filePath`
    * @param {string} options.filePath The filePath of the object
-   * @param {number} [options.versionId] Optional specific versionId for the object
+   * @param {number} [options.versionId=undefined] Optional specific versionId for the object
    * @returns {Promise<object>} The response of the get object operation
    */
-  readObject({ filePath, versionId }) {
+  readObject({ filePath, versionId = undefined }) {
     const params = {
       Bucket: bucket,
-      Key: filePath
+      Key: filePath,
+      VersionId: versionId
     };
-    if (versionId) params.VersionId = versionId;
 
     return this._s3Client.send(new GetObjectCommand(params));
   },
@@ -326,17 +314,17 @@ const objectStorageService = {
    * @function readSignedUrl
    * Yields a presigned url for the get object operation with a limited expiration window
    * @param {string} options.filePath The filePath of the object
-   * @param {number} [options.versionId] Optional specific versionId for the object
+   * @param {number} [options.versionId=undefined] Optional specific versionId for the object
    * @param {number} [options.expiresIn] The number of seconds this signed url will be valid for
    * @returns {Promise<string>} A presigned url for the direct S3 REST `command` operation
    */
-  readSignedUrl({ filePath, versionId, expiresIn }) {
+  readSignedUrl({ filePath, versionId = undefined, expiresIn }) {
     const expires = expiresIn ? expiresIn : defaultTempExpiresIn;
     const params = {
       Bucket: bucket,
-      Key: filePath
+      Key: filePath,
+      VersionId: versionId
     };
-    if (versionId) params.VersionId = versionId;
 
 
     return this.presignUrl(new GetObjectCommand(params), expires);

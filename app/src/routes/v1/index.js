@@ -10,7 +10,6 @@ router.get('/', (_req, res) => {
       '/docs',
       '/object',
       '/permission',
-      '/storage',
       '/user'
     ]
   });
@@ -24,9 +23,6 @@ router.use('/object', require('./object'));
 
 /** Permission Router */
 router.use('/permission', require('./permission'));
-
-/** Storage Router */
-router.use('/storage', require('./storage'));
 
 /** User Router */
 router.use('/user', require('./user'));

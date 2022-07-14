@@ -51,7 +51,7 @@ const controller = {
    * @param {object} res Express response object
    * @param {function} next The next callback function
    * @returns {function} Express middleware function
-  */
+   */
   async addMetadata(req, res, next) {
     try {
       const objId = addDashesToUuid(req.params.objId);
@@ -97,7 +97,7 @@ const controller = {
    * @param {object} res Express response object
    * @param {function} next The next callback function
    * @returns {function} Express middleware function
-  */
+   */
   async addTags(req, res, next) {
     try {
       const objId = addDashesToUuid(req.params.objId);
@@ -108,7 +108,7 @@ const controller = {
       // Join new and existing tags then filter duplicates
       let newSet = Object.entries(newTags).map(([k, v]) => ({ Key: k, Value: v }));
       if (objectTagging.TagSet) newSet = newSet.concat(objectTagging.TagSet);
-      newSet = newSet.filter((v, i, a) => a.findIndex(v2 => (v2.Key === v.Key)) === i);
+      newSet = newSet.filter((element, idx, arr) => arr.findIndex(element2 => (element2.Key === element.Key)) === idx);
 
       if (!Object.keys(newTags).length || newSet.length > 10) {
         // TODO: Validation level logic. To be moved.
@@ -200,7 +200,7 @@ const controller = {
    * @param {object} res Express response object
    * @param {function} next The next callback function
    * @returns {function} Express middleware function
-  */
+   */
   async deleteMetadata(req, res, next) {
     try {
       const objId = addDashesToUuid(req.params.objId);
@@ -297,13 +297,13 @@ const controller = {
   },
 
   /**
-     * @function deleteTags
-     * Deletes the tag set on the requested object
-     * @param {object} req Express request object
-     * @param {object} res Express response object
-     * @param {function} next The next callback function
-     * @returns {function} Express middleware function
-    */
+   * @function deleteTags
+   * Deletes the tag set on the requested object
+   * @param {object} req Express request object
+   * @param {object} res Express response object
+   * @param {function} next The next callback function
+   * @returns {function} Express middleware function
+   */
   async deleteTags(req, res, next) {
     try {
       const objId = addDashesToUuid(req.params.objId);
@@ -324,10 +324,14 @@ const controller = {
         versionId: versionId ? versionId.toString() : undefined
       };
 
-      let response = await storageService.deleteObjectTagging(data);
+      let response;
       if (newTags) {
         response = await storageService.putObjectTagging(data);
       }
+      else {
+        response = await storageService.deleteObjectTagging(data);
+      }
+
       controller._setS3Headers(response, res);
       res.status(204).end();
     } catch (e) {
@@ -428,13 +432,13 @@ const controller = {
   },
 
   /**
-  * @function replaceMetadata
-  * Creates a new version of the object via copy with the new metadata replacing the previous
-  * @param {object} req Express request object
-  * @param {object} res Express response object
-  * @param {function} next The next callback function
-  * @returns {function} Express middleware function
-  */
+   * @function replaceMetadata
+   * Creates a new version of the object via copy with the new metadata replacing the previous
+   * @param {object} req Express request object
+   * @param {object} res Express response object
+   * @param {function} next The next callback function
+   * @returns {function} Express middleware function
+   */
   async replaceMetadata(req, res, next) {
     try {
       const objId = addDashesToUuid(req.params.objId);
@@ -480,7 +484,7 @@ const controller = {
    * @param {object} res Express response object
    * @param {function} next The next callback function
    * @returns {function} Express middleware function
-  */
+   */
   async replaceTags(req, res, next) {
     try {
       const objId = addDashesToUuid(req.params.objId);
