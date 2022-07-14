@@ -8,6 +8,9 @@ metadata:
     {{- include "coms.labels" . | nindent 4 }}
   {{- with .Values.route.annotations }}
   annotations:
+    {{- if not .Values.config.releaseScoped }}
+    "helm.sh/resource-policy": keep
+    {{- end }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
 data: {{ toYaml .Values.config.configMap | nindent 2 }}
