@@ -174,6 +174,17 @@ const utils = {
   },
 
   /**
+   * @function getKeyValue
+   * Transforms array of {<key>:<value>} objects to {key: <key>, value: <value>}
+   * @param {any}
+   * @param {object} input of key value tuples like `<key>:<value>`
+   * @returns {object[]} array of objects like `{key: <key>, value: <value>}`
+   */
+  getKeyValue(input) {
+    return Object.entries(input).map(([k, v]) => ({ key: k, value: v }));
+  },
+
+  /**
    * @function mixedQueryToArray
    * Standardizes query params to yield an array of unique string values
    * @param {string|string[]} param The query param to process

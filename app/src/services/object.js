@@ -10,9 +10,7 @@ const service = {
    * @function create
    * Create an object DB record and give the uploader (if authed) permissions
    * @param {string} data.id The object uuid
-   * @param {string} data.mimeType The object's mime type
    * @param {string} data.userId The uploading user userId
-   * @param {string} data.originalName The object's original name
    * @param {string} data.path The relative S3 key/path of the object
    * @param {boolean} [data.public] The optional public flag - defaults to true if undefined
    * @param {object} [etrx=undefined] An optional Objection Transaction object
@@ -82,7 +80,7 @@ const service = {
    * @function searchObjects
    * Search and filter for specific object records
    * @param {string|string[]} [params.id] Optional string or array of uuids representing the object
-   * @param {string} [params.originalName] Optional filename string to match on
+   * @param {string} [params.name] Optional metadata name string to match on
    * @param {string} [params.path] Optional canonical S3 path string to match on
    * @param {string} [params.mimeType] Optional mimeType string to match on
    * @param {boolean} [params.public] Optional boolean on object public status
@@ -97,7 +95,7 @@ const service = {
       .modify('filterPublic', params.public)
       .modify('filterActive', params.active)
       .modify('filterUserId', params.userId)
-      .modify('filterOriginalName', params.originalName)
+      .modify('filterName', params.name)
       .modify('filterMimeType', params.mimeType);
   },
 
@@ -118,9 +116,7 @@ const service = {
    * @function update
    * Update an object DB record
    * @param {string} data.id The object uuid
-   * @param {string} data.mimeType The object's mime type
    * @param {string} data.userId The uploading user userId
-   * @param {string} data.originalName The object's original name
    * @param {string} data.path The relative S3 key/path of the object
    * @param {boolean} [data.public] The optional public flag - defaults to true if undefined
    * @param {object} [etrx=undefined] An optional Objection Transaction object

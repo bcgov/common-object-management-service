@@ -301,6 +301,16 @@ describe('getCurrentTokenClaim', () => {
   });
 });
 
+describe('getKeyValue', () => {
+  const inputArr = { k1: 'v1', k2: 'v2' };
+  const outputArr = [{ key: 'k1', value: 'v1' }, { key: 'k2', value: 'v2' }];
+
+  it('should convert array as expected', () => {
+    expect(utils.getKeyValue(inputArr)).toEqual(outputArr);
+    expect(utils.getKeyValue({})).toEqual([]);
+  });
+}),
+
 describe('mixedQueryToArray', () => {
   it('should return undefined if no param', () => {
     expect(utils.mixedQueryToArray()).toBeUndefined();

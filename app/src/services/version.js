@@ -1,5 +1,5 @@
 const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
-
+const metadataService = require('./metadata');
 const { Version } = require('../db/models');
 
 /**
@@ -8,7 +8,7 @@ const { Version } = require('../db/models');
 const service = {
   /**
    * @function create
-   * Saves a version of each object in an array
+   * Saves a version and related metadata of each object in an array
    * @param {object[]} data array of objects each with an `objectId` and version data
    * @param {string} userId uuid of the current user
    * @param {object} [etrx=undefined] An optional Objection Transaction object
@@ -19,21 +19,29 @@ const service = {
     let trx;
     try {
       trx = etrx ? etrx : await Version.startTransaction();
-      // build array for multi-row insert
-      const insertArray = data.map(obj => ({
+
+      // multi-row version insert
+      const versionArray = data.map((v) => ({
         id: uuidv4(),
-        versionId: obj.VersionId,
-        objectId: obj.id,
+        versionId: v.VersionId,
+        mimeType: v.mimeType,
+        objectId: v.id,
         createdBy: userId,
-        mimeType: obj.mimeType,
-        originalName: obj.originalName,
-        deleteMarker: obj.DeleteMarker
+        deleteMarker: v.DeleteMarker,
+      }));
+      const response = await Version.query(trx)
+        .insert(versionArray)
+        .returning('id', 'objectId');
+
+      // call metadata service for each version that was inserted
+      await Promise.all(response.map((v) => {
+        // get metadata from original incoming data array
+        const metadata = data.filter(obj => obj.id === v.objectId)[0].metadata;
+        if (metadata) return metadataService.addMetadata(v.id, metadata, data.userId, trx);
       }));
 
-      const response = await Version.query(trx).insert(insertArray);
-
       if (!etrx) await trx.commit();
-      return response;
+      return Promise.resolve(response);
     } catch (err) {
       if (!etrx && trx) await trx.rollback();
       throw err;
@@ -62,7 +70,7 @@ const service = {
         .returning('*')
         .throwIfNotFound();
       if (!etrx) await trx.commit();
-      return response;
+      return Promise.resolve(response);
     } catch (err) {
       if (!etrx && trx) await trx.rollback();
       throw err;
@@ -85,7 +93,7 @@ const service = {
       const response = await Version.query(trx)
         .where({ objectId: objId });
       if (!etrx) await trx.commit();
-      return response;
+      return Promise.resolve(response);
     } catch (err) {
       if (!etrx && trx) await trx.rollback();
       throw err;
@@ -97,10 +105,11 @@ const service = {
    * Updates a version of an object.
    * Typically happens when updating the 'null-version' created for an object
    * on a non-versioned or version-suspnded bucket.
+   * Replaces metadata that already exists on this version by default
    * @param {object[]} data array of object attributes
    * @param {string} userId uuid of the current user
    * @param {object} [etrx=undefined] An optional Objection Transaction object
-   * @returns {Promise<integer>} The number of updated rows returned by db operation
+   * @returns {Promise<integer>} id of version updated in db
    * @throws The error encountered upon db transaction failure
    */
   update: async (data = {}, userId = SYSTEM_USER, etrx = undefined) => {
@@ -113,12 +122,15 @@ const service = {
         .update({
           objectId: data.id,
           updatedBy: userId,
-          mimeType: data.mimeType,
-          originalName: data.originalName
-        });
+          mimeType: data.mimeType
+        })
+        .first()
+        .returning('id');
+
+      if(data.metadata) await metadataService.addMetadata(response.id, data.metadata, data.userId, trx);
 
       if (!etrx) await trx.commit();
-      return response;
+      return Promise.resolve(response);
     } catch (err) {
       if (!etrx && trx) await trx.rollback();
       throw err;

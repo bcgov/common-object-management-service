@@ -119,11 +119,11 @@ describe('searchObjects', () => {
       });
     });
 
-    describe('originalName', () => {
-      const originalName = query.keys.originalName;
+    describe('name', () => {
+      const name = query.keys.name;
 
       it('is the expected schema', () => {
-        expect(originalName).toEqual(type.alphanum.describe());
+        expect(name.type).toEqual('string');
       });
     });
 

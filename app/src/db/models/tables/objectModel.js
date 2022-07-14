@@ -60,18 +60,18 @@ class ObjectModel extends Timestamps(Model) {
       },
       filterMimeType(query, value) {
         if (value) {
-          const subquery = Version.query()
+          query.whereIn('id', Version.query()
             .distinct('objectId')
-            .where('mimeType', 'ilike', `%${value}%`);
-          query.whereIn('id', subquery);
+            .where('mimeType', 'ilike', `%${value}%`));
         }
       },
-      filterOriginalName(query, value) {
+      filterName(query, value) {
         if (value) {
-          const subquery = Version.query()
-            .distinct('objectId')
-            .where('originalName', 'ilike', `%${value}%`);
-          query.whereIn('id', subquery);
+          query.whereIn('id', Version.query()
+            .distinct('version.objectId')
+            .joinRelated('metadata')
+            .where('value', 'ilike', `%${value}%`)
+            .andWhere('key', 'name'));
         }
       }
       // TODO: consider chaining Version modifiers in a way that they are combined. Example:
