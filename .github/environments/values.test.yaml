@@ -1,0 +1,28 @@
+---
+features:
+  basicAuth: true
+  oidcAuth: true
+
+config:
+  enabled: true
+  configMap:
+    BASICAUTH_ENABLED: "true"
+    DB_ENABLED: "true"
+    DB_PORT: "5432"
+    KC_ENABLED: "true"
+    KC_IDENTITYKEY: idir_user_guid
+    KC_PUBLICKEY: >-
+      MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAry3hhpL3KT6Y2IXW+YJ3bw6krv/dA4VRP0Y/pLjI/D5fa53DhbCi6vD9nqdWl13gHZQRRpyp8jXLqhkYmmkuHoQtEg9f0pwR/JMXwT50zGrAEi/jEOri6wIEkTaVlKK2bVwNSPLREajVxqZdEGTlLDCOv6XjRdSVDLVfbtFGz+YtLlW+tPKqBo1gdIGmBe/lSs0g/HdiLZvVMCHKZBF3arPmTtRgv94GUBkCDu5aLZ0jHQNXfRbOxQV1BNCBXRPrchta4+PcDeAcYdfBmoJNBfX1qrqaGkXHnifmaAwAdhP/tZHiaYtyz31ywW1a2037lA0xY5IuI9s8OcqYPHybFwIDAQAB
+    KC_REALM: cp1qly2d
+    KC_SERVERURL: "https://test.oidc.gov.bc.ca/auth"
+    OBJECTSTORAGE_BUCKET: egejyy
+    OBJECTSTORAGE_TEMP_EXPIRESIN: "300"
+    OBJECTSTORAGE_ENDPOINT: "https://nrs.objectstore.gov.bc.ca"
+    # OBJECTSTORAGE_KEY: ~
+    SERVER_BODYLIMIT: 30mb
+    # SERVER_LOGFILE: ~
+    SERVER_LOGLEVEL: http
+    SERVER_PORT: "3000"
+
+patroni:
+  enabled: true
