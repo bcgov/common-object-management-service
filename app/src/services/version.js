@@ -23,11 +23,11 @@ const service = {
       // multi-row version insert
       const versionArray = data.map((v) => ({
         id: uuidv4(),
-        versionId: v.VersionId,
+        versionId: v.versionId,
         mimeType: v.mimeType,
         objectId: v.id,
         createdBy: userId,
-        deleteMarker: v.DeleteMarker,
+        deleteMarker: v.deleteMarker,
       }));
       const response = await Version.query(trx)
         .insert(versionArray)
@@ -105,7 +105,7 @@ const service = {
    * Updates a version of an object.
    * Typically happens when updating the 'null-version' created for an object
    * on a non-versioned or version-suspnded bucket.
-   * Replaces metadata that already exists on this version by default
+   * Replaces metadata/tags that already exists on this version by default
    * @param {object[]} data array of object attributes
    * @param {string} userId uuid of the current user
    * @param {object} [etrx=undefined] An optional Objection Transaction object
@@ -118,7 +118,7 @@ const service = {
       trx = etrx ? etrx : await Version.startTransaction();
       // update version record
       const response = await Version.query(trx)
-        .where({ objectId: data.id })
+        .where({ objectId: data.id, versionId: data.versionId })
         .update({
           objectId: data.id,
           updatedBy: userId,
@@ -127,7 +127,7 @@ const service = {
         .first()
         .returning('id');
 
-      if(data.metadata) await metadataService.addMetadata(response.id, data.metadata, data.userId, trx);
+      if (data.metadata) await metadataService.addMetadata(response.id, data.metadata, data.userId, trx);
 
       if (!etrx) await trx.commit();
       return Promise.resolve(response);
