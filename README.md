@@ -33,6 +33,7 @@ openshift/                 - OpenShift-deployment and shared pipeline files
 CODE-OF-CONDUCT.md         - Code of Conduct
 COMPLIANCE.yaml            - BCGov PIA/STRA compliance status
 CONTRIBUTING.md            - Contributing Guidelines
+Dockerfile                 - Dockerfile Image definition
 LICENSE                    - License
 SECURITY.md                - Security Policy and Reporting
 ```
