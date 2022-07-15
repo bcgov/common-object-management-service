@@ -86,8 +86,6 @@ const controller = {
         const s3Response = await storageService.copyObject(data);
 
         // create version and metadata db records
-        console.log('here:', s3Response.VersionId);
-
         const versionData = {
           ...data,
           id: objId,

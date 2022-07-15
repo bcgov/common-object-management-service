@@ -307,8 +307,8 @@ describe('deleteObject', () => {
     expect(versionCreateSpy).toHaveBeenCalledTimes(1);
     expect(versionCreateSpy).toHaveBeenCalledWith([{
       id: 'xyz-789',
-      DeleteMarker: true,
-      VersionId: '1234',
+      deleteMarker: true,
+      versionId: '1234',
       mimeType: null,
     }], 'testsub');
   });
