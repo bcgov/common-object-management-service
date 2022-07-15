@@ -57,11 +57,12 @@ const objectStorageService = {
    * @param {string} options.copySource Specifies the source object for the copy operation, excluding the bucket name
    * @param {string} options.filePath The filePath of the object
    * @param {string} [options.metadata] Optional metadata to store with the object
+   * @param {string} [options.tags] Optional tags to store with the object
    * @param {string} [options.metadataDirective=COPY] Optional operation directive
    * @param {string} [options.versionId=undefined] Optional versionId to copy from
    * @returns {Promise<object>} The response of the delete object operation
    */
-  copyObject({ copySource, filePath, metadata, metadataDirective = MetadataDirective.COPY, taggingDirective = TaggingDirective.COPY, versionId = undefined }) {
+  copyObject({ copySource, filePath, metadata, tags, metadataDirective = MetadataDirective.COPY, taggingDirective = TaggingDirective.COPY, versionId = undefined }) {
     const params = {
       Bucket: bucket,
       CopySource: `${bucket}/${copySource}`,
@@ -71,6 +72,12 @@ const objectStorageService = {
       TaggingDirective: taggingDirective,
       VersionId: versionId
     };
+
+    if (tags) {
+      params.Tagging = Object.entries(tags).map(([key, value]) => {
+        return `${key}=${encodeURIComponent(value)}`;
+      }).join('&');
+    }
 
     return this._s3Client.send(new CopyObjectCommand(params));
   },
