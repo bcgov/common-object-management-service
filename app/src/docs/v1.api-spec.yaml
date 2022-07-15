@@ -409,7 +409,7 @@ paths:
       description: >-
         Creates a copy and new version of the object with the given metadata removed.
         Multiple Key/Value pairs can be provided in the header for the metadata.
-        If no metadata headers are given then all metadata will be removed.
+        If no metadata headers are given then all metadata will be removed except `name` and `id` which always exist.
       operationId: deleteMetadata
       tags:
         - Object Metadata
@@ -956,8 +956,7 @@ components:
       name: versionId
       description: Request a specified version
       schema:
-        type: integer
-        format: int32
+        type: string
         description: a version identifier created in S3
         example: 1647462569641
     Query-VersionId-Delete:
@@ -965,8 +964,7 @@ components:
       name: versionId
       description: delete a specified version
       schema:
-        type: integer
-        format: int32
+        type: string
         description: a version identifier created in S3
         example: 1647462569641
   schemas:
