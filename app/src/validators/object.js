@@ -13,7 +13,7 @@ const schema = {
       objId: type.uuidv4
     }),
     query: Joi.object({
-      versionId: type.alphanum
+      versionId: Joi.string(),
     })
   },
 
@@ -28,7 +28,7 @@ const schema = {
       objId: type.uuidv4
     }),
     query: Joi.object({
-      versionId: type.alphanum,
+      versionId: Joi.string(),
       expiresIn: Joi.number(),
       download: type.truthy
     })
