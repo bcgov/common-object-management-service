@@ -44,7 +44,7 @@ describe('_s3Client', () => {
   });
 });
 
-describe.only('copyObject', () => {
+describe('copyObject', () => {
   beforeEach(() => {
     s3ClientMock.on(CopyObjectCommand).resolves({});
   });
