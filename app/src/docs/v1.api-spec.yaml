@@ -18,17 +18,22 @@ security:
   - BearerAuth: []
     OpenID: []
 tags:
-  - name: Metadata
-    description: >-
-      Operations directly influencing the Metadata S3 Object.
-    externalDocs:
-      url: https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#metadata
   - name: Object
     description: >-
       Operations directly influencing an S3 Object. Certain operations not
       available without a database.
     externalDocs:
       url: https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#object
+  - name: Object Metadata
+    description: >-
+      Operations directly influencing the Metadata of an S3 Object.
+    externalDocs:
+      url: https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#metadata
+  - name: Object Tag
+    description: >-
+      Operations directly influencing the Tags of an S3 Object.
+    externalDocs:
+      url: https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#tag
   - name: Permission
     description: >-
       Operations for managing User Access Control to S3 Objects. Not available
@@ -360,7 +365,7 @@ paths:
         Multiple Key/Value pairs can be provided in the header for the metadata.
       operationId: addMetadata
       tags:
-        - Metadata
+        - Object Metadata
       parameters:
         - $ref: "#/components/parameters/Header-Metadata"
         - $ref: "#/components/parameters/Path-ObjectId"
@@ -383,7 +388,7 @@ paths:
         Multiple Key/Value pairs can be provided in the header for the metadata.
       operationId: replaceMetadata
       tags:
-        - Metadata
+        - Object Metadata
       parameters:
         - $ref: "#/components/parameters/Header-Metadata"
         - $ref: "#/components/parameters/Path-ObjectId"
@@ -407,10 +412,79 @@ paths:
         If no metadata headers are given then all metadata will be removed.
       operationId: deleteMetadata
       tags:
-        - Metadata
+        - Object Metadata
       parameters:
         - $ref: "#/components/parameters/Header-Metadata"
         - $ref: "#/components/parameters/Path-ObjectId"
+        - $ref: "#/components/parameters/Query-VersionId"
+      responses:
+        "204":
+          description: The resource was deleted successfully.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        default:
+          $ref: "#/components/responses/Error"
+  /object/{objId}/tags:
+    patch:
+      summary: Adds tags to an object
+      description: >-
+        Adds the given tagset to the object.
+        Multiple comma separated Key/Value pairs can be provided in the query.
+      operationId: addTags
+      tags:
+        - Object Tag
+      parameters:
+        - $ref: "#/components/parameters/Path-ObjectId"
+        - $ref: "#/components/parameters/Query-Tag"
+        - $ref: "#/components/parameters/Query-VersionId"
+      responses:
+        "204":
+          description: The resource was added successfully.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        default:
+          $ref: "#/components/responses/Error"
+    put:
+      summary: Replaces tags of an object
+      description: >-
+        Replace the existing tags of an object with the given tagset.
+        Multiple comma separated Key/Value pairs can be provided in the query.
+      operationId: replaceTags
+      tags:
+        - Object Tag
+      parameters:
+        - $ref: "#/components/parameters/Path-ObjectId"
+        - $ref: "#/components/parameters/Query-Tag"
+        - $ref: "#/components/parameters/Query-VersionId"
+      responses:
+        "204":
+          description: The resource was added successfully.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        default:
+          $ref: "#/components/responses/Error"
+    delete:
+      summary: Delete tags of an object.
+      description: >-
+        Removes the given tags from the object.
+        Multiple comma separated keys can be provided in the query.
+        If no keys are given then all keys will be removed.
+      operationId: deleteTags
+      tags:
+        - Object Tag
+      parameters:
+        - $ref: "#/components/parameters/Path-ObjectId"
+        - $ref: "#/components/parameters/Query-Keys"
         - $ref: "#/components/parameters/Query-VersionId"
       responses:
         "204":
@@ -764,6 +838,13 @@ components:
             items:
               type: string
               example: idir
+    Query-Keys:
+      in: query
+      name: keys
+      description: String of keys to remove
+      schema:
+        type: string
+        example: Foo
     Query-LastName:
       in: query
       name: lastName
@@ -833,6 +914,13 @@ components:
       schema:
         type: boolean
         example: true
+    Query-Tag:
+      in: query
+      name: anyKey
+      description: Key/Value pair
+      schema:
+        type: string
+        example: Foo=Bar
     Query-UserSearch:
       in: query
       name: search
@@ -866,7 +954,7 @@ components:
     Query-VersionId:
       in: query
       name: versionId
-      description: request a specified version
+      description: Request a specified version
       schema:
         type: integer
         format: int32

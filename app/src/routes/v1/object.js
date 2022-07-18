@@ -37,12 +37,12 @@ routes.post('/:objId', currentObject, hasPermission(Permissions.UPDATE), (req, r
 });
 
 /** Deletes the object */
-routes.delete('/:objId', objectValidator.deleteObject, currentObject, hasPermission(Permissions.DELETE), async (req, res, next) => {
+routes.delete('/:objId', objectValidator.deleteObject, currentObject, hasPermission(Permissions.DELETE), (req, res, next) => {
   objectController.deleteObject(req, res, next);
 });
 
 /** Returns the object version history */
-routes.get('/:objId/versions', objectValidator.listObjectVersion, currentObject, hasPermission(Permissions.READ), async (req, res, next) => {
+routes.get('/:objId/version', objectValidator.listObjectVersion, currentObject, hasPermission(Permissions.READ), (req, res, next) => {
   objectController.listObjectVersion(req, res, next);
 });
 
@@ -65,6 +65,21 @@ routes.put('/:objId/metadata', currentObject, requireSomeAuth, (req, res, next) 
 /** Deletes an objects metadata */
 routes.delete('/:objId/metadata', currentObject, requireSomeAuth, (req, res, next) => {
   objectController.deleteMetadata(req, res, next);
+});
+
+/** Add tags to an object */
+routes.patch('/:objId/tag', currentObject, requireSomeAuth, (req, res, next) => {
+  objectController.addTags(req, res, next);
+});
+
+/** Add tags to an object */
+routes.put('/:objId/tag', currentObject, requireSomeAuth, (req, res, next) => {
+  objectController.replaceTags(req, res, next);
+});
+
+/** Add tags to an object */
+routes.delete('/:objId/tag', currentObject, requireSomeAuth, (req, res, next) => {
+  objectController.deleteTags(req, res, next);
 });
 
 module.exports = routes;

@@ -34,6 +34,14 @@ module.exports = Object.freeze({
     REPLACE: 'REPLACE'
   },
 
+  /** Allowable values for the Tagging Directive parameter */
+  TaggingDirective: {
+    /** The original tags are copied to the new version as-is where applicable. */
+    COPY: 'COPY',
+    /** All original tags are replaced by the tags you specify. */
+    REPLACE: 'REPLACE'
+  },
+
   /** Object permissions */
   Permissions: {
     /** Grants object creation permission */
