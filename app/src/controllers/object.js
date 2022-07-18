@@ -57,7 +57,6 @@ const controller = {
       const objId = addDashesToUuid(req.params.objId);
       const objPath = getPath(objId);
       const userId = getCurrentSubject(req.currentUser);
-
       const sourceVersionId = req.query.versionId ? req.query.versionId.toString() : undefined;
 
       const source = await storageService.headObject({ filePath: objPath, versionId: sourceVersionId });
@@ -476,7 +475,6 @@ const controller = {
       const objId = addDashesToUuid(req.params.objId);
       const objPath = getPath(objId);
       const userId = getCurrentSubject(req.currentUser);
-
       const sourceVersionId = req.query.versionId ? req.query.versionId.toString() : undefined;
 
       const source = await storageService.headObject({ filePath: objPath, versionId: sourceVersionId });

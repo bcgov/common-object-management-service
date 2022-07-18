@@ -320,6 +320,20 @@ describe('headObject', () => {
       VersionId: versionId
     }, true)).toHaveLength(1);
   });
+
+  it.only('should not require a version ID parameter', () => {
+    const filePath = 'filePath';
+    const versionId = undefined;
+    const result = service.headObject({ filePath, versionId });
+
+    expect(result).toBeTruthy();
+    expect(s3ClientMock.calls()).toHaveLength(1);
+    expect(s3ClientMock.commandCalls(HeadObjectCommand, {
+      Bucket: bucket,
+      Key: filePath,
+      VersionId: versionId
+    }, true)).toHaveLength(1);
+  });
 });
 
 describe('listObjects', () => {
