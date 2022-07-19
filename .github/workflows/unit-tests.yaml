@@ -1,14 +1,19 @@
 ---
 name: Tests
+
 on:
   - push
   - pull_request
+
 jobs:
   test-app:
+    name: Unit Tests
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: app
+    outputs:
+      HAS_CC_SECRETS: ${{ steps.check-secrets.outputs.HAS_CC_SECRETS }}
     timeout-minutes: 10
     strategy:
       fail-fast: true
@@ -20,8 +25,10 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
+      - name: Check CodeClimate Secrets
+        id: check-secrets
+        run: |
+          echo "::set-output name=HAS_CC_SECRETS::${{ secrets.CC_TEST_REPORTER_ID != '' }}"
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v1
         with:
@@ -45,6 +52,16 @@ jobs:
         run: npm run test
         env:
           CI: true
+      - name: Monitor Coverage
+        if: matrix.node-version == '16.x'
+        uses: slavcodev/coverage-monitor-action@v1
+        with:
+          comment_mode: update
+          comment_footer: false
+          coverage_path: app/coverage/clover.xml
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          threshold_alert: 50
+          threshold_warning: 80
       - name: Save Coverage Results
         if: matrix.node-version == '16.x'
         uses: actions/upload-artifact@v2
@@ -52,31 +69,20 @@ jobs:
           name: coverage-app
           path: ${{ github.workspace }}/app/coverage
           retention-days: 1
+
   test-coverage:
-    needs:
-      - "test-app"
+    name: Publish to Code Climate
+    needs: test-app
+    if: needs.test-app.outputs.HAS_CC_SECRETS == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Check Workflow Secrets
-        id: check-secrets
-        run: |
-          unset HAS_SECRETS
-          if [ -n "$CC_TEST_REPORTER_ID" ]; then HAS_SECRETS='true'; fi
-          echo ::set-output name=HAS_SECRETS::${HAS_SECRETS}
-        env:
-          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
       - name: Checkout Repository
-        if: steps.check-secrets.outputs.HAS_SECRETS
         uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
       - name: Restore Coverage Results
-        if: steps.check-secrets.outputs.HAS_SECRETS
         uses: actions/download-artifact@v2
       - name: Publish code coverage
-        if: steps.check-secrets.outputs.HAS_SECRETS
-        uses: paambaati/codeclimate-action@v2.7.5
+        uses: paambaati/codeclimate-action@v3
         env:
           CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
         with:
