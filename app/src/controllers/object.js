@@ -12,7 +12,14 @@ const {
   isTruthy,
   mixedQueryToArray
 } = require('../components/utils');
-const { objectService, storageService, versionService } = require('../services');
+const { trx } = require('../db/models/utils');
+
+const {
+  metadataService,
+  objectService,
+  storageService,
+  versionService
+} = require('../services');
 
 const SERVICE = 'ObjectService';
 
@@ -84,18 +91,15 @@ const controller = {
         };
         const s3Response = await storageService.copyObject(data);
 
-        // create version and metadata db records
-        const versionData = {
-          ...data,
-          id: objId,
-          versionId: s3Response.VersionId ? s3Response.VersionId : null,
-          mimeType: source.ContentType
-        };
-        if (s3Response.VersionId) { // if versioning enabled
-          await versionService.create([versionData], userId);
-        } else {  // else update existing null-version in DB
-          await versionService.update(versionData, userId);
-        }
+        await trx(async (trx) => {
+          // create or update version (if a non-versioned object)
+          const version = s3Response.VersionId ?
+            await versionService.copy(sourceVersionId, s3Response.VersionId, objId, userId, trx) :
+            await versionService.update({ ...data, id: objId }, userId, trx);
+
+          // add metadata
+          await metadataService.addMetadata(version.id, data.metadata, userId, trx);
+        });
 
         controller._setS3Headers(s3Response, res);
         res.status(204).end();
@@ -186,12 +190,14 @@ const controller = {
           object.dbResponse = await object.dbResponse;
           // wait for file to finish uploading to S3
           object.s3Response = await object.s3Response;
-          // add VersionId to data for the file. If versioning not enabled on bucket. VersionId is undefined
-          object.data.versionId = object.s3Response.VersionId;
+          await trx(async (trx) => {
+            // create version in DB
+            object.data.versionId = object.s3Response.VersionId;
+            const versions = await versionService.create(object.data, userId, trx);
+            // add metadata
+            await metadataService.addMetadata(versions.id, object.data.metadata, userId, trx);
+          });
         }));
-        // create version in DB
-        const objectVersionArray = objects.map((object) => object.data);
-        await versionService.create(objectVersionArray, userId);
 
         // merge returned responses into a result
         const result = objects.map((object) => ({
@@ -252,18 +258,15 @@ const controller = {
       };
       const s3Response = await storageService.copyObject(data);
 
-      // create version and metadata db records
-      const versionData = {
-        ...data,
-        id: objId,
-        versionId: s3Response.VersionId ? s3Response.VersionId : null,
-        mimeType: source.ContentType
-      };
-      if (s3Response.VersionId) { // if versioning enabled
-        await versionService.create([versionData], userId);
-      } else {  // else update existing null-version in DB
-        await versionService.update(versionData, userId);
-      }
+      await trx(async (trx) => {
+        // create or update version (if a non-versioned object)
+        const version = s3Response.VersionId ?
+          await versionService.copy(sourceVersionId, s3Response.VersionId, objId, userId, trx) :
+          await versionService.update({ ...data, id: objId }, userId, trx);
+
+        // add metadata
+        await metadataService.addMetadata(version.id, data.metadata, userId, trx);
+      });
 
       controller._setS3Headers(s3Response, res);
       res.status(204).end();
@@ -313,7 +316,7 @@ const controller = {
             versionId: s3Response.VersionId,
             mimeType: null
           };
-          await versionService.create([deleteMarker], userId);
+          await versionService.create(deleteMarker, userId);
         }
         // else object in bucket is not versioned
         else {
@@ -502,18 +505,15 @@ const controller = {
         };
         const s3Response = await storageService.copyObject(data);
 
-        // create version and metadata db records
-        const versionData = {
-          ...data,
-          id: objId,
-          versionId: s3Response.VersionId ? s3Response.VersionId : null,
-          mimeType: source.ContentType
-        };
-        if (s3Response.VersionId) { // if versioning enabled
-          await versionService.create([versionData], userId);
-        } else {  // else update existing null-version in DB
-          await versionService.update(versionData, userId);
-        }
+        await trx(async (trx) => {
+          // create or update version (if a non-versioned object)
+          const version = s3Response.VersionId ?
+            await versionService.copy(sourceVersionId, s3Response.VersionId, objId, userId, trx) :
+            await versionService.update({ ...data, id: objId }, userId, trx);
+
+          // add metadata
+          await metadataService.addMetadata(version.id, data.metadata, userId, trx);
+        });
 
         controller._setS3Headers(s3Response, res);
         res.status(204).end();
@@ -659,17 +659,23 @@ const controller = {
           object.s3Response
         ]);
 
-        // create version and metadata
-        if (s3Response.VersionId) { // if versioning enabled
-          object.data.versionId = s3Response.VersionId;
-          await versionService.create([object.data], userId);
+        await trx(async (trx) => {
+          // create or update version (if a non-versioned object)
+          let version = undefined;
+          if (s3Response.VersionId) {
+            object.data.versionId = s3Response.VersionId;
+            version = await versionService.create(object.data, userId, trx);
+          }
+          else {
+            version = await versionService.update({
+              ...object.data,
+              versionId: null
+            }, userId, trx);
+          }
 
-        } else { // else update existing null-version
-          await versionService.update({
-            ...object.data,
-            versionId: null
-          }, userId);
-        }
+          // add metadata
+          await metadataService.addMetadata(version.id, object.data.metadata, userId, trx);
+        });
 
         // merge returned responses into a result
         const result = {
