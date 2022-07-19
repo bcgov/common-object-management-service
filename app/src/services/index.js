@@ -29,4 +29,5 @@ module.exports = {
   storageService: require('./storage'),
   userService: featureNoDb(require('./user')),
   versionService: featureNoDb(require('./version')),
+  metadataService: featureNoDb(require('./metadata')),
 };
