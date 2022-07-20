@@ -18,6 +18,7 @@ const {
   metadataService,
   objectService,
   storageService,
+  tagService,
   versionService
 } = require('../services');
 
@@ -196,6 +197,8 @@ const controller = {
             const versions = await versionService.create(object.data, userId, trx);
             // add metadata
             await metadataService.addMetadata(versions.id, object.data.metadata, userId, trx);
+            // add tags
+            if(object.data.tags) await tagService.addTags(versions.id, object.data.tags, userId, trx);
           });
         }));
 
