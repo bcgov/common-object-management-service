@@ -24,7 +24,7 @@ jobs:
           - '16.x'
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Check CodeClimate Secrets
         id: check-secrets
         run: |
@@ -78,7 +78,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Restore Coverage Results
         uses: actions/download-artifact@v2
       - name: Publish code coverage
