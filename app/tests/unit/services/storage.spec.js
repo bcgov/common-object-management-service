@@ -321,7 +321,7 @@ describe('headObject', () => {
     }, true)).toHaveLength(1);
   });
 
-  it.only('should not require a version ID parameter', () => {
+  it('should not require a version ID parameter', () => {
     const filePath = 'filePath';
     const versionId = undefined;
     const result = service.headObject({ filePath, versionId });
