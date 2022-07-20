@@ -1,0 +1,17 @@
+---
+features:
+  basicAuth: true
+  oidcAuth: true
+
+patroni:
+  enabled: true
+  replicaCount: 2
+  resources:
+    limits:
+      cpu: 250m
+      memory: 384Mi
+    requests:
+      cpu: 50m
+      memory: 192Mi
+  persistentVolume:
+    enabled: false

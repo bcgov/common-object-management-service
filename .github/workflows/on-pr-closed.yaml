@@ -1,0 +1,42 @@
+name: Pull Request Closed
+
+env:
+  ACRONYM: coms
+  APP_NAME: common-object-management-service
+  NAMESPACE_PREFIX: bb17f9
+
+on:
+  pull_request:
+    branches:
+      - master
+    types:
+      - closed
+
+jobs:
+  remove-pr-dev:
+    name: Remove PR build from dev namespace
+    environment:
+      name: pr
+      url: https://${{ env.ACRONYM }}-dev-pr-${{ github.event.number }}.apps.silver.devops.gov.bc.ca
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Login to OpenShift Cluster
+      uses: redhat-actions/oc-login@v1
+      with:
+        openshift_server_url: ${{ secrets.OPENSHIFT_SERVER }}
+        openshift_token: ${{ secrets.OPENSHIFT_TOKEN }}
+        insecure_skip_tls_verify: true
+        namespace: ${{ env.NAMESPACE_PREFIX }}-dev
+    - name: Remove PR Deployment
+      shell: bash
+      run: |
+        helm uninstall --namespace ${{ env.NAMESPACE_PREFIX }}-dev pr-${{ github.event.number }} --timeout 10m --wait
+        oc delete --namespace ${{ env.NAMESPACE_PREFIX }}-dev cm,secret --selector app.kubernetes.io/instance=pr-${{ github.event.number }}
+    - name: Remove Release Comment on PR
+      uses: marocchino/sticky-pull-request-comment@v2
+      with:
+        header: release
+        delete: true
