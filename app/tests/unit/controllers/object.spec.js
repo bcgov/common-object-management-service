@@ -1,8 +1,13 @@
 const Problem = require('api-problem');
 const { AuthType, MAXCOPYOBJECTLENGTH, MetadataDirective } = require('../../../src/components/constants');
 
+// const { MockTransaction } = require('../../common/dbHelper');
+const utils = require('../../../src/db/models/utils');
+
 const controller = require('../../../src/controllers/object');
-const { storageService, objectService, versionService } = require('../../../src/services');
+const { storageService, objectService, metadataService, versionService } = require('../../../src/services');
+
+// const metadataAddMetadataSpy = jest.spyOn(metadataService, 'addMetadata');
 
 const mockResponse = () => {
   const res = {};
@@ -24,9 +29,26 @@ describe('addMetadata', () => {
     jest.resetAllMocks();
   });
 
+  // beforeEach(() => {
+  //   MockTransaction.mockReset();
+  // });
+
+  // afterAll(() => {
+  //   MockTransaction.mockReset();
+  // });
+
   // mock service calls
   const storageHeadObjectSpy = jest.spyOn(storageService, 'headObject');
   const storageCopyObjectSpy = jest.spyOn(storageService, 'copyObject');
+
+  // const versionCreateSpy = jest.spyOn(versionService, 'create');
+  const versionUpdateSpy = jest.spyOn(versionService, 'update');
+  const versionCopySpy = jest.spyOn(versionService, 'copy');
+
+  const metadataAddMetadataSpy = jest.spyOn(metadataService, 'addMetadata');
+
+  // jest.fn().mockResolvedValue(MockTransaction);
+  const trxSpy = jest.spyOn(utils, 'trx');
 
   const next = jest.fn();
 
@@ -63,7 +85,7 @@ describe('addMetadata', () => {
     expect(res.status).toHaveBeenCalledWith(422);
   });
 
-  it('should add the metadata', async () => {
+  it.only('should add the metadata', async () => {
     // request object
     const req = {
       headers: { 'x-amz-meta-baz': 'quz' },
@@ -72,10 +94,20 @@ describe('addMetadata', () => {
     };
 
     storageHeadObjectSpy.mockReturnValue(GoodResponse);
-    storageCopyObjectSpy.mockReturnValue({});
+    storageCopyObjectSpy.mockReturnValue(GoodResponse);
+
+    versionCopySpy.mockReturnValue({id: '5dad1ec9-d3c0-4b0f-8ead-cb4d9fa98987'});
+    versionUpdateSpy.mockReturnValue({id: '5dad1ec9-d3c0-4b0f-8ead-cb4d9fa98987'});
+    metadataAddMetadataSpy.mockReturnValue({});
+
+    trxSpy.mockImplementation(trx => trx);
+
+    // const etrx = await jest.fn().mockResolvedValue(MockTransaction);
 
     await controller.addMetadata(req, res, next);
 
+    // expect(versionCopySpy).toHaveBeenCalledTimes(1);
+    expect(versionUpdateSpy).toHaveBeenCalledTimes(1);
     expect(res.status).toHaveBeenCalledWith(204);
     expect(storageCopyObjectSpy).toHaveBeenCalledWith({
       copySource: 'xyz-789',
