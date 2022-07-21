@@ -15,6 +15,7 @@ on:
 jobs:
   remove-pr-dev:
     name: Remove PR build from dev namespace
+    if: "! github.event.pull_request.head.repo.fork"
     environment:
       name: pr
       url: https://${{ env.ACRONYM }}-dev-pr-${{ github.event.number }}.apps.silver.devops.gov.bc.ca

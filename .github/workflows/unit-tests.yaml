@@ -52,8 +52,15 @@ jobs:
         run: npm run test
         env:
           CI: true
-      - name: Monitor Coverage
+      - name: Save Coverage Results
         if: matrix.node-version == '16.x'
+        uses: actions/upload-artifact@v2
+        with:
+          name: coverage-app
+          path: ${{ github.workspace }}/app/coverage
+          retention-days: 1
+      - name: Monitor Coverage
+        if: "matrix.node-version == '16.x' && ! github.event.pull_request.head.repo.fork"
         uses: slavcodev/coverage-monitor-action@v1
         with:
           comment_mode: update
@@ -62,13 +69,6 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           threshold_alert: 50
           threshold_warning: 80
-      - name: Save Coverage Results
-        if: matrix.node-version == '16.x'
-        uses: actions/upload-artifact@v2
-        with:
-          name: coverage-app
-          path: ${{ github.workspace }}/app/coverage
-          retention-days: 1
 
   test-coverage:
     name: Publish to Code Climate
