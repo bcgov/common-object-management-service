@@ -105,7 +105,7 @@ config:
 
   # This should be set to true if and only if you require configmaps and secrets to be release
   # scoped. In the event you want all instances in the same namespace to share a similar
-  # configuration, this should be set to false
+  # configuration, this should be set to false.
   releaseScoped: false
 
   # These values will be wholesale added to the configmap as is; refer to the coms
