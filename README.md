@@ -18,7 +18,7 @@ To learn more about the **Common Services** available visit the [Common Services
 ## Directory Structure
 
 ```txt
-.github/                   - PR and Issue templates
+.github/                   - PR, Issue templates and CI/CD
 app/                       - Application Root
 ├── src/                   - Node.js web application
 │   ├── components/        - Components Layer
@@ -29,7 +29,9 @@ app/                       - Application Root
 │   ├── routes/            - API Route Layer
 │   └── services/          - Services Layer
 └── tests/                 - Node.js web application tests
-openshift/                 - OpenShift-deployment and shared pipeline files
+chart/                     - General Helm Charts
+└── coms/                  - COMS Helm Chart Repository
+    └── templates/         - COMS Helm Chart Template manifests
 CODE-OF-CONDUCT.md         - Code of Conduct
 COMPLIANCE.yaml            - BCGov PIA/STRA compliance status
 CONTRIBUTING.md            - Contributing Guidelines

@@ -103,12 +103,12 @@ spec:
               valueFrom:
                 secretKeyRef:
                   key: username
-                  name: {{ include "coms.configname" . }}-basicauth
+                  name: {{ include "coms.fullname" . }}-basicauth
             - name: BASICAUTH_PASSWORD
               valueFrom:
                 secretKeyRef:
                   key: password
-                  name: {{ include "coms.configname" . }}-basicauth
+                  name: {{ include "coms.fullname" . }}-basicauth
             {{- end }}
             {{- if or .Values.patroni.enabled .Values.config.configMap.DB_ENABLED }}
             - name: DB_DATABASE
