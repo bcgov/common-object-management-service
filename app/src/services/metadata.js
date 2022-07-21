@@ -44,8 +44,10 @@ const service = {
           metadataId: id,
           createdBy: currentUserId
         }));
+        console.log('relateArray:', relateArray);
         response = await VersionMetadata.query(trx)
           .insert(relateArray);
+        console.log(response);
       }
 
       if (!etrx) await trx.commit();

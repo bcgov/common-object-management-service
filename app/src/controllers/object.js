@@ -7,10 +7,12 @@ const {
   addDashesToUuid,
   getAppAuthMode,
   getCurrentSubject,
+  getKeyValue,
   getMetadata,
   getPath,
   isTruthy,
-  mixedQueryToArray
+  mixedQueryToArray,
+  toLowerKeys
 } = require('../components/utils');
 const { trx } = require('../db/models/utils');
 
@@ -90,15 +92,16 @@ const controller = {
           metadataDirective: MetadataDirective.REPLACE,
           versionId: sourceVersionId
         };
+        // create new version with metadata in S3
         const s3Response = await storageService.copyObject(data);
 
         await trx(async (trx) => {
-          // create or update version (if a non-versioned object)
+          // create or update version in DB (if a non-versioned object)
           const version = s3Response.VersionId ?
             await versionService.copy(sourceVersionId, s3Response.VersionId, objId, userId, trx) :
             await versionService.update({ ...data, id: objId }, userId, trx);
 
-          // add metadata
+          // add metadata to version in DB
           await metadataService.addMetadata(version.id, data.metadata, userId, trx);
         });
 
@@ -122,6 +125,7 @@ const controller = {
     try {
       const objId = addDashesToUuid(req.params.objId);
       const objPath = getPath(objId);
+      const userId = getCurrentSubject(req.currentUser);
       const { versionId, ...newTags } = req.query;
       const objectTagging = await storageService.getObjectTagging({ filePath: objPath, versionId });
 
@@ -141,8 +145,15 @@ const controller = {
           tags: newSet,
           versionId: versionId ? versionId.toString() : undefined
         };
-
+        // Add tags to the version in S3
         const response = await storageService.putObjectTagging(data);
+
+        // Add tags to version in DB
+        await trx(async (trx) => {
+          const version = await versionService.get(data.versionId, objId, trx);
+          await tagService.addTags(version.id, toLowerKeys(data.tags), userId, trx);
+        });
+
         controller._setS3Headers(response, res);
         res.status(204).end();
       }
@@ -191,14 +202,16 @@ const controller = {
           object.dbResponse = await object.dbResponse;
           // wait for file to finish uploading to S3
           object.s3Response = await object.s3Response;
+
           await trx(async (trx) => {
-            // create version in DB
+            // create new version in DB
             object.data.versionId = object.s3Response.VersionId;
             const versions = await versionService.create(object.data, userId, trx);
-            // add metadata
+            // add metadata to version in DB
             await metadataService.addMetadata(versions.id, object.data.metadata, userId, trx);
-            // add tags
-            if(object.data.tags) await tagService.addTags(versions.id, object.data.tags, userId, trx);
+
+            // add tags to version in DB
+            if (object.data.tags.length) await tagService.addTags(versions.id, getKeyValue(object.data.tags), userId, trx);
           });
         }));
 
@@ -259,15 +272,16 @@ const controller = {
         metadataDirective: MetadataDirective.REPLACE,
         versionId: sourceVersionId
       };
+      // create new version with metadata in S3
       const s3Response = await storageService.copyObject(data);
 
       await trx(async (trx) => {
-        // create or update version (if a non-versioned object)
+        // create or update version in DB(if a non-versioned object)
         const version = s3Response.VersionId ?
           await versionService.copy(sourceVersionId, s3Response.VersionId, objId, userId, trx) :
           await versionService.update({ ...data, id: objId }, userId, trx);
 
-        // add metadata
+        // add metadata to version in DB
         await metadataService.addMetadata(version.id, data.metadata, userId, trx);
       });
 
@@ -346,6 +360,7 @@ const controller = {
       const objId = addDashesToUuid(req.params.objId);
       const objPath = getPath(objId);
       const { versionId } = req.query;
+      const userId = getCurrentSubject(req.currentUser);
       const objectTagging = await storageService.getObjectTagging({ filePath: objPath, versionId });
 
       // Generate object subset by subtracting/omitting defined keys via filter/inclusion
@@ -361,6 +376,7 @@ const controller = {
         versionId: versionId ? versionId.toString() : undefined
       };
 
+      // Update tags for version in S3
       let response;
       if (newTags) {
         response = await storageService.putObjectTagging(data);
@@ -368,6 +384,11 @@ const controller = {
       else {
         response = await storageService.deleteObjectTagging(data);
       }
+      // update tags for version in DB
+      await trx(async (trx) => {
+        const version = await versionService.get(data.versionId, objId, trx);
+        await tagService.addTags(version.id, toLowerKeys(data.tags), userId, trx);
+      });
 
       controller._setS3Headers(response, res);
       res.status(204).end();
@@ -538,6 +559,7 @@ const controller = {
     try {
       const objId = addDashesToUuid(req.params.objId);
       const objPath = getPath(objId);
+      const userId = getCurrentSubject(req.currentUser);
       const { versionId, ...newTags } = req.query;
 
       if (!Object.keys(newTags).length || Object.keys(newTags).length > 10) {
@@ -552,7 +574,15 @@ const controller = {
           versionId: versionId ? versionId.toString() : undefined
         };
 
+        // Add tags to the object in S3
         const response = await storageService.putObjectTagging(data);
+
+        // update tags on version in DB
+        await trx(async (trx) => {
+          const version = await versionService.get(data.versionId, objId, trx);
+          await tagService.addTags(version.id, toLowerKeys(data.tags), userId, trx);
+        });
+
         controller._setS3Headers(response, res);
         res.status(204).end();
       }
@@ -676,8 +706,12 @@ const controller = {
             }, userId, trx);
           }
 
-          // add metadata
+          // add metadata to version in DB
           await metadataService.addMetadata(version.id, object.data.metadata, userId, trx);
+
+          // add tags to version in DB
+          if (object.data.tags.length) await tagService.addTags(version.id, getKeyValue(object.data.tags), userId, trx);
+
         });
 
         // merge returned responses into a result

@@ -1,6 +1,5 @@
 const { NIL: SYSTEM_USER } = require('uuid');
 const { Tag, VersionTag } = require('../db/models');
-const { getKeyValue } = require('../components/utils');
 
 /**
  * The Tag DB Service
@@ -24,28 +23,27 @@ const service = {
       trx = etrx ? etrx : await Tag.startTransaction();
       let response = [];
 
-      // convert tags to array for DB insert query
-      const arr = getKeyValue(tags);
-      if (arr.length) {
-        // insert/merge tag records
-        const insertTags = await Tag.query(trx)
-          .insert(arr)
-          .onConflict(['key', 'value'])
-          .merge(); // required to include id's of existing rows in result
+      // insert/merge tag records
+      const insertTags = await Tag.query(trx)
+        .insert(tags)
+        .onConflict(['key', 'value'])
+        .merge(); // required to include id's of existing rows in result
 
-        // add new version_tag records
-        const relateArray = insertTags.map(({id}) => ({
+
+      // un-relate all existing tags (when adding additional tags to a version)
+      await VersionTag.query(trx)
+        .delete()
+        .where('versionId', versionId);
+
+      // relate all incomming tags
+      if (tags.length) {
+        const relateArray = insertTags.map(({ id }) => ({
           versionId: versionId,
           tagId: id,
           createdBy: currentUserId
         }));
-
-        // So if a tag is already on the version, do not add it again.
         response = await VersionTag.query(trx)
-          .insert(relateArray)
-          .onConflict(['tagId', 'versionId'])
-          .ignore();
-
+          .insert(relateArray);
       }
 
       if (!etrx) await trx.commit();
@@ -66,43 +64,43 @@ const service = {
    * @returns {Promise<object>} The result of running the insert operation
    * @throws The error encountered upon db transaction failure
    */
-  replaceTags: async (versionId, tags, currentUserId = SYSTEM_USER, etrx = undefined) => {
-    let trx;
-    try {
-      trx = etrx ? etrx : await Tag.startTransaction();
-      let response = [];
+  // replaceTags: async (versionId, tags, currentUserId = SYSTEM_USER, etrx = undefined) => {
+  //   let trx;
+  //   try {
+  //     trx = etrx ? etrx : await Tag.startTransaction();
+  //     let response = [];
 
-      // convert tags to array for DB insert query
-      const arr = getKeyValue(tags);
-      if (arr.length) {
-        // insert/merge tag records
-        const insertTags = await Tag.query(trx)
-          .insert(arr)
-          .onConflict(['key', 'value'])
-          .merge(); // required to include id's of existing rows in result
+  //     // convert tags to array for DB insert query
+  //     const arr = getKeyValue(tags);
+  //     if (arr.length) {
+  //       // insert/merge tag records
+  //       const insertTags = await Tag.query(trx)
+  //         .insert(arr)
+  //         .onConflict(['key', 'value'])
+  //         .merge(); // required to include id's of existing rows in result
 
-        // un-relate all existing version_tag (when updating a version)
-        await VersionTag.query(trx)
-          .delete()
-          .where('versionId', versionId);
+  //       // un-relate all existing version_tag (when updating a version)
+  //       await VersionTag.query(trx)
+  //         .delete()
+  //         .where('versionId', versionId);
 
-        // add new version_tag records
-        const relateArray = insertTags.map(({id}) => ({
-          versionId: versionId,
-          tagId: id,
-          createdBy: currentUserId
-        }));
-        response = await VersionTag.query(trx)
-          .insert(relateArray);
-      }
+  //       // add new version_tag records
+  //       const relateArray = insertTags.map(({ id }) => ({
+  //         versionId: versionId,
+  //         tagId: id,
+  //         createdBy: currentUserId
+  //       }));
+  //       response = await VersionTag.query(trx)
+  //         .insert(relateArray);
+  //     }
 
-      if (!etrx) await trx.commit();
-      return Promise.resolve(response);
-    } catch (err) {
-      if (!etrx && trx) await trx.rollback();
-      throw err;
-    }
-  },
+  //     if (!etrx) await trx.commit();
+  //     return Promise.resolve(response);
+  //   } catch (err) {
+  //     if (!etrx && trx) await trx.rollback();
+  //     throw err;
+  //   }
+  // },
 
 };
 
