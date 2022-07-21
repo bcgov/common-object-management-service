@@ -91,6 +91,45 @@ const service = {
   },
 
   /**
+ * @function get
+ * Get a given version from the database
+ * @param {object[]} versionId S3 VersionId if null or undefined,
+ * get latest version (excluding delete-makers)
+ * @param {string} objectId id of the parent object
+ * @param {object} [etrx=undefined] An optional Objection Transaction object
+ * @returns {Promise<object>} the Version object from the database
+ * @throws The error encountered upon db transaction failure
+ */
+  get: async (versionId, objectId, etrx = undefined) => {
+    let trx;
+    try {
+      trx = etrx ? etrx : await Version.startTransaction();
+
+      let response = undefined;
+      if (versionId) {
+        response = await Version.query(trx)
+          .where({
+            versionId: versionId,
+            objectId: objectId
+          })
+          .first();
+      }
+      else {
+        response = await Version.query(trx)
+          .where('objectId', objectId)
+          .andWhere('deleteMarker', false)
+          .orderBy('createdBy', 'desc')
+          .first();
+      }
+      if (!etrx) await trx.commit();
+      return Promise.resolve(response);
+    } catch (err) {
+      if (!etrx && trx) await trx.rollback();
+      throw err;
+    }
+  },
+
+  /**
    * @function delete
    * Delete a version record of an object
    * @param {string} objId The object uuid
