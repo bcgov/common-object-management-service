@@ -309,13 +309,29 @@ describe('headObject', () => {
 
   it('should send a head object command', () => {
     const filePath = 'filePath';
-    const result = service.headObject({ filePath });
+    const versionId = '123';
+    const result = service.headObject({ filePath, versionId });
 
     expect(result).toBeTruthy();
     expect(s3ClientMock.calls()).toHaveLength(1);
     expect(s3ClientMock.commandCalls(HeadObjectCommand, {
       Bucket: bucket,
-      Key: filePath
+      Key: filePath,
+      VersionId: versionId
+    }, true)).toHaveLength(1);
+  });
+
+  it('should not require a version ID parameter', () => {
+    const filePath = 'filePath';
+    const versionId = undefined;
+    const result = service.headObject({ filePath, versionId });
+
+    expect(result).toBeTruthy();
+    expect(s3ClientMock.calls()).toHaveLength(1);
+    expect(s3ClientMock.commandCalls(HeadObjectCommand, {
+      Bucket: bucket,
+      Key: filePath,
+      VersionId: versionId
     }, true)).toHaveLength(1);
   });
 });

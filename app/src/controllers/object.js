@@ -7,12 +7,22 @@ const {
   addDashesToUuid,
   getAppAuthMode,
   getCurrentSubject,
+  getKeyValue,
   getMetadata,
   getPath,
   isTruthy,
-  mixedQueryToArray
+  mixedQueryToArray,
+  toLowerKeys
 } = require('../components/utils');
-const { objectService, storageService, versionService } = require('../services');
+const { trx } = require('../db/models/utils');
+
+const {
+  metadataService,
+  objectService,
+  storageService,
+  tagService,
+  versionService
+} = require('../services');
 
 const SERVICE = 'ObjectService';
 
@@ -56,9 +66,11 @@ const controller = {
     try {
       const objId = addDashesToUuid(req.params.objId);
       const objPath = getPath(objId);
+      const userId = getCurrentSubject(req.currentUser);
+      const sourceVersionId = req.query.versionId ? req.query.versionId.toString() : undefined;
 
-      const latest = await storageService.headObject({ filePath: objPath });
-      if (latest.ContentLength > MAXCOPYOBJECTLENGTH) {
+      const source = await storageService.headObject({ filePath: objPath, versionId: sourceVersionId });
+      if (source.ContentLength > MAXCOPYOBJECTLENGTH) {
         throw new Error('Cannot copy an object larger than 5GB');
       }
 
@@ -73,16 +85,27 @@ const controller = {
           copySource: objPath,
           filePath: objPath,
           metadata: {
-            ...latest.Metadata,  // Take existing metadata first
+            ...source.Metadata,  // Take existing metadata first
             ...metadataToAppend, // Append new metadata
-            id: latest.Metadata.id // Always enforce id key behavior
+            id: source.Metadata.id // Always enforce id key behavior
           },
           metadataDirective: MetadataDirective.REPLACE,
-          versionId: req.query.versionId ? req.query.versionId.toString() : undefined
+          versionId: sourceVersionId
         };
+        // create new version with metadata in S3
+        const s3Response = await storageService.copyObject(data);
 
-        const response = await storageService.copyObject(data);
-        controller._setS3Headers(response, res);
+        await trx(async (trx) => {
+          // create or update version in DB (if a non-versioned object)
+          const version = s3Response.VersionId ?
+            await versionService.copy(sourceVersionId, s3Response.VersionId, objId, userId, trx) :
+            await versionService.update({ ...data, id: objId }, userId, trx);
+
+          // add metadata to version in DB
+          await metadataService.addMetadata(version.id, data.metadata, userId, trx);
+        });
+
+        controller._setS3Headers(s3Response, res);
         res.status(204).end();
       }
     } catch (e) {
@@ -102,6 +125,7 @@ const controller = {
     try {
       const objId = addDashesToUuid(req.params.objId);
       const objPath = getPath(objId);
+      const userId = getCurrentSubject(req.currentUser);
       const { versionId, ...newTags } = req.query;
       const objectTagging = await storageService.getObjectTagging({ filePath: objPath, versionId });
 
@@ -121,8 +145,15 @@ const controller = {
           tags: newSet,
           versionId: versionId ? versionId.toString() : undefined
         };
-
+        // Add tags to the version in S3
         const response = await storageService.putObjectTagging(data);
+
+        // Add tags to version in DB
+        await trx(async (trx) => {
+          const version = await versionService.get(data.versionId, objId, trx);
+          await tagService.addTags(version.id, toLowerKeys(data.tags), userId, trx);
+        });
+
         controller._setS3Headers(response, res);
         res.status(204).end();
       }
@@ -171,12 +202,18 @@ const controller = {
           object.dbResponse = await object.dbResponse;
           // wait for file to finish uploading to S3
           object.s3Response = await object.s3Response;
-          // add VersionId to data for the file. If versioning not enabled on bucket. VersionId is undefined
-          object.data.VersionId = object.s3Response.VersionId;
+
+          await trx(async (trx) => {
+            // create new version in DB
+            object.data.versionId = object.s3Response.VersionId;
+            const versions = await versionService.create(object.data, userId, trx);
+            // add metadata to version in DB
+            await metadataService.addMetadata(versions.id, object.data.metadata, userId, trx);
+
+            // add tags to version in DB
+            if (object.data.tags.length) await tagService.addTags(versions.id, getKeyValue(object.data.tags), userId, trx);
+          });
         }));
-        // create version in DB
-        const objectVersionArray = objects.map((object) => object.data);
-        await versionService.create(objectVersionArray, userId);
 
         // merge returned responses into a result
         const result = objects.map((object) => ({
@@ -205,9 +242,12 @@ const controller = {
     try {
       const objId = addDashesToUuid(req.params.objId);
       const objPath = getPath(objId);
+      const userId = getCurrentSubject(req.currentUser);
 
-      const latest = await storageService.headObject({ filePath: objPath });
-      if (latest.ContentLength > MAXCOPYOBJECTLENGTH) {
+      const sourceVersionId = req.query.versionId ? req.query.versionId.toString() : undefined;
+
+      const source = await storageService.headObject({ filePath: objPath, versionId: sourceVersionId });
+      if (source.ContentLength > MAXCOPYOBJECTLENGTH) {
         throw new Error('Cannot copy an object larger than 5GB');
       }
 
@@ -216,7 +256,7 @@ const controller = {
       let metadata = undefined;
       if (keysToRemove.length) {
         metadata = Object.fromEntries(
-          Object.entries(latest.Metadata)
+          Object.entries(source.Metadata)
             .filter(([key]) => !keysToRemove.includes(key))
         );
       }
@@ -226,15 +266,26 @@ const controller = {
         filePath: objPath,
         metadata: {
           ...metadata,
-          name: latest.Metadata.name,  // Always enforce name and id key behavior
-          id: latest.Metadata.id
+          name: source.Metadata.name,  // Always enforce name and id key behavior
+          id: source.Metadata.id
         },
         metadataDirective: MetadataDirective.REPLACE,
-        versionId: req.query.versionId ? req.query.versionId.toString() : undefined
+        versionId: sourceVersionId
       };
+      // create new version with metadata in S3
+      const s3Response = await storageService.copyObject(data);
 
-      const response = await storageService.copyObject(data);
-      controller._setS3Headers(response, res);
+      await trx(async (trx) => {
+        // create or update version in DB(if a non-versioned object)
+        const version = s3Response.VersionId ?
+          await versionService.copy(sourceVersionId, s3Response.VersionId, objId, userId, trx) :
+          await versionService.update({ ...data, id: objId }, userId, trx);
+
+        // add metadata to version in DB
+        await metadataService.addMetadata(version.id, data.metadata, userId, trx);
+      });
+
+      controller._setS3Headers(s3Response, res);
       res.status(204).end();
     } catch (e) {
       next(errorToProblem(SERVICE, e));
@@ -278,11 +329,11 @@ const controller = {
           // create DeleteMarker version in DB
           const deleteMarker = {
             id: objId,
-            DeleteMarker: true,
-            VersionId: s3Response.VersionId,
+            deleteMarker: true,
+            versionId: s3Response.VersionId,
             mimeType: null
           };
-          await versionService.create([deleteMarker], userId);
+          await versionService.create(deleteMarker, userId);
         }
         // else object in bucket is not versioned
         else {
@@ -309,6 +360,7 @@ const controller = {
       const objId = addDashesToUuid(req.params.objId);
       const objPath = getPath(objId);
       const { versionId } = req.query;
+      const userId = getCurrentSubject(req.currentUser);
       const objectTagging = await storageService.getObjectTagging({ filePath: objPath, versionId });
 
       // Generate object subset by subtracting/omitting defined keys via filter/inclusion
@@ -324,6 +376,7 @@ const controller = {
         versionId: versionId ? versionId.toString() : undefined
       };
 
+      // Update tags for version in S3
       let response;
       if (newTags) {
         response = await storageService.putObjectTagging(data);
@@ -331,6 +384,11 @@ const controller = {
       else {
         response = await storageService.deleteObjectTagging(data);
       }
+      // update tags for version in DB
+      await trx(async (trx) => {
+        const version = await versionService.get(data.versionId, objId, trx);
+        await tagService.addTags(version.id, toLowerKeys(data.tags), userId, trx);
+      });
 
       controller._setS3Headers(response, res);
       res.status(204).end();
@@ -443,9 +501,11 @@ const controller = {
     try {
       const objId = addDashesToUuid(req.params.objId);
       const objPath = getPath(objId);
+      const userId = getCurrentSubject(req.currentUser);
+      const sourceVersionId = req.query.versionId ? req.query.versionId.toString() : undefined;
 
-      const latest = await storageService.headObject({ filePath: objPath });
-      if (latest.ContentLength > MAXCOPYOBJECTLENGTH) {
+      const source = await storageService.headObject({ filePath: objPath, versionId: sourceVersionId });
+      if (source.ContentLength > MAXCOPYOBJECTLENGTH) {
         throw new Error('Cannot copy an object larger than 5GB');
       }
 
@@ -460,16 +520,26 @@ const controller = {
           copySource: objPath,
           filePath: objPath,
           metadata: {
-            name: latest.Metadata.name,  // Always enforce name and id key behavior
+            name: source.Metadata.name,  // Always enforce name and id key behavior
             ...newMetadata, // Add new metadata
-            id: latest.Metadata.id
+            id: source.Metadata.id
           },
           metadataDirective: MetadataDirective.REPLACE,
-          versionId: req.query.versionId ? req.query.versionId.toString() : undefined
+          versionId: sourceVersionId
         };
+        const s3Response = await storageService.copyObject(data);
 
-        const response = await storageService.copyObject(data);
-        controller._setS3Headers(response, res);
+        await trx(async (trx) => {
+          // create or update version (if a non-versioned object)
+          const version = s3Response.VersionId ?
+            await versionService.copy(sourceVersionId, s3Response.VersionId, objId, userId, trx) :
+            await versionService.update({ ...data, id: objId }, userId, trx);
+
+          // add metadata
+          await metadataService.addMetadata(version.id, data.metadata, userId, trx);
+        });
+
+        controller._setS3Headers(s3Response, res);
         res.status(204).end();
       }
     } catch (e) {
@@ -489,6 +559,7 @@ const controller = {
     try {
       const objId = addDashesToUuid(req.params.objId);
       const objPath = getPath(objId);
+      const userId = getCurrentSubject(req.currentUser);
       const { versionId, ...newTags } = req.query;
 
       if (!Object.keys(newTags).length || Object.keys(newTags).length > 10) {
@@ -503,7 +574,15 @@ const controller = {
           versionId: versionId ? versionId.toString() : undefined
         };
 
+        // Add tags to the object in S3
         const response = await storageService.putObjectTagging(data);
+
+        // update tags on version in DB
+        await trx(async (trx) => {
+          const version = await versionService.get(data.versionId, objId, trx);
+          await tagService.addTags(version.id, toLowerKeys(data.tags), userId, trx);
+        });
+
         controller._setS3Headers(response, res);
         res.status(204).end();
       }
@@ -613,14 +692,27 @@ const controller = {
           object.s3Response
         ]);
 
-        // if versioning enabled, create new version in DB
-        if (s3Response.VersionId) {
-          object.data.VersionId = s3Response.VersionId;
-          await versionService.create([object.data], userId);
-        } else {
-          // else update existing null-version
-          await versionService.update(object.data, userId);
-        }
+        await trx(async (trx) => {
+          // create or update version (if a non-versioned object)
+          let version = undefined;
+          if (s3Response.VersionId) {
+            object.data.versionId = s3Response.VersionId;
+            version = await versionService.create(object.data, userId, trx);
+          }
+          else {
+            version = await versionService.update({
+              ...object.data,
+              versionId: null
+            }, userId, trx);
+          }
+
+          // add metadata to version in DB
+          await metadataService.addMetadata(version.id, object.data.metadata, userId, trx);
+
+          // add tags to version in DB
+          if (object.data.tags.length) await tagService.addTags(version.id, getKeyValue(object.data.tags), userId, trx);
+
+        });
 
         // merge returned responses into a result
         const result = {

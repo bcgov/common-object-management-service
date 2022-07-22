@@ -242,7 +242,24 @@ const utils = {
       stream.on('end', () => resolve(Buffer.concat(chunks)));
       stream.on('error', reject);
     });
-  }
+  },
+
+  /**
+   * @function toLowerKeys converts all key names for all objects in an array to lowercase
+   * @param {object[]} Array of tag objects (eg: [{Key: k1, Value: V1}])
+   * @returns {object[]} Array of objects (eg: [{key: k1, value: V1}])
+   */
+  toLowerKeys(arr) {
+    const result = arr.map(obj => {
+      const entries = Object.entries(obj);
+      return Object.fromEntries(
+        entries.map(([key, value]) => {
+          return [key.toLowerCase(), value];
+        }),
+      );
+    });
+    return result;
+  },
 };
 
 module.exports = utils;

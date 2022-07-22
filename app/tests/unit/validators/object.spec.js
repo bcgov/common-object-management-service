@@ -42,7 +42,7 @@ describe('headObject', () => {
       const versionId = query.keys.versionId;
 
       it('is the expected schema', () => {
-        expect(versionId).toEqual(type.alphanum.describe());
+        expect(versionId).toEqual(Joi.string().describe());
       });
     });
   });
@@ -84,7 +84,7 @@ describe('readObject', () => {
       const versionId = query.keys.versionId;
 
       it('is the expected schema', () => {
-        expect(versionId).toEqual(type.alphanum.describe());
+        expect(versionId).toEqual(Joi.string().describe());
       });
     });
 
