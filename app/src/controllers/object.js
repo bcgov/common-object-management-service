@@ -694,8 +694,6 @@ const controller = {
 
         const s3Response = storageService.putObject({ ...data, stream });
 
-
-
         const dbResponse = utils.trxWrapper(async (trx) => {
           // update object in DB
           const object = await objectService.update({ ...data, userId, path: getPath(objId) }, trx);

@@ -37,7 +37,7 @@ const utils = {
   },
 
   inArrayFilter(column, values) {
-    const clause = this.inArrayClause(column, values);
+    const clause = utils.inArrayClause(column, values);
     return `(array_length("${column}", 1) > 0 and (${clause}))`;
   },
 
@@ -59,7 +59,7 @@ const utils = {
    * @returns {Promise<object} The transaction object
    * @throws The error encountered upon db transaction failure
    */
-  async trx(callback) {
+  async trxWrapper(callback) {
     const trx = await Model.startTransaction();
     try {
       const result = await callback(trx);
@@ -69,7 +69,8 @@ const utils = {
       if (trx) await trx.rollback();
       throw err;
     }
-  }
+  },
+
 };
 
 module.exports = utils;

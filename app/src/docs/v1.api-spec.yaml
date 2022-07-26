@@ -58,6 +58,9 @@ paths:
       operationId: createObjects
       tags:
         - Object
+      parameters:
+        - $ref: "#/components/parameters/Header-Metadata"
+        - $ref: "#/components/parameters/Query-Tag"
       requestBody:
         description: Form-data containing files
         required: true
@@ -98,6 +101,7 @@ paths:
                           example: file1
                     - $ref: "#/components/schemas/DB-Object"
                     - $ref: "#/components/schemas/DB-Metadata"
+                    - $ref: "#/components/schemas/DB-Tags"
                     - $ref: "#/components/schemas/S3-Object"
         "401":
           $ref: "#/components/responses/Unauthorized"
@@ -236,6 +240,8 @@ paths:
         - Object
       parameters:
         - $ref: "#/components/parameters/Path-ObjectId"
+        - $ref: "#/components/parameters/Query-Tag"
+        - $ref: "#/components/parameters/Header-Metadata"
       requestBody:
         description: Form-data containing files
         required: true
@@ -273,6 +279,7 @@ paths:
                         example: file1
                   - $ref: "#/components/schemas/DB-Object"
                   - $ref: "#/components/schemas/DB-Metadata"
+                  - $ref: "#/components/schemas/DB-Tags"
                   - $ref: "#/components/schemas/S3-Object"
         "401":
           $ref: "#/components/responses/Unauthorized"
@@ -845,7 +852,7 @@ components:
       description: String of keys to remove
       schema:
         type: string
-        example: Foo
+        example: Foo,Bar
     Query-LastName:
       in: query
       name: lastName
@@ -918,10 +925,10 @@ components:
     Query-Tag:
       in: query
       name: anyKey
-      description: Key/Value pair
+      description: Tags to add to the object, defined as Key/Value pairs
       schema:
         type: string
-        example: Foo=Bar
+        example: anyValue
     Query-UserSearch:
       in: query
       name: search
@@ -1057,6 +1064,14 @@ components:
             permCode:
               $ref: "#/components/schemas/PermCode"
         - $ref: "#/components/schemas/DB-TimestampUserData"
+    DB-Tags:
+      allOf:
+        - type: object
+          properties:
+            tags:
+              type: object
+              description: User-defined tags
+              example: {'classification': 'Top Secret', 'Priority': 'Urgent'}
     DB-TimestampUserData:
       type: object
       required:

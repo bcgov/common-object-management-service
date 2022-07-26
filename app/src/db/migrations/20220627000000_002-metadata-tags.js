@@ -84,12 +84,23 @@ exports.up = function (knex) {
     // remove column originalName from version table
     .then(() => knex.schema.alterTable('version', table => {
       table.dropColumn('originalName');
+    }))
+
+    // additional DB update: change user.identityId field to data type `string`
+    .then(() => knex.schema.alterTable('user', table => {
+      table.string('identityId', 255).alter();
     }));
+
 };
 
 
 exports.down = function (knex) {
   return Promise.resolve()
+
+    // additional DB update: change user.identityId field back to data type `uuid`
+    .then(() => knex.schema.alterTable('user', table => {
+      table.uuid('identityId').alter();
+    }))
 
     // re-add columns originalName version table
     .then(() => knex.schema.alterTable('version', table => {
