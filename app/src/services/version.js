@@ -91,6 +91,35 @@ const service = {
   },
 
   /**
+   * @function delete
+   * Delete a version record of an object
+   * @param {string} objId The object uuid
+   * @param {string} versionId The version ID or null if deleting an object
+   * @param {object} [etrx=undefined] An optional Objection Transaction object
+   * @returns {Promise<integer>} The number of remaining versions in db after the delete
+   * @throws The error encountered upon db transaction failure
+   */
+  delete: async (objId, versionId, etrx = undefined) => {
+    let trx;
+    try {
+      trx = etrx ? etrx : await Version.startTransaction();
+      const response = await Version.query(trx)
+        .delete()
+        .where('objectId', objId)
+        .where('versionId', versionId)
+        // Returns array of deleted rows instead of count
+        // https://vincit.github.io/objection.js/recipes/returning-tricks.html
+        .returning('*')
+        .throwIfNotFound();
+      if (!etrx) await trx.commit();
+      return Promise.resolve(response);
+    } catch (err) {
+      if (!etrx && trx) await trx.rollback();
+      throw err;
+    }
+  },
+
+  /**
  * @function get
  * Get a given version from the database
  * @param {object[]} versionId S3 VersionId if null or undefined,
@@ -118,38 +147,9 @@ const service = {
         response = await Version.query(trx)
           .where('objectId', objectId)
           .andWhere('deleteMarker', false)
-          .orderBy('createdBy', 'desc')
+          .orderBy('createdAt', 'desc')
           .first();
       }
-      if (!etrx) await trx.commit();
-      return Promise.resolve(response);
-    } catch (err) {
-      if (!etrx && trx) await trx.rollback();
-      throw err;
-    }
-  },
-
-  /**
-   * @function delete
-   * Delete a version record of an object
-   * @param {string} objId The object uuid
-   * @param {string} versionId The version ID or null if deleting an object
-   * @param {object} [etrx=undefined] An optional Objection Transaction object
-   * @returns {Promise<integer>} The number of remaining versions in db after the delete
-   * @throws The error encountered upon db transaction failure
-   */
-  delete: async (objId, versionId, etrx = undefined) => {
-    let trx;
-    try {
-      trx = etrx ? etrx : await Version.startTransaction();
-      const response = await Version.query(trx)
-        .delete()
-        .where('objectId', objId)
-        .where('versionId', versionId)
-        // Returns array of deleted rows instead of count
-        // https://vincit.github.io/objection.js/recipes/returning-tricks.html
-        .returning('*')
-        .throwIfNotFound();
       if (!etrx) await trx.commit();
       return Promise.resolve(response);
     } catch (err) {

@@ -14,7 +14,7 @@ const {
   mixedQueryToArray,
   toLowerKeys
 } = require('../components/utils');
-const { trx } = require('../db/models/utils');
+const utils = require('../db/models/utils');
 
 const {
   metadataService,
@@ -95,7 +95,8 @@ const controller = {
         // create new version with metadata in S3
         const s3Response = await storageService.copyObject(data);
 
-        await trx(async (trx) => {
+
+        await utils.trxWrapper(async (trx) => {
           // create or update version in DB (if a non-versioned object)
           const version = s3Response.VersionId ?
             await versionService.copy(sourceVersionId, s3Response.VersionId, objId, userId, trx) :
@@ -149,7 +150,7 @@ const controller = {
         const response = await storageService.putObjectTagging(data);
 
         // Add tags to version in DB
-        await trx(async (trx) => {
+        await utils.trxWrapper(async (trx) => {
           const version = await versionService.get(data.versionId, objId, trx);
           await tagService.addTags(version.id, toLowerKeys(data.tags), userId, trx);
         });
@@ -175,7 +176,6 @@ const controller = {
       const bb = busboy({ headers: req.headers });
       const objects = [];
       const userId = getCurrentSubject(req.currentUser);
-      const { ...newTags } = req.query;
 
       bb.on('file', (name, stream, info) => {
         const objId = uuidv4();
@@ -188,31 +188,42 @@ const controller = {
             ...getMetadata(req.headers),
             id: objId
           },
-          tags: newTags,
+          tags: req.query,
         };
+
+        const s3Response = storageService.putObject({ ...data, stream });
+
+        const dbResponse = utils.trxWrapper(async (trx) => {
+          // create object
+          const object = await objectService.create({ ...data, userId, path: getPath(objId) }, trx);
+
+          // create new version in DB
+          const s3Resolved = await s3Response;
+          data.versionId = s3Resolved.VersionId;
+          const versions = await versionService.create(data, userId, trx);
+
+          // add metadata to version in DB
+          if (Object.keys(data.metadata).length) await metadataService.addMetadata(versions.id, data.metadata, userId, trx);
+
+          // add tags to version in DB
+          if (Object.keys(data.tags).length) await tagService.addTags(versions.id, getKeyValue(data.tags), userId, trx);
+
+          return object;
+        });
+
         objects.push({
           data: data,
-          dbResponse: objectService.create({ ...data, userId, path: getPath(objId) }),
-          s3Response: storageService.putObject({ ...data, stream })
+          dbResponse: dbResponse,
+          s3Response: s3Response
         });
       });
+
       bb.on('close', async () => {
         await Promise.all(objects.map(async (object) => {
-          // wait for object and permission db update
-          object.dbResponse = await object.dbResponse;
           // wait for file to finish uploading to S3
           object.s3Response = await object.s3Response;
-
-          await trx(async (trx) => {
-            // create new version in DB
-            object.data.versionId = object.s3Response.VersionId;
-            const versions = await versionService.create(object.data, userId, trx);
-            // add metadata to version in DB
-            await metadataService.addMetadata(versions.id, object.data.metadata, userId, trx);
-
-            // add tags to version in DB
-            if (object.data.tags.length) await tagService.addTags(versions.id, getKeyValue(object.data.tags), userId, trx);
-          });
+          // wait for object and permission db update
+          object.dbResponse = await object.dbResponse;
         }));
 
         // merge returned responses into a result
@@ -275,7 +286,7 @@ const controller = {
       // create new version with metadata in S3
       const s3Response = await storageService.copyObject(data);
 
-      await trx(async (trx) => {
+      await utils.trxWrapper(async (trx) => {
         // create or update version in DB(if a non-versioned object)
         const version = s3Response.VersionId ?
           await versionService.copy(sourceVersionId, s3Response.VersionId, objId, userId, trx) :
@@ -385,7 +396,7 @@ const controller = {
         response = await storageService.deleteObjectTagging(data);
       }
       // update tags for version in DB
-      await trx(async (trx) => {
+      await utils.trxWrapper(async (trx) => {
         const version = await versionService.get(data.versionId, objId, trx);
         await tagService.addTags(version.id, toLowerKeys(data.tags), userId, trx);
       });
@@ -529,7 +540,7 @@ const controller = {
         };
         const s3Response = await storageService.copyObject(data);
 
-        await trx(async (trx) => {
+        await utils.trxWrapper(async (trx) => {
           // create or update version (if a non-versioned object)
           const version = s3Response.VersionId ?
             await versionService.copy(sourceVersionId, s3Response.VersionId, objId, userId, trx) :
@@ -578,7 +589,7 @@ const controller = {
         const response = await storageService.putObjectTagging(data);
 
         // update tags on version in DB
-        await trx(async (trx) => {
+        await utils.trxWrapper(async (trx) => {
           const version = await versionService.get(data.versionId, objId, trx);
           await tagService.addTags(version.id, toLowerKeys(data.tags), userId, trx);
         });
@@ -680,39 +691,52 @@ const controller = {
           },
           tags: newTags
         };
-        object = {
-          data: data,
-          dbResponse: objectService.update({ ...data, userId, path: getPath(objId) }),
-          s3Response: storageService.putObject({ ...data, stream })
-        };
-      });
-      bb.on('close', async () => {
-        const [dbResponse, s3Response] = await Promise.all([
-          object.dbResponse,
-          object.s3Response
-        ]);
 
-        await trx(async (trx) => {
-          // create or update version (if a non-versioned object)
+        const s3Response = storageService.putObject({ ...data, stream });
+
+
+
+        const dbResponse = utils.trxWrapper(async (trx) => {
+          // update object in DB
+          const object = await objectService.update({ ...data, userId, path: getPath(objId) }, trx);
+
+          // wait for S3 response
+          const s3Resolved = await s3Response;
+          // if versioning enabled, create new version in DB
           let version = undefined;
-          if (s3Response.VersionId) {
-            object.data.versionId = s3Response.VersionId;
-            version = await versionService.create(object.data, userId, trx);
+          if (s3Resolved.VersionId) {
+            data.versionId = s3Resolved.VersionId;
+            version = await versionService.create(data, userId, trx);
           }
+          // else update only version in DB
           else {
             version = await versionService.update({
-              ...object.data,
+              ...data,
               versionId: null
             }, userId, trx);
           }
 
           // add metadata to version in DB
-          await metadataService.addMetadata(version.id, object.data.metadata, userId, trx);
+          if (Object.keys(data.metadata).length) await metadataService.addMetadata(version.id, data.metadata, userId, trx);
 
           // add tags to version in DB
-          if (object.data.tags.length) await tagService.addTags(version.id, getKeyValue(object.data.tags), userId, trx);
+          if (Object.keys(data.tags).length)  await tagService.addTags(version.id, getKeyValue(data.tags), userId, trx);
 
+          return object;
         });
+
+        object = {
+          data: data,
+          dbResponse: dbResponse,
+          s3Response: s3Response
+        };
+      });
+
+      bb.on('close', async () => {
+        const [dbResponse, s3Response] = await Promise.all([
+          object.dbResponse,
+          object.s3Response
+        ]);
 
         // merge returned responses into a result
         const result = {
