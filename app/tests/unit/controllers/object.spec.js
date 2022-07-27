@@ -1,8 +1,10 @@
 const Problem = require('api-problem');
 const { AuthType, MAXCOPYOBJECTLENGTH, MetadataDirective } = require('../../../src/components/constants');
 
+const utils = require('../../../src/db/models/utils');
+
 const controller = require('../../../src/controllers/object');
-const { storageService, objectService, versionService } = require('../../../src/services');
+const { storageService, objectService, metadataService, versionService } = require('../../../src/services');
 
 const mockResponse = () => {
   const res = {};
@@ -27,13 +29,18 @@ describe('addMetadata', () => {
   // mock service calls
   const storageHeadObjectSpy = jest.spyOn(storageService, 'headObject');
   const storageCopyObjectSpy = jest.spyOn(storageService, 'copyObject');
+  const versionCopySpy = jest.spyOn(versionService, 'copy');
+  const metadataAddMetadataSpy = jest.spyOn(metadataService, 'addMetadata');
+  const trxWrapperSpy = jest.spyOn(utils, 'trxWrapper');
+  const setHeadersSpy = jest.spyOn(controller, '_setS3Headers');
 
   const next = jest.fn();
 
   // response from S3
   const GoodResponse = {
     ContentLength: 1234,
-    Metadata: { id: 1, foo: 'bar' }
+    Metadata: { id: 1, foo: 'bar' },
+    VersionId: '5678'
   };
   const BadResponse = {
     MontentLength: MAXCOPYOBJECTLENGTH + 1
@@ -72,11 +79,14 @@ describe('addMetadata', () => {
     };
 
     storageHeadObjectSpy.mockReturnValue(GoodResponse);
-    storageCopyObjectSpy.mockReturnValue({});
+    storageCopyObjectSpy.mockResolvedValue(GoodResponse);
+    trxWrapperSpy.mockImplementation(callback => callback({}));
+    versionCopySpy.mockReturnValue({id: '5dad1ec9-d3c0-4b0f-8ead-cb4d9fa98987'});
+    metadataAddMetadataSpy.mockReturnValue({});
+    setHeadersSpy.mockImplementation(x => x);
 
     await controller.addMetadata(req, res, next);
 
-    expect(res.status).toHaveBeenCalledWith(204);
     expect(storageCopyObjectSpy).toHaveBeenCalledWith({
       copySource: 'xyz-789',
       filePath: 'xyz-789',
@@ -88,6 +98,11 @@ describe('addMetadata', () => {
       metadataDirective: MetadataDirective.REPLACE,
       versionId: undefined
     });
+
+    expect(trxWrapperSpy).toHaveBeenCalledTimes(1);
+    expect(versionCopySpy).toHaveBeenCalledTimes(1);
+    expect(metadataAddMetadataSpy).toHaveBeenCalledTimes(1);
+    expect(res.status).toHaveBeenCalledWith(204);
   });
 });
 
@@ -305,12 +320,12 @@ describe('deleteObject', () => {
     await controller.deleteObject(req, res, next);
 
     expect(versionCreateSpy).toHaveBeenCalledTimes(1);
-    expect(versionCreateSpy).toHaveBeenCalledWith([{
+    expect(versionCreateSpy).toHaveBeenCalledWith({
       id: 'xyz-789',
-      DeleteMarker: true,
-      VersionId: '1234',
+      deleteMarker: true,
+      versionId: '1234',
       mimeType: null,
-    }], 'testsub');
+    }, 'testsub');
   });
 
   it('should delete object if versioning not enabled', async () => {

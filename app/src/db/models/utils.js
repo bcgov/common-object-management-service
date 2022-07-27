@@ -1,59 +1,76 @@
-/**
- * @function filterILike
- * Conditionally adds a where or where in clause to the `query` if `value` is a string
- * or an array of strings respectively
- * @param {object} query The Objection Query Builder
- * @param {string|string[]} value The string or array of string values to match on
- * @param {string} column The table column to match on
- */
-const filterOneOrMany = (query, value, column) => {
-  if (value) {
-    if (Array.isArray(value) && value.length) {
-      query.whereIn(column, value);
-    } else {
-      query.where(column, value);
+const { Model } = require('objection');
+
+const utils = {
+  /**
+   * @function filterILike
+   * Conditionally adds a where or where in clause to the `query` if `value` is a string
+   * or an array of strings respectively
+   * @param {object} query The Objection Query Builder
+   * @param {string|string[]} value The string or array of string values to match on
+   * @param {string} column The table column to match on
+   */
+  filterOneOrMany(query, value, column) {
+    if (value) {
+      if (Array.isArray(value) && value.length) {
+        query.whereIn(column, value);
+      } else {
+        query.where(column, value);
+      }
     }
-  }
+  },
+
+  /**
+   * @function filterILike
+   * Conditionally adds a where ilike clause to the `query` builder if `value` is not falsy
+   * ilike is a Postgres keyword for case-insensitive matching
+   * @see {@link https://www.postgresql.org/docs/current/functions-matching.html}
+   * @param {object} query The Objection Query Builder
+   * @param {string} value The string value to match on
+   * @param {string} column The table column to match on
+   */
+  filterILike(query, value, column) {
+    if (value) query.where(column, 'ilike', `%${value}%`);
+  },
+
+  inArrayClause(column, values) {
+    return values.map(p => `'${p}' = ANY("${column}")`).join(' or ');
+  },
+
+  inArrayFilter(column, values) {
+    const clause = utils.inArrayClause(column, values);
+    return `(array_length("${column}", 1) > 0 and (${clause}))`;
+  },
+
+  tableNames(models) {
+    return Object.values(models).map(model => model.tableName);
+  },
+
+  toArray(values) {
+    if (values) {
+      return Array.isArray(values) ? values.filter(p => p && p.trim().length > 0) : [values].filter(p => p && p.trim().length > 0);
+    }
+    return [];
+  },
+
+  /**
+   * @function trx
+   * Wraps Objection/Knex queries in an Objection Transaction object
+   * @param {*} callback The objection queries that we want to enclose in a transaction
+   * @returns {Promise<object} The transaction object
+   * @throws The error encountered upon db transaction failure
+   */
+  async trxWrapper(callback) {
+    const trx = await Model.startTransaction();
+    try {
+      const result = await callback(trx);
+      await trx.commit();
+      return Promise.resolve(result);
+    } catch (err) {
+      if (trx) await trx.rollback();
+      throw err;
+    }
+  },
+
 };
 
-/**
- * @function filterILike
- * Conditionally adds a where ilike clause to the `query` builder if `value` is not falsy
- * ilike is a Postgres keyword for case-insensitive matching
- * @see {@link https://www.postgresql.org/docs/current/functions-matching.html}
- * @param {object} query The Objection Query Builder
- * @param {string} value The string value to match on
- * @param {string} column The table column to match on
- */
-const filterILike = (query, value, column) => {
-  if (value) query.where(column, 'ilike', `%${value}%`);
-};
-
-const inArrayClause = (column, values) => {
-  return values.map(p => `'${p}' = ANY("${column}")`).join(' or ');
-};
-
-const inArrayFilter = (column, values) => {
-  const clause = inArrayClause(column, values);
-  return `(array_length("${column}", 1) > 0 and (${clause}))`;
-};
-
-const tableNames = (models) => {
-  return Object.values(models).map(model => model.tableName);
-};
-
-const toArray = (values) => {
-  if (values) {
-    return Array.isArray(values) ? values.filter(p => p && p.trim().length > 0) : [values].filter(p => p && p.trim().length > 0);
-  }
-  return [];
-};
-
-module.exports = {
-  filterOneOrMany,
-  filterILike,
-  inArrayClause,
-  inArrayFilter,
-  tableNames,
-  toArray
-};
+module.exports = utils;

@@ -175,12 +175,14 @@ const objectStorageService = {
    * @function headObject
    * Gets the object headers for the object at `filePath`
    * @param {string} options.filePath The filePath of the object
+   * @param {string} options.versionId A version ID used to reference a speciific version of the object
    * @returns {Promise<object>} The response of the head object operation
    */
-  headObject({ filePath }) {
+  headObject({ filePath, versionId = undefined }) {
     const params = {
       Bucket: bucket,
-      Key: filePath
+      Key: filePath,
+      VersionId: versionId
     };
     return this._s3Client.send(new HeadObjectCommand(params));
   },
