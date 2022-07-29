@@ -3,8 +3,8 @@ const config = require('config');
 
 const log = require('../components/log')(module.filename);
 const { AuthMode, AuthType, Permissions } = require('../components/constants');
-const { getAppAuthMode, getCurrentSubject, getPath } = require('../components/utils');
-const { objectService, permissionService, storageService } = require('../services');
+const { getAppAuthMode, getPath } = require('../components/utils');
+const { objectService, permissionService, storageService, userService } = require('../services');
 
 /**
  * @function checkAppMode
@@ -69,7 +69,7 @@ const hasPermission = (permission) => {
   return async (req, res, next) => {
     const authMode = getAppAuthMode();
     const authType = req.currentUser ? req.currentUser.authType : undefined;
-    const userId = getCurrentSubject(req.currentUser);
+    const userId = await userService.getCurrentUserId(req.currentUser);
 
     const canBasicMode = (mode) => [AuthMode.BASICAUTH, AuthMode.FULLAUTH].includes(mode);
     const canOidcMode = (mode) => [AuthMode.OIDCAUTH, AuthMode.FULLAUTH].includes(mode);

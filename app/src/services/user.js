@@ -1,6 +1,8 @@
-const { NIL: SYSTEM_USER } = require('uuid');
+const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 
-const { addDashesToUuid, parseIdentityKeyClaims } = require('../components/utils');
+const { getCurrentIdentity, parseIdentityKeyClaims } = require('../components/utils');
+const { AuthType } = require('../components/constants');
+
 const { IdentityProvider, User } = require('../db/models');
 
 /**
@@ -20,8 +22,7 @@ const service = {
       .concat(undefined)[0]; // Set undefined as last element of array
 
     return {
-      userId: token.sub,
-      identityId: addDashesToUuid(identityId),
+      identityId: identityId,
       username: token.identity_provider_identity ? token.identity_provider_identity : token.preferred_username,
       firstName: token.given_name,
       fullName: token.name,
@@ -77,7 +78,7 @@ const service = {
       }
 
       const obj = {
-        userId: data.userId,
+        userId: uuidv4(),
         identityId: data.identityId,
         username: data.username,
         fullName: data.fullName,
@@ -95,6 +96,24 @@ const service = {
       if (!etrx && trx) await trx.rollback();
       throw err;
     }
+  },
+
+  /**
+   * @function getCurrentUserId
+   * Gets userId (primary identifier of a user in COMS db) of currentUser.
+   * if request is basic auth returns `defaultValue`
+   * @param {object} currentUser The express request currentUser object
+   * @param {string} [defaultValue=undefined] An optional default return value
+   * @returns {string} The current userId if applicable, or `defaultValue`
+   */
+  async getCurrentUserId(currentUser, defaultValue = undefined) {
+    if(currentUser && currentUser.authType === AuthType.BEARER) {
+      const user = await User.query()
+        .where('identityId', getCurrentIdentity(currentUser))
+        .first();
+      return user.userId;
+    }
+    return defaultValue;
   },
 
   /**
@@ -117,7 +136,9 @@ const service = {
    */
   login: async (token) => {
     const newUser = service._tokenToUser(token);
-    const oldUser = await User.query().findById(newUser.userId);
+    const oldUser = await User.query()
+      .where('identityId', newUser.identityId)
+      .first();
 
     if (!oldUser) {
       // Add user to system
