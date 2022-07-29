@@ -9,16 +9,22 @@ inputs:
   image_name:
     description: Image Name
     required: true
-  registry:
-    description: Container Registry
+  github_username:
+    description: Github Container Registry Username
     required: true
-    default: ghcr.io
-  username:
-    description: Container Registry Username
+  github_token:
+    description: Github Container Registry Authorization Token
     required: true
-  token:
-    description: Container Registry Authorization Token
-    required: true
+  dockerhub_username:
+    description: Dockerhub Container Registry Username
+    required: false
+  dockerhub_organization:
+    description: Dockerhub Container Registry Organization
+    required: false
+    default: bcgovimages
+  dockerhub_token:
+    description: Dockerhub Container Registry Authorization Token
+    required: false
 
 runs:
   using: composite
@@ -26,18 +32,34 @@ runs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: Login to Container Registry
+    - name: Parse Input Values
+      shell: bash
+      run: |
+        echo "GH_USERNAME=$(tr '[:upper:]' '[:lower:]' <<< '${{ inputs.github_username }}')" >> $GITHUB_ENV
+        echo "HAS_DOCKERHUB=${{ fromJson(inputs.dockerhub_username != '' && inputs.dockerhub_token != '') }}" >> $GITHUB_ENV
+
+    - name: Login to Github Container Registry
       uses: docker/login-action@v1
       with:
-        registry: ${{ inputs.registry }}
-        username: ${{ inputs.username }}
-        password: ${{ inputs.token }}
+        registry: ghcr.io
+        username: ${{ env.GH_USERNAME }}
+        password: ${{ inputs.github_token }}
+
+    - name: Login to Dockerhub Container Registry
+      if: env.HAS_DOCKERHUB == 'true'
+      uses: docker/login-action@v1
+      with:
+        registry: docker.io
+        username: ${{ inputs.dockerhub_username }}
+        password: ${{ inputs.dockerhub_token }}
 
     - name: Prepare Container Metadata tags
       id: meta
       uses: docker/metadata-action@v3
       with:
-        images: ${{ inputs.registry }}/${{ inputs.username }}/${{ inputs.image_name }}
+        images: |
+          ghcr.io/${{ env.GH_USERNAME }}/${{ inputs.image_name }}
+          docker.io/${{ inputs.dockerhub_organization }}/${{ inputs.image_name }},enable=${{ env.HAS_DOCKERHUB }}
         # Always updates the 'latest' tag
         flavor: |
           latest=true
@@ -52,7 +74,7 @@ runs:
 
     - name: Build and Push to Container Registry
       id: builder
-      uses: docker/build-push-action@v2
+      uses: docker/build-push-action@v3
       with:
         context: ${{ inputs.context }}
         push: true
@@ -61,4 +83,5 @@ runs:
 
     - name: Inspect Docker Image
       shell: bash
-      run: docker image inspect ${{ inputs.registry }}/${{ inputs.username }}/${{ inputs.image_name }}:latest
+      run: |
+        docker image inspect ghcr.io/${{ env.GH_USERNAME }}/${{ inputs.image_name }}:latest

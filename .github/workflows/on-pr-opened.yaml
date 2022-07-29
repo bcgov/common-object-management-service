@@ -16,21 +16,20 @@ on:
 
 jobs:
   build:
-    name: Build & Push to GHCR
+    name: Build & Push
     if: "! github.event.pull_request.head.repo.fork"
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Build & Push to GHCR
+      - name: Build & Push
         uses: ./.github/actions/build-push-container
         with:
           context: .
           image_name: ${{ env.APP_NAME }}
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          github_username: ${{ github.repository_owner }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
   deploy-pr-dev:
     name: Deploy Pull Request to Dev
