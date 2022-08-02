@@ -14,7 +14,7 @@ At this time, only the latest version of Common Object Management Service is sup
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 0.2.0   | :white_check_mark: |
+| 0.2.1   | :white_check_mark: |
 | < 0.2.x | :x:                |
 
 ## Reporting a Bug
