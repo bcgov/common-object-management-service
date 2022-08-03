@@ -1,7 +1,6 @@
 const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 
-const { getCurrentIdentity, parseIdentityKeyClaims } = require('../components/utils');
-const { AuthType } = require('../components/constants');
+const { parseIdentityKeyClaims } = require('../components/utils');
 
 const { IdentityProvider, User } = require('../db/models');
 
@@ -102,18 +101,17 @@ const service = {
    * @function getCurrentUserId
    * Gets userId (primary identifier of a user in COMS db) of currentUser.
    * if request is basic auth returns `defaultValue`
-   * @param {object} currentUser The express request currentUser object
+   * @param {object} identityId the identity field of the current user
    * @param {string} [defaultValue=undefined] An optional default return value
    * @returns {string} The current userId if applicable, or `defaultValue`
    */
-  async getCurrentUserId(currentUser, defaultValue = undefined) {
-    if(currentUser && currentUser.authType === AuthType.BEARER) {
-      const user = await User.query()
-        .where('identityId', getCurrentIdentity(currentUser))
-        .first();
-      return user.userId;
-    }
-    return defaultValue;
+  async getCurrentUserId(identityId, defaultValue = undefined) {
+    const user = await User.query()
+      .select('userId')
+      .where('identityId', identityId)
+      .first();
+
+    return user && user.userId ? user.userId : defaultValue;
   },
 
   /**

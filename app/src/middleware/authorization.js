@@ -3,7 +3,8 @@ const config = require('config');
 
 const log = require('../components/log')(module.filename);
 const { AuthMode, AuthType, Permissions } = require('../components/constants');
-const { getAppAuthMode, getPath } = require('../components/utils');
+const { getAppAuthMode, getPath, getCurrentIdentity } = require('../components/utils');
+const { NIL: SYSTEM_USER } = require('uuid');
 const { objectService, permissionService, storageService, userService } = require('../services');
 
 /**
@@ -69,7 +70,7 @@ const hasPermission = (permission) => {
   return async (req, res, next) => {
     const authMode = getAppAuthMode();
     const authType = req.currentUser ? req.currentUser.authType : undefined;
-    const userId = await userService.getCurrentUserId(req.currentUser);
+    const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
     const canBasicMode = (mode) => [AuthMode.BASICAUTH, AuthMode.FULLAUTH].includes(mode);
     const canOidcMode = (mode) => [AuthMode.OIDCAUTH, AuthMode.FULLAUTH].includes(mode);
