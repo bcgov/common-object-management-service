@@ -178,8 +178,8 @@ describe('login', () => {
 
     expect(MockModel.query).toHaveBeenCalledTimes(1);
     expect(MockModel.query).toHaveBeenCalledWith();
-    expect(MockModel.findById).toHaveBeenCalledTimes(1);
-    expect(MockModel.findById).toHaveBeenCalledWith(user.userId);
+    expect(MockModel.where).toHaveBeenCalledTimes(1);
+    expect(MockModel.where).toHaveBeenCalledWith('identityId', user.identityId);
   });
 
   it('Creates a new user if none found in db with matching userId', async () => {

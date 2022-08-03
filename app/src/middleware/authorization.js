@@ -70,7 +70,6 @@ const hasPermission = (permission) => {
   return async (req, res, next) => {
     const authMode = getAppAuthMode();
     const authType = req.currentUser ? req.currentUser.authType : undefined;
-    const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
     const canBasicMode = (mode) => [AuthMode.BASICAUTH, AuthMode.FULLAUTH].includes(mode);
     const canOidcMode = (mode) => [AuthMode.OIDCAUTH, AuthMode.FULLAUTH].includes(mode);
@@ -87,6 +86,8 @@ const hasPermission = (permission) => {
         log.debug('Read requests on public objects are always permitted', { function: 'hasPermission' });
       } else {
         // Guard against unauthorized access for all other cases
+        const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
+
         if (authType === AuthType.BEARER && userId) {
           // Check if user has the required permission in their permission set
           const permissions = await permissionService.searchPermissions({
