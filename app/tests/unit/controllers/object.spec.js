@@ -1,10 +1,10 @@
 const Problem = require('api-problem');
-const { AuthType, MAXCOPYOBJECTLENGTH, MetadataDirective } = require('../../../src/components/constants');
+const { MAXCOPYOBJECTLENGTH, MetadataDirective } = require('../../../src/components/constants');
 
 const utils = require('../../../src/db/models/utils');
 
 const controller = require('../../../src/controllers/object');
-const { storageService, objectService, metadataService, versionService } = require('../../../src/services');
+const { storageService, objectService, metadataService, versionService, userService } = require('../../../src/services');
 
 const mockResponse = () => {
   const res = {};
@@ -292,6 +292,7 @@ describe('deleteObject', () => {
   });
 
   // mock service calls
+  const getCurrentUserIdSpy = jest.spyOn(userService, 'getCurrentUserId');
   const storageDeleteObjectSpy = jest.spyOn(storageService, 'deleteObject');
   const objectDeleteSpy = jest.spyOn(objectService, 'delete');
   const versionCreateSpy = jest.spyOn(versionService, 'create');
@@ -300,7 +301,6 @@ describe('deleteObject', () => {
 
   // request object
   const req = {
-    currentUser: { authType: AuthType.BEARER, tokenPayload: { sub: 'testsub' } },
     params: { objId: 'xyz-789' }
   };
   const next = jest.fn();
@@ -314,6 +314,7 @@ describe('deleteObject', () => {
   it('should call version service to create a delete marker in db', async () => {
     // request is to delete an object (no versionId query parameter passed)
     req.query = {};
+    getCurrentUserIdSpy.mockReturnValue('user-123');
     // storage response is a DeleteMarker
     storageDeleteObjectSpy.mockReturnValue(DeleteMarker);
 
@@ -325,7 +326,7 @@ describe('deleteObject', () => {
       deleteMarker: true,
       versionId: '1234',
       mimeType: null,
-    }, 'testsub');
+    }, 'user-123');
   });
 
   it('should delete object if versioning not enabled', async () => {

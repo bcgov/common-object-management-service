@@ -1,8 +1,7 @@
 const Problem = require('api-problem');
 
-const { AuthType } = require('../../../src/components/constants');
 const controller = require('../../../src/controllers/permission');
-const { permissionService } = require('../../../src/services');
+const { permissionService, userService } = require('../../../src/services');
 
 const mockResponse = () => {
   const res = {};
@@ -91,21 +90,22 @@ describe('addPermissions', () => {
   });
 
   const addPermissionsSpy = jest.spyOn(permissionService, 'addPermissions');
+  const getCurrentUserIdSpy = jest.spyOn(userService, 'getCurrentUserId');
 
   const req = {
     body: ['READ'],
-    currentUser: { authType: AuthType.BEARER, tokenPayload: { sub: 'testsub' } },
     params: { objId: 'xyz-789' }
   };
   const next = jest.fn();
 
   it('should return the permission service addPermissions result', async () => {
     addPermissionsSpy.mockReturnValue({ res: 123 });
+    getCurrentUserIdSpy.mockReturnValue('user-123');
 
     const res = mockResponse();
     await controller.addPermissions(req, res, next);
     expect(addPermissionsSpy).toHaveBeenCalledTimes(1);
-    expect(addPermissionsSpy).toHaveBeenCalledWith(req.params.objId, req.body, 'testsub');
+    expect(addPermissionsSpy).toHaveBeenCalledWith(req.params.objId, req.body, 'user-123');
     expect(res.status).toHaveBeenCalledWith(201);
     expect(res.json).toHaveBeenCalledWith({ res: 123 });
     expect(next).toHaveBeenCalledTimes(0);

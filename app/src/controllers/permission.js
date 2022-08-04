@@ -1,8 +1,13 @@
 const Problem = require('api-problem');
 
 const errorToProblem = require('../components/errorToProblem');
-const { addDashesToUuid, getCurrentSubject, mixedQueryToArray } = require('../components/utils');
-const { permissionService } = require('../services');
+const {
+  addDashesToUuid,
+  mixedQueryToArray,
+  getCurrentIdentity
+} = require('../components/utils');
+const { NIL: SYSTEM_USER } = require('uuid');
+const { permissionService, userService } = require('../services');
 
 const SERVICE = 'PermissionService';
 
@@ -70,7 +75,7 @@ const controller = {
         return new Problem(422).send(res);
       }
 
-      const userId = getCurrentSubject(req.currentUser);
+      const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
       const response = await permissionService.addPermissions(addDashesToUuid(req.params.objId), req.body, userId);
       res.status(201).json(response);
     } catch (e) {

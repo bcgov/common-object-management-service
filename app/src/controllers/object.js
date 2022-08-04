@@ -6,13 +6,13 @@ const errorToProblem = require('../components/errorToProblem');
 const {
   addDashesToUuid,
   getAppAuthMode,
-  getCurrentSubject,
   getKeyValue,
   getMetadata,
   getPath,
   isTruthy,
   mixedQueryToArray,
-  toLowerKeys
+  toLowerKeys,
+  getCurrentIdentity
 } = require('../components/utils');
 const utils = require('../db/models/utils');
 
@@ -21,6 +21,7 @@ const {
   objectService,
   storageService,
   tagService,
+  userService,
   versionService
 } = require('../services');
 
@@ -66,7 +67,7 @@ const controller = {
     try {
       const objId = addDashesToUuid(req.params.objId);
       const objPath = getPath(objId);
-      const userId = getCurrentSubject(req.currentUser);
+      const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
       const sourceVersionId = req.query.versionId ? req.query.versionId.toString() : undefined;
 
       const source = await storageService.headObject({ filePath: objPath, versionId: sourceVersionId });
@@ -126,7 +127,7 @@ const controller = {
     try {
       const objId = addDashesToUuid(req.params.objId);
       const objPath = getPath(objId);
-      const userId = getCurrentSubject(req.currentUser);
+      const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
       const { versionId, ...newTags } = req.query;
       const objectTagging = await storageService.getObjectTagging({ filePath: objPath, versionId });
 
@@ -171,11 +172,11 @@ const controller = {
    * @param {function} next The next callback function
    * @returns {function} Express middleware function
    */
-  createObjects(req, res, next) {
+  async createObjects(req, res, next) {
     try {
       const bb = busboy({ headers: req.headers });
       const objects = [];
-      const userId = getCurrentSubject(req.currentUser);
+      const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
       bb.on('file', (name, stream, info) => {
         const objId = uuidv4();
@@ -253,7 +254,7 @@ const controller = {
     try {
       const objId = addDashesToUuid(req.params.objId);
       const objPath = getPath(objId);
-      const userId = getCurrentSubject(req.currentUser);
+      const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
       const sourceVersionId = req.query.versionId ? req.query.versionId.toString() : undefined;
 
@@ -318,7 +319,7 @@ const controller = {
         filePath: getPath(objId),
         versionId: req.query.versionId
       };
-      const userId = getCurrentSubject(req.currentUser);
+      const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
       // delete version on S3
       const s3Response = await storageService.deleteObject(data);
@@ -371,7 +372,7 @@ const controller = {
       const objId = addDashesToUuid(req.params.objId);
       const objPath = getPath(objId);
       const { versionId } = req.query;
-      const userId = getCurrentSubject(req.currentUser);
+      const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
       const objectTagging = await storageService.getObjectTagging({ filePath: objPath, versionId });
 
       // Generate object subset by subtracting/omitting defined keys via filter/inclusion
@@ -512,7 +513,7 @@ const controller = {
     try {
       const objId = addDashesToUuid(req.params.objId);
       const objPath = getPath(objId);
-      const userId = getCurrentSubject(req.currentUser);
+      const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
       const sourceVersionId = req.query.versionId ? req.query.versionId.toString() : undefined;
 
       const source = await storageService.headObject({ filePath: objPath, versionId: sourceVersionId });
@@ -570,7 +571,7 @@ const controller = {
     try {
       const objId = addDashesToUuid(req.params.objId);
       const objPath = getPath(objId);
-      const userId = getCurrentSubject(req.currentUser);
+      const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
       const { versionId, ...newTags } = req.query;
 
       if (!Object.keys(newTags).length || Object.keys(newTags).length > 10) {
@@ -628,9 +629,8 @@ const controller = {
 
       // When using OIDC authentication, force populate current user as filter if available
       if (authMode === AuthMode.OIDCAUTH || authMode === AuthMode.FULLAUTH) {
-        params.userId = getCurrentSubject(req.currentUser);
+        params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
       }
-
       const response = await objectService.searchObjects(params);
       res.status(201).json(response);
     } catch (error) {
@@ -648,7 +648,7 @@ const controller = {
    */
   async togglePublic(req, res, next) {
     try {
-      const userId = getCurrentSubject(req.currentUser, SYSTEM_USER);
+      const userId = await userService.getCurrentUserId(req.currentUser, SYSTEM_USER);
       const data = {
         id: addDashesToUuid(req.params.objId),
         public: isTruthy(req.query.public),
@@ -674,7 +674,7 @@ const controller = {
   async updateObject(req, res, next) {
     try {
       const bb = busboy({ headers: req.headers, limits: { files: 1 } });
-      const userId = getCurrentSubject(req.currentUser);
+      const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
       const { ...newTags } = req.query;
       let object = undefined;
 
