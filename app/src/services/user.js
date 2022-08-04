@@ -105,7 +105,7 @@ const service = {
    * @param {string} [defaultValue=undefined] An optional default return value
    * @returns {string} The current userId if applicable, or `defaultValue`
    */
-  async getCurrentUserId(identityId, defaultValue = undefined) {
+  getCurrentUserId: async (identityId, defaultValue = undefined) => {
     const user = await User.query()
       .select('userId')
       .where('identityId', identityId)

@@ -139,6 +139,7 @@ describe('currentObject', () => {
 
 describe('hasPermission', () => {
   const getAppAuthModeSpy = jest.spyOn(utils, 'getAppAuthMode');
+  const getCurrentIdentitySpy = jest.spyOn(utils, 'getCurrentIdentity');
   const getCurrentUserIdSpy = jest.spyOn(userService, 'getCurrentUserId');
   const searchPermissionsSpy = jest.spyOn(permissionService, 'searchPermissions');
   const problemSendSpy = jest.spyOn(Problem.prototype, 'send');
@@ -166,8 +167,6 @@ describe('hasPermission', () => {
     ])('should call next %i times given hasDb %s and authMode %s', (nextCount, hasDb, mode) => {
       const sendCount = 1 - nextCount;
       getAppAuthModeSpy.mockReturnValue(mode);
-      //getCurrentSubjectSpy.mockReturnValue(undefined);
-      getCurrentUserIdSpy.mockResolvedValue(SYSTEM_USER);
       config.has.mockReturnValueOnce(hasDb); // db.enabled
 
       const mw = hasPermission(Permissions.READ);
@@ -199,8 +198,9 @@ describe('hasPermission', () => {
     ])('should call next %i times given hasDb %s and authMode %s', async (nextCount, hasDb, mode) => {
       const sendCount = 1 - nextCount;
       getAppAuthModeSpy.mockReturnValue(mode);
-      getCurrentUserIdSpy.mockResolvedValue(SYSTEM_USER);
       config.has.mockReturnValueOnce(hasDb); // db.enabled
+      getCurrentUserIdSpy.mockResolvedValue(SYSTEM_USER);
+      getCurrentIdentitySpy.mockReturnValue(SYSTEM_USER);
 
       const mw = hasPermission(Permissions.READ);
       expect(mw).toBeInstanceOf(Function);
@@ -211,6 +211,24 @@ describe('hasPermission', () => {
       expect(problemSendSpy).toHaveBeenCalledTimes(sendCount);
       if (sendCount) expect(problemSendSpy).toHaveBeenCalledWith(res);
       expect(searchPermissionsSpy).toHaveBeenCalledTimes(0);
+    });
+
+    it.each([
+      [true, AuthMode.OIDCAUTH],
+      [true, AuthMode.FULLAUTH],
+    ])('should call getCurrentUserId given hasDb %s and authMode %s', async (hasDb, mode) => {
+      getAppAuthModeSpy.mockReturnValue(mode);
+      config.has.mockReturnValueOnce(hasDb); // db.enabled
+      getCurrentUserIdSpy.mockResolvedValue(SYSTEM_USER);
+      getCurrentIdentitySpy.mockReturnValue(SYSTEM_USER);
+
+      const mw = hasPermission(Permissions.READ);
+      expect(mw).toBeInstanceOf(Function);
+      await mw(req, res, next);
+
+      expect(getCurrentUserIdSpy).toHaveBeenCalledTimes(1);
+      expect(getCurrentUserIdSpy).toHaveBeenCalledWith(SYSTEM_USER);
+      expect(getCurrentIdentitySpy).toHaveBeenCalledTimes(1);
     });
   });
 

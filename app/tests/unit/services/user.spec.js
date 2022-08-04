@@ -200,6 +200,27 @@ describe('login', () => {
   });
 });
 
+describe('getCurrentUserId', () => {
+  beforeEach(() => {
+    MockModel.mockReset();
+  });
+
+  afterAll(() => {
+    MockModel.mockReset();
+  });
+
+  it('Query user by identityId', async () => {
+    MockModel.mockResolvedValue({ ...user, userId: '123', identityId: '123-idir' });
+
+    const result = await service.getCurrentUserId('123-idir');
+
+    expect(MockModel.query).toHaveBeenCalledTimes(1);
+    expect(MockModel.query).toHaveBeenCalledWith();
+    expect(MockModel.where).toHaveBeenCalledTimes(1);
+    expect(MockModel.where).toHaveBeenCalledWith('identityId', '123-idir');
+    expect(result).toEqual('123');
+  });
+});
 
 describe('readIdp', () => {
 
