@@ -53,3 +53,8 @@ runs:
         --set config.configMap.OBJECTSTORAGE_KEY=${{ inputs.acronym }}/${{ inputs.namespace_environment }}
         --timeout 10m
         --wait
+
+    - name: Wait on Deployment
+      shell: bash
+      run: |
+        oc rollout --namespace ${{ inputs.namespace_prefix }}-${{ inputs.namespace_environment }} status dc/${{ inputs.app_name }}-${{ inputs.job_name }} --watch=true
