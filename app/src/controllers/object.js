@@ -48,9 +48,13 @@ const controller = {
     if (s3Resp.ServerSideEncryption) res.set('x-amz-server-side-encryption', s3Resp.ServerSideEncryption);
     if (s3Resp.VersionId) res.set('x-amz-version-id', s3Resp.VersionId);
     if (s3Resp.Metadata) {
-      Object.entries(s3Resp.Metadata).forEach(([key, value]) => {
+      const metadataList = Object.entries(s3Resp.Metadata).map(([key, value]) => {
         res.set(`x-amz-meta-${key}`, value);
-      });
+        return `x-amz-meta-${key}`;
+      }).join(', ');
+      // allow metadata headers in CORS
+      res.set('Access-Control-Expose-Headers', metadataList);
+
       if (s3Resp.Metadata.name) res.attachment(s3Resp.Metadata.name);
     }
   },
