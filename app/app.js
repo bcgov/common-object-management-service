@@ -239,7 +239,7 @@ function checkConnections() {
       state.connections.data = results[0];
       state.ready = Object.values(state.connections).every(x => x);
       if (!wasReady && state.ready) log.info('Service ready to accept traffic', { function: 'checkConnections' });
-      log.debug('App state', { function: 'checkConnections', state });
+      log.silly('App state', { function: 'checkConnections', state });
       if (!state.ready) {
         process.exitCode = 1;
         shutdown();
