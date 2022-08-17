@@ -23,29 +23,32 @@ tags:
       Operations directly influencing an S3 Object. Certain operations not
       available without a database.
     externalDocs:
-      url: https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#object
+      url: >-
+        https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#object
   - name: Object Metadata
-    description: >-
-      Operations directly influencing the Metadata of an S3 Object.
+    description: Operations directly influencing the Metadata of an S3 Object.
     externalDocs:
-      url: https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#metadata
+      url: >-
+        https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#metadata
   - name: Object Tag
-    description: >-
-      Operations directly influencing the Tags of an S3 Object.
+    description: Operations directly influencing the Tags of an S3 Object.
     externalDocs:
-      url: https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#tag
+      url: >-
+        https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#tag
   - name: Permission
     description: >-
       Operations for managing User Access Control to S3 Objects. Not available
       without a database.
     externalDocs:
-      url: https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#permission
+      url: >-
+        https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#permission
   - name: User
     description: >-
       Operations to list valid queryable users and identity providers. Not
       available without a database.
     externalDocs:
-      url: https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#user
+      url: >-
+        https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#user
 paths:
   /object:
     post:
@@ -59,8 +62,8 @@ paths:
       tags:
         - Object
       parameters:
-        - $ref: "#/components/parameters/Header-Metadata"
-        - $ref: "#/components/parameters/Query-Tag"
+        - $ref: '#/components/parameters/Header-Metadata'
+        - $ref: '#/components/parameters/Query-Tag'
       requestBody:
         description: Form-data containing files
         required: true
@@ -81,7 +84,7 @@ paths:
                     property corresponding to your custom defined keys.
                   format: binary
       responses:
-        "201":
+        '201':
           description: Returns an array of created object data
           content:
             application/json:
@@ -99,48 +102,51 @@ paths:
                             A unique form field chosen for the key for each file
                             in the multi-part form-data post
                           example: file1
-                    - $ref: "#/components/schemas/DB-Object"
-                    - $ref: "#/components/schemas/DB-Metadata"
-                    - $ref: "#/components/schemas/DB-Tags"
-                    - $ref: "#/components/schemas/S3-Object"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+                    - $ref: '#/components/schemas/DB-Object'
+                    - $ref: '#/components/schemas/DB-Metadata'
+                    - $ref: '#/components/schemas/DB-Tags'
+                    - $ref: '#/components/schemas/S3-Object'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         default:
-          $ref: "#/components/responses/Error"
+          $ref: '#/components/responses/Error'
     get:
       summary: Search for objects
       description: >-
-        Returns a list of objects matching all search criteria across all known versions of objects.
-        If the request is BasicAuth authenticated, all search and filtered results will appear.
-        However, If the request is BearerAuth authenticated, only objects that the user has at least one
-        permission associated with, will appear in addition to their filtering parameters.
+        Returns a list of objects matching all search criteria across all known
+        versions of objects. If the request is BasicAuth authenticated, all
+        search and filtered results will appear. However, If the request is
+        BearerAuth authenticated, only objects that the user has at least one
+        permission associated with, will appear in addition to their filtering
+        parameters.
       operationId: searchObjects
       tags:
         - Object
       parameters:
-        - $ref: "#/components/parameters/Query-ObjectId"
-        - $ref: "#/components/parameters/Query-Name"
-        - $ref: "#/components/parameters/Query-Path"
-        - $ref: "#/components/parameters/Query-MimeType"
-        - $ref: "#/components/parameters/Query-Active"
-        - $ref: "#/components/parameters/Query-Public"
+        - $ref: '#/components/parameters/Header-Metadata'
+        - $ref: '#/components/parameters/Query-ObjectId'
+        - $ref: '#/components/parameters/Query-Path'
+        - $ref: '#/components/parameters/Query-Active'
+        - $ref: '#/components/parameters/Query-Public'
+        - $ref: '#/components/parameters/Query-MimeType'
+        - $ref: '#/components/parameters/Query-Name'
       responses:
-        "201":
+        '201':
           description: Returns and array of objects
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/DB-Object"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+                  $ref: '#/components/schemas/DB-Object'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         default:
-          $ref: "#/components/responses/Error"
+          $ref: '#/components/responses/Error'
   /object/{objId}:
     head:
       summary: Returns object headers
@@ -149,36 +155,36 @@ paths:
       tags:
         - Object
       parameters:
-        - $ref: "#/components/parameters/Path-ObjectId"
-        - $ref: "#/components/parameters/Query-VersionId"
+        - $ref: '#/components/parameters/Path-ObjectId'
+        - $ref: '#/components/parameters/Query-VersionId'
       responses:
-        "204":
+        '204':
           description: Returns object headers
           headers:
             Content-Disposition:
-              $ref: "#/components/headers/Content-Disposition"
+              $ref: '#/components/headers/Content-Disposition'
             Content-Length:
-              $ref: "#/components/headers/Content-Length"
+              $ref: '#/components/headers/Content-Length'
             Content-Type:
-              $ref: "#/components/headers/Content-Type"
+              $ref: '#/components/headers/Content-Type'
             ETag:
-              $ref: "#/components/headers/ETag"
+              $ref: '#/components/headers/ETag'
             Last-Modified:
-              $ref: "#/components/headers/Last-Modified"
+              $ref: '#/components/headers/Last-Modified'
             x-amz-server-side-encryption:
-              $ref: "#/components/headers/x-amz-server-side-encryption"
+              $ref: '#/components/headers/x-amz-server-side-encryption'
             x-amz-version-id:
-              $ref: "#/components/headers/x-amz-version-id"
+              $ref: '#/components/headers/x-amz-version-id'
             x-amz-meta-id:
-              $ref: "#/components/headers/x-amz-meta-id"
+              $ref: '#/components/headers/x-amz-meta-id'
             x-amz-meta-name:
-              $ref: "#/components/headers/x-amz-meta-name"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+              $ref: '#/components/headers/x-amz-meta-name'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         default:
-          $ref: "#/components/responses/Error"
+          $ref: '#/components/responses/Error'
     get:
       summary: Returns the object
       description: >-
@@ -188,60 +194,60 @@ paths:
       tags:
         - Object
       parameters:
-        - $ref: "#/components/parameters/Path-ObjectId"
-        - $ref: "#/components/parameters/Query-Download"
-        - $ref: "#/components/parameters/Query-ExpiresIn"
-        - $ref: "#/components/parameters/Query-VersionId"
+        - $ref: '#/components/parameters/Path-ObjectId'
+        - $ref: '#/components/parameters/Query-Download'
+        - $ref: '#/components/parameters/Query-ExpiresIn'
+        - $ref: '#/components/parameters/Query-VersionId'
       responses:
-        "200":
+        '200':
           description: Returns the object
           headers:
             Content-Disposition:
-              $ref: "#/components/headers/Content-Disposition"
+              $ref: '#/components/headers/Content-Disposition'
             Content-Length:
-              $ref: "#/components/headers/Content-Length"
+              $ref: '#/components/headers/Content-Length'
             Content-Type:
-              $ref: "#/components/headers/Content-Type"
+              $ref: '#/components/headers/Content-Type'
             ETag:
-              $ref: "#/components/headers/ETag"
+              $ref: '#/components/headers/ETag'
             Last-Modified:
-              $ref: "#/components/headers/Last-Modified"
+              $ref: '#/components/headers/Last-Modified'
             x-amz-server-side-encryption:
-              $ref: "#/components/headers/x-amz-server-side-encryption"
+              $ref: '#/components/headers/x-amz-server-side-encryption'
             x-amz-version-id:
-              $ref: "#/components/headers/x-amz-version-id"
+              $ref: '#/components/headers/x-amz-version-id'
             x-amz-meta-id:
-              $ref: "#/components/headers/x-amz-meta-id"
+              $ref: '#/components/headers/x-amz-meta-id'
             x-amz-meta-name:
-              $ref: "#/components/headers/x-amz-meta-name"
+              $ref: '#/components/headers/x-amz-meta-name'
           content:
             application/octet-stream:
               schema:
                 type: string
                 format: binary
-        "302":
-          $ref: "#/components/responses/S3Found"
-        "304":
-          $ref: "#/components/responses/NotModified"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+        '302':
+          $ref: '#/components/responses/S3Found'
+        '304':
+          $ref: '#/components/responses/NotModified'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         default:
-          $ref: "#/components/responses/Error"
+          $ref: '#/components/responses/Error'
     post:
       summary: Updates an Object
       description: >-
-        Updates the object in the configured object storage. If the object storage
-        supports versioning, a new version will be generated instead
-        of overwriting the existing contents.
+        Updates the object in the configured object storage. If the object
+        storage supports versioning, a new version will be generated instead of
+        overwriting the existing contents.
       operationId: updateObject
       tags:
         - Object
       parameters:
-        - $ref: "#/components/parameters/Path-ObjectId"
-        - $ref: "#/components/parameters/Query-Tag"
-        - $ref: "#/components/parameters/Header-Metadata"
+        - $ref: '#/components/parameters/Path-ObjectId'
+        - $ref: '#/components/parameters/Query-Tag'
+        - $ref: '#/components/parameters/Header-Metadata'
       requestBody:
         description: Form-data containing files
         required: true
@@ -261,7 +267,7 @@ paths:
                     custom defined key.
                   format: binary
       responses:
-        "200":
+        '200':
           description: Returns the updated object data
           content:
             application/json:
@@ -277,45 +283,45 @@ paths:
                           A unique form field chosen for the key for each file
                           in the multi-part form-data post
                         example: file1
-                  - $ref: "#/components/schemas/DB-Object"
-                  - $ref: "#/components/schemas/DB-Metadata"
-                  - $ref: "#/components/schemas/DB-Tags"
-                  - $ref: "#/components/schemas/S3-Object"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+                  - $ref: '#/components/schemas/DB-Object'
+                  - $ref: '#/components/schemas/DB-Metadata'
+                  - $ref: '#/components/schemas/DB-Tags'
+                  - $ref: '#/components/schemas/S3-Object'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         default:
-          $ref: "#/components/responses/Error"
+          $ref: '#/components/responses/Error'
     delete:
       summary: Deletes an object or a version of object
       description: >-
-        Deletes the specified object (or version) from S3. If the object storage supports
-        versioning, precise S3 version stack manipulation is supported, including
-        soft-deletion and soft-restore. Hard-deletions on S3 are also supported. For more
-        details on general S3 version behavior, visit
+        Deletes the specified object (or version) from S3. If the object storage
+        supports versioning, precise S3 version stack manipulation is supported,
+        including soft-deletion and soft-restore. Hard-deletions on S3 are also
+        supported. For more details on general S3 version behavior, visit
         https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeletingObjectVersions.html
       operationId: deleteObject
       tags:
         - Object
       parameters:
-        - $ref: "#/components/parameters/Path-ObjectId"
-        - $ref: "#/components/parameters/Query-VersionId-Delete"
+        - $ref: '#/components/parameters/Path-ObjectId'
+        - $ref: '#/components/parameters/Query-VersionId-Delete'
       responses:
-        "200":
+        '200':
           description: Object or version was deleted from object storage and COMS database
           content:
             application/json:
               schema:
                 oneOf:
-                  - $ref: "#/components/schemas/Response-ObjectDeleted"
-                  - $ref: "#/components/schemas/Response-VersionDeleted"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+                  - $ref: '#/components/schemas/Response-ObjectDeleted'
+                  - $ref: '#/components/schemas/Response-VersionDeleted'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         default:
-          $ref: "#/components/responses/Error"
+          $ref: '#/components/responses/Error'
   /object/{objId}/versions:
     get:
       summary: Returns the object version history
@@ -324,20 +330,20 @@ paths:
       tags:
         - Object
       parameters:
-        - $ref: "#/components/parameters/Path-ObjectId"
+        - $ref: '#/components/parameters/Path-ObjectId'
       responses:
-        "200":
+        '200':
           description: Returns an array of versions for a specific object
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/S3-VersionList"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+                $ref: '#/components/schemas/S3-VersionList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         default:
-          $ref: "#/components/responses/Error"
+          $ref: '#/components/responses/Error'
   /object/{objId}/public:
     patch:
       summary: Sets the public flag of an object
@@ -348,161 +354,163 @@ paths:
       tags:
         - Object
       parameters:
-        - $ref: "#/components/parameters/Path-ObjectId"
-        - $ref: "#/components/parameters/Query-Public"
+        - $ref: '#/components/parameters/Path-ObjectId'
+        - $ref: '#/components/parameters/Query-Public'
       responses:
-        "200":
+        '200':
           description: Returns the object information
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DB-Object"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+                $ref: '#/components/schemas/DB-Object'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         default:
-          $ref: "#/components/responses/Error"
+          $ref: '#/components/responses/Error'
   /object/{objId}/metadata:
     patch:
       summary: Adds metadata to an object
       description: >-
         Creates a copy and new version of the object with the given metadata
-        added to the object.
-        Multiple Key/Value pairs can be provided in the header for the metadata.
+        added to the object. Multiple Key/Value pairs can be provided in the
+        header for the metadata.
       operationId: addMetadata
       tags:
         - Object Metadata
       parameters:
-        - $ref: "#/components/parameters/Header-Metadata"
-        - $ref: "#/components/parameters/Path-ObjectId"
-        - $ref: "#/components/parameters/Query-VersionId"
+        - $ref: '#/components/parameters/Header-Metadata'
+        - $ref: '#/components/parameters/Path-ObjectId'
+        - $ref: '#/components/parameters/Query-VersionId'
       responses:
-        "204":
+        '204':
           description: The resource was added successfully.
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "422":
-          $ref: "#/components/responses/UnprocessableEntity"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
         default:
-          $ref: "#/components/responses/Error"
+          $ref: '#/components/responses/Error'
     put:
       summary: Replaces metadata of an object
       description: >-
-        Creates a copy and new version of the object with the given metadata replacing the existing.
-        Multiple Key/Value pairs can be provided in the header for the metadata.
+        Creates a copy and new version of the object with the given metadata
+        replacing the existing. Multiple Key/Value pairs can be provided in the
+        header for the metadata.
       operationId: replaceMetadata
       tags:
         - Object Metadata
       parameters:
-        - $ref: "#/components/parameters/Header-Metadata"
-        - $ref: "#/components/parameters/Path-ObjectId"
-        - $ref: "#/components/parameters/Query-VersionId"
+        - $ref: '#/components/parameters/Header-Metadata'
+        - $ref: '#/components/parameters/Path-ObjectId'
+        - $ref: '#/components/parameters/Query-VersionId'
       responses:
-        "204":
+        '204':
           description: The resource was added successfully.
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "422":
-          $ref: "#/components/responses/UnprocessableEntity"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
         default:
-          $ref: "#/components/responses/Error"
+          $ref: '#/components/responses/Error'
     delete:
       summary: Delete metadata of an object.
       description: >-
-        Creates a copy and new version of the object with the given metadata removed.
-        Multiple Key/Value pairs can be provided in the header for the metadata.
-        If no metadata headers are given then all metadata will be removed.
-        Metadata headers `name` and `id` are mandatory and will always persist.
+        Creates a copy and new version of the object with the given metadata
+        removed. Multiple Key/Value pairs can be provided in the header for the
+        metadata. If no metadata headers are given then all metadata will be
+        removed. Metadata headers `name` and `id` are mandatory and will always
+        persist.
       operationId: deleteMetadata
       tags:
         - Object Metadata
       parameters:
-        - $ref: "#/components/parameters/Header-Metadata"
-        - $ref: "#/components/parameters/Path-ObjectId"
-        - $ref: "#/components/parameters/Query-VersionId"
+        - $ref: '#/components/parameters/Header-Metadata'
+        - $ref: '#/components/parameters/Path-ObjectId'
+        - $ref: '#/components/parameters/Query-VersionId'
       responses:
-        "204":
+        '204':
           description: The resource was deleted successfully.
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         default:
-          $ref: "#/components/responses/Error"
+          $ref: '#/components/responses/Error'
   /object/{objId}/tags:
     patch:
       summary: Adds tags to an object
       description: >-
-        Adds the given tagset to the object.
-        Multiple comma separated Key/Value pairs can be provided in the query.
+        Adds the given tagset to the object. Multiple comma separated Key/Value
+        pairs can be provided in the query.
       operationId: addTags
       tags:
         - Object Tag
       parameters:
-        - $ref: "#/components/parameters/Path-ObjectId"
-        - $ref: "#/components/parameters/Query-Tag"
-        - $ref: "#/components/parameters/Query-VersionId"
+        - $ref: '#/components/parameters/Path-ObjectId'
+        - $ref: '#/components/parameters/Query-Tag'
+        - $ref: '#/components/parameters/Query-VersionId'
       responses:
-        "204":
+        '204':
           description: The resource was added successfully.
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "422":
-          $ref: "#/components/responses/UnprocessableEntity"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
         default:
-          $ref: "#/components/responses/Error"
+          $ref: '#/components/responses/Error'
     put:
       summary: Replaces tags of an object
       description: >-
-        Replace the existing tags of an object with the given tagset.
-        Multiple comma separated Key/Value pairs can be provided in the query.
+        Replace the existing tags of an object with the given tagset. Multiple
+        comma separated Key/Value pairs can be provided in the query.
       operationId: replaceTags
       tags:
         - Object Tag
       parameters:
-        - $ref: "#/components/parameters/Path-ObjectId"
-        - $ref: "#/components/parameters/Query-Tag"
-        - $ref: "#/components/parameters/Query-VersionId"
+        - $ref: '#/components/parameters/Path-ObjectId'
+        - $ref: '#/components/parameters/Query-Tag'
+        - $ref: '#/components/parameters/Query-VersionId'
       responses:
-        "204":
+        '204':
           description: The resource was added successfully.
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "422":
-          $ref: "#/components/responses/UnprocessableEntity"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
         default:
-          $ref: "#/components/responses/Error"
+          $ref: '#/components/responses/Error'
     delete:
       summary: Delete tags of an object.
       description: >-
-        Removes the given tags from the object.
-        Multiple comma separated keys can be provided in the query.
-        If no keys are given then all keys will be removed.
+        Removes the given tags from the object. Multiple comma separated keys
+        can be provided in the query. If no keys are given then all keys will be
+        removed.
       operationId: deleteTags
       tags:
         - Object Tag
       parameters:
-        - $ref: "#/components/parameters/Path-ObjectId"
-        - $ref: "#/components/parameters/Query-Keys"
-        - $ref: "#/components/parameters/Query-VersionId"
+        - $ref: '#/components/parameters/Path-ObjectId'
+        - $ref: '#/components/parameters/Query-Keys'
+        - $ref: '#/components/parameters/Query-VersionId'
       responses:
-        "204":
+        '204':
           description: The resource was deleted successfully.
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         default:
-          $ref: "#/components/responses/Error"
+          $ref: '#/components/responses/Error'
   /permission:
     get:
       summary: Search for object permissions
@@ -515,11 +523,11 @@ paths:
       tags:
         - Permission
       parameters:
-        - $ref: "#/components/parameters/Query-ObjectId"
-        - $ref: "#/components/parameters/Query-UserId"
-        - $ref: "#/components/parameters/Query-PermCode"
+        - $ref: '#/components/parameters/Query-ObjectId'
+        - $ref: '#/components/parameters/Query-UserId'
+        - $ref: '#/components/parameters/Query-PermCode'
       responses:
-        "200":
+        '200':
           description: >-
             Returns an array of objectId/userId/permCode triplets that match the
             provided parameters
@@ -528,13 +536,13 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/DB-ObjectPermission"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+                  $ref: '#/components/schemas/DB-ObjectPermission'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         default:
-          $ref: "#/components/responses/Error"
+          $ref: '#/components/responses/Error'
   /permission/{objId}:
     get:
       summary: Returns the object permissions
@@ -545,11 +553,11 @@ paths:
       tags:
         - Permission
       parameters:
-        - $ref: "#/components/parameters/Path-ObjectId"
-        - $ref: "#/components/parameters/Query-UserId"
-        - $ref: "#/components/parameters/Query-PermCode"
+        - $ref: '#/components/parameters/Path-ObjectId'
+        - $ref: '#/components/parameters/Query-UserId'
+        - $ref: '#/components/parameters/Query-PermCode'
       responses:
-        "200":
+        '200':
           description: >-
             Returns an array of objectId/userId/permCode triplets that match the
             provided parameters
@@ -558,13 +566,13 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/DB-ObjectPermission"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+                  $ref: '#/components/schemas/DB-ObjectPermission'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         default:
-          $ref: "#/components/responses/Error"
+          $ref: '#/components/responses/Error'
     put:
       summary: Grants object permissions to users
       description: >-
@@ -577,7 +585,7 @@ paths:
       tags:
         - Permission
       parameters:
-        - $ref: "#/components/parameters/Path-ObjectId"
+        - $ref: '#/components/parameters/Path-ObjectId'
       requestBody:
         description: An array of objects, each containing a `permCode` and `userId`
         content:
@@ -585,22 +593,22 @@ paths:
             schema:
               type: array
               items:
-                $ref: "#/components/schemas/Request-PermissionTuple"
+                $ref: '#/components/schemas/Request-PermissionTuple'
       responses:
-        "201":
+        '201':
           description: Returns an array of added permissions
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/DB-ObjectPermission"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+                  $ref: '#/components/schemas/DB-ObjectPermission'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         default:
-          $ref: "#/components/responses/Error"
+          $ref: '#/components/responses/Error'
     delete:
       summary: Deletes permissions for a user
       description: >-
@@ -615,24 +623,24 @@ paths:
       tags:
         - Permission
       parameters:
-        - $ref: "#/components/parameters/Path-ObjectId"
-        - $ref: "#/components/parameters/Query-UserId"
-        - $ref: "#/components/parameters/Query-PermCode"
+        - $ref: '#/components/parameters/Path-ObjectId'
+        - $ref: '#/components/parameters/Query-UserId'
+        - $ref: '#/components/parameters/Query-PermCode'
       responses:
-        "200":
+        '200':
           description: Returns an array of deleted permissions
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/DB-ObjectPermission"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+                  $ref: '#/components/schemas/DB-ObjectPermission'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         default:
-          $ref: "#/components/responses/Error"
+          $ref: '#/components/responses/Error'
   /user:
     get:
       summary: Search for users
@@ -643,18 +651,18 @@ paths:
       tags:
         - User
       parameters:
-        - $ref: "#/components/parameters/Query-UserId"
-        - $ref: "#/components/parameters/Query-IdentityId"
-        - $ref: "#/components/parameters/Query-Idp"
-        - $ref: "#/components/parameters/Query-Username"
-        - $ref: "#/components/parameters/Query-Email"
-        - $ref: "#/components/parameters/Query-FirstName"
-        - $ref: "#/components/parameters/Query-FullName"
-        - $ref: "#/components/parameters/Query-LastName"
-        - $ref: "#/components/parameters/Query-Active"
-        - $ref: "#/components/parameters/Query-UserSearch"
+        - $ref: '#/components/parameters/Query-UserId'
+        - $ref: '#/components/parameters/Query-IdentityId'
+        - $ref: '#/components/parameters/Query-Idp'
+        - $ref: '#/components/parameters/Query-Username'
+        - $ref: '#/components/parameters/Query-Email'
+        - $ref: '#/components/parameters/Query-FirstName'
+        - $ref: '#/components/parameters/Query-FullName'
+        - $ref: '#/components/parameters/Query-LastName'
+        - $ref: '#/components/parameters/Query-Active'
+        - $ref: '#/components/parameters/Query-UserSearch'
       responses:
-        "200":
+        '200':
           description: >-
             Returns a JSON object representation of the user matching provided
             parameters
@@ -663,13 +671,13 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/DB-User"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+                  $ref: '#/components/schemas/DB-User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         default:
-          $ref: "#/components/responses/Error"
+          $ref: '#/components/responses/Error'
   /user/idpList:
     get:
       summary: Lists all identity providers
@@ -678,22 +686,22 @@ paths:
       tags:
         - User
       parameters:
-        - $ref: "#/components/parameters/Query-Active"
+        - $ref: '#/components/parameters/Query-Active'
       responses:
-        "200":
+        '200':
           description: Returns a JSON array of known identity providers
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/DB-IdentityProvider"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+                  $ref: '#/components/schemas/DB-IdentityProvider'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         default:
-          $ref: "#/components/responses/Error"
+          $ref: '#/components/responses/Error'
 components:
   headers:
     Content-Disposition:
@@ -757,11 +765,16 @@ components:
   parameters:
     Header-Metadata:
       in: header
-      name: metadata
-      description: Metadata key/value pair. Must contain the x-amz-meta- prefix to be valid.
+      name: x-amz-meta-*
+      description: >-
+        An arbitrary metadata key/value pair. Must contain the x-amz-meta-
+        prefix to be valid. Multiple metadata pairs can be defined.
       schema:
         type: string
-        example: x-amz-meta-foo
+        example:
+          - x-amz-meta-foo
+          - x-amz-meta-bar
+          - x-amz-meta-baz
     Path-ObjectId:
       in: path
       name: objId
@@ -893,8 +906,8 @@ components:
       in: query
       name: name
       description: >-
-        the `name` metadata for the object
-        Typically a descriptive title or original filename
+        the `name` metadata for the object Typically a descriptive title or
+        original filename
       schema:
         type: string
         example: foobar.txt
@@ -911,10 +924,10 @@ components:
       description: the permission type
       schema:
         oneOf:
-          - $ref: "#/components/schemas/PermCode"
+          - $ref: '#/components/schemas/PermCode'
           - type: array
             items:
-              $ref: "#/components/schemas/PermCode"
+              $ref: '#/components/schemas/PermCode'
     Query-Public:
       in: query
       name: public
@@ -992,13 +1005,12 @@ components:
               description: Determines whether this identity provider is considered active
               default: true
               example: true
-        - $ref: "#/components/schemas/DB-TimestampUserData"
+        - $ref: '#/components/schemas/DB-TimestampUserData'
     DB-Object:
       allOf:
         - type: object
           required:
             - id
-            - mimeType
             - path
             - public
             - active
@@ -1008,10 +1020,6 @@ components:
               description: The primary identifier for this object
               format: uuid
               example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
-            mimeType:
-              type: string
-              description: the MIME Type of the object
-              example: application/octet-stream
             path:
               type: string
               description: The canonical S3 path string of the object
@@ -1026,7 +1034,7 @@ components:
               description: Determines whether this object is considered active
               default: true
               example: true
-        - $ref: "#/components/schemas/DB-TimestampUserData"
+        - $ref: '#/components/schemas/DB-TimestampUserData'
     DB-Metadata:
       allOf:
         - type: object
@@ -1036,7 +1044,10 @@ components:
             metadata:
               type: object
               description: User-defined metadata
-              example: {'name': 'report.xls', 'department': 'finance', 'id': 'ac246e31-c807-496c-bc93-cd8bc2f1b2b4'}
+              example:
+                name: report.xls
+                department: finance
+                id: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
     DB-ObjectPermission:
       allOf:
         - type: object
@@ -1062,8 +1073,8 @@ components:
               description: The unique identifier of the user
               example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
             permCode:
-              $ref: "#/components/schemas/PermCode"
-        - $ref: "#/components/schemas/DB-TimestampUserData"
+              $ref: '#/components/schemas/PermCode'
+        - $ref: '#/components/schemas/DB-TimestampUserData'
     DB-Tags:
       allOf:
         - type: object
@@ -1071,7 +1082,9 @@ components:
             tags:
               type: object
               description: User-defined tags
-              example: {'classification': 'Top Secret', 'Priority': 'Urgent'}
+              example:
+                classification: Top Secret
+                Priority: Urgent
     DB-TimestampUserData:
       type: object
       required:
@@ -1092,7 +1105,7 @@ components:
           type: string
           format: date-time
           description: Time when this record was created
-          example: "2022-03-11T23:19:16.343Z"
+          example: '2022-03-11T23:19:16.343Z'
         updatedBy:
           type: string
           format: uuid
@@ -1106,7 +1119,7 @@ components:
           type: string
           format: date-time
           description: Time when this record was last updated
-          example: "2022-03-11T23:19:16.343Z"
+          example: '2022-03-11T23:19:16.343Z'
     DB-User:
       allOf:
         - type: object
@@ -1147,7 +1160,7 @@ components:
               description: Determines whether this user is considered active
               default: true
               example: true
-        - $ref: "#/components/schemas/DB-TimestampUserData"
+        - $ref: '#/components/schemas/DB-TimestampUserData'
     PermCode:
       type: string
       description: Permission code/type for an object
@@ -1165,7 +1178,7 @@ components:
         - userId
       properties:
         permCode:
-          $ref: "#/components/schemas/PermCode"
+          $ref: '#/components/schemas/PermCode'
         userId:
           type: string
           description: The primary identifier for a user
@@ -1173,7 +1186,7 @@ components:
           example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
     Response-BadRequest:
       allOf:
-        - $ref: "#/components/schemas/Response-Problem"
+        - $ref: '#/components/schemas/Response-Problem'
         - type: object
           properties:
             status:
@@ -1184,7 +1197,7 @@ components:
               example: https://httpstatuses.com/400
     Response-Conflict:
       allOf:
-        - $ref: "#/components/schemas/Response-Problem"
+        - $ref: '#/components/schemas/Response-Problem'
         - type: object
           properties:
             status:
@@ -1195,7 +1208,7 @@ components:
               example: https://httpstatuses.com/409
     Response-Error:
       allOf:
-        - $ref: "#/components/schemas/Response-Problem"
+        - $ref: '#/components/schemas/Response-Problem'
         - type: object
           properties:
             status:
@@ -1206,7 +1219,7 @@ components:
               example: https://httpstatuses.com/500
     Response-Forbidden:
       allOf:
-        - $ref: "#/components/schemas/Response-Problem"
+        - $ref: '#/components/schemas/Response-Problem'
         - type: object
           properties:
             type:
@@ -1219,7 +1232,7 @@ components:
               example: User lacks permission to complete this action
     Response-NotFound:
       allOf:
-        - $ref: "#/components/schemas/Response-Problem"
+        - $ref: '#/components/schemas/Response-Problem'
         - type: object
           properties:
             status:
@@ -1230,7 +1243,7 @@ components:
               example: https://httpstatuses.com/404
     Response-NotImplemented:
       allOf:
-        - $ref: "#/components/schemas/Response-Problem"
+        - $ref: '#/components/schemas/Response-Problem'
         - type: object
           properties:
             status:
@@ -1244,7 +1257,7 @@ components:
       type: object
       properties:
         $metadata:
-          $ref: "#/components/schemas/S3-Metadata"
+          $ref: '#/components/schemas/S3-Metadata'
         DeleteMarker:
           type: boolean
         VersionId:
@@ -1285,6 +1298,7 @@ components:
                 description: The error message for the field.
     Response-Unauthorized:
       allOf:
+        - $ref: '#/components/schemas/Response-Problem'
         - type: object
           properties:
             type:
@@ -1297,7 +1311,7 @@ components:
               example: Invalid authorization credentials
     Response-ValidationError:
       allOf:
-        - $ref: "#/components/schemas/Response-Problem"
+        - $ref: '#/components/schemas/Response-Problem'
         - type: object
           required:
             - errors
@@ -1328,7 +1342,7 @@ components:
       type: object
       properties:
         $metadata:
-          $ref: "#/components/schemas/S3-Metadata"
+          $ref: '#/components/schemas/S3-Metadata'
         VersionId:
           type: string
           description: a version identifier created in S3
@@ -1362,7 +1376,7 @@ components:
         - ETag
       properties:
         $metadata:
-          $ref: "#/components/schemas/S3-Metadata"
+          $ref: '#/components/schemas/S3-Metadata'
         ETag:
           type: string
           description: S3 Identifier for a specific version of this object
@@ -1415,9 +1429,9 @@ components:
         LastModified:
           type: string
           format: date-time
-          example: "2022-03-11T23:19:16.343Z"
+          example: '2022-03-11T23:19:16.343Z'
         Owner:
-          $ref: "#/components/schemas/S3-VersionOwner"
+          $ref: '#/components/schemas/S3-VersionOwner'
     S3-VersionList:
       type: object
       required:
@@ -1429,7 +1443,7 @@ components:
         - Versions
       properties:
         $metadata:
-          $ref: "#/components/schemas/S3-Metadata"
+          $ref: '#/components/schemas/S3-Metadata'
         IsTruncated:
           type: boolean
           description: Whether or not this object listing is complete
@@ -1437,7 +1451,7 @@ components:
         KeyMarker:
           type: string
           description: Marks the last key returned in a truncated response
-          example: ""
+          example: ''
         MaxKeys:
           type: integer
           format: int32
@@ -1456,11 +1470,11 @@ components:
         VersionIdMarker:
           type: string
           description: Marks the last version of the key returned in a truncated response
-          example: ""
+          example: ''
         Versions:
           type: array
           items:
-            $ref: "#/components/schemas/S3-Version"
+            $ref: '#/components/schemas/S3-Version'
     S3-VersionOwner:
       type: object
       required:
@@ -1483,19 +1497,19 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Response-BadRequest"
+            $ref: '#/components/schemas/Response-BadRequest'
     Conflict:
       description: Request conflicts with server state
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Response-Conflict"
+            $ref: '#/components/schemas/Response-Conflict'
     Error:
       description: Internal Server Error
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Response-Error"
+            $ref: '#/components/schemas/Response-Error'
     Found:
       description: Resource requested has been temporarily moved
     Forbidden:
@@ -1503,7 +1517,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Response-Forbidden"
+            $ref: '#/components/schemas/Response-Forbidden'
     NoContent:
       description: Accepted and no content
     NotFound:
@@ -1511,7 +1525,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Response-NotFound"
+            $ref: '#/components/schemas/Response-NotFound'
     NotImplemented:
       description: >-
         The server does not support the functionality required to fulfill the
@@ -1519,20 +1533,20 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Response-NotImplemented"
+            $ref: '#/components/schemas/Response-NotImplemented'
     NotModified:
       description: Not Modified
     S3Found:
       description: Returns a temporary pre-signed S3 object URL location header
       headers:
         Location:
-          $ref: "#/components/headers/Location"
+          $ref: '#/components/headers/Location'
     Unauthorized:
       description: Unauthorized
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Response-Unauthorized"
+            $ref: '#/components/schemas/Response-Unauthorized'
     UnprocessableEntity:
       description: >-
         The server was unable to process the contained instructions. Generally
@@ -1540,7 +1554,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Response-ValidationError"
+            $ref: '#/components/schemas/Response-ValidationError'
   securitySchemes:
     BasicAuth:
       type: http
