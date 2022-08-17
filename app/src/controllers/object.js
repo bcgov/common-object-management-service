@@ -617,16 +617,18 @@ const controller = {
    */
   async searchObjects(req, res, next) {
     // TODO: Handle no database scenarios via S3 ListObjectsCommand?
-    // TODO: Consider metadata/tagging query parameter design here?
+    // TODO: Consider tagging query parameter design here
     // TODO: Consider support for filtering by set of permissions?
     // TODO: handle additional parameters. Eg: deleteMarker, latest
     try {
       const objIds = mixedQueryToArray(req.query.objId);
+      const metadata = getMetadata(req.headers);
       const params = {
         id: objIds ? objIds.map(id => addDashesToUuid(id)) : objIds,
         name: req.query.name,
         path: req.query.path,
         mimeType: req.query.mimeType,
+        metadata: metadata && Object.keys(metadata).length ? metadata : undefined,
         public: isTruthy(req.query.public),
         active: isTruthy(req.query.active)
       };
