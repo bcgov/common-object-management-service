@@ -80,23 +80,30 @@ const service = {
    * @function searchObjects
    * Search and filter for specific object records
    * @param {string|string[]} [params.id] Optional string or array of uuids representing the object
-   * @param {string} [params.name] Optional metadata name string to match on
    * @param {string} [params.path] Optional canonical S3 path string to match on
-   * @param {string} [params.mimeType] Optional mimeType string to match on
    * @param {boolean} [params.public] Optional boolean on object public status
-   * @param {boolean} [params.active] Optional boolean on object active status
-   * @param {boolean} [params.deleteMarker] Optional boolean, is object soft-deleted
-   * @returns {Promise<object>} The result of running the find operation
+   * @param {boolean} [params.active] Optional boolean on object active
+   * @param {string} [params.userId] Optional uuid string representing the user
+   * @param {string} [params.mimeType] Optional mimeType string to match on
+   * @param {string} [params.name] Optional metadata name string to match on
+   * @param {object} [params.metadata] Optional object of metadata key/value pairs
+   * @returns {Promise<object[]>} The result of running the find operation
    */
   searchObjects: (params) => {
     return ObjectModel.query()
+      .allowGraph('[objectPermission, version]')
       .modify('filterIds', params.id)
       .modify('filterPath', params.path)
       .modify('filterPublic', params.public)
       .modify('filterActive', params.active)
       .modify('filterUserId', params.userId)
-      .modify('filterName', params.name)
-      .modify('filterMimeType', params.mimeType);
+      .modify('filterMimeType', params.mimeType)
+      .modify('filterMetadata', params.name, params.metadata)
+      .then(result => result.map(row => {
+        // eslint-disable-next-line no-unused-vars
+        const { objectPermission, version, ...object } = row;
+        return object;
+      }));
   },
 
   /**

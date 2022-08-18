@@ -35,43 +35,69 @@ class ObjectModel extends Timestamps(Model) {
   }
 
   static get modifiers() {
-    const ObjectPermission = require('./objectPermission');
     const Version = require('./version');
 
     return {
       filterIds(query, value) {
-        filterOneOrMany(query, value, 'id');
+        filterOneOrMany(query, value, 'object.id');
       },
       filterPath(query, value) {
-        filterILike(query, value, 'path');
+        filterILike(query, value, 'object.path');
       },
       filterPublic(query, value) {
-        if (value !== undefined) query.where('public', value);
+        if (value !== undefined) query.where('object.public', value);
       },
       filterActive(query, value) {
-        if (value !== undefined) query.where('active', value);
+        if (value !== undefined) query.where('object.active', value);
       },
       filterUserId(query, value) {
         if (value) {
-          query.whereIn('id', ObjectPermission.query()
-            .distinct('objectId')
-            .where('userId', value));
+          query
+            .withGraphJoined('objectPermission')
+            .whereIn('objectPermission.objectId', builder => {
+              builder.distinct('objectPermission.objectId')
+                .where('objectPermission.userId', value);
+            });
         }
       },
       filterMimeType(query, value) {
         if (value) {
-          query.whereIn('id', Version.query()
-            .distinct('objectId')
-            .where('mimeType', 'ilike', `%${value}%`));
+          query
+            .withGraphJoined('version')
+            .whereIn('version.id', builder => {
+              builder.select('version.id')
+                .where('version.mimeType', 'ilike', `%${value}%`);
+            });
         }
       },
-      filterName(query, value) {
-        if (value) {
-          query.whereIn('id', Version.query()
-            .distinct('version.objectId')
+      filterMetadata(query, name, metadata) {
+        const subqueries = [];
+
+        if (name) {
+          subqueries.push(Version.query()
+            .select('version.id')
             .joinRelated('metadata')
-            .where('value', 'ilike', `%${value}%`)
-            .andWhere('key', 'name'));
+            .where('metadata.key', 'name')
+            .where('metadata.value', 'ilike', `%${name}%`));
+        }
+
+        if (metadata && Object.keys(metadata).length) {
+          Object.entries(metadata).forEach(([key, val]) => {
+            const q = Version.query()
+              .select('version.id')
+              .joinRelated('metadata')
+              .where('metadata.key', key);
+            if (val.length) q.where('metadata.value', val);
+            subqueries.push(q);
+          });
+        }
+
+        if (subqueries.length) {
+          query
+            .withGraphJoined('version')
+            .whereIn('version.id', builder => {
+              builder.intersect(subqueries);
+            });
         }
       }
       // TODO: consider chaining Version modifiers in a way that they are combined. Example:

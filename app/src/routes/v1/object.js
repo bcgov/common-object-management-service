@@ -15,7 +15,6 @@ routes.post('/', requireSomeAuth, (req, res, next) => {
 
 /** Search for objects */
 routes.get('/', requireDb, requireSomeAuth, objectValidator.searchObjects, (req, res, next) => {
-  // TODO: Add validation to reject unexpected query parameters
   objectController.searchObjects(req, res, next);
 });
 
@@ -48,7 +47,6 @@ routes.get('/:objId/version', objectValidator.listObjectVersion, currentObject, 
 
 /** Sets the public flag of an object */
 routes.patch('/:objId/public', objectValidator.togglePublic, requireDb, currentObject, hasPermission(Permissions.MANAGE), (req, res, next) => {
-  // TODO: Add validation to reject unexpected query parameters
   objectController.togglePublic(req, res, next);
 });
 
