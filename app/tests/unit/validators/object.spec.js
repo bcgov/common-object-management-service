@@ -108,6 +108,41 @@ describe('readObject', () => {
 
 describe('searchObjects', () => {
 
+  describe('headers', () => {
+    const headers = schema.searchObjects.headers.describe();
+
+    it('is an object', () => {
+      expect(headers).toBeTruthy();
+      expect(headers.type).toEqual('object');
+    });
+
+    it('permits other attributes', () => {
+      expect(headers.flags).toBeTruthy();
+      expect(headers.flags).toEqual(expect.objectContaining({
+        unknown: true
+      }));
+    });
+
+    it('enforces general metadata pattern', () => {
+      expect(headers.patterns).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          regex: '/^x-amz-meta-.{1,255}$/i',
+          rule: expect.objectContaining({
+            type: 'string',
+            rules: expect.arrayContaining([
+              expect.objectContaining({
+                name: 'max',
+                args: expect.objectContaining({
+                  limit: 255
+                })
+              })
+            ])
+          })
+        })
+      ]));
+    });
+  });
+
   describe('query', () => {
     const query = schema.searchObjects.query.describe();
 
@@ -186,6 +221,34 @@ describe('searchObjects', () => {
       it('must be less than or equal to 255 characters long', () => {
         const longStr = crypto.randomBytes(256).toString('hex');
         expect(longStr).not.toMatchSchema(Joi.string().max(255));
+      });
+    });
+
+    describe('tagging', () => {
+      const tagging = query.keys.tagging;
+
+      it('is an object', () => {
+        expect(tagging).toBeTruthy();
+        expect(tagging.type).toEqual('object');
+      });
+
+      it('enforces general tagging pattern', () => {
+        expect(tagging.patterns).toEqual(expect.arrayContaining([
+          expect.objectContaining({
+            regex: '/^.{1,128}$/',
+            rule: expect.objectContaining({
+              type: 'string',
+              rules: expect.arrayContaining([
+                expect.objectContaining({
+                  name: 'max',
+                  args: expect.objectContaining({
+                    limit: 255
+                  })
+                })
+              ])
+            })
+          })
+        ]));
       });
     });
 

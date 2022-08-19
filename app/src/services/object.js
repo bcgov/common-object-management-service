@@ -87,6 +87,7 @@ const service = {
    * @param {string} [params.mimeType] Optional mimeType string to match on
    * @param {string} [params.name] Optional metadata name string to match on
    * @param {object} [params.metadata] Optional object of metadata key/value pairs
+   * @param {object} [params.tag] Optional object of tag key/value pairs
    * @returns {Promise<object[]>} The result of running the find operation
    */
   searchObjects: (params) => {
@@ -98,7 +99,11 @@ const service = {
       .modify('filterActive', params.active)
       .modify('filterUserId', params.userId)
       .modify('filterMimeType', params.mimeType)
-      .modify('filterMetadata', params.name, params.metadata)
+      .modify('filterMetadataTag', {
+        name: params.name,
+        metadata: params.metadata,
+        tag: params.tag
+      })
       .then(result => result.map(row => {
         // eslint-disable-next-line no-unused-vars
         const { objectPermission, version, ...object } = row;
