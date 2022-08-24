@@ -177,8 +177,8 @@ const utils = {
    * @function getKeyValue
    * Transforms array of {<key>:<value>} objects to {key: <key>, value: <value>}
    * @param {any}
-   * @param {object} input of key value tuples like `<key>:<value>`
-   * @returns {object[]} array of objects like `{key: <key>, value: <value>}`
+   * @param {object[]} input Array of key value tuples like `<key>:<value>`
+   * @returns {object[]} Array of objects like `{key: <key>, value: <value>}`
    */
   getKeyValue(input) {
     return Object.entries(input).map(([k, v]) => ({ key: k, value: v }));
@@ -245,20 +245,20 @@ const utils = {
   },
 
   /**
-   * @function toLowerKeys converts all key names for all objects in an array to lowercase
-   * @param {object[]} Array of tag objects (eg: [{Key: k1, Value: V1}])
+   * @function toLowerKeys
+   * Converts all key names for all objects in an array to lowercase
+   * @param {object[]} arr Array of tag objects (eg: [{Key: k1, Value: V1}])
    * @returns {object[]} Array of objects (eg: [{key: k1, value: V1}])
    */
   toLowerKeys(arr) {
-    const result = arr.map(obj => {
-      const entries = Object.entries(obj);
+    if (!arr) return [];
+    return arr.map(obj => {
       return Object.fromEntries(
-        entries.map(([key, value]) => {
+        Object.entries(obj).map(([key, value]) => {
           return [key.toLowerCase(), value];
         }),
       );
     });
-    return result;
   },
 };
 
