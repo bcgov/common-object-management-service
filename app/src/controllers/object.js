@@ -132,20 +132,19 @@ const controller = {
       const objId = addDashesToUuid(req.params.objId);
       const objPath = getPath(objId);
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
-      const { versionId, ...newTags } = req.query;
+      const { versionId, tagset: newTags } = req.query;
       const objectTagging = await storageService.getObjectTagging({ filePath: objPath, versionId });
 
       // Join new and existing tags then filter duplicates
-      let newSet = Object.entries(newTags).map(([k, v]) => ({ Key: k, Value: v }));
+      let newSet = newTags ? Object.entries(newTags).map(([k, v]) => ({ Key: k, Value: v })) : [];
       if (objectTagging.TagSet) newSet = newSet.concat(objectTagging.TagSet);
       newSet = newSet.filter((element, idx, arr) => arr.findIndex(element2 => (element2.Key === element.Key)) === idx);
 
-      if (!Object.keys(newTags).length || newSet.length > 10) {
+      if (!newTags || !Object.keys(newTags).length || newSet.length > 10) {
         // TODO: Validation level logic. To be moved.
         // 422 when no new tags or when tag limit will be exceeded
         res.status(422).end();
-      }
-      else {
+      } else {
         const data = {
           filePath: objPath,
           tags: newSet,
@@ -377,14 +376,14 @@ const controller = {
     try {
       const objId = addDashesToUuid(req.params.objId);
       const objPath = getPath(objId);
-      const { versionId } = req.query;
+      const versionId = req.query.versionId;
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
       const objectTagging = await storageService.getObjectTagging({ filePath: objPath, versionId });
 
       // Generate object subset by subtracting/omitting defined keys via filter/inclusion
-      const keysToRemove = mixedQueryToArray(req.query.keys);
+      const keysToRemove = req.query.tagset ? Object.keys(req.query.tagset) : [];
       let newTags = undefined;
-      if (keysToRemove && objectTagging.TagSet) {
+      if (keysToRemove.length && objectTagging.TagSet) {
         newTags = objectTagging.TagSet.filter(x => !keysToRemove.includes(x.Key));
       }
 
@@ -578,14 +577,14 @@ const controller = {
       const objId = addDashesToUuid(req.params.objId);
       const objPath = getPath(objId);
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
-      const { versionId, ...newTags } = req.query;
+      const versionId = req.query.versionId;
+      const newTags = req.query.tagset;
 
-      if (!Object.keys(newTags).length || Object.keys(newTags).length > 10) {
+      if (!newTags || !Object.keys(newTags).length || Object.keys(newTags).length > 10) {
         // TODO: Validation level logic. To be moved.
         // 422 when no new tags or when tag limit will be exceeded
         res.status(422).end();
-      }
-      else {
+      } else {
         const data = {
           filePath: objPath,
           tags: Object.entries(newTags).map(([k, v]) => ({ Key: k, Value: v })),

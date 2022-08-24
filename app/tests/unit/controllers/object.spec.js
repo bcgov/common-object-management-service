@@ -139,10 +139,12 @@ describe('addTags', () => {
     // request object
     const req = {
       params: { objId: 'xyz-789' },
-      query: { a: '1', b: '2', c: '3', d: '4', e: '5', f: '6', g: '7', h: '8', i: '9', j: '10', k: '11' }
+      query: {
+        tagset: { a: '1', b: '2', c: '3', d: '4', e: '5', f: '6', g: '7', h: '8', i: '9', j: '10', k: '11' }
+      }
     };
 
-    storageGetObjectTaggingSpy.mockReturnValue(getObjectTaggingResponse);
+    storageGetObjectTaggingSpy.mockResolvedValue(getObjectTaggingResponse);
     await controller.addTags(req, res, next);
     expect(res.status).toHaveBeenCalledWith(422);
   });
@@ -154,11 +156,13 @@ describe('addTags', () => {
     // request object
     const req = {
       params: { objId: 'xyz-789' },
-      query: { foo: 'bar', baz: 'bam' }
+      query: {
+        tagset: { foo: 'bar', baz: 'bam' }
+      }
     };
 
-    storageGetObjectTaggingSpy.mockReturnValue(getObjectTaggingResponse);
-    storagePutObjectTaggingSpy.mockReturnValue({});
+    storageGetObjectTaggingSpy.mockResolvedValue(getObjectTaggingResponse);
+    storagePutObjectTaggingSpy.mockResolvedValue({});
 
     await controller.addTags(req, res, next);
 
@@ -182,11 +186,13 @@ describe('addTags', () => {
     // request object
     const req = {
       params: { objId: 'xyz-789' },
-      query: { foo: 'bar', baz: 'bam' }
+      query: {
+        tagset: { foo: 'bar', baz: 'bam' }
+      }
     };
 
-    storageGetObjectTaggingSpy.mockReturnValue(getObjectTaggingResponse);
-    storagePutObjectTaggingSpy.mockReturnValue({});
+    storageGetObjectTaggingSpy.mockResolvedValue(getObjectTaggingResponse);
+    storagePutObjectTaggingSpy.mockResolvedValue({});
 
     await controller.addTags(req, res, next);
 
@@ -439,7 +445,9 @@ describe('deleteTags', () => {
     // request object
     const req = {
       params: { objId: 'xyz-789' },
-      query: { keys: 'foo, baz' }
+      query: {
+        tagset: { foo: '', baz: '' }
+      }
     };
 
     storageGetObjectTaggingSpy.mockReturnValue(getObjectTaggingResponse);
@@ -556,72 +564,74 @@ describe('replaceMetadata', () => {
       versionId: undefined
     });
   });
+});
 
-  describe('replaceTags', () => {
-    afterEach(() => {
-      jest.resetAllMocks();
-    });
+describe('replaceTags', () => {
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
 
-    // mock service calls
-    const storageGetObjectTaggingSpy = jest.spyOn(storageService, 'getObjectTagging');
-    const storagePutObjectTaggingSpy = jest.spyOn(storageService, 'putObjectTagging');
+  // mock service calls
+  const storageGetObjectTaggingSpy = jest.spyOn(storageService, 'getObjectTagging');
+  const storagePutObjectTaggingSpy = jest.spyOn(storageService, 'putObjectTagging');
 
-    const next = jest.fn();
+  const next = jest.fn();
 
-    it('responds 422 when no query keys are present', async () => {
-      // response from S3
-      const getObjectTaggingResponse = {};
+  it('responds 422 when no query keys are present', async () => {
+    // response from S3
+    const getObjectTaggingResponse = {};
 
-      // request object
-      const req = {
-        params: { objId: 'xyz-789' },
-        query: {}
-      };
+    // request object
+    const req = {
+      params: { objId: 'xyz-789' },
+      query: {}
+    };
 
-      storageGetObjectTaggingSpy.mockReturnValue(getObjectTaggingResponse);
-      await controller.replaceTags(req, res, next);
-      expect(res.status).toHaveBeenCalledWith(422);
-    });
+    storageGetObjectTaggingSpy.mockReturnValue(getObjectTaggingResponse);
+    await controller.replaceTags(req, res, next);
+    expect(res.status).toHaveBeenCalledWith(422);
+  });
 
-    it('responds 422 when more than 10 keys', async () => {
-      // response from S3
-      const getObjectTaggingResponse = {};
+  it('responds 422 when more than 10 keys', async () => {
+    // response from S3
+    const getObjectTaggingResponse = {};
 
-      // request object
-      const req = {
-        params: { objId: 'xyz-789' },
-        query: { a: '1', b: '2', c: '3', d: '4', e: '5', f: '6', g: '7', h: '8', i: '9', j: '10', k: '11' }
-      };
+    // request object
+    const req = {
+      params: { objId: 'xyz-789' },
+      query: { a: '1', b: '2', c: '3', d: '4', e: '5', f: '6', g: '7', h: '8', i: '9', j: '10', k: '11' }
+    };
 
-      storageGetObjectTaggingSpy.mockReturnValue(getObjectTaggingResponse);
-      await controller.replaceTags(req, res, next);
-      expect(res.status).toHaveBeenCalledWith(422);
-    });
+    storageGetObjectTaggingSpy.mockReturnValue(getObjectTaggingResponse);
+    await controller.replaceTags(req, res, next);
+    expect(res.status).toHaveBeenCalledWith(422);
+  });
 
-    it('should add the new tags', async () => {
-      // response from S3
-      const getObjectTaggingResponse = {};
+  it('should add the new tags', async () => {
+    // response from S3
+    const getObjectTaggingResponse = {};
 
-      // request object
-      const req = {
-        params: { objId: 'xyz-789' },
-        query: { foo: 'bar', baz: 'bam' }
-      };
+    // request object
+    const req = {
+      params: { objId: 'xyz-789' },
+      query: {
+        tagset: { foo: 'bar', baz: 'bam' }
+      }
+    };
 
-      storageGetObjectTaggingSpy.mockReturnValue(getObjectTaggingResponse);
-      storagePutObjectTaggingSpy.mockReturnValue({});
+    storageGetObjectTaggingSpy.mockReturnValue(getObjectTaggingResponse);
+    storagePutObjectTaggingSpy.mockReturnValue({});
 
-      await controller.replaceTags(req, res, next);
+    await controller.replaceTags(req, res, next);
 
-      expect(res.status).toHaveBeenCalledWith(204);
-      expect(storagePutObjectTaggingSpy).toHaveBeenCalledWith({
-        filePath: 'xyz-789',
-        tags: [
-          { Key: 'foo', Value: 'bar' },
-          { Key: 'baz', Value: 'bam' },
-        ],
-        versionId: undefined
-      });
+    expect(res.status).toHaveBeenCalledWith(204);
+    expect(storagePutObjectTaggingSpy).toHaveBeenCalledWith({
+      filePath: 'xyz-789',
+      tags: [
+        { Key: 'foo', Value: 'bar' },
+        { Key: 'baz', Value: 'bam' },
+      ],
+      versionId: undefined
     });
   });
 });
