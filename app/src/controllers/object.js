@@ -184,6 +184,7 @@ const controller = {
 
       bb.on('file', (name, stream, info) => {
         const objId = uuidv4();
+
         const data = {
           id: objId,
           fieldName: name,
@@ -193,9 +194,10 @@ const controller = {
             ...getMetadata(req.headers),
             id: objId
           },
-          tags: req.query,
+          tags: req.query.tagset,
         };
 
+        // TODO: Consider refactoring to use Upload instead from @aws-sdk/lib-storage
         const s3Response = storageService.putObject({ ...data, stream });
 
         const dbResponse = utils.trxWrapper(async (trx) => {
@@ -208,10 +210,10 @@ const controller = {
           const versions = await versionService.create(data, userId, trx);
 
           // add metadata to version in DB
-          if (Object.keys(data.metadata).length) await metadataService.addMetadata(versions.id, data.metadata, userId, trx);
+          if (data.metadata && Object.keys(data.metadata).length) await metadataService.addMetadata(versions.id, data.metadata, userId, trx);
 
           // add tags to version in DB
-          if (Object.keys(data.tags).length) await tagService.addTags(versions.id, getKeyValue(data.tags), userId, trx);
+          if (data.tags && Object.keys(data.tags).length) await tagService.addTags(versions.id, getKeyValue(data.tags), userId, trx);
 
           return object;
         });
@@ -622,7 +624,7 @@ const controller = {
     try {
       const objIds = mixedQueryToArray(req.query.objId);
       const metadata = getMetadata(req.headers);
-      const tagging = req.query.tagging;
+      const tagging = req.query.tagset;
       const params = {
         id: objIds ? objIds.map(id => addDashesToUuid(id)) : objIds,
         name: req.query.name,
@@ -682,7 +684,6 @@ const controller = {
     try {
       const bb = busboy({ headers: req.headers, limits: { files: 1 } });
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
-      const { ...newTags } = req.query;
       let object = undefined;
 
       bb.on('file', (name, stream, info) => {
@@ -696,9 +697,10 @@ const controller = {
             ...getMetadata(req.headers),
             id: objId
           },
-          tags: newTags
+          tags: req.query.tagset
         };
 
+        // TODO: Consider refactoring to use Upload instead from @aws-sdk/lib-storage
         const s3Response = storageService.putObject({ ...data, stream });
 
         const dbResponse = utils.trxWrapper(async (trx) => {
@@ -722,10 +724,10 @@ const controller = {
           }
 
           // add metadata to version in DB
-          if (Object.keys(data.metadata).length) await metadataService.addMetadata(version.id, data.metadata, userId, trx);
+          if (data.metadata && Object.keys(data.metadata).length) await metadataService.addMetadata(version.id, data.metadata, userId, trx);
 
           // add tags to version in DB
-          if (Object.keys(data.tags).length)  await tagService.addTags(version.id, getKeyValue(data.tags), userId, trx);
+          if (data.tags && Object.keys(data.tags).length) await tagService.addTags(version.id, getKeyValue(data.tags), userId, trx);
 
           return object;
         });

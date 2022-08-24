@@ -278,6 +278,7 @@ const objectStorageService = {
       }).join('&');
     }
 
+    // TODO: Consider refactoring to use Upload instead from @aws-sdk/lib-storage
     return this._s3Client.send(new PutObjectCommand(params));
   },
 

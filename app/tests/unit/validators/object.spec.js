@@ -131,6 +131,12 @@ describe('searchObjects', () => {
             type: 'string',
             rules: expect.arrayContaining([
               expect.objectContaining({
+                name: 'min',
+                args: expect.objectContaining({
+                  limit: 0
+                })
+              }),
+              expect.objectContaining({
                 name: 'max',
                 args: expect.objectContaining({
                   limit: 255
@@ -224,21 +230,27 @@ describe('searchObjects', () => {
       });
     });
 
-    describe('tagging', () => {
-      const tagging = query.keys.tagging;
+    describe('tagset', () => {
+      const tagset = query.keys.tagset;
 
       it('is an object', () => {
-        expect(tagging).toBeTruthy();
-        expect(tagging.type).toEqual('object');
+        expect(tagset).toBeTruthy();
+        expect(tagset.type).toEqual('object');
       });
 
-      it('enforces general tagging pattern', () => {
-        expect(tagging.patterns).toEqual(expect.arrayContaining([
+      it('enforces general tagset pattern', () => {
+        expect(tagset.patterns).toEqual(expect.arrayContaining([
           expect.objectContaining({
             regex: '/^.{1,128}$/',
             rule: expect.objectContaining({
               type: 'string',
               rules: expect.arrayContaining([
+                expect.objectContaining({
+                  name: 'min',
+                  args: expect.objectContaining({
+                    limit: 0
+                  })
+                }),
                 expect.objectContaining({
                   name: 'max',
                   args: expect.objectContaining({
