@@ -108,7 +108,7 @@ const controller = {
             await versionService.update({ ...data, id: objId }, userId, trx);
 
           // add metadata to version in DB
-          await metadataService.addMetadata(version.id, data.metadata, userId, trx);
+          await metadataService.updateMetadata(version.id, data.metadata, userId, trx);
         });
 
         controller._setS3Headers(s3Response, res);
@@ -157,7 +157,7 @@ const controller = {
         // Add tags to version in DB
         await utils.trxWrapper(async (trx) => {
           const version = await versionService.get(data.versionId, objId, trx);
-          await tagService.addTags(version.id, toLowerKeys(data.tags), userId, trx);
+          await tagService.updateTags(version.id, toLowerKeys(data.tags), userId, trx);
         });
 
         controller._setS3Headers(response, res);
@@ -210,10 +210,10 @@ const controller = {
           const versions = await versionService.create(data, userId, trx);
 
           // add metadata to version in DB
-          if (data.metadata && Object.keys(data.metadata).length) await metadataService.addMetadata(versions.id, data.metadata, userId, trx);
+          if (data.metadata && Object.keys(data.metadata).length) await metadataService.updateMetadata(versions.id, data.metadata, userId, trx);
 
           // add tags to version in DB
-          if (data.tags && Object.keys(data.tags).length) await tagService.addTags(versions.id, getKeyValue(data.tags), userId, trx);
+          if (data.tags && Object.keys(data.tags).length) await tagService.updateTags(versions.id, getKeyValue(data.tags), userId, trx);
 
           return object;
         });
@@ -300,7 +300,7 @@ const controller = {
           await versionService.update({ ...data, id: objId }, userId, trx);
 
         // add metadata to version in DB
-        await metadataService.addMetadata(version.id, data.metadata, userId, trx);
+        await metadataService.updateMetadata(version.id, data.metadata, userId, trx);
       });
 
       controller._setS3Headers(s3Response, res);
@@ -398,14 +398,14 @@ const controller = {
       let response;
       if (newTags) {
         response = await storageService.putObjectTagging(data);
-      }
-      else {
+      } else {
         response = await storageService.deleteObjectTagging(data);
       }
+
       // update tags for version in DB
       await utils.trxWrapper(async (trx) => {
         const version = await versionService.get(data.versionId, objId, trx);
-        await tagService.addTags(version.id, toLowerKeys(data.tags), userId, trx);
+        await tagService.updateTags(version.id, toLowerKeys(data.tags), userId, trx);
       });
 
       controller._setS3Headers(response, res);
@@ -554,7 +554,7 @@ const controller = {
             await versionService.update({ ...data, id: objId }, userId, trx);
 
           // add metadata
-          await metadataService.addMetadata(version.id, data.metadata, userId, trx);
+          await metadataService.updateMetadata(version.id, data.metadata, userId, trx);
         });
 
         controller._setS3Headers(s3Response, res);
@@ -598,7 +598,7 @@ const controller = {
         // update tags on version in DB
         await utils.trxWrapper(async (trx) => {
           const version = await versionService.get(data.versionId, objId, trx);
-          await tagService.addTags(version.id, toLowerKeys(data.tags), userId, trx);
+          await tagService.updateTags(version.id, toLowerKeys(data.tags), userId, trx);
         });
 
         controller._setS3Headers(response, res);
@@ -724,10 +724,10 @@ const controller = {
           }
 
           // add metadata to version in DB
-          if (data.metadata && Object.keys(data.metadata).length) await metadataService.addMetadata(version.id, data.metadata, userId, trx);
+          if (data.metadata && Object.keys(data.metadata).length) await metadataService.updateMetadata(version.id, data.metadata, userId, trx);
 
           // add tags to version in DB
-          if (data.tags && Object.keys(data.tags).length) await tagService.addTags(version.id, getKeyValue(data.tags), userId, trx);
+          if (data.tags && Object.keys(data.tags).length) await tagService.updateTags(version.id, getKeyValue(data.tags), userId, trx);
 
           return object;
         });

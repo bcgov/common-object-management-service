@@ -30,7 +30,7 @@ describe('addMetadata', () => {
   const storageHeadObjectSpy = jest.spyOn(storageService, 'headObject');
   const storageCopyObjectSpy = jest.spyOn(storageService, 'copyObject');
   const versionCopySpy = jest.spyOn(versionService, 'copy');
-  const metadataAddMetadataSpy = jest.spyOn(metadataService, 'addMetadata');
+  const metadataUpdateMetadataSpy = jest.spyOn(metadataService, 'updateMetadata');
   const trxWrapperSpy = jest.spyOn(utils, 'trxWrapper');
   const setHeadersSpy = jest.spyOn(controller, '_setS3Headers');
 
@@ -82,7 +82,7 @@ describe('addMetadata', () => {
     storageCopyObjectSpy.mockResolvedValue(GoodResponse);
     trxWrapperSpy.mockImplementation(callback => callback({}));
     versionCopySpy.mockReturnValue({id: '5dad1ec9-d3c0-4b0f-8ead-cb4d9fa98987'});
-    metadataAddMetadataSpy.mockReturnValue({});
+    metadataUpdateMetadataSpy.mockReturnValue({});
     setHeadersSpy.mockImplementation(x => x);
 
     await controller.addMetadata(req, res, next);
@@ -101,7 +101,7 @@ describe('addMetadata', () => {
 
     expect(trxWrapperSpy).toHaveBeenCalledTimes(1);
     expect(versionCopySpy).toHaveBeenCalledTimes(1);
-    expect(metadataAddMetadataSpy).toHaveBeenCalledTimes(1);
+    expect(metadataUpdateMetadataSpy).toHaveBeenCalledTimes(1);
     expect(res.status).toHaveBeenCalledWith(204);
   });
 });
@@ -127,7 +127,7 @@ describe('addTags', () => {
       query: {}
     };
 
-    storageGetObjectTaggingSpy.mockReturnValue(getObjectTaggingResponse);
+    storageGetObjectTaggingSpy.mockResolvedValue(getObjectTaggingResponse);
     await controller.addTags(req, res, next);
     expect(res.status).toHaveBeenCalledWith(422);
   });
