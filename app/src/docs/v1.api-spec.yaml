@@ -449,7 +449,7 @@ paths:
       description: >-
         Adds specified tagsets to the object. Multiple Key/Value tagset pairs
         can be provided in the query.
-      operationId: addTags
+      operationId: addTagging
       tags:
         - Object Tagging
       parameters:
@@ -471,9 +471,8 @@ paths:
       summary: Replaces tags of an object
       description: >-
         Replace the existing tags of an object with the given tagsets. Multiple
-        Key/Value tagset pairs can be provided in the query. All tagsets will be
-        removed from the object if no tagsets are specified.
-      operationId: replaceTags
+        Key/Value tagset pairs can be provided in the query.
+      operationId: replaceTagging
       tags:
         - Object Tagging
       parameters:
@@ -497,7 +496,7 @@ paths:
         Removes the specified tagsets from the object. Multiple Key/Value
         tagset pairs can be provided in the query. All tagsets will be
         removed from the object if no tagsets are specified.
-      operationId: deleteTags
+      operationId: deleteTagging
       tags:
         - Object Tagging
       parameters:
