@@ -447,7 +447,7 @@ paths:
     patch:
       summary: Adds tags to an object
       description: >-
-        Adds specified tagsets to the object. Multiple Key/Value tagset pairs
+        Adds a specified set of tags to the object. Multiple Key/Value pairs
         can be provided in the query.
       operationId: addTagging
       tags:
@@ -470,8 +470,8 @@ paths:
     put:
       summary: Replaces tags of an object
       description: >-
-        Replace the existing tags of an object with the given tagsets. Multiple
-        Key/Value tagset pairs can be provided in the query.
+        Replace the existing tag-set of an object with the set of given tags.
+        Multiple Key/Value pairs can be provided in the query.
       operationId: replaceTagging
       tags:
         - Object Tagging
@@ -493,9 +493,9 @@ paths:
     delete:
       summary: Delete tags of an object.
       description: >-
-        Removes the specified tagsets from the object. Multiple Key/Value
-        tagset pairs can be provided in the query. All tagsets will be
-        removed from the object if no tagsets are specified.
+        Removes the specified set of tags from the object. Multiple Key/Value
+        pairs can be provided in the query. All tags in the tag-set will be
+        removed from the object if no tags are specified.
       operationId: deleteTagging
       tags:
         - Object Tagging
@@ -931,11 +931,12 @@ components:
         example: true
     Query-TagSet:
       in: query
-      name: tagging[*]
+      name: tagset[*]
       description: >-
-        Tags to add to the object, defined as Key/Value TagSet. The query should
-        be formatted in deepObject style notation, where multiple TagSets would
-        be encoded something similar to `tagging[x]=a&tagging[y]=b`.
+        Tags to add to the object, defined as a Key/Value tag. The query must
+        be formatted in deepObject style notation, where a tag-set made out of
+        multiple tags would be encoded something similar to
+        `tagset[x]=a&tagset[y]=b`.
       schema:
         $ref: '#/components/schemas/S3-TagSet'
       style: deepObject
@@ -1398,11 +1399,11 @@ components:
       properties:
         key:
           type: string
-          description: The TagSet key
+          description: The tag key
           example: x
         value:
           type: string
-          description: The TagSet value
+          description: The tag value
           example: a
     S3-Version:
       type: object
