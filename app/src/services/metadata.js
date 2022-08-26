@@ -8,8 +8,8 @@ const { getKeyValue } = require('../components/utils');
 const service = {
 
   /**
-   * @function addMetadata
-   * Add given Metadata and relate to a given version in database
+   * @function updateMetadata
+   * Updates metadata and relates them to the associated version
    * Un-relates any existing metadata for this version
    * @param {string} versionId The uuid id column from version table
    * @param {object} metadata Incoming object with `<key>:<value>` metadata to add for this version
@@ -18,7 +18,7 @@ const service = {
    * @returns {Promise<object>} The result of running the insert operation
    * @throws The error encountered upon db transaction failure
    */
-  addMetadata: async (versionId, metadata, currentUserId = SYSTEM_USER, etrx = undefined) => {
+  updateMetadata: async (versionId, metadata, currentUserId = SYSTEM_USER, etrx = undefined) => {
     let trx;
     try {
       trx = etrx ? etrx : await Metadata.startTransaction();

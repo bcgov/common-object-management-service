@@ -209,7 +209,7 @@ const service = {
         .first()
         .returning('id');
 
-      if (data.metadata) await metadataService.addMetadata(response.id, data.metadata, data.userId, trx);
+      if (data.metadata) await metadataService.updateMetadata(response.id, data.metadata, data.userId, trx);
 
       if (!etrx) await trx.commit();
       return Promise.resolve(response);

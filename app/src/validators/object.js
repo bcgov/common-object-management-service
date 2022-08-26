@@ -35,11 +35,15 @@ const schema = {
   },
 
   searchObjects: {
+    headers: Joi.object()
+      .pattern(/^x-amz-meta-.{1,255}$/i, Joi.string().min(0).max(255))
+      .unknown(),
     query: Joi.object({
       objId: scheme.guid,
       name: Joi.string(),
       path: Joi.string().max(1024),
       mimeType: Joi.string().max(255),
+      tagset: Joi.object().pattern(/^.{1,128}$/, Joi.string().min(0).max(255)),
       public: type.truthy,
       active: type.truthy
     })

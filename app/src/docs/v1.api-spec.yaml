@@ -30,7 +30,7 @@ tags:
     externalDocs:
       url: >-
         https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#metadata
-  - name: Object Tag
+  - name: Object Tagging
     description: Operations directly influencing the Tags of an S3 Object.
     externalDocs:
       url: >-
@@ -63,7 +63,7 @@ paths:
         - Object
       parameters:
         - $ref: '#/components/parameters/Header-Metadata'
-        - $ref: '#/components/parameters/Query-Tag'
+        - $ref: '#/components/parameters/Query-TagSet'
       requestBody:
         description: Form-data containing files
         required: true
@@ -132,6 +132,7 @@ paths:
         - $ref: '#/components/parameters/Query-Public'
         - $ref: '#/components/parameters/Query-MimeType'
         - $ref: '#/components/parameters/Query-Name'
+        - $ref: '#/components/parameters/Query-TagSet'
       responses:
         '201':
           description: Returns and array of objects
@@ -245,9 +246,9 @@ paths:
       tags:
         - Object
       parameters:
-        - $ref: '#/components/parameters/Path-ObjectId'
-        - $ref: '#/components/parameters/Query-Tag'
         - $ref: '#/components/parameters/Header-Metadata'
+        - $ref: '#/components/parameters/Path-ObjectId'
+        - $ref: '#/components/parameters/Query-TagSet'
       requestBody:
         description: Form-data containing files
         required: true
@@ -442,18 +443,18 @@ paths:
           $ref: '#/components/responses/Forbidden'
         default:
           $ref: '#/components/responses/Error'
-  /object/{objId}/tags:
+  /object/{objId}/tagging:
     patch:
       summary: Adds tags to an object
       description: >-
-        Adds the given tagset to the object. Multiple comma separated Key/Value
-        pairs can be provided in the query.
-      operationId: addTags
+        Adds a specified set of tags to the object. Multiple Key/Value pairs
+        can be provided in the query.
+      operationId: addTagging
       tags:
-        - Object Tag
+        - Object Tagging
       parameters:
         - $ref: '#/components/parameters/Path-ObjectId'
-        - $ref: '#/components/parameters/Query-Tag'
+        - $ref: '#/components/parameters/Query-TagSet'
         - $ref: '#/components/parameters/Query-VersionId'
       responses:
         '204':
@@ -469,14 +470,14 @@ paths:
     put:
       summary: Replaces tags of an object
       description: >-
-        Replace the existing tags of an object with the given tagset. Multiple
-        comma separated Key/Value pairs can be provided in the query.
-      operationId: replaceTags
+        Replace the existing tag-set of an object with the set of given tags.
+        Multiple Key/Value pairs can be provided in the query.
+      operationId: replaceTagging
       tags:
-        - Object Tag
+        - Object Tagging
       parameters:
         - $ref: '#/components/parameters/Path-ObjectId'
-        - $ref: '#/components/parameters/Query-Tag'
+        - $ref: '#/components/parameters/Query-TagSet'
         - $ref: '#/components/parameters/Query-VersionId'
       responses:
         '204':
@@ -492,15 +493,15 @@ paths:
     delete:
       summary: Delete tags of an object.
       description: >-
-        Removes the given tags from the object. Multiple comma separated keys
-        can be provided in the query. If no keys are given then all keys will be
-        removed.
-      operationId: deleteTags
+        Removes the specified set of tags from the object. Multiple Key/Value
+        pairs can be provided in the query. All tags in the tag-set will be
+        removed from the object if no tags are specified.
+      operationId: deleteTagging
       tags:
-        - Object Tag
+        - Object Tagging
       parameters:
         - $ref: '#/components/parameters/Path-ObjectId'
-        - $ref: '#/components/parameters/Query-Keys'
+        - $ref: '#/components/parameters/Query-TagSet'
         - $ref: '#/components/parameters/Query-VersionId'
       responses:
         '204':
@@ -859,13 +860,6 @@ components:
             items:
               type: string
               example: idir
-    Query-Keys:
-      in: query
-      name: keys
-      description: String of keys to remove
-      schema:
-        type: string
-        example: Foo,Bar
     Query-LastName:
       in: query
       name: lastName
@@ -935,13 +929,18 @@ components:
       schema:
         type: boolean
         example: true
-    Query-Tag:
+    Query-TagSet:
       in: query
-      name: anyKey
-      description: Tags to add to the object, defined as Key/Value pairs
+      name: tagset[*]
+      description: >-
+        Tags to add to the object, defined as a Key/Value tag. The query must
+        be formatted in deepObject style notation, where a tag-set made out of
+        multiple tags would be encoded something similar to
+        `tagset[x]=a&tagset[y]=b`.
       schema:
-        type: string
-        example: anyValue
+        $ref: '#/components/schemas/S3-TagSet'
+      style: deepObject
+      explode: true
     Query-UserSearch:
       in: query
       name: search
@@ -1393,6 +1392,19 @@ components:
           type: string
           description: a version identifier created in S3
           example: 1647462569641
+    S3-TagSet:
+      type: object
+      required:
+        - key
+      properties:
+        key:
+          type: string
+          description: The tag key
+          example: x
+        value:
+          type: string
+          description: The tag value
+          example: a
     S3-Version:
       type: object
       required:

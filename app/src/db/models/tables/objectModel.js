@@ -70,24 +70,36 @@ class ObjectModel extends Timestamps(Model) {
             });
         }
       },
-      filterMetadata(query, name, metadata) {
+      filterMetadataTag(query, value) {
         const subqueries = [];
 
-        if (name) {
-          subqueries.push(Version.query()
+        if (value.name) {
+          const q = Version.query()
             .select('version.id')
             .joinRelated('metadata')
             .where('metadata.key', 'name')
-            .where('metadata.value', 'ilike', `%${name}%`));
+            .where('metadata.value', 'ilike', `%${value.name}%`);
+          subqueries.push(q);
         }
 
-        if (metadata && Object.keys(metadata).length) {
-          Object.entries(metadata).forEach(([key, val]) => {
+        if (value.metadata && Object.keys(value.metadata).length) {
+          Object.entries(value.metadata).forEach(([key, val]) => {
             const q = Version.query()
               .select('version.id')
               .joinRelated('metadata')
               .where('metadata.key', key);
             if (val.length) q.where('metadata.value', val);
+            subqueries.push(q);
+          });
+        }
+
+        if (value.tag && Object.keys(value.tag).length) {
+          Object.entries(value.tag).forEach(([key, val]) => {
+            const q = Version.query()
+              .select('version.id')
+              .joinRelated('tag')
+              .where('tag.key', key);
+            if (val.length) q.where('tag.value', val);
             subqueries.push(q);
           });
         }

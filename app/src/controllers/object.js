@@ -108,7 +108,7 @@ const controller = {
             await versionService.update({ ...data, id: objId }, userId, trx);
 
           // add metadata to version in DB
-          await metadataService.addMetadata(version.id, data.metadata, userId, trx);
+          await metadataService.updateMetadata(version.id, data.metadata, userId, trx);
         });
 
         controller._setS3Headers(s3Response, res);
@@ -132,20 +132,19 @@ const controller = {
       const objId = addDashesToUuid(req.params.objId);
       const objPath = getPath(objId);
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
-      const { versionId, ...newTags } = req.query;
+      const { versionId, tagset: newTags } = req.query;
       const objectTagging = await storageService.getObjectTagging({ filePath: objPath, versionId });
 
       // Join new and existing tags then filter duplicates
-      let newSet = Object.entries(newTags).map(([k, v]) => ({ Key: k, Value: v }));
+      let newSet = newTags ? Object.entries(newTags).map(([k, v]) => ({ Key: k, Value: v })) : [];
       if (objectTagging.TagSet) newSet = newSet.concat(objectTagging.TagSet);
       newSet = newSet.filter((element, idx, arr) => arr.findIndex(element2 => (element2.Key === element.Key)) === idx);
 
-      if (!Object.keys(newTags).length || newSet.length > 10) {
+      if (!newTags || !Object.keys(newTags).length || newSet.length > 10) {
         // TODO: Validation level logic. To be moved.
         // 422 when no new tags or when tag limit will be exceeded
         res.status(422).end();
-      }
-      else {
+      } else {
         const data = {
           filePath: objPath,
           tags: newSet,
@@ -157,7 +156,7 @@ const controller = {
         // Add tags to version in DB
         await utils.trxWrapper(async (trx) => {
           const version = await versionService.get(data.versionId, objId, trx);
-          await tagService.addTags(version.id, toLowerKeys(data.tags), userId, trx);
+          await tagService.updateTags(version.id, toLowerKeys(data.tags), userId, trx);
         });
 
         controller._setS3Headers(response, res);
@@ -184,6 +183,7 @@ const controller = {
 
       bb.on('file', (name, stream, info) => {
         const objId = uuidv4();
+
         const data = {
           id: objId,
           fieldName: name,
@@ -193,9 +193,10 @@ const controller = {
             ...getMetadata(req.headers),
             id: objId
           },
-          tags: req.query,
+          tags: req.query.tagset,
         };
 
+        // TODO: Consider refactoring to use Upload instead from @aws-sdk/lib-storage
         const s3Response = storageService.putObject({ ...data, stream });
 
         const dbResponse = utils.trxWrapper(async (trx) => {
@@ -208,10 +209,10 @@ const controller = {
           const versions = await versionService.create(data, userId, trx);
 
           // add metadata to version in DB
-          if (Object.keys(data.metadata).length) await metadataService.addMetadata(versions.id, data.metadata, userId, trx);
+          if (data.metadata && Object.keys(data.metadata).length) await metadataService.updateMetadata(versions.id, data.metadata, userId, trx);
 
           // add tags to version in DB
-          if (Object.keys(data.tags).length) await tagService.addTags(versions.id, getKeyValue(data.tags), userId, trx);
+          if (data.tags && Object.keys(data.tags).length) await tagService.updateTags(versions.id, getKeyValue(data.tags), userId, trx);
 
           return object;
         });
@@ -298,7 +299,7 @@ const controller = {
           await versionService.update({ ...data, id: objId }, userId, trx);
 
         // add metadata to version in DB
-        await metadataService.addMetadata(version.id, data.metadata, userId, trx);
+        await metadataService.updateMetadata(version.id, data.metadata, userId, trx);
       });
 
       controller._setS3Headers(s3Response, res);
@@ -375,14 +376,14 @@ const controller = {
     try {
       const objId = addDashesToUuid(req.params.objId);
       const objPath = getPath(objId);
-      const { versionId } = req.query;
+      const versionId = req.query.versionId;
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
       const objectTagging = await storageService.getObjectTagging({ filePath: objPath, versionId });
 
       // Generate object subset by subtracting/omitting defined keys via filter/inclusion
-      const keysToRemove = mixedQueryToArray(req.query.keys);
+      const keysToRemove = req.query.tagset ? Object.keys(req.query.tagset) : [];
       let newTags = undefined;
-      if (keysToRemove && objectTagging.TagSet) {
+      if (keysToRemove.length && objectTagging.TagSet) {
         newTags = objectTagging.TagSet.filter(x => !keysToRemove.includes(x.Key));
       }
 
@@ -396,14 +397,14 @@ const controller = {
       let response;
       if (newTags) {
         response = await storageService.putObjectTagging(data);
-      }
-      else {
+      } else {
         response = await storageService.deleteObjectTagging(data);
       }
+
       // update tags for version in DB
       await utils.trxWrapper(async (trx) => {
         const version = await versionService.get(data.versionId, objId, trx);
-        await tagService.addTags(version.id, toLowerKeys(data.tags), userId, trx);
+        await tagService.updateTags(version.id, toLowerKeys(data.tags), userId, trx);
       });
 
       controller._setS3Headers(response, res);
@@ -552,7 +553,7 @@ const controller = {
             await versionService.update({ ...data, id: objId }, userId, trx);
 
           // add metadata
-          await metadataService.addMetadata(version.id, data.metadata, userId, trx);
+          await metadataService.updateMetadata(version.id, data.metadata, userId, trx);
         });
 
         controller._setS3Headers(s3Response, res);
@@ -576,14 +577,14 @@ const controller = {
       const objId = addDashesToUuid(req.params.objId);
       const objPath = getPath(objId);
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
-      const { versionId, ...newTags } = req.query;
+      const versionId = req.query.versionId;
+      const newTags = req.query.tagset;
 
-      if (!Object.keys(newTags).length || Object.keys(newTags).length > 10) {
+      if (!newTags || !Object.keys(newTags).length || Object.keys(newTags).length > 10) {
         // TODO: Validation level logic. To be moved.
         // 422 when no new tags or when tag limit will be exceeded
         res.status(422).end();
-      }
-      else {
+      } else {
         const data = {
           filePath: objPath,
           tags: Object.entries(newTags).map(([k, v]) => ({ Key: k, Value: v })),
@@ -596,7 +597,7 @@ const controller = {
         // update tags on version in DB
         await utils.trxWrapper(async (trx) => {
           const version = await versionService.get(data.versionId, objId, trx);
-          await tagService.addTags(version.id, toLowerKeys(data.tags), userId, trx);
+          await tagService.updateTags(version.id, toLowerKeys(data.tags), userId, trx);
         });
 
         controller._setS3Headers(response, res);
@@ -617,18 +618,19 @@ const controller = {
    */
   async searchObjects(req, res, next) {
     // TODO: Handle no database scenarios via S3 ListObjectsCommand?
-    // TODO: Consider tagging query parameter design here
     // TODO: Consider support for filtering by set of permissions?
     // TODO: handle additional parameters. Eg: deleteMarker, latest
     try {
       const objIds = mixedQueryToArray(req.query.objId);
       const metadata = getMetadata(req.headers);
+      const tagging = req.query.tagset;
       const params = {
         id: objIds ? objIds.map(id => addDashesToUuid(id)) : objIds,
         name: req.query.name,
         path: req.query.path,
         mimeType: req.query.mimeType,
         metadata: metadata && Object.keys(metadata).length ? metadata : undefined,
+        tag: tagging && Object.keys(tagging).length ? tagging : undefined,
         public: isTruthy(req.query.public),
         active: isTruthy(req.query.active)
       };
@@ -681,7 +683,6 @@ const controller = {
     try {
       const bb = busboy({ headers: req.headers, limits: { files: 1 } });
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
-      const { ...newTags } = req.query;
       let object = undefined;
 
       bb.on('file', (name, stream, info) => {
@@ -695,9 +696,10 @@ const controller = {
             ...getMetadata(req.headers),
             id: objId
           },
-          tags: newTags
+          tags: req.query.tagset
         };
 
+        // TODO: Consider refactoring to use Upload instead from @aws-sdk/lib-storage
         const s3Response = storageService.putObject({ ...data, stream });
 
         const dbResponse = utils.trxWrapper(async (trx) => {
@@ -721,10 +723,10 @@ const controller = {
           }
 
           // add metadata to version in DB
-          if (Object.keys(data.metadata).length) await metadataService.addMetadata(version.id, data.metadata, userId, trx);
+          if (data.metadata && Object.keys(data.metadata).length) await metadataService.updateMetadata(version.id, data.metadata, userId, trx);
 
           // add tags to version in DB
-          if (Object.keys(data.tags).length)  await tagService.addTags(version.id, getKeyValue(data.tags), userId, trx);
+          if (data.tags && Object.keys(data.tags).length) await tagService.updateTags(version.id, getKeyValue(data.tags), userId, trx);
 
           return object;
         });

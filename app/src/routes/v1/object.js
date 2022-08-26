@@ -66,17 +66,17 @@ routes.delete('/:objId/metadata', currentObject, requireSomeAuth, (req, res, nex
 });
 
 /** Add tags to an object */
-routes.patch('/:objId/tag', currentObject, requireSomeAuth, (req, res, next) => {
+routes.patch('/:objId/tagging', currentObject, requireSomeAuth, (req, res, next) => {
   objectController.addTags(req, res, next);
 });
 
 /** Add tags to an object */
-routes.put('/:objId/tag', currentObject, requireSomeAuth, (req, res, next) => {
+routes.put('/:objId/tagging', currentObject, requireSomeAuth, (req, res, next) => {
   objectController.replaceTags(req, res, next);
 });
 
 /** Add tags to an object */
-routes.delete('/:objId/tag', currentObject, requireSomeAuth, (req, res, next) => {
+routes.delete('/:objId/tagging', currentObject, requireSomeAuth, (req, res, next) => {
   objectController.deleteTags(req, res, next);
 });
 
