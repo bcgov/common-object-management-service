@@ -32,7 +32,7 @@ describe('addMetadata', () => {
   const versionCopySpy = jest.spyOn(versionService, 'copy');
   const metadataUpdateMetadataSpy = jest.spyOn(metadataService, 'updateMetadata');
   const trxWrapperSpy = jest.spyOn(utils, 'trxWrapper');
-  const setHeadersSpy = jest.spyOn(controller, '_setS3Headers');
+  const setHeadersSpy = jest.spyOn(controller, '_processS3Headers');
 
   const next = jest.fn();
 
