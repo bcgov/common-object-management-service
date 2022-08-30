@@ -1,5 +1,7 @@
 const { validate, Joi } = require('express-validation');
+
 const { scheme, type } = require('./common');
+const { DownloadMode } = require('../components/constants');
 
 const schema = {
   deleteObject: {
@@ -30,7 +32,7 @@ const schema = {
     query: Joi.object({
       versionId: Joi.string(),
       expiresIn: Joi.number(),
-      download: type.truthy
+      download: Joi.string().valid(...Object.values(DownloadMode)),
     })
   },
 

@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const { Joi } = require('express-validation');
 const jestJoi = require('jest-joi');
+const { DownloadMode } = require('../../../src/components/constants');
 expect.extend(jestJoi.matchers);
 
 const schema = require('../../../src/validators/object').schema;
@@ -100,7 +101,10 @@ describe('readObject', () => {
       const download = query.keys.download;
 
       it('is the expected schema', () => {
-        expect(download).toEqual(type.truthy.describe());
+        expect(download).toEqual(expect.objectContaining({
+          type: 'string',
+          allow: expect.arrayContaining(Object.values(DownloadMode))
+        }));
       });
     });
   });

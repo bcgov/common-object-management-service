@@ -2,7 +2,12 @@ const busboy = require('busboy');
 const cors = require('cors');
 const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 
-const { AuthMode, MAXCOPYOBJECTLENGTH, MetadataDirective } = require('../components/constants');
+const {
+  AuthMode,
+  DownloadMode,
+  MAXCOPYOBJECTLENGTH,
+  MetadataDirective
+} = require('../components/constants');
 const errorToProblem = require('../components/errorToProblem');
 const {
   addDashesToUuid,
@@ -493,8 +498,9 @@ const controller = {
         versionId: req.query.versionId ? req.query.versionId.toString() : undefined
       };
 
-      // Download through service
-      if (!req.query.expiresIn && req.query.download) {
+      // Download via service proxy
+      if (req.query.download && req.query.download === DownloadMode.PROXY) {
+        // TODO: Consider if we need a HEAD operation first before doing the actual read on large files for pre-flight caching behavior?
         const response = await storageService.readObject(data);
 
         // Set Headers via CORS library
@@ -511,13 +517,21 @@ const controller = {
           response.Body.pipe(res); // Stream body content directly to response
           res.status(200);
         }
-      } else { // Download via redirect
-        const response = await storageService.readSignedUrl({
+      } else {
+        const signedUrl = await storageService.readSignedUrl({
           expiresIn: req.query.expiresIn,
           ...data
         });
-        res.status(302).set('Location', response).end();
+
+        // Present download url link
+        if (req.query.download && req.query.download === DownloadMode.URL) {
+          res.status(200).json(signedUrl);
+        // Download via HTTP redirect
+        } else {
+          res.status(302).set('Location', signedUrl).end();
+        }
       }
+
     } catch (e) {
       next(errorToProblem(SERVICE, e));
     }

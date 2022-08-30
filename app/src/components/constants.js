@@ -21,8 +21,17 @@ module.exports = Object.freeze({
     NONE: 'NONE'
   },
 
+  /** Download mode behavior overrides */
+  DownloadMode: {
+    /** Proxies payload data through COMS */
+    PROXY: 'proxy',
+    /** Returns only a pre-signed S3 url */
+    URL: 'url'
+  },
+
   /** Maximum Content Length supported by S3 CopyObjectCommand */
   MAXCOPYOBJECTLENGTH: 5 * 1024 * 1024 * 1024,
+
   /** Default maximum number of keys to list. S3 default cap is 1000*/
   MAXKEYS: (2 ** 31) - 1,
 
@@ -54,5 +63,5 @@ module.exports = Object.freeze({
     DELETE: 'DELETE',
     /** Grants object permission management */
     MANAGE: 'MANAGE'
-  },
+  }
 });
