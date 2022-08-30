@@ -525,7 +525,7 @@ const controller = {
 
         // Present download url link
         if (req.query.download && req.query.download === DownloadMode.URL) {
-          res.status(200).json(signedUrl);
+          res.status(201).json(signedUrl);
         // Download via HTTP redirect
         } else {
           res.status(302).set('Location', signedUrl).end();

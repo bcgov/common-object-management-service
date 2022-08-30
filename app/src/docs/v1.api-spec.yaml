@@ -189,8 +189,10 @@ paths:
     get:
       summary: Returns the object
       description: >-
-        Returns the object as either a direct binary stream or HTTP 302 redirect
-        to a direct, temporary pre-signed S3 object URL location.
+        Returns the object as either a direct binary stream, an HTTP 201
+        containing a direct, temporary pre-signed S3 object URL location, or
+        an HTTP 302 redirect to a direct, temporary pre-signed S3 object URL
+        location.
       operationId: readObject
       tags:
         - Object
@@ -226,6 +228,12 @@ paths:
               schema:
                 type: string
                 format: binary
+        '201':
+          description: Returns a Presigned S3 URL
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response-PresignedURL'
         '302':
           $ref: '#/components/responses/S3Found'
         '304':
@@ -795,11 +803,14 @@ components:
     Query-Download:
       in: query
       name: download
-      description: Request to directly download the object as a binary stream
+      description: >-
+        Download mode behavior. Default behavior (undefined) will yield an
+        HTTP 302 redirect to the S3 bucket via presigned URL. If `proxy` is
+        specified, the object contents will be available proxied through COMS.
+        If `url` is specified, expect an HTTP 201 cotaining the presigned URL
+        as a JSON string in the response.
       schema:
-        type: boolean
-        default: false
-        example: true
+        $ref: '#/components/schemas/DownloadMode'
     Query-Email:
       in: query
       name: email
@@ -1160,6 +1171,13 @@ components:
               default: true
               example: true
         - $ref: '#/components/schemas/DB-TimestampUserData'
+    DownloadMode:
+      type: string
+      description: Download mode behavior overrides
+      enum:
+        - proxy
+        - url
+      example: proxy
     PermCode:
       type: string
       description: Permission code/type for an object
@@ -1264,6 +1282,12 @@ components:
           format: int32
           description: a version identifier created in S3
           example: 1647462569641
+    Response-PresignedURL:
+      title: Presigned URL
+      type: string
+      description: A Presigned S3 URL
+      example: >-
+        https://your.objectstore.com/yourbucket/coms/env/00000000-0000-0000-0000-000000000000?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=credential%2F20220411%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20220411T204528Z&X-Amz-Expires=300&X-Amz-Signature=SIGNATURE&X-Amz-SignedHeaders=host&x-id=GetObject
     Response-Problem:
       required:
         - type
