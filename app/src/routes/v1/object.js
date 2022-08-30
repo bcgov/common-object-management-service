@@ -32,6 +32,7 @@ routes.get('/:objId', objectValidator.readObject, currentObject, hasPermission(P
 
 /** Updates an object */
 routes.post('/:objId', currentObject, hasPermission(Permissions.UPDATE), (req, res, next) => {
+  // TODO: Add validation to reject unexpected query parameters
   objectController.updateObject(req, res, next);
 });
 

@@ -27,14 +27,7 @@ let probeId;
 const app = express();
 app.use(compression());
 app.use(cors({
-  // Consider specifying '*' to permit any arbitrary header to be exposed to other domains
-  exposedHeaders: [
-    'ETag',
-    'x-amz-meta-name',
-    'x-amz-meta-id',
-    'x-amz-server-side-encryption',
-    'x-amz-version-id'
-  ]
+  origin: true // Set true to dynamically set Access-Control-Allow-Origin based on Origin
 }));
 app.use(express.json({ limit: config.get('server.bodyLimit') }));
 app.use(express.urlencoded({ extended: true }));

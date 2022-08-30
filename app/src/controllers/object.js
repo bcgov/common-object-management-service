@@ -1,4 +1,5 @@
 const busboy = require('busboy');
+const cors = require('cors');
 const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 
 const { AuthMode, MAXCOPYOBJECTLENGTH, MetadataDirective } = require('../components/constants');
@@ -34,29 +35,46 @@ const authMode = getAppAuthMode();
  */
 const controller = {
   /**
-   * @function _setS3Headers
+   * @function _processS3Headers
    * Accepts a typical S3 response object and inserts appropriate express response headers
+   * Returns an array of non-standard headers that need to be CORS exposed
    * @param {object} s3Resp S3 response object
    * @param {object} res Express response object
+   * @returns {string[]} An array of non-standard headers that need to be CORS exposed
    */
-  _setS3Headers(s3Resp, res) {
-    // TODO: Consider looking around for express-based header middleware
+  _processS3Headers(s3Resp, res) {
+    // TODO: Consider adding 'x-coms-public' and 'x-coms-path' headers into API spec?
+    const exposedHeaders = [];
+
     if (s3Resp.ContentLength) res.set('Content-Length', s3Resp.ContentLength);
     if (s3Resp.ContentType) res.set('Content-Type', s3Resp.ContentType);
-    if (s3Resp.ETag) res.set('ETag', s3Resp.ETag);
+    if (s3Resp.ETag) {
+      const etag = 'ETag';
+      res.set(etag, s3Resp.ETag);
+      exposedHeaders.push(etag);
+    }
     if (s3Resp.LastModified) res.set('Last-Modified', s3Resp.LastModified);
-    if (s3Resp.ServerSideEncryption) res.set('x-amz-server-side-encryption', s3Resp.ServerSideEncryption);
-    if (s3Resp.VersionId) res.set('x-amz-version-id', s3Resp.VersionId);
     if (s3Resp.Metadata) {
-      const metadataList = Object.entries(s3Resp.Metadata).map(([key, value]) => {
-        res.set(`x-amz-meta-${key}`, value);
-        return `x-amz-meta-${key}`;
-      }).join(', ');
-      // allow metadata headers in CORS
-      res.set('Access-Control-Expose-Headers', metadataList);
+      Object.entries(s3Resp.Metadata).forEach(([key, value]) => {
+        const metadata = `x-amz-meta-${key}`;
+        res.set(metadata, value);
+        exposedHeaders.push(metadata);
+      });
 
       if (s3Resp.Metadata.name) res.attachment(s3Resp.Metadata.name);
     }
+    if (s3Resp.ServerSideEncryption) {
+      const sse = 'x-amz-server-side-encryption';
+      res.set(sse, s3Resp.ServerSideEncryption);
+      exposedHeaders.push(sse);
+    }
+    if (s3Resp.VersionId) {
+      const versionId = 'x-amz-version-id';
+      res.set(versionId, s3Resp.VersionId);
+      exposedHeaders.push(versionId);
+    }
+
+    return exposedHeaders;
   },
 
   /**
@@ -100,7 +118,6 @@ const controller = {
         // create new version with metadata in S3
         const s3Response = await storageService.copyObject(data);
 
-
         await utils.trxWrapper(async (trx) => {
           // create or update version in DB (if a non-versioned object)
           const version = s3Response.VersionId ?
@@ -111,7 +128,6 @@ const controller = {
           await metadataService.updateMetadata(version.id, data.metadata, userId, trx);
         });
 
-        controller._setS3Headers(s3Response, res);
         res.status(204).end();
       }
     } catch (e) {
@@ -151,7 +167,7 @@ const controller = {
           versionId: versionId ? versionId.toString() : undefined
         };
         // Add tags to the version in S3
-        const response = await storageService.putObjectTagging(data);
+        await storageService.putObjectTagging(data);
 
         // Add tags to version in DB
         await utils.trxWrapper(async (trx) => {
@@ -159,7 +175,6 @@ const controller = {
           await tagService.updateTags(version.id, toLowerKeys(data.tags), userId, trx);
         });
 
-        controller._setS3Headers(response, res);
         res.status(204).end();
       }
     } catch (e) {
@@ -302,7 +317,6 @@ const controller = {
         await metadataService.updateMetadata(version.id, data.metadata, userId, trx);
       });
 
-      controller._setS3Headers(s3Response, res);
       res.status(204).end();
     } catch (e) {
       next(errorToProblem(SERVICE, e));
@@ -338,9 +352,7 @@ const controller = {
         // TODO: synch with versions in S3
         const remainingVersions = await versionService.list(objId);
         if (remainingVersions.length === 0) await objectService.delete(objId);
-      }
-      // else deleting the object
-      else {
+      } else { // else deleting the object
         // if versioning enabled s3Response will contain DeleteMarker: true
         if (s3Response.DeleteMarker) {
           // create DeleteMarker version in DB
@@ -351,13 +363,12 @@ const controller = {
             mimeType: null
           };
           await versionService.create(deleteMarker, userId);
-        }
-        // else object in bucket is not versioned
-        else {
+        } else { // else object in bucket is not versioned
           // delete object record from DB
           await objectService.delete(objId);
         }
       }
+
       res.status(200).json(s3Response);
     } catch (e) {
       next(errorToProblem(SERVICE, e));
@@ -394,11 +405,10 @@ const controller = {
       };
 
       // Update tags for version in S3
-      let response;
       if (newTags) {
-        response = await storageService.putObjectTagging(data);
+        await storageService.putObjectTagging(data);
       } else {
-        response = await storageService.deleteObjectTagging(data);
+        await storageService.deleteObjectTagging(data);
       }
 
       // update tags for version in DB
@@ -407,7 +417,6 @@ const controller = {
         await tagService.updateTags(version.id, toLowerKeys(data.tags), userId, trx);
       });
 
-      controller._setS3Headers(response, res);
       res.status(204).end();
     } catch (e) {
       next(errorToProblem(SERVICE, e));
@@ -430,9 +439,16 @@ const controller = {
         versionId: req.query.versionId ? req.query.versionId.toString() : undefined
       };
       const response = await storageService.headObject(data);
-      // Set Headers
-      // TODO: Consider adding 'x-coms-public' and 'x-coms-path' headers into API spec?
-      controller._setS3Headers(response, res);
+
+      // TODO: Proper 304 caching logic (with If-Modified-Since header support)
+      // Consider looking around for express-based caching middleware
+      // Perhaps npm express-preconditions is sufficient?
+
+      // Set Headers via CORS library
+      cors({
+        exposedHeaders: controller._processS3Headers(response, res),
+        origin: true // Set true to dynamically set Access-Control-Allow-Origin based on Origin
+      })(req, res, () => {});
       res.status(204).end();
     } catch (e) {
       next(errorToProblem(SERVICE, e));
@@ -481,20 +497,21 @@ const controller = {
       if (!req.query.expiresIn && req.query.download) {
         const response = await storageService.readObject(data);
 
-        // Set Headers
-        controller._setS3Headers(response, res);
+        // Set Headers via CORS library
+        cors({
+          exposedHeaders: controller._processS3Headers(response, res),
+          origin: true // Set true to dynamically set Access-Control-Allow-Origin based on Origin
+        })(req, res, () => {});
 
         // TODO: Proper 304 caching logic (with If-Modified-Since header support)
         // Consider looking around for express-based caching middleware
+        // Perhaps npm express-preconditions is sufficient?
         if (req.get('If-None-Match') === response.ETag) res.status(304).end();
         else {
           response.Body.pipe(res); // Stream body content directly to response
           res.status(200);
         }
-      }
-
-      // Download via redirect
-      else {
+      } else { // Download via redirect
         const response = await storageService.readSignedUrl({
           expiresIn: req.query.expiresIn,
           ...data
@@ -556,7 +573,6 @@ const controller = {
           await metadataService.updateMetadata(version.id, data.metadata, userId, trx);
         });
 
-        controller._setS3Headers(s3Response, res);
         res.status(204).end();
       }
     } catch (e) {
@@ -592,7 +608,7 @@ const controller = {
         };
 
         // Add tags to the object in S3
-        const response = await storageService.putObjectTagging(data);
+        await storageService.putObjectTagging(data);
 
         // update tags on version in DB
         await utils.trxWrapper(async (trx) => {
@@ -600,7 +616,6 @@ const controller = {
           await tagService.updateTags(version.id, toLowerKeys(data.tags), userId, trx);
         });
 
-        controller._setS3Headers(response, res);
         res.status(204).end();
       }
     } catch (e) {
