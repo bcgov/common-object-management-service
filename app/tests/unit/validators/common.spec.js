@@ -304,14 +304,6 @@ describe('scheme', () => {
             items: expect.arrayContaining([
               expect.objectContaining({
                 type: 'string',
-                rules: expect.arrayContaining([
-                  expect.objectContaining({
-                    args: {
-                      limit: 255
-                    },
-                    name: 'max'
-                  })
-                ]),
                 allow: expect.arrayContaining(Object.values(Permissions))
               })
             ])
@@ -328,14 +320,6 @@ describe('scheme', () => {
             items: expect.arrayContaining([
               expect.objectContaining({
                 type: 'string',
-                rules: expect.arrayContaining([
-                  expect.objectContaining({
-                    args: {
-                      limit: 255
-                    },
-                    name: 'max'
-                  })
-                ]),
                 allow: expect.arrayContaining(Object.values(Permissions))
               })
             ])

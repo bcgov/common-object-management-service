@@ -135,14 +135,6 @@ describe('addPermissions', () => {
             permCode: expect.objectContaining({
               type: 'string',
               flags: expect.objectContaining({ presence: 'required' }),
-              rules: expect.arrayContaining([
-                expect.objectContaining({
-                  name: 'max',
-                  args: {
-                    limit: 255
-                  }
-                })
-              ]),
               allow: expect.arrayContaining(Object.values(Permissions))
             })
           })

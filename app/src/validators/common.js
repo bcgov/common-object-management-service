@@ -40,7 +40,7 @@ const scheme = {
 
   string: oneOrMany(Joi.string().max(255)),
 
-  permCode: oneOrMany(Joi.string().max(255).valid(...Object.values(Permissions)))
+  permCode: oneOrMany(Joi.string().valid(...Object.values(Permissions)))
 };
 
 module.exports = { oneOrMany, scheme, type };
