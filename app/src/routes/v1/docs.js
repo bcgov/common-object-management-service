@@ -9,7 +9,9 @@ function getSpec() {
   const rawSpec = readFileSync(join(__dirname, '../../docs/v1.api-spec.yaml'), 'utf8');
   const spec = yaml.load(rawSpec);
   spec.servers[0].url = '/api/v1';
-  spec.components.securitySchemes.OpenID.openIdConnectUrl = `${config.get('keycloak.serverUrl')}/realms/${config.get('keycloak.realm')}/.well-known/openid-configuration`;
+  if (config.has('keycloak.enabled')) {
+    spec.components.securitySchemes.OpenID.openIdConnectUrl = `${config.get('keycloak.serverUrl')}/realms/${config.get('keycloak.realm')}/.well-known/openid-configuration`;
+  }
   return spec;
 }
 

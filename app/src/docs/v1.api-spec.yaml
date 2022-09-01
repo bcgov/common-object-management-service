@@ -1605,4 +1605,4 @@ components:
       type: openIdConnect
       description: OpenID Connect endpoint for acquiring JWT tokens
       openIdConnectUrl: >-
-        https://oidc.gov.bc.ca/auth/realms/your-realm-name/.well-known/openid-configuration
+        https://logonproxy.gov.bc.ca/auth/realms/your-realm-name/.well-known/openid-configuration
