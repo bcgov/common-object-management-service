@@ -9,7 +9,7 @@ const { checkAppMode, currentObject, hasPermission } = require('../../middleware
 routes.use(checkAppMode);
 
 /** Creates new objects */
-routes.post('/', requireSomeAuth, (req, res, next) => {
+routes.post('/', objectValidator.createObjects, requireSomeAuth, (req, res, next) => {
   objectController.createObjects(req, res, next);
 });
 
@@ -31,8 +31,7 @@ routes.get('/:objId', objectValidator.readObject, currentObject, hasPermission(P
 });
 
 /** Updates an object */
-routes.post('/:objId', currentObject, hasPermission(Permissions.UPDATE), (req, res, next) => {
-  // TODO: Add validation to reject unexpected query parameters
+routes.post('/:objId', objectValidator.updateObject, currentObject, hasPermission(Permissions.UPDATE), (req, res, next) => {
   objectController.updateObject(req, res, next);
 });
 
@@ -52,32 +51,32 @@ routes.patch('/:objId/public', objectValidator.togglePublic, requireDb, currentO
 });
 
 /** Add metadata to an object */
-routes.patch('/:objId/metadata', currentObject, requireSomeAuth, (req, res, next) => {
+routes.patch('/:objId/metadata', objectValidator.addMetadata, currentObject, requireSomeAuth, (req, res, next) => {
   objectController.addMetadata(req, res, next);
 });
 
 /** Replace metadata on an object */
-routes.put('/:objId/metadata', currentObject, requireSomeAuth, (req, res, next) => {
+routes.put('/:objId/metadata', objectValidator.replaceMetadata, currentObject, requireSomeAuth, (req, res, next) => {
   objectController.replaceMetadata(req, res, next);
 });
 
 /** Deletes an objects metadata */
-routes.delete('/:objId/metadata', currentObject, requireSomeAuth, (req, res, next) => {
+routes.delete('/:objId/metadata', objectValidator.deleteMetadata, currentObject, requireSomeAuth, (req, res, next) => {
   objectController.deleteMetadata(req, res, next);
 });
 
 /** Add tags to an object */
-routes.patch('/:objId/tagging', currentObject, requireSomeAuth, (req, res, next) => {
+routes.patch('/:objId/tagging', objectValidator.addTags, currentObject, requireSomeAuth, (req, res, next) => {
   objectController.addTags(req, res, next);
 });
 
 /** Add tags to an object */
-routes.put('/:objId/tagging', currentObject, requireSomeAuth, (req, res, next) => {
+routes.put('/:objId/tagging', objectValidator.replaceTags, currentObject, requireSomeAuth, (req, res, next) => {
   objectController.replaceTags(req, res, next);
 });
 
 /** Add tags to an object */
-routes.delete('/:objId/tagging', currentObject, requireSomeAuth, (req, res, next) => {
+routes.delete('/:objId/tagging', objectValidator.deleteTags, currentObject, requireSomeAuth, (req, res, next) => {
   objectController.deleteTags(req, res, next);
 });
 
