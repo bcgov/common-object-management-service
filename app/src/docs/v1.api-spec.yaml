@@ -947,7 +947,7 @@ components:
         Tags to add to the object, defined as a Key/Value tag. The query must
         be formatted in deepObject style notation, where a tag-set made out of
         multiple tags would be encoded something similar to
-        `tagset[x]=a&tagset[y]=b`.
+        `tagset[x]=a&tagset[y]=b`. Only one value can exist for a given tag name.
       schema:
         $ref: '#/components/schemas/S3-TagSet'
       style: deepObject

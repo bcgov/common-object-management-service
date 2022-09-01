@@ -7,10 +7,8 @@ const { Tag, VersionTag } = require('../db/models');
 const service = {
 
   /**
-   * @function addTags
-   * add tags (if required) and relates them to the version
-   * NOTE: this function is not curtrently used.
-   * Because all our controllers do a 'replace all' tags process that calls the updateTags() method below
+   * @function replaceTags
+   * Makes the incoming list of tags the definitive set associated with versionId
    * @param {string} versionId The uuid id column from version table
    * @param {object} tags Incoming object with `<key>:<value>` tags to add for this version
    * @param {string} [currentUserId=SYSTEM_USER] The optional userId uuid actor; defaults to system user if unspecified
@@ -18,68 +16,27 @@ const service = {
    * @returns {Promise<object>} The result of running the insert operation
    * @throws The error encountered upon db transaction failure
    */
-  addTags: async (versionId, tags, currentUserId = SYSTEM_USER, etrx = undefined) => {
-    let trx;
-    try {
-      trx = etrx ? etrx : await Tag.startTransaction();
-      let response = [];
-      if (tags.length) {
-        // step 1: add any new records to tag table and return id's of tags provided
-        const tIds = await service.addTagRecords(tags, trx);
-        // relate new Tags
-        response = await service.relateTags(versionId, tIds, currentUserId, trx);
-      }
-      if (!etrx) await trx.commit();
-      return Promise.resolve(response);
-    } catch (err) {
-      if (!etrx && trx) await trx.rollback();
-      throw err;
-    }
-
-  },
-
-  /**
-   * @function updateTags
-   * Updates tags and relates them to the associated version
-   * Un-relates any existing tags for this version
-   * @param {string} versionId The uuid id column from version table
-   * @param {object} tags Incoming object with `<key>:<value>` tags to add for this version
-   * @param {string} [currentUserId=SYSTEM_USER] The optional userId uuid actor; defaults to system user if unspecified
-   * @param {object} [etrx=undefined] An optional Objection Transaction object
-   * @returns {Promise<object>} The result of running the insert operation
-   * @throws The error encountered upon db transaction failure
-   */
-  updateTags: async (versionId, tags, currentUserId = SYSTEM_USER, etrx = undefined) => {
+  replaceTags: async (versionId, tags, currentUserId = SYSTEM_USER, etrx = undefined) => {
     let trx;
     try {
       trx = etrx ? etrx : await Tag.startTransaction();
       let response = [];
       if (tags.length) {
 
-        // step 1: add any new records to tag table and return id's of tags provided
-        const tIds = await service.addTagRecords(tags, trx);
-
-        // step 2: relate all provided tags to this version
-        // get all existing related tags for this versionId
-        const allTags = await VersionTag.query(trx)
-          .select('tagId')
+        // get all currently associated tags (before update)
+        const current = await VersionTag.query(trx)
+          .select('tag.*')
+          .joinRelated('tag')
           .where('versionId', versionId);
-        const allTagIds = allTags.map(el => el.tagId);
 
-        let newTagIds = [];
-        tIds.filter(tId => {
-          // if join is not already in db
-          if (!allTagIds.some( aTagId => (aTagId === tId))) {
-            newTagIds.push(tId);
-          }
-        });
+        // associate Tags
+        response = await service.associateTags(versionId, tags, currentUserId, trx);
 
-        // relate new Tags
-        response = await service.relateTags(versionId, newTagIds, currentUserId, trx);
-
-        // unrelate tags that WERE related but no longer are
-        const unrelateTags = allTagIds.filter(tagId => !tIds.includes(tagId));
-        unrelateTags.length ? await service.unRelateTags(versionId, unrelateTags, trx) : [];
+        // dissociate tags that are no longer associated
+        const dissociateTags = current
+          .filter(({ key: k}) => !tags
+            .some(({ key }) => k === key.toLowerCase()));
+        if (dissociateTags.length) await service.dissociateTags(versionId, dissociateTags.map(tag => tag.key), trx);
       }
 
       if (!etrx) await trx.commit();
@@ -91,29 +48,44 @@ const service = {
   },
 
   /**
-   * @function relateTags
-   * relates all provided tags to the versionId
+   * @function associateTags
+   * calls createTags to create new Tag records
+   * associates new tags to the versionId
    * @param {*} versionId The uuid id column from version table
-   * @param {string[]} tagIds array of tag id's
+   * @param {object[]} tags array of tags
    * @param {*} currentUserId uuid of current user
    * @param {object} [etrx=undefined] An optional Objection Transaction object
-   * @returns {Promise<object>} The result of running the insert operation
+   * @returns {Promise<object>} array of all associated tags
    * @throws The error encountered upon db transaction failure
    */
-  relateTags: async (versionId, tagIds, currentUserId = SYSTEM_USER, etrx = undefined) => {
+  associateTags: async (versionId, tags, currentUserId = SYSTEM_USER, etrx = undefined) => {
     let trx;
     try {
       trx = etrx ? etrx : await Tag.startTransaction();
       let response = [];
 
-      // relate all incoming tags
-      const relateArray = tagIds.map((id => ({
-        versionId: versionId,
-        tagId: id,
-        createdBy: currentUserId
-      })));
-      response = await VersionTag.query(trx)
-        .insert(relateArray);
+      if (tags.length) {
+        // get id's of all input tags
+        const dbTags = await service.createTags(tags, trx);
+
+        // get all currently associated tags
+        const allArray = await VersionTag.query(trx)
+          .modify('filterVersionId', versionId);
+
+        // associate remaining tags
+        const newJoins = dbTags.filter(({ id }) => {
+          return !allArray.some(({ tagId }) => tagId === id);
+        });
+        if (newJoins.length) {
+          await VersionTag.query(trx)
+            .insert(newJoins.map(({ id }) => ({
+              versionId: versionId,
+              tagId: id,
+              createdBy: currentUserId
+            })));
+        }
+        response = dbTags;
+      }
 
       if (!etrx) await trx.commit();
       return Promise.resolve(response);
@@ -124,16 +96,15 @@ const service = {
   },
 
   /**
-   * @function unRelateTags
-   * un-relates all provided tags from a versionId
+   * @function dissociateTags
+   * dissociates all provided tags from a versionId
    * @param {*} versionId The uuid id column from version table
-   * @param {string[]} tagIds array of tag id's
-   * @param {*} currentUserId uuid of current user
+   * @param {string[]} keys array of tags keys (eg ['animal', 'colour'])
    * @param {object} [etrx=undefined] An optional Objection Transaction object
-   * @returns {Promise<number>} The result of running the delete operation
+   * @returns {Promise<number>} The result of running the delete operation (number of rows deleted)
    * @throws The error encountered upon db transaction failure
    */
-  unRelateTags: async (versionId, tagIds, etrx = undefined) => {
+  dissociateTags: async (versionId, keys = undefined, etrx = undefined) => {
     let trx;
     try {
       trx = etrx ? etrx : await Tag.startTransaction();
@@ -141,12 +112,14 @@ const service = {
 
       // delete joining records
       response = await VersionTag.query(trx)
-        .delete()
-        .whereIn('tagId', tagIds)
-        .andWhere('versionId', versionId);
+        .allowGraph('tag')
+        .withGraphJoined('tag')
+        .whereIn('key', keys)
+        .modify('filterVersionId', versionId)
+        .delete();
 
-      // delete any orphaned tags from the provided set
-      await service.deleteOrphanedTags(trx);
+      // delete all orphaned tags
+      await service.pruneOrphanedTags(trx);
 
       if (!etrx) await trx.commit();
       return Promise.resolve(response);
@@ -160,25 +133,23 @@ const service = {
    * @function deleteOrphanedTags
    * deletes Tag records if they are no longer related to any versions
    * @param {object} [etrx=undefined] An optional Objection Transaction object
-   * @returns {Promise<number>} The result of running the delete operation
+   * @returns {Promise<number>} The result of running the delete operation (number of rows deleted)
    * @throws The error encountered upon db transaction failure
    */
-  deleteOrphanedTags: async (etrx = undefined) => {
+  pruneOrphanedTags: async (etrx = undefined) => {
     let trx;
     try {
       trx = etrx ? etrx : await Tag.startTransaction();
-      let response = [];
 
-      // TODO: this query is currently not doing anything.
+      const deletedTagIds = await Tag.query(trx)
+        .allowGraph('versionTag')
+        .withGraphJoined('versionTag')
+        .select('tag.id')
+        .whereNull('versionTag.tagId');
 
-      response = await Tag.query(trx)
-      // response = Tag.query(trx)
-        .leftJoin('version_tag', 'tag.id', 'version_tag.tagId')
-        .whereNull('version_tag.versionId')
-        .delete();
-      //   .delete().toKnexQuery();
-      // console.log(response.toQuery());
-      // sql: delete from "tag" using "version_tag" where "version_tag"."versionId" is null and "tag"."id" = "version_tag"."tagId"
+      const response = await Tag.query(trx)
+        .delete()
+        .whereIn('id', deletedTagIds.map(({ id }) => id));
 
       if (!etrx) await trx.commit();
       return Promise.resolve(response);
@@ -189,41 +160,42 @@ const service = {
   },
 
   /**
-   * @function addTagRecords
+   * @function createTags
    * Inserts any tag records if they dont already exist in db
    * @param {object} tags Incoming object with `<key>:<value>` tags to add for this version
    * @param {object} [etrx=undefined] An optional Objection Transaction object
-   * @returns {Promise<object>} an array of the tag id's of all provided tags
+   * @returns {Promise<object>} an array of all input tags
    * @throws The error encountered upon db transaction failure
    */
-  addTagRecords: async (tags, etrx = undefined) => {
+  createTags: async (tags, etrx = undefined) => {
     let trx;
-    let response;
+    let response = [];
     try {
       trx = etrx ? etrx : await Tag.startTransaction();
 
       // get all tags already in db
       const allTags = await Tag.query(trx).select();
+      const existingTags = [];
+      const newTags = [];
 
-      let existingTags = [];
-      let newTags = [];
-      tags.filter(({ key, value }) => {
-        // if tag is already in db add tag id to existingTags array
-        if (allTags.some(({ key: allKey, value: allValue }) => (allKey === key && allValue === value))) {
-          existingTags.push(allTags.find(el => el.key === key).id);
-        } else {
-          // else add tag id to newTags array
-          newTags.push({ key: key, value: value });
+      tags.forEach(({ key, value }) => {
+        // if tag is already in db
+        if (allTags.some(tag => (tag.key === key.toLowerCase() && tag.value === value))){
+          existingTags.push({ id: allTags.find(tag => tag.key === key).id, key: key, value: value });
+        }
+        // else add to array for inserting
+        else {
+          newTags.push({ key: key.toLowerCase(), value: value });
         }
       });
 
       // insert new tags
       if (newTags.length) {
-        const newTagArr = await Tag.query(trx)
-          .insert(newTags);
-        // merge newTag id's with existing tag id's
-        response = existingTags.concat(newTagArr.map(t => t.id));
-      } else {
+        const newTagArr = await Tag.query(trx).insert(newTags).returning('*');
+        // merge newTags with existing tags
+        response = existingTags.concat(newTagArr);
+      }
+      else{
         response = existingTags;
       }
 

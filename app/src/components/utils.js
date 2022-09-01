@@ -248,10 +248,10 @@ const utils = {
    * @function toLowerKeys
    * Converts all key names for all objects in an array to lowercase
    * @param {object[]} arr Array of tag objects (eg: [{Key: k1, Value: V1}])
-   * @returns {object[]} Array of objects (eg: [{key: k1, value: V1}])
+   * @returns {object[]} Array of objects (eg: [{key: k1, value: V1}]) or undefined if empty
    */
   toLowerKeys(arr) {
-    if (!arr) return [];
+    if (!arr) return undefined;
     return arr.map(obj => {
       return Object.fromEntries(
         Object.entries(obj).map(([key, value]) => {

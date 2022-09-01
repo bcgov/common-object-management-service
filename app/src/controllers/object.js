@@ -129,7 +129,7 @@ const controller = {
             await versionService.copy(sourceVersionId, s3Response.VersionId, objId, userId, trx) :
             await versionService.update({ ...data, id: objId }, userId, trx);
 
-          // add metadata to version in DB
+          // update metadata for version in DB
           await metadataService.updateMetadata(version.id, data.metadata, userId, trx);
         });
 
@@ -177,7 +177,8 @@ const controller = {
         // Add tags to version in DB
         await utils.trxWrapper(async (trx) => {
           const version = await versionService.get(data.versionId, objId, trx);
-          await tagService.updateTags(version.id, toLowerKeys(data.tags), userId, trx);
+          // callling replaceTags() in case they are replacing an existing tag with same key which we need to dissociate
+          await tagService.replaceTags(version.id, toLowerKeys(data.tags), userId, trx);
         });
 
         res.status(204).end();
@@ -232,7 +233,7 @@ const controller = {
           if (data.metadata && Object.keys(data.metadata).length) await metadataService.updateMetadata(versions.id, data.metadata, userId, trx);
 
           // add tags to version in DB
-          if (data.tags && Object.keys(data.tags).length) await tagService.updateTags(versions.id, getKeyValue(data.tags), userId, trx);
+          if (data.tags && Object.keys(data.tags).length) await tagService.associateTags(versions.id, getKeyValue(data.tags), userId, trx);
 
           return object;
         });
@@ -415,11 +416,10 @@ const controller = {
       } else {
         await storageService.deleteObjectTagging(data);
       }
-
       // update tags for version in DB
       await utils.trxWrapper(async (trx) => {
         const version = await versionService.get(data.versionId, objId, trx);
-        await tagService.updateTags(version.id, toLowerKeys(data.tags), userId, trx);
+        await tagService.dissociateTags(version.id, keysToRemove, userId, trx);
       });
 
       res.status(204).end();
@@ -627,7 +627,7 @@ const controller = {
         // update tags on version in DB
         await utils.trxWrapper(async (trx) => {
           const version = await versionService.get(data.versionId, objId, trx);
-          await tagService.updateTags(version.id, toLowerKeys(data.tags), userId, trx);
+          await tagService.replaceTags(version.id, toLowerKeys(data.tags), userId, trx);
         });
 
         res.status(204).end();
@@ -755,7 +755,7 @@ const controller = {
           if (data.metadata && Object.keys(data.metadata).length) await metadataService.updateMetadata(version.id, data.metadata, userId, trx);
 
           // add tags to version in DB
-          if (data.tags && Object.keys(data.tags).length) await tagService.updateTags(version.id, getKeyValue(data.tags), userId, trx);
+          if (data.tags && Object.keys(data.tags).length) await tagService.replaceTags(version.id, getKeyValue(data.tags), userId, trx);
 
           return object;
         });

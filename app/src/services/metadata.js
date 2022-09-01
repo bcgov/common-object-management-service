@@ -31,9 +31,11 @@ const service = {
         const insertMetadata = await Metadata.query(trx)
           .insert(arr)
           .onConflict(['key', 'value'])
-          .merge();// required to include id's of existing rows in result
+          .merge(); // required to include id's of existing rows in result
 
-        // un-relate all existing version_metadata (when updating a version)
+        // un-relate all existing version_metadata
+        // this only happens when updating the single 'null version' record in db, when using a non-versioned bucket
+        // otherwise joining records remain in db for previous versions
         await VersionMetadata.query(trx)
           .delete()
           .where('versionId', versionId);
