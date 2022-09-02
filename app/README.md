@@ -142,6 +142,15 @@ docker run -it --rm -p 3000:3000 \
   docker.io/bcgovimages/common-object-management-service:latest
 ```
 
+---
+
+The following modes will require a database to operate. Before running the application, you must make sure that your database is up to date with the latest schema migration. Run the following first before starting up the COMS app as a maintenance task:
+
+``` sh
+docker run -it --rm --entrypoint '/bin/sh' -c 'npm run migrate' \
+  docker.io/bcgovimages/common-object-management-service:latest
+```
+
 Run COMS in **OIDC Auth Mode** (replace environment values as necessary)
 
 ``` sh
@@ -234,6 +243,14 @@ To run COMS in Full Auth mode you will want your `local.json` to have the follow
     "port": "<The port that COMS application will bind to>"
   }
 }
+```
+
+#### Database Setup
+
+If you are running in either **OIDC Auth Mode** or **Full Auth Mode**, you must make sure that your database is up to date with the latest schema migration. Run the following first before starting up the COMS app as a maintenance task:
+
+``` sh
+npm run migrate
 ```
 
 #### Common Commands
