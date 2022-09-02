@@ -5,9 +5,7 @@ const { DownloadMode } = require('../components/constants');
 
 const schema = {
   addMetadata: {
-    headers: Joi.object()
-      .pattern(/^x-amz-meta-.{1,255}$/i, Joi.string().min(1).max(255))
-      .unknown(),
+    headers: type.metadata,
     params: Joi.object({
       objId: type.uuidv4
     }),
@@ -22,26 +20,22 @@ const schema = {
     }),
     query: Joi.object({
       versionId: Joi.string(),
-      tagset: Joi.object().pattern(/^.{1,128}$/, Joi.string().min(1).max(255))
+      tagset: type.tagset
     })
   },
 
   createObjects: {
-    headers: Joi.object()
-      .pattern(/^x-amz-meta-.{1,255}$/i, Joi.string().min(1).max(255))
-      .unknown(),
+    headers: type.metadata,
     params: Joi.object({
       objId: type.uuidv4
     }),
     query: Joi.object({
-      tagset: Joi.object().pattern(/^.{1,128}$/, Joi.string().min(1).max(255))
+      tagset: type.tagset
     })
   },
 
   deleteMetadata: {
-    headers: Joi.object()
-      .pattern(/^x-amz-meta-.{1,255}$/i, Joi.string().min(1).max(255))
-      .unknown(),
+    headers: type.metadata,
     params: Joi.object({
       objId: type.uuidv4
     }),
@@ -65,7 +59,7 @@ const schema = {
     }),
     query: Joi.object({
       versionId: Joi.string(),
-      tagset: Joi.object().pattern(/^.{1,128}$/, Joi.string().min(1).max(255))
+      tagset: type.tagset,
     })
   },
 
@@ -96,9 +90,7 @@ const schema = {
   },
 
   replaceMetadata: {
-    headers: Joi.object()
-      .pattern(/^x-amz-meta-.{1,255}$/i, Joi.string().min(1).max(255))
-      .unknown(),
+    headers: type.metadata,
     params: Joi.object({
       objId: type.uuidv4
     }),
@@ -113,20 +105,18 @@ const schema = {
     }),
     query: Joi.object({
       versionId: Joi.string(),
-      tagset: Joi.object().pattern(/^.{1,128}$/, Joi.string().min(1).max(255))
+      tagset: type.tagset,
     })
   },
 
   searchObjects: {
-    headers: Joi.object()
-      .pattern(/^x-amz-meta-.{1,255}$/i, Joi.string().min(1).max(255))
-      .unknown(),
+    headers: type.metadata,
     query: Joi.object({
       objId: scheme.guid,
       name: Joi.string(),
       path: Joi.string().max(1024),
       mimeType: Joi.string().max(255),
-      tagset: Joi.object().pattern(/^.{1,128}$/, Joi.string().min(1).max(255)),
+      tagset: type.tagset,
       public: type.truthy,
       active: type.truthy
     })
@@ -142,14 +132,12 @@ const schema = {
   },
 
   updateObject: {
-    headers: Joi.object()
-      .pattern(/^x-amz-meta-.{1,255}$/i, Joi.string().min(1).max(255))
-      .unknown(),
+    headers: type.metadata,
     params: Joi.object({
       objId: type.uuidv4
     }),
     query: Joi.object({
-      tagset: Joi.object().pattern(/^.{1,128}$/, Joi.string().min(1).max(255))
+      tagset: type.tagset,
     })
   },
 };

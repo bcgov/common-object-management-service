@@ -29,6 +29,12 @@ const type = {
   uuidv4: Joi.string().guid({
     version: 'uuidv4'
   }),
+
+  metadata: Joi.object()
+    .pattern(/^x-amz-meta-.{1,255}$/i, Joi.string().min(1).max(255))
+    .unknown(),
+
+  tagset: Joi.object().pattern(/^.{1,128}$/, Joi.string().min(1).max(255))
 };
 
 /**

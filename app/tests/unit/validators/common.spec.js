@@ -136,6 +136,69 @@ describe('type', () => {
       expect('notauuidv4').not.toMatchSchema(type.uuidv4);
     });
   });
+
+  describe('metadata', () => {
+    const model = type.metadata.describe();
+
+    it('enforces general metadata pattern', () => {
+      expect(model.patterns).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          regex: '/^x-amz-meta-.{1,255}$/i',
+          rule: expect.objectContaining({
+            type: 'string',
+            rules: expect.arrayContaining([
+              expect.objectContaining({
+                name: 'min',
+                args: expect.objectContaining({
+                  limit: 1
+                })
+              }),
+              expect.objectContaining({
+                name: 'max',
+                args: expect.objectContaining({
+                  limit: 255
+                })
+              })
+            ])
+          })
+        })
+      ]));
+    });
+  });
+
+  describe('tagset', () => {
+    const model = type.tagset.describe();
+
+    it('is an object', () => {
+      expect(model).toBeTruthy();
+      expect(model.type).toEqual('object');
+    });
+
+    it('enforces general tagset pattern', () => {
+      expect(model.patterns).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          regex: '/^.{1,128}$/',
+          rule: expect.objectContaining({
+            type: 'string',
+            rules: expect.arrayContaining([
+              expect.objectContaining({
+                name: 'min',
+                args: expect.objectContaining({
+                  limit: 1
+                })
+              }),
+              expect.objectContaining({
+                name: 'max',
+                args: expect.objectContaining({
+                  limit: 255
+                })
+              })
+            ])
+          })
+        })
+      ]));
+    });
+  });
 });
 
 describe('scheme', () => {

@@ -13,29 +13,8 @@ describe('addMetadata', () => {
   describe('headers', () => {
     const headers = schema.addMetadata.headers.describe();
 
-    it('enforces general metadata pattern', () => {
-      expect(headers.patterns).toEqual(expect.arrayContaining([
-        expect.objectContaining({
-          regex: '/^x-amz-meta-.{1,255}$/i',
-          rule: expect.objectContaining({
-            type: 'string',
-            rules: expect.arrayContaining([
-              expect.objectContaining({
-                name: 'min',
-                args: expect.objectContaining({
-                  limit: 1
-                })
-              }),
-              expect.objectContaining({
-                name: 'max',
-                args: expect.objectContaining({
-                  limit: 255
-                })
-              })
-            ])
-          })
-        })
-      ]));
+    it('is the expected schema', () => {
+      expect(headers).toEqual(type.metadata.describe());
     });
   });
 
@@ -92,34 +71,8 @@ describe('addTags', () => {
     describe('tagset', () => {
       const tagset = query.keys.tagset;
 
-      it('is an object', () => {
-        expect(tagset).toBeTruthy();
-        expect(tagset.type).toEqual('object');
-      });
-
-      it('enforces general tagset pattern', () => {
-        expect(tagset.patterns).toEqual(expect.arrayContaining([
-          expect.objectContaining({
-            regex: '/^.{1,128}$/',
-            rule: expect.objectContaining({
-              type: 'string',
-              rules: expect.arrayContaining([
-                expect.objectContaining({
-                  name: 'min',
-                  args: expect.objectContaining({
-                    limit: 1
-                  })
-                }),
-                expect.objectContaining({
-                  name: 'max',
-                  args: expect.objectContaining({
-                    limit: 255
-                  })
-                })
-              ])
-            })
-          })
-        ]));
+      it('is the expected schema', () => {
+        expect(tagset).toEqual(type.tagset.describe());
       });
     });
   });
@@ -130,29 +83,8 @@ describe('createObject', () => {
   describe('headers', () => {
     const headers = schema.createObjects.headers.describe();
 
-    it('enforces general metadata pattern', () => {
-      expect(headers.patterns).toEqual(expect.arrayContaining([
-        expect.objectContaining({
-          regex: '/^x-amz-meta-.{1,255}$/i',
-          rule: expect.objectContaining({
-            type: 'string',
-            rules: expect.arrayContaining([
-              expect.objectContaining({
-                name: 'min',
-                args: expect.objectContaining({
-                  limit: 1
-                })
-              }),
-              expect.objectContaining({
-                name: 'max',
-                args: expect.objectContaining({
-                  limit: 255
-                })
-              })
-            ])
-          })
-        })
-      ]));
+    it('is the expected schema', () => {
+      expect(headers).toEqual(type.metadata.describe());
     });
   });
 
@@ -174,34 +106,8 @@ describe('createObject', () => {
     describe('tagset', () => {
       const tagset = query.keys.tagset;
 
-      it('is an object', () => {
-        expect(tagset).toBeTruthy();
-        expect(tagset.type).toEqual('object');
-      });
-
-      it('enforces general tagset pattern', () => {
-        expect(tagset.patterns).toEqual(expect.arrayContaining([
-          expect.objectContaining({
-            regex: '/^.{1,128}$/',
-            rule: expect.objectContaining({
-              type: 'string',
-              rules: expect.arrayContaining([
-                expect.objectContaining({
-                  name: 'min',
-                  args: expect.objectContaining({
-                    limit: 1
-                  })
-                }),
-                expect.objectContaining({
-                  name: 'max',
-                  args: expect.objectContaining({
-                    limit: 255
-                  })
-                })
-              ])
-            })
-          })
-        ]));
+      it('is the expected schema', () => {
+        expect(tagset).toEqual(type.tagset.describe());
       });
     });
   });
@@ -212,29 +118,8 @@ describe('deleteMetadata', () => {
   describe('headers', () => {
     const headers = schema.deleteMetadata.headers.describe();
 
-    it('enforces general metadata pattern', () => {
-      expect(headers.patterns).toEqual(expect.arrayContaining([
-        expect.objectContaining({
-          regex: '/^x-amz-meta-.{1,255}$/i',
-          rule: expect.objectContaining({
-            type: 'string',
-            rules: expect.arrayContaining([
-              expect.objectContaining({
-                name: 'min',
-                args: expect.objectContaining({
-                  limit: 1
-                })
-              }),
-              expect.objectContaining({
-                name: 'max',
-                args: expect.objectContaining({
-                  limit: 255
-                })
-              })
-            ])
-          })
-        })
-      ]));
+    it('is the expected schema', () => {
+      expect(headers).toEqual(type.metadata.describe());
     });
   });
 
@@ -318,34 +203,8 @@ describe('deleteTags', () => {
     describe('tagset', () => {
       const tagset = query.keys.tagset;
 
-      it('is an object', () => {
-        expect(tagset).toBeTruthy();
-        expect(tagset.type).toEqual('object');
-      });
-
-      it('enforces general tagset pattern', () => {
-        expect(tagset.patterns).toEqual(expect.arrayContaining([
-          expect.objectContaining({
-            regex: '/^.{1,128}$/',
-            rule: expect.objectContaining({
-              type: 'string',
-              rules: expect.arrayContaining([
-                expect.objectContaining({
-                  name: 'min',
-                  args: expect.objectContaining({
-                    limit: 1
-                  })
-                }),
-                expect.objectContaining({
-                  name: 'max',
-                  args: expect.objectContaining({
-                    limit: 255
-                  })
-                })
-              ])
-            })
-          })
-        ]));
+      it('is the expected schema', () => {
+        expect(tagset).toEqual(type.tagset.describe());
       });
     });
   });
@@ -443,29 +302,8 @@ describe('readObject', () => {
     describe('headers', () => {
       const headers = schema.replaceMetadata.headers.describe();
 
-      it('enforces general metadata pattern', () => {
-        expect(headers.patterns).toEqual(expect.arrayContaining([
-          expect.objectContaining({
-            regex: '/^x-amz-meta-.{1,255}$/i',
-            rule: expect.objectContaining({
-              type: 'string',
-              rules: expect.arrayContaining([
-                expect.objectContaining({
-                  name: 'min',
-                  args: expect.objectContaining({
-                    limit: 1
-                  })
-                }),
-                expect.objectContaining({
-                  name: 'max',
-                  args: expect.objectContaining({
-                    limit: 255
-                  })
-                })
-              ])
-            })
-          })
-        ]));
+      it('is the expected schema', () => {
+        expect(headers).toEqual(type.metadata.describe());
       });
     });
 
@@ -523,34 +361,8 @@ describe('readObject', () => {
       describe('tagset', () => {
         const tagset = query.keys.tagset;
 
-        it('is an object', () => {
-          expect(tagset).toBeTruthy();
-          expect(tagset.type).toEqual('object');
-        });
-
-        it('enforces general tagset pattern', () => {
-          expect(tagset.patterns).toEqual(expect.arrayContaining([
-            expect.objectContaining({
-              regex: '/^.{1,128}$/',
-              rule: expect.objectContaining({
-                type: 'string',
-                rules: expect.arrayContaining([
-                  expect.objectContaining({
-                    name: 'min',
-                    args: expect.objectContaining({
-                      limit: 1
-                    })
-                  }),
-                  expect.objectContaining({
-                    name: 'max',
-                    args: expect.objectContaining({
-                      limit: 255
-                    })
-                  })
-                ])
-              })
-            })
-          ]));
+        it('is the expected schema', () => {
+          expect(tagset).toEqual(type.tagset.describe());
         });
       });
     });
@@ -683,34 +495,8 @@ describe('readObject', () => {
       describe('tagset', () => {
         const tagset = query.keys.tagset;
 
-        it('is an object', () => {
-          expect(tagset).toBeTruthy();
-          expect(tagset.type).toEqual('object');
-        });
-
-        it('enforces general tagset pattern', () => {
-          expect(tagset.patterns).toEqual(expect.arrayContaining([
-            expect.objectContaining({
-              regex: '/^.{1,128}$/',
-              rule: expect.objectContaining({
-                type: 'string',
-                rules: expect.arrayContaining([
-                  expect.objectContaining({
-                    name: 'min',
-                    args: expect.objectContaining({
-                      limit: 1
-                    })
-                  }),
-                  expect.objectContaining({
-                    name: 'max',
-                    args: expect.objectContaining({
-                      limit: 255
-                    })
-                  })
-                ])
-              })
-            })
-          ]));
+        it('is the expected schema', () => {
+          expect(tagset).toEqual(type.tagset.describe());
         });
       });
 
@@ -765,29 +551,8 @@ describe('readObject', () => {
     describe('headers', () => {
       const headers = schema.updateObject.headers.describe();
 
-      it('enforces general metadata pattern', () => {
-        expect(headers.patterns).toEqual(expect.arrayContaining([
-          expect.objectContaining({
-            regex: '/^x-amz-meta-.{1,255}$/i',
-            rule: expect.objectContaining({
-              type: 'string',
-              rules: expect.arrayContaining([
-                expect.objectContaining({
-                  name: 'min',
-                  args: expect.objectContaining({
-                    limit: 1
-                  })
-                }),
-                expect.objectContaining({
-                  name: 'max',
-                  args: expect.objectContaining({
-                    limit: 255
-                  })
-                })
-              ])
-            })
-          })
-        ]));
+      it('is the expected schema', () => {
+        expect(headers).toEqual(type.metadata.describe());
       });
     });
 
@@ -809,34 +574,8 @@ describe('readObject', () => {
       describe('tagset', () => {
         const tagset = query.keys.tagset;
 
-        it('is an object', () => {
-          expect(tagset).toBeTruthy();
-          expect(tagset.type).toEqual('object');
-        });
-
-        it('enforces general tagset pattern', () => {
-          expect(tagset.patterns).toEqual(expect.arrayContaining([
-            expect.objectContaining({
-              regex: '/^.{1,128}$/',
-              rule: expect.objectContaining({
-                type: 'string',
-                rules: expect.arrayContaining([
-                  expect.objectContaining({
-                    name: 'min',
-                    args: expect.objectContaining({
-                      limit: 1
-                    })
-                  }),
-                  expect.objectContaining({
-                    name: 'max',
-                    args: expect.objectContaining({
-                      limit: 255
-                    })
-                  })
-                ])
-              })
-            })
-          ]));
+        it('is the expected schema', () => {
+          expect(tagset).toEqual(type.tagset.describe());
         });
       });
     });
