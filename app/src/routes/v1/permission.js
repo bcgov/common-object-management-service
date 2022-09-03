@@ -4,7 +4,7 @@ const { Permissions } = require('../../components/constants');
 const { permissionController } = require('../../controllers');
 const { permissionValidator } = require('../../validators');
 const { checkAppMode, currentObject, hasPermission } = require('../../middleware/authorization');
-const { requireBasicAuth, requireDb } = require('../../middleware/featureToggle');
+const { requireBasicAuth, requireDb, requireSomeAuth } = require('../../middleware/featureToggle');
 
 routes.use(checkAppMode);
 routes.use(requireDb);
@@ -15,17 +15,17 @@ routes.get('/', requireBasicAuth, permissionValidator.searchPermissions, (req, r
 });
 
 /** Returns the object permissions */
-routes.get('/:objId', permissionValidator.listPermissions, currentObject, hasPermission(Permissions.READ), (req, res, next) => {
+routes.get('/:objId', requireSomeAuth, currentObject, hasPermission(Permissions.READ), permissionValidator.listPermissions, (req, res, next) => {
   permissionController.listPermissions(req, res, next);
 });
 
 /** Grants object permissions to users */
-routes.put('/:objId', permissionValidator.addPermissions, currentObject, hasPermission(Permissions.MANAGE), (req, res, next) => {
+routes.put('/:objId', requireSomeAuth, currentObject, hasPermission(Permissions.MANAGE), permissionValidator.addPermissions, (req, res, next) => {
   permissionController.addPermissions(req, res, next);
 });
 
 /** Deletes object permissions for a user */
-routes.delete('/:objId', permissionValidator.removePermissions, currentObject, hasPermission(Permissions.MANAGE), (req, res, next) => {
+routes.delete('/:objId', requireSomeAuth, currentObject, hasPermission(Permissions.MANAGE), permissionValidator.removePermissions, (req, res, next) => {
   permissionController.removePermissions(req, res, next);
 });
 
