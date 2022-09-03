@@ -5,7 +5,7 @@ const { DownloadMode } = require('../components/constants');
 
 const schema = {
   addMetadata: {
-    headers: type.metadata,
+    headers: type.metadata(1),
     params: Joi.object({
       objId: type.uuidv4
     }),
@@ -20,22 +20,22 @@ const schema = {
     }),
     query: Joi.object({
       versionId: Joi.string(),
-      tagset: type.tagset
+      tagset: type.tagset(1)
     })
   },
 
   createObjects: {
-    headers: type.metadata,
+    headers: type.metadata(1),
     params: Joi.object({
       objId: type.uuidv4
     }),
     query: Joi.object({
-      tagset: type.tagset
+      tagset: type.tagset(1)
     })
   },
 
   deleteMetadata: {
-    headers: type.metadata,
+    headers: type.metadata(0),
     params: Joi.object({
       objId: type.uuidv4
     }),
@@ -59,7 +59,7 @@ const schema = {
     }),
     query: Joi.object({
       versionId: Joi.string(),
-      tagset: type.tagset,
+      tagset: type.tagset(0),
     })
   },
 
@@ -90,7 +90,7 @@ const schema = {
   },
 
   replaceMetadata: {
-    headers: type.metadata,
+    headers: type.metadata(1),
     params: Joi.object({
       objId: type.uuidv4
     }),
@@ -105,18 +105,18 @@ const schema = {
     }),
     query: Joi.object({
       versionId: Joi.string(),
-      tagset: type.tagset,
+      tagset: type.tagset(1),
     })
   },
 
   searchObjects: {
-    headers: type.metadata,
+    headers: type.metadata(0),
     query: Joi.object({
       objId: scheme.guid,
       name: Joi.string(),
       path: Joi.string().max(1024),
       mimeType: Joi.string().max(255),
-      tagset: type.tagset,
+      tagset: type.tagset(0),
       public: type.truthy,
       active: type.truthy
     })
@@ -132,12 +132,12 @@ const schema = {
   },
 
   updateObject: {
-    headers: type.metadata,
+    headers: type.metadata(1),
     params: Joi.object({
       objId: type.uuidv4
     }),
     query: Joi.object({
-      tagset: type.tagset,
+      tagset: type.tagset(1),
     })
   },
 };

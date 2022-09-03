@@ -14,7 +14,7 @@ describe('addMetadata', () => {
     const headers = schema.addMetadata.headers.describe();
 
     it('is the expected schema', () => {
-      expect(headers).toEqual(type.metadata.describe());
+      expect(headers).toEqual(type.metadata(1).describe());
     });
   });
 
@@ -72,7 +72,7 @@ describe('addTags', () => {
       const tagset = query.keys.tagset;
 
       it('is the expected schema', () => {
-        expect(tagset).toEqual(type.tagset.describe());
+        expect(tagset).toEqual(type.tagset(1).describe());
       });
     });
   });
@@ -84,7 +84,7 @@ describe('createObject', () => {
     const headers = schema.createObjects.headers.describe();
 
     it('is the expected schema', () => {
-      expect(headers).toEqual(type.metadata.describe());
+      expect(headers).toEqual(type.metadata(1).describe());
     });
   });
 
@@ -107,7 +107,7 @@ describe('createObject', () => {
       const tagset = query.keys.tagset;
 
       it('is the expected schema', () => {
-        expect(tagset).toEqual(type.tagset.describe());
+        expect(tagset).toEqual(type.tagset(1).describe());
       });
     });
   });
@@ -119,7 +119,7 @@ describe('deleteMetadata', () => {
     const headers = schema.deleteMetadata.headers.describe();
 
     it('is the expected schema', () => {
-      expect(headers).toEqual(type.metadata.describe());
+      expect(headers).toEqual(type.metadata(0).describe());
     });
   });
 
@@ -204,7 +204,7 @@ describe('deleteTags', () => {
       const tagset = query.keys.tagset;
 
       it('is the expected schema', () => {
-        expect(tagset).toEqual(type.tagset.describe());
+        expect(tagset).toEqual(type.tagset(0).describe());
       });
     });
   });
@@ -303,7 +303,7 @@ describe('readObject', () => {
       const headers = schema.replaceMetadata.headers.describe();
 
       it('is the expected schema', () => {
-        expect(headers).toEqual(type.metadata.describe());
+        expect(headers).toEqual(type.metadata(1).describe());
       });
     });
 
@@ -362,7 +362,7 @@ describe('readObject', () => {
         const tagset = query.keys.tagset;
 
         it('is the expected schema', () => {
-          expect(tagset).toEqual(type.tagset.describe());
+          expect(tagset).toEqual(type.tagset(1).describe());
         });
       });
     });
@@ -395,7 +395,7 @@ describe('readObject', () => {
                 expect.objectContaining({
                   name: 'min',
                   args: expect.objectContaining({
-                    limit: 1
+                    limit: 0
                   })
                 }),
                 expect.objectContaining({
@@ -496,7 +496,7 @@ describe('readObject', () => {
         const tagset = query.keys.tagset;
 
         it('is the expected schema', () => {
-          expect(tagset).toEqual(type.tagset.describe());
+          expect(tagset).toEqual(type.tagset(0).describe());
         });
       });
 
@@ -552,7 +552,7 @@ describe('readObject', () => {
       const headers = schema.updateObject.headers.describe();
 
       it('is the expected schema', () => {
-        expect(headers).toEqual(type.metadata.describe());
+        expect(headers).toEqual(type.metadata(1).describe());
       });
     });
 
@@ -575,7 +575,7 @@ describe('readObject', () => {
         const tagset = query.keys.tagset;
 
         it('is the expected schema', () => {
-          expect(tagset).toEqual(type.tagset.describe());
+          expect(tagset).toEqual(type.tagset(1).describe());
         });
       });
     });

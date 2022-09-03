@@ -138,7 +138,8 @@ describe('type', () => {
   });
 
   describe('metadata', () => {
-    const model = type.metadata.describe();
+    const func = type.metadata(1);
+    const model = func.describe();
 
     it('enforces general metadata pattern', () => {
       expect(model.patterns).toEqual(expect.arrayContaining([
@@ -167,7 +168,8 @@ describe('type', () => {
   });
 
   describe('tagset', () => {
-    const model = type.tagset.describe();
+    const func = type.tagset(1);
+    const model = func.describe();
 
     it('is an object', () => {
       expect(model).toBeTruthy();

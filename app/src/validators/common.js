@@ -30,11 +30,11 @@ const type = {
     version: 'uuidv4'
   }),
 
-  metadata: Joi.object()
-    .pattern(/^x-amz-meta-.{1,255}$/i, Joi.string().min(1).max(255))
+  metadata: (min) => Joi.object()
+    .pattern(/^x-amz-meta-.{1,255}$/i, Joi.string().min(min).max(255))
     .unknown(),
 
-  tagset: Joi.object().pattern(/^.{1,128}$/, Joi.string().min(1).max(255))
+  tagset: (min) => Joi.object().pattern(/^.{1,128}$/, Joi.string().min(min).max(255))
 };
 
 /**
