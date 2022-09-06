@@ -10,7 +10,7 @@ const service = {
    * @function replaceTags
    * Makes the incoming list of tags the definitive set associated with versionId
    * @param {string} versionId The uuid id column from version table
-   * @param {object} tags Incoming object with `<key>:<value>` tags to add for this version
+   * @param {object[]} tags Incoming array of `<key>:<value>` tageset objects to add for this version
    * @param {string} [currentUserId=SYSTEM_USER] The optional userId uuid actor; defaults to system user if unspecified
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<object>} The result of running the insert operation
@@ -21,12 +21,11 @@ const service = {
     try {
       trx = etrx ? etrx : await Tag.startTransaction();
       let response = [];
-      if (tags.length) {
+      if (tags && tags.length) {
 
         // get all currently associated tags (before update)
-        const current = await VersionTag.query(trx)
-          .select('tag.*')
-          .joinRelated('tag')
+        const current = await Tag.query(trx)
+          .joinRelated('versionTag')
           .where('versionId', versionId);
 
         // associate Tags
@@ -51,9 +50,9 @@ const service = {
    * @function associateTags
    * calls createTags to create new Tag records
    * associates new tags to the versionId
-   * @param {*} versionId The uuid id column from version table
+   * @param {string} versionId The uuid id column from version table
    * @param {object[]} tags array of tags
-   * @param {*} currentUserId uuid of current user
+   * @param {string} [currentUserId=SYSTEM_USER] The optional userId uuid actor; defaults to system user if unspecified
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<object>} array of all associated tags
    * @throws The error encountered upon db transaction failure
@@ -64,17 +63,17 @@ const service = {
       trx = etrx ? etrx : await Tag.startTransaction();
       let response = [];
 
-      if (tags.length) {
+      if (tags && tags.length) {
         // get id's of all input tags
         const dbTags = await service.createTags(tags, trx);
 
         // get all currently associated tags
-        const allArray = await VersionTag.query(trx)
+        const associatedTags = await VersionTag.query(trx)
           .modify('filterVersionId', versionId);
 
         // associate remaining tags
         const newJoins = dbTags.filter(({ id }) => {
-          return !allArray.some(({ tagId }) => tagId === id);
+          return !associatedTags.some(({ tagId }) => tagId === id);
         });
         if (newJoins.length) {
           await VersionTag.query(trx)
@@ -98,8 +97,8 @@ const service = {
   /**
    * @function dissociateTags
    * dissociates all provided tags from a versionId
-   * @param {*} versionId The uuid id column from version table
-   * @param {string[]} keys array of tags keys (eg ['animal', 'colour'])
+   * @param {string} versionId The uuid id column from version table
+   * @param {string[]} [keys=undefined] array of tag keys (eg ['animal', 'colour'])
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<number>} The result of running the delete operation (number of rows deleted)
    * @throws The error encountered upon db transaction failure
@@ -114,7 +113,7 @@ const service = {
       response = await VersionTag.query(trx)
         .allowGraph('tag')
         .withGraphJoined('tag')
-        .whereIn('key', keys)
+        .whereIn('tag.key', keys)
         .modify('filterVersionId', versionId)
         .delete();
 
@@ -191,9 +190,11 @@ const service = {
 
       // insert new tags
       if (newTags.length) {
-        const newTagArr = await Tag.query(trx).insert(newTags).returning('*');
+        const newTagset = await Tag.query(trx)
+          .insert(newTags)
+          .returning('*');
         // merge newTags with existing tags
-        response = existingTags.concat(newTagArr);
+        response = existingTags.concat(newTagset);
       }
       else{
         response = existingTags;

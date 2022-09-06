@@ -416,10 +416,17 @@ const controller = {
       } else {
         await storageService.deleteObjectTagging(data);
       }
-      // update tags for version in DB
+      // dissociate provided tags or all tags if no tagset passed in query parameter
       await utils.trxWrapper(async (trx) => {
         const version = await versionService.get(data.versionId, objId, trx);
-        await tagService.dissociateTags(version.id, keysToRemove, userId, trx);
+
+        let dissociateTags = [];
+        if (keysToRemove.length) {
+          dissociateTags = keysToRemove.map(key => key.toLowerCase());
+        } else if (objectTagging.TagSet) {
+          dissociateTags = objectTagging.TagSet.map(tag => tag.Key.toLowerCase());
+        }
+        if (dissociateTags.length) await tagService.dissociateTags(version.id, dissociateTags, userId, trx);
       });
 
       res.status(204).end();
@@ -453,7 +460,7 @@ const controller = {
       cors({
         exposedHeaders: controller._processS3Headers(response, res),
         origin: true // Set true to dynamically set Access-Control-Allow-Origin based on Origin
-      })(req, res, () => {});
+      })(req, res, () => { });
       res.status(204).end();
     } catch (e) {
       next(errorToProblem(SERVICE, e));
@@ -507,7 +514,7 @@ const controller = {
         cors({
           exposedHeaders: controller._processS3Headers(response, res),
           origin: true // Set true to dynamically set Access-Control-Allow-Origin based on Origin
-        })(req, res, () => {});
+        })(req, res, () => { });
 
         // TODO: Proper 304 caching logic (with If-Modified-Since header support)
         // Consider looking around for express-based caching middleware
@@ -526,7 +533,7 @@ const controller = {
         // Present download url link
         if (req.query.download && req.query.download === DownloadMode.URL) {
           res.status(201).json(signedUrl);
-        // Download via HTTP redirect
+          // Download via HTTP redirect
         } else {
           res.status(302).set('Location', signedUrl).end();
         }
