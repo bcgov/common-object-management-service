@@ -13,11 +13,11 @@ const {
   addDashesToUuid,
   getAppAuthMode,
   getKeyValue,
+  toLowerCaseKeys,
   getMetadata,
   getPath,
   isTruthy,
   mixedQueryToArray,
-  toLowerKeys,
   getCurrentIdentity
 } = require('../components/utils');
 const utils = require('../db/models/utils');
@@ -178,7 +178,7 @@ const controller = {
         await utils.trxWrapper(async (trx) => {
           const version = await versionService.get(data.versionId, objId, trx);
           // callling replaceTags() in case they are replacing an existing tag with same key which we need to dissociate
-          await tagService.replaceTags(version.id, toLowerKeys(data.tags), userId, trx);
+          await tagService.replaceTags(version.id, data.tags.map(tag => toLowerCaseKeys(tag)), userId, trx);
         });
 
         res.status(204).end();
@@ -411,7 +411,7 @@ const controller = {
       };
 
       // Update tags for version in S3
-      if (newTags) {
+      if (newTags && newTags.length) {
         await storageService.putObjectTagging(data);
       } else {
         await storageService.deleteObjectTagging(data);
@@ -421,10 +421,10 @@ const controller = {
         const version = await versionService.get(data.versionId, objId, trx);
 
         let dissociateTags = [];
-        if (keysToRemove.length) {
-          dissociateTags = keysToRemove.map(key => key.toLowerCase());
+        if (req.query.tagset) {
+          dissociateTags = getKeyValue(req.query.tagset);
         } else if (objectTagging.TagSet) {
-          dissociateTags = objectTagging.TagSet.map(tag => tag.Key.toLowerCase());
+          dissociateTags = objectTagging.TagSet.map(tag => toLowerCaseKeys(tag));
         }
         if (dissociateTags.length) await tagService.dissociateTags(version.id, dissociateTags, userId, trx);
       });
@@ -634,7 +634,7 @@ const controller = {
         // update tags on version in DB
         await utils.trxWrapper(async (trx) => {
           const version = await versionService.get(data.versionId, objId, trx);
-          await tagService.replaceTags(version.id, toLowerKeys(data.tags), userId, trx);
+          await tagService.replaceTags(version.id, data.tags.map(tag => toLowerCaseKeys(tag)), userId, trx);
         });
 
         res.status(204).end();

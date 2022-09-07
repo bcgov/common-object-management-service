@@ -22,6 +22,17 @@ const utils = {
   },
 
   /**
+   * @function toLowerCaseKeys
+   * @param {object} obj an object with keys of mixed-case
+   * @returns {object} the input object with keys converted to lowercase
+   */
+  toLowerCaseKeys(obj){
+    return Object.fromEntries(Object.entries(obj).map(entry => {
+      return [entry[0].toLowerCase(), entry[1]];
+    }));
+  },
+
+  /**
    * @function delimit
    * Yields a string `s` that will always have a trailing delimiter. Returns an empty string if falsy.
    * @param {string} s The input string
@@ -182,6 +193,18 @@ const utils = {
    */
   getKeyValue(input) {
     return Object.entries(input).map(([k, v]) => ({ key: k, value: v }));
+  },
+
+  /**
+   * @function getTagsByKeyValue
+   * get tag objects in array that have given key and value
+   * @param {object[]} tags and array of tags (eg: [{ key: 'a', value: '1'}, { key: 'b', value: '1'}]
+   * @param {string} key the string to match in the tag's `key` property
+   * @param {string} value the string to match in the tag's `value` property
+   * @returns {object[]} an array of matching tag objects
+   */
+  getTagsByKeyValue(tags, key, value){
+    return tags.find(tag => (tag.key === key && tag.value === value));
   },
 
   /**

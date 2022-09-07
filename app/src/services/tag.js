@@ -1,5 +1,6 @@
 const { NIL: SYSTEM_USER } = require('uuid');
 const { Tag, VersionTag } = require('../db/models');
+const { getTagsByKeyValue } = require('../components/utils');
 
 /**
  * The Tag DB Service
@@ -10,7 +11,7 @@ const service = {
    * @function replaceTags
    * Makes the incoming list of tags the definitive set associated with versionId
    * @param {string} versionId The uuid id column from version table
-   * @param {object[]} tags Incoming array of `<key>:<value>` tageset objects to add for this version
+   * @param {object[]} tags Incoming array of tageset objects to add for this version (eg: [{ key: 'a', value: '1'}, {key: 'B', value: '2'}])
    * @param {string} [currentUserId=SYSTEM_USER] The optional userId uuid actor; defaults to system user if unspecified
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<object>} The result of running the insert operation
@@ -28,14 +29,13 @@ const service = {
           .joinRelated('versionTag')
           .where('versionId', versionId);
 
-        // associate Tags
-        response = await service.associateTags(versionId, tags, currentUserId, trx);
-
         // dissociate tags that are no longer associated
         const dissociateTags = current
-          .filter(({ key: k}) => !tags
-            .some(({ key }) => k === key.toLowerCase()));
-        if (dissociateTags.length) await service.dissociateTags(versionId, dissociateTags.map(tag => tag.key), trx);
+          .filter(({ key, value}) => !getTagsByKeyValue(tags, key, value));
+        if (dissociateTags.length) await service.dissociateTags(versionId, dissociateTags, trx);
+
+        // associate tags
+        response = await service.associateTags(versionId, tags, currentUserId, trx);
       }
 
       if (!etrx) await trx.commit();
@@ -51,7 +51,7 @@ const service = {
    * calls createTags to create new Tag records
    * associates new tags to the versionId
    * @param {string} versionId The uuid id column from version table
-   * @param {object[]} tags array of tags
+   * @param {object[]} tags array of tags (eg: [{ key: 'a', value: '1'}, {key: 'B', value: '2'}])
    * @param {string} [currentUserId=SYSTEM_USER] The optional userId uuid actor; defaults to system user if unspecified
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<object>} array of all associated tags
@@ -98,24 +98,34 @@ const service = {
    * @function dissociateTags
    * dissociates all provided tags from a versionId
    * @param {string} versionId The uuid id column from version table
-   * @param {string[]} [keys=undefined] array of tag keys (eg ['animal', 'colour'])
+   * @param {object[]} [tags=undefined] array of tags (eg: [{ key: 'a', value: '1'}, {key: 'B', value: ''}])
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<number>} The result of running the delete operation (number of rows deleted)
    * @throws The error encountered upon db transaction failure
    */
-  dissociateTags: async (versionId, keys = undefined, etrx = undefined) => {
+  dissociateTags: async (versionId, tags = undefined, etrx = undefined) => {
     let trx;
     try {
       trx = etrx ? etrx : await Tag.startTransaction();
-      let response = [];
+      let response = 0;
 
-      // delete joining records
-      response = await VersionTag.query(trx)
-        .allowGraph('tag')
-        .withGraphJoined('tag')
-        .whereIn('tag.key', keys)
-        .modify('filterVersionId', versionId)
-        .delete();
+      await tags.forEach(async tag => {
+
+        // match on key
+        const params = { 'tag.key': tag.key };
+        // if tag has a value match key and value
+        if(tag.value && tag.value !== '') params['tag.value'] = tag.value;
+
+        let count = 0;
+        count = await VersionTag.query(trx)
+          .allowGraph('tag')
+          .withGraphJoined('tag')
+          .where(params)
+          .modify('filterVersionId', versionId)
+          .delete();
+
+        if (count) response += count;
+      });
 
       // delete all orphaned tags
       await service.pruneOrphanedTags(trx);
@@ -179,12 +189,12 @@ const service = {
 
       tags.forEach(({ key, value }) => {
         // if tag is already in db
-        if (allTags.some(tag => (tag.key === key.toLowerCase() && tag.value === value))){
-          existingTags.push({ id: allTags.find(tag => tag.key === key).id, key: key, value: value });
+        if (getTagsByKeyValue(allTags, key, value)){
+          existingTags.push({ id: getTagsByKeyValue(allTags, key, value).id, key: key, value: value });
         }
         // else add to array for inserting
         else {
-          newTags.push({ key: key.toLowerCase(), value: value });
+          newTags.push({ key: key, value: value });
         }
       });
 
