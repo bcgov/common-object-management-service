@@ -13,11 +13,11 @@ const {
   addDashesToUuid,
   getAppAuthMode,
   getKeyValue,
+  toLowerCaseKeys,
   getMetadata,
   getPath,
   isTruthy,
   mixedQueryToArray,
-  toLowerKeys,
   getCurrentIdentity
 } = require('../components/utils');
 const utils = require('../db/models/utils');
@@ -129,7 +129,7 @@ const controller = {
             await versionService.copy(sourceVersionId, s3Response.VersionId, objId, userId, trx) :
             await versionService.update({ ...data, id: objId }, userId, trx);
 
-          // add metadata to version in DB
+          // update metadata for version in DB
           await metadataService.updateMetadata(version.id, data.metadata, userId, trx);
         });
 
@@ -177,7 +177,8 @@ const controller = {
         // Add tags to version in DB
         await utils.trxWrapper(async (trx) => {
           const version = await versionService.get(data.versionId, objId, trx);
-          await tagService.updateTags(version.id, toLowerKeys(data.tags), userId, trx);
+          // callling replaceTags() in case they are replacing an existing tag with same key which we need to dissociate
+          await tagService.replaceTags(version.id, data.tags.map(tag => toLowerCaseKeys(tag)), userId, trx);
         });
 
         res.status(204).end();
@@ -232,7 +233,7 @@ const controller = {
           if (data.metadata && Object.keys(data.metadata).length) await metadataService.updateMetadata(versions.id, data.metadata, userId, trx);
 
           // add tags to version in DB
-          if (data.tags && Object.keys(data.tags).length) await tagService.updateTags(versions.id, getKeyValue(data.tags), userId, trx);
+          if (data.tags && Object.keys(data.tags).length) await tagService.associateTags(versions.id, getKeyValue(data.tags), userId, trx);
 
           return object;
         });
@@ -410,16 +411,22 @@ const controller = {
       };
 
       // Update tags for version in S3
-      if (newTags) {
+      if (newTags && newTags.length) {
         await storageService.putObjectTagging(data);
       } else {
         await storageService.deleteObjectTagging(data);
       }
-
-      // update tags for version in DB
+      // dissociate provided tags or all tags if no tagset passed in query parameter
       await utils.trxWrapper(async (trx) => {
         const version = await versionService.get(data.versionId, objId, trx);
-        await tagService.updateTags(version.id, toLowerKeys(data.tags), userId, trx);
+
+        let dissociateTags = [];
+        if (req.query.tagset) {
+          dissociateTags = getKeyValue(req.query.tagset);
+        } else if (objectTagging.TagSet) {
+          dissociateTags = objectTagging.TagSet.map(tag => toLowerCaseKeys(tag));
+        }
+        if (dissociateTags.length) await tagService.dissociateTags(version.id, dissociateTags, userId, trx);
       });
 
       res.status(204).end();
@@ -453,7 +460,7 @@ const controller = {
       cors({
         exposedHeaders: controller._processS3Headers(response, res),
         origin: true // Set true to dynamically set Access-Control-Allow-Origin based on Origin
-      })(req, res, () => {});
+      })(req, res, () => { });
       res.status(204).end();
     } catch (e) {
       next(errorToProblem(SERVICE, e));
@@ -507,7 +514,7 @@ const controller = {
         cors({
           exposedHeaders: controller._processS3Headers(response, res),
           origin: true // Set true to dynamically set Access-Control-Allow-Origin based on Origin
-        })(req, res, () => {});
+        })(req, res, () => { });
 
         // TODO: Proper 304 caching logic (with If-Modified-Since header support)
         // Consider looking around for express-based caching middleware
@@ -526,7 +533,7 @@ const controller = {
         // Present download url link
         if (req.query.download && req.query.download === DownloadMode.URL) {
           res.status(201).json(signedUrl);
-        // Download via HTTP redirect
+          // Download via HTTP redirect
         } else {
           res.status(302).set('Location', signedUrl).end();
         }
@@ -627,7 +634,7 @@ const controller = {
         // update tags on version in DB
         await utils.trxWrapper(async (trx) => {
           const version = await versionService.get(data.versionId, objId, trx);
-          await tagService.updateTags(version.id, toLowerKeys(data.tags), userId, trx);
+          await tagService.replaceTags(version.id, data.tags.map(tag => toLowerCaseKeys(tag)), userId, trx);
         });
 
         res.status(204).end();
@@ -755,7 +762,7 @@ const controller = {
           if (data.metadata && Object.keys(data.metadata).length) await metadataService.updateMetadata(version.id, data.metadata, userId, trx);
 
           // add tags to version in DB
-          if (data.tags && Object.keys(data.tags).length) await tagService.updateTags(version.id, getKeyValue(data.tags), userId, trx);
+          if (data.tags && Object.keys(data.tags).length) await tagService.replaceTags(version.id, getKeyValue(data.tags), userId, trx);
 
           return object;
         });

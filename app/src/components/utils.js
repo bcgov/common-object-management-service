@@ -22,6 +22,17 @@ const utils = {
   },
 
   /**
+   * @function toLowerCaseKeys
+   * @param {object} obj an object with keys of mixed-case
+   * @returns {object} the input object with keys converted to lowercase
+   */
+  toLowerCaseKeys(obj){
+    return Object.fromEntries(Object.entries(obj).map(entry => {
+      return [entry[0].toLowerCase(), entry[1]];
+    }));
+  },
+
+  /**
    * @function delimit
    * Yields a string `s` that will always have a trailing delimiter. Returns an empty string if falsy.
    * @param {string} s The input string
@@ -185,6 +196,18 @@ const utils = {
   },
 
   /**
+   * @function getTagsByKeyValue
+   * get tag objects in array that have given key and value
+   * @param {object[]} tags and array of tags (eg: [{ key: 'a', value: '1'}, { key: 'b', value: '1'}]
+   * @param {string} key the string to match in the tag's `key` property
+   * @param {string} value the string to match in the tag's `value` property
+   * @returns {object[]} an array of matching tag objects
+   */
+  getTagsByKeyValue(tags, key, value){
+    return tags.find(tag => (tag.key === key && tag.value === value));
+  },
+
+  /**
    * @function mixedQueryToArray
    * Standardizes query params to yield an array of unique string values
    * @param {string|string[]} param The query param to process
@@ -248,10 +271,10 @@ const utils = {
    * @function toLowerKeys
    * Converts all key names for all objects in an array to lowercase
    * @param {object[]} arr Array of tag objects (eg: [{Key: k1, Value: V1}])
-   * @returns {object[]} Array of objects (eg: [{key: k1, value: V1}])
+   * @returns {object[]} Array of objects (eg: [{key: k1, value: V1}]) or undefined if empty
    */
   toLowerKeys(arr) {
-    if (!arr) return [];
+    if (!arr) return undefined;
     return arr.map(obj => {
       return Object.fromEntries(
         Object.entries(obj).map(([key, value]) => {

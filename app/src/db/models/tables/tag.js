@@ -7,8 +7,18 @@ class Tag extends Model {
 
   static get relationMappings() {
     const Version = require('./version');
+    const VersionTag = require('./versionTag');
 
     return {
+      versionTag: {
+        relation: Model.HasManyRelation,
+        modelClass: VersionTag,
+        join: {
+          from: 'tag.id',
+          to: 'version_tag.tagId'
+        }
+      },
+
       version: {
         relation: Model.ManyToManyRelation,
         modelClass: Version,
