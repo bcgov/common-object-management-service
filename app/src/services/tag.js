@@ -1,6 +1,6 @@
 const { NIL: SYSTEM_USER } = require('uuid');
 const { Tag, VersionTag } = require('../db/models');
-const { getTagsByKeyValue } = require('../components/utils');
+const { getObjectsByKeyValue } = require('../components/utils');
 
 /**
  * The Tag DB Service
@@ -31,7 +31,7 @@ const service = {
 
         // dissociate tags that are no longer associated
         const dissociateTags = current
-          .filter(({ key, value}) => !getTagsByKeyValue(tags, key, value));
+          .filter(({ key, value}) => !getObjectsByKeyValue(tags, key, value));
         if (dissociateTags.length) await service.dissociateTags(versionId, dissociateTags, trx);
 
         // associate tags
@@ -70,6 +70,9 @@ const service = {
         // get all currently associated tags
         const associatedTags = await VersionTag.query(trx)
           .modify('filterVersionId', versionId);
+
+        // TODO: exclude tags (with matching key vand value) that are already joined
+        // lets us use associateTags in addTags controller
 
         // associate remaining tags
         const newJoins = dbTags.filter(({ id }) => {
@@ -189,8 +192,8 @@ const service = {
 
       tags.forEach(({ key, value }) => {
         // if tag is already in db
-        if (getTagsByKeyValue(allTags, key, value)){
-          existingTags.push({ id: getTagsByKeyValue(allTags, key, value).id, key: key, value: value });
+        if (getObjectsByKeyValue(allTags, key, value)){
+          existingTags.push({ id: getObjectsByKeyValue(allTags, key, value).id, key: key, value: value });
         }
         // else add to array for inserting
         else {

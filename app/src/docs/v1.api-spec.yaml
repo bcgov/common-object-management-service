@@ -778,6 +778,7 @@ components:
       description: >-
         An arbitrary metadata key/value pair. Must contain the x-amz-meta-
         prefix to be valid. Multiple metadata pairs can be defined.
+        keys must be unique and will be converted to lowercase.
       schema:
         type: string
         example:

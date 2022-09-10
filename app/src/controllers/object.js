@@ -13,7 +13,7 @@ const {
   addDashesToUuid,
   getAppAuthMode,
   getKeyValue,
-  toLowerCaseKeys,
+  toLowerKeys,
   getMetadata,
   getPath,
   isTruthy,
@@ -130,7 +130,7 @@ const controller = {
             await versionService.update({ ...data, id: objId }, userId, trx);
 
           // update metadata for version in DB
-          await metadataService.updateMetadata(version.id, data.metadata, userId, trx);
+          await metadataService.associateMetadata(version.id, getKeyValue(data.metadata), userId, trx);
         });
 
         res.status(204).end();
@@ -177,8 +177,8 @@ const controller = {
         // Add tags to version in DB
         await utils.trxWrapper(async (trx) => {
           const version = await versionService.get(data.versionId, objId, trx);
-          // callling replaceTags() in case they are replacing an existing tag with same key which we need to dissociate
-          await tagService.replaceTags(version.id, data.tags.map(tag => toLowerCaseKeys(tag)), userId, trx);
+          // use replaceTags() in case they are replacing an existing tag with same key which we need to dissociate
+          await tagService.replaceTags(version.id, toLowerKeys(data.tags), userId, trx);
         });
 
         res.status(204).end();
@@ -230,7 +230,7 @@ const controller = {
           const versions = await versionService.create(data, userId, trx);
 
           // add metadata to version in DB
-          if (data.metadata && Object.keys(data.metadata).length) await metadataService.updateMetadata(versions.id, data.metadata, userId, trx);
+          await metadataService.associateMetadata(versions.id, getKeyValue(data.metadata), userId, trx);
 
           // add tags to version in DB
           if (data.tags && Object.keys(data.tags).length) await tagService.associateTags(versions.id, getKeyValue(data.tags), userId, trx);
@@ -318,9 +318,8 @@ const controller = {
         const version = s3Response.VersionId ?
           await versionService.copy(sourceVersionId, s3Response.VersionId, objId, userId, trx) :
           await versionService.update({ ...data, id: objId }, userId, trx);
-
         // add metadata to version in DB
-        await metadataService.updateMetadata(version.id, data.metadata, userId, trx);
+        await metadataService.associateMetadata(version.id, getKeyValue(data.metadata), userId, trx);
       });
 
       res.status(204).end();
@@ -423,8 +422,8 @@ const controller = {
         let dissociateTags = [];
         if (req.query.tagset) {
           dissociateTags = getKeyValue(req.query.tagset);
-        } else if (objectTagging.TagSet) {
-          dissociateTags = objectTagging.TagSet.map(tag => toLowerCaseKeys(tag));
+        } else if (objectTagging.TagSet && objectTagging.TagSet.length) {
+          dissociateTags = toLowerKeys(objectTagging.TagSet);
         }
         if (dissociateTags.length) await tagService.dissociateTags(version.id, dissociateTags, userId, trx);
       });
@@ -591,7 +590,7 @@ const controller = {
             await versionService.update({ ...data, id: objId }, userId, trx);
 
           // add metadata
-          await metadataService.updateMetadata(version.id, data.metadata, userId, trx);
+          await metadataService.associateMetadata(version.id, getKeyValue(data.metadata), userId, trx);
         });
 
         res.status(204).end();
@@ -634,7 +633,7 @@ const controller = {
         // update tags on version in DB
         await utils.trxWrapper(async (trx) => {
           const version = await versionService.get(data.versionId, objId, trx);
-          await tagService.replaceTags(version.id, data.tags.map(tag => toLowerCaseKeys(tag)), userId, trx);
+          await tagService.replaceTags(version.id, toLowerKeys(data.tags), userId, trx);
         });
 
         res.status(204).end();
@@ -759,7 +758,7 @@ const controller = {
           }
 
           // add metadata to version in DB
-          if (data.metadata && Object.keys(data.metadata).length) await metadataService.updateMetadata(version.id, data.metadata, userId, trx);
+          if (data.metadata && Object.keys(data.metadata).length) await metadataService.associateMetadata(version.id, getKeyValue(data.metadata), userId, trx);
 
           // add tags to version in DB
           if (data.tags && Object.keys(data.tags).length) await tagService.replaceTags(version.id, getKeyValue(data.tags), userId, trx);
