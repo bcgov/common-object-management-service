@@ -111,6 +111,9 @@ const service = {
         // https://vincit.github.io/objection.js/recipes/returning-tricks.html
         .returning('*')
         .throwIfNotFound();
+
+      // TODO: prune metadata and tags
+
       if (!etrx) await trx.commit();
       return Promise.resolve(response);
     } catch (err) {

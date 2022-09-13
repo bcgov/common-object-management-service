@@ -7,6 +7,7 @@ class Metadata extends Model {
 
   static get relationMappings() {
     const Version = require('./version');
+    const VersionMetadata = require('./versionMetadata');
 
     return {
       version: {
@@ -20,7 +21,15 @@ class Metadata extends Model {
           },
           to: 'version.id'
         }
-      }
+      },
+      versionMetadata: {
+        relation: Model.HasManyRelation,
+        modelClass: VersionMetadata,
+        join: {
+          from: 'metadata.id',
+          to: 'version_metadata.metadataId'
+        }
+      },
     };
   }
 
