@@ -353,8 +353,10 @@ const controller = {
         const objectVersionId = s3Response.VersionId;
         // delete version in DB
         await versionService.delete(objId, objectVersionId);
+        // prune tags amd metadata
+        await metadataService.pruneOrphanedMetadata();
+        await tagService.pruneOrphanedTags();
         // if other versions in DB, delete object record
-        // TODO: synch with versions in S3
         const remainingVersions = await versionService.list(objId);
         if (remainingVersions.length === 0) await objectService.delete(objId);
       } else { // else deleting the object
@@ -371,6 +373,9 @@ const controller = {
         } else { // else object in bucket is not versioned
           // delete object record from DB
           await objectService.delete(objId);
+          // prune tags amd metadata
+          await metadataService.pruneOrphanedMetadata();
+          await tagService.pruneOrphanedTags();
         }
       }
 

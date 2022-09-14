@@ -30,16 +30,15 @@ const service = {
         // get DB records of all input metadata
         const dbMetadata = await service.createMetadata(metadata, trx);
 
-        // already joined
+        // for non-versioned objects we are updating metadata joins for an existing version
         const associatedMetadata = await VersionMetadata.query(trx)
           .modify('filterVersionId', versionId);
-
         // remove existing joins for metadata that is not in incomming set
         if (associatedMetadata.length) {
           const dissociateMetadata = associatedMetadata.filter(({ metadataId }) => !dbMetadata.some(({ id }) => id === metadataId));
           if (dissociateMetadata.length) {
             await VersionMetadata.query(trx)
-              .whereIn('id', dissociateMetadata.map(meta => meta.id))
+              .whereIn('metadataId', dissociateMetadata.map(vm => vm.metadataId))
               .modify('filterVersionId', versionId)
               .delete();
 

@@ -1,4 +1,5 @@
 const { Model } = require('objection');
+const config = require('config');
 
 const utils = {
   /**
@@ -60,6 +61,7 @@ const utils = {
    * @throws The error encountered upon db transaction failure
    */
   async trxWrapper(callback) {
+    if(!config.has('db.enabled')) return Promise.resolve(true);
     const trx = await Model.startTransaction();
     try {
       const result = await callback(trx);
