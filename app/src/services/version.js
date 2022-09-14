@@ -111,8 +111,6 @@ const service = {
         .returning('*')
         .throwIfNotFound();
 
-      // TODO: prune metadata and tags
-
       if (!etrx) await trx.commit();
       return Promise.resolve(response);
     } catch (err) {
