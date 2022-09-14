@@ -1,5 +1,4 @@
 const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
-const metadataService = require('./metadata');
 const { Version } = require('../db/models');
 
 /**
@@ -189,7 +188,6 @@ const service = {
    * Updates a version of an object.
    * Typically happens when updating the 'null-version' created for an object
    * on a non-versioned or version-suspnded bucket.
-   * Replaces metadata/tags that already exists on this version by default
    * @param {object[]} data array of object attributes
    * @param {string} userId uuid of the current user
    * @param {object} [etrx=undefined] An optional Objection Transaction object
@@ -202,7 +200,7 @@ const service = {
       trx = etrx ? etrx : await Version.startTransaction();
       // update version record
       const versionId = data.versionId ? data.versionId : null;
-      const response = await Version.query(trx)
+      const version = await Version.query(trx)
         .where({ objectId: data.id, versionId: versionId })
         .patch({
           objectId: data.id,
@@ -212,10 +210,10 @@ const service = {
         .first()
         .returning('id');
 
-      if (data.metadata) await metadataService.updateMetadata(response.id, data.metadata, data.userId, trx);
+      // TODO: consider updating metadata here instead of the controller
 
       if (!etrx) await trx.commit();
-      return Promise.resolve(response);
+      return Promise.resolve(version);
     } catch (err) {
       if (!etrx && trx) await trx.rollback();
       throw err;
