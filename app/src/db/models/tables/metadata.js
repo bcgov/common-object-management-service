@@ -33,6 +33,28 @@ class Metadata extends Model {
     };
   }
 
+  static get modifiers() {
+    return {
+      filterKey(query, value) {
+        const subqueries = [];
+
+        if (value.metadata && Object.keys(value.metadata).length) {
+          Object.entries(value.metadata).forEach(([key]) => {
+            const q = Metadata.query().distinct('key').where('key', 'ilike', `%${key}%`);
+            subqueries.push(q);
+          });
+        }
+
+        if (subqueries.length) {
+          query
+            .whereIn('key', builder => {
+              builder.intersect(subqueries);
+            });
+        }
+      },
+    };
+  }
+
   static get jsonSchema() {
     return {
       type: 'object',

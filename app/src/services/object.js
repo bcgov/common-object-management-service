@@ -1,6 +1,6 @@
 const permissionService = require('./permission');
 const { Permissions } = require('../components/constants');
-const { ObjectModel } = require('../db/models');
+const { Metadata, ObjectModel, Tag } = require('../db/models');
 
 /**
  * The Object DB Service
@@ -77,6 +77,21 @@ const service = {
   },
 
   /**
+   * @function searchMetadata
+    * Search and filter for specific metadata keys
+   * @param {object} [params.metadata] Optional object of metadata keys to filter on
+   * @returns {Promise<object[]>} The result of running the find operation
+   */
+  searchMetadata: (params) => {
+    return Metadata.query()
+      .modify('filterKey', { metadata: params.metadata })
+      .then(result => result.map(row => {
+        // eslint-disable-next-line no-unused-vars
+        return { key: row.key, value: row.value };
+      }));
+  },
+
+  /**
    * @function searchObjects
    * Search and filter for specific object records
    * @param {string|string[]} [params.id] Optional string or array of uuids representing the object
@@ -108,6 +123,21 @@ const service = {
         // eslint-disable-next-line no-unused-vars
         const { objectPermission, version, ...object } = row;
         return object;
+      }));
+  },
+
+  /**
+   * @function searchTags
+   * Search and filter for specific tag keys
+   * @param {object} [params.tag] Optional object of tag keys to filter on
+   * @returns {Promise<object[]>} The result of running the find operation
+   */
+  searchTags: (params) => {
+    return Tag.query()
+      .modify('filterKey', { tag: params.tag })
+      .then(result => result.map(row => {
+        // eslint-disable-next-line no-unused-vars
+        return { key: row.key, value: row.value };
       }));
   },
 
