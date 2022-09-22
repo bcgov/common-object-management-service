@@ -38,19 +38,37 @@ class Metadata extends Model {
       filterKeyValue(query, value) {
         const subqueries = [];
 
+        let filterValues = false;
+
         if (value.metadata && Object.keys(value.metadata).length) {
           Object.entries(value.metadata).forEach(([key, val]) => {
-            const q = Metadata.query().distinct('key').where('key', 'ilike', `%${key}%`);
-            if (val.length) q.where('value', 'ilike', `%${val}%`);
+            let q;
+
+            if (val.length) {
+              q = Metadata.query().distinct('key', 'value').where('key', 'ilike', `%${key}%`).where('value', 'ilike', `%${val}%`);
+              filterValues = true;
+            }
+            else {
+              q = Metadata.query().distinct('key').where('key', 'ilike', `%${key}%`);
+            }
+
             subqueries.push(q);
           });
         }
 
         if (subqueries.length) {
-          query
-            .whereIn('key', builder => {
-              builder.intersect(subqueries);
-            });
+          if (filterValues) {
+            query
+              .whereIn(['key', 'value'], builder => {
+                builder.intersect(subqueries);
+              });
+          }
+          else {
+            query
+              .whereIn('key', builder => {
+                builder.intersect(subqueries);
+              });
+          }
         }
       },
     };
