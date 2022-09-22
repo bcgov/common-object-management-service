@@ -664,7 +664,7 @@ const controller = {
         metadata: metadata && Object.keys(metadata).length ? metadata : undefined
       };
 
-      const response = await objectService.searchMetadata(params);
+      const response = await metadataService.searchMetadata(params);
       res.status(200).json(response);
     } catch (error) {
       next(error);
@@ -725,7 +725,7 @@ const controller = {
         tag: tagging && Object.keys(tagging).length ? tagging : undefined,
       };
 
-      const response = await objectService.searchTags(params);
+      const response = await tagService.searchTags(params);
       res.status(200).json(response);
     } catch (error) {
       next(error);

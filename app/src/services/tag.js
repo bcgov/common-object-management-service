@@ -31,7 +31,7 @@ const service = {
 
         // dissociate tags that are no longer associated
         const dissociateTags = current
-          .filter(({ key, value}) => !getObjectsByKeyValue(tags, key, value));
+          .filter(({ key, value }) => !getObjectsByKeyValue(tags, key, value));
         if (dissociateTags.length) await service.dissociateTags(versionId, dissociateTags, trx);
 
         // associate tags
@@ -117,7 +117,7 @@ const service = {
         // match on key
         const params = { 'tag.key': tag.key };
         // if tag has a value match key and value
-        if(tag.value && tag.value !== '') params['tag.value'] = tag.value;
+        if (tag.value && tag.value !== '') params['tag.value'] = tag.value;
 
         let count = 0;
         count = await VersionTag.query(trx)
@@ -192,7 +192,7 @@ const service = {
 
       tags.forEach(({ key, value }) => {
         // if tag is already in db
-        if (getObjectsByKeyValue(allTags, key, value)){
+        if (getObjectsByKeyValue(allTags, key, value)) {
           existingTags.push({ id: getObjectsByKeyValue(allTags, key, value).id, key: key, value: value });
         }
         // else add to array for inserting
@@ -209,7 +209,7 @@ const service = {
         // merge newTags with existing tags
         response = existingTags.concat(newTagset);
       }
-      else{
+      else {
         response = existingTags;
       }
 
@@ -219,6 +219,20 @@ const service = {
       if (!etrx && trx) await trx.rollback();
       throw err;
     }
+  },
+
+  /**
+   * @function searchTags
+   * Search and filter for specific tag keys
+   * @param {object} [params.tag] Optional object of tag keys to filter on
+   * @returns {Promise<object[]>} The result of running the find operation
+   */
+  searchTags: (params) => {
+    return Tag.query()
+      .modify('filterKeyValue', { tag: params.tag })
+      .then(result => result.map(row => {
+        return { key: row.key, value: row.value };
+      }));
   },
 
 };

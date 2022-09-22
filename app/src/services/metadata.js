@@ -149,6 +149,19 @@ const service = {
     }
   },
 
+  /**
+   * @function searchMetadata
+    * Search and filter for specific metadata keys
+   * @param {object} [params.metadata] Optional object of metadata keys to filter on
+   * @returns {Promise<object[]>} The result of running the find operation
+   */
+  searchMetadata: (params) => {
+    return Metadata.query()
+      .modify('filterKeyValue', { metadata: params.metadata })
+      .then(result => result.map(row => {
+        return { key: row.key, value: row.value };
+      }));
+  },
 };
 
 module.exports = service;
