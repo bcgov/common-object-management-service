@@ -673,7 +673,7 @@ describe('searchMetadata', () => {
     });
 
     expect(res.json).toHaveBeenCalledWith(GoodResponse);
-    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.status).toHaveBeenCalledWith(200);
   });
 
   it('should return only matching metadata', async () => {
@@ -698,6 +698,76 @@ describe('searchMetadata', () => {
       metadata: { foo: '' },
     });
     expect(res.json).toHaveBeenCalledWith(GoodResponse);
-    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+});
+
+describe('searchTags', () => {
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
+
+  // mock service calls
+  const objectSearchTagsSpy = jest.spyOn(objectService, 'searchTags');
+
+  const next = jest.fn();
+
+  it('should return all tags with no params', async () => {
+    // request object
+    const req = {
+      headers: {},
+      query: {}
+    };
+
+    const GoodResponse = [
+      {
+        key: 'foo',
+        value: 'bar'
+      },
+      {
+        key: 'baz',
+        value: 'quz'
+      }
+    ];
+
+    objectSearchTagsSpy.mockReturnValue(GoodResponse);
+
+    await controller.searchTags(req, res, next);
+
+    expect(objectSearchTagsSpy).toHaveBeenCalledWith({
+      tags: undefined,
+    });
+
+    expect(res.json).toHaveBeenCalledWith(GoodResponse);
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  it('should return only matching tags', async () => {
+    // request object
+    const req = {
+      headers: {},
+      query: {
+        tagset: {
+          foo: ''
+        }
+      }
+    };
+
+    const GoodResponse = [
+      {
+        key: 'foo',
+        value: 'bar'
+      }
+    ];
+
+    objectSearchTagsSpy.mockReturnValue(GoodResponse);
+
+    await controller.searchTags(req, res, next);
+
+    expect(objectSearchTagsSpy).toHaveBeenCalledWith({
+      tag: { foo: '' },
+    });
+    expect(res.json).toHaveBeenCalledWith(GoodResponse);
+    expect(res.status).toHaveBeenCalledWith(200);
   });
 });

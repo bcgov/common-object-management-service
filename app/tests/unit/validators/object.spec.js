@@ -538,7 +538,7 @@ describe('readObject', () => {
         const tagset = query.keys.tagset;
 
         it('is the expected schema', () => {
-          expect(tagset).toEqual(type.tagset(1).describe());
+          expect(tagset).toEqual(type.tagset(0).describe());
         });
       });
     });
