@@ -665,7 +665,7 @@ const controller = {
       };
 
       const response = await objectService.searchMetadata(params);
-      res.status(201).json(response);
+      res.status(200).json(response);
     } catch (error) {
       next(error);
     }
@@ -726,7 +726,7 @@ const controller = {
       };
 
       const response = await objectService.searchTags(params);
-      res.status(201).json(response);
+      res.status(200).json(response);
     } catch (error) {
       next(error);
     }
