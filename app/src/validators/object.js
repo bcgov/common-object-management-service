@@ -109,6 +109,10 @@ const schema = {
     })
   },
 
+  searchMetadata: {
+    headers: type.metadata(0),
+  },
+
   searchObjects: {
     headers: type.metadata(0),
     query: Joi.object({
@@ -119,6 +123,12 @@ const schema = {
       tagset: type.tagset(0),
       public: type.truthy,
       active: type.truthy
+    })
+  },
+
+  searchTags: {
+    query: Joi.object({
+      tagset: type.tagset(0),
     })
   },
 
@@ -154,7 +164,9 @@ const validator = {
   readObject: validate(schema.readObject, { statusCode: 422 }),
   replaceMetadata: validate(schema.replaceMetadata, { statusCode: 422 }),
   replaceTags: validate(schema.replaceTags, { statusCode: 422 }),
+  searchMetadata: validate(schema.searchMetadata, { statusCode: 422 }),
   searchObjects: validate(schema.searchObjects, { statusCode: 422 }),
+  searchTags: validate(schema.searchTags, { statusCode: 422 }),
   togglePublic: validate(schema.togglePublic, { statusCode: 422 }),
   updateObject: validate(schema.updateObject, { statusCode: 422 })
 };

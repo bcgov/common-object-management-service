@@ -36,12 +36,13 @@ class Tag extends Model {
 
   static get modifiers() {
     return {
-      filterKey(query, value) {
+      filterKeyValue(query, value) {
         const subqueries = [];
 
         if (value.tag && Object.keys(value.tag).length) {
-          Object.entries(value.tag).forEach(([key]) => {
+          Object.entries(value.tag).forEach(([key, val]) => {
             const q = Tag.query().distinct('key').where('key', 'ilike', `%${key}%`);
+            if (val.length) q.where('value', 'ilike', `%${val}%`);
             subqueries.push(q);
           });
         }

@@ -84,7 +84,7 @@ const service = {
    */
   searchMetadata: (params) => {
     return Metadata.query()
-      .modify('filterKey', { metadata: params.metadata })
+      .modify('filterKeyValue', { metadata: params.metadata })
       .then(result => result.map(row => {
         // eslint-disable-next-line no-unused-vars
         return { key: row.key, value: row.value };
@@ -134,7 +134,7 @@ const service = {
    */
   searchTags: (params) => {
     return Tag.query()
-      .modify('filterKey', { tag: params.tag })
+      .modify('filterKeyValue', { tag: params.tag })
       .then(result => result.map(row => {
         // eslint-disable-next-line no-unused-vars
         return { key: row.key, value: row.value };

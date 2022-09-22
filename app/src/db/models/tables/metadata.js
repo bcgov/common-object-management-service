@@ -35,12 +35,13 @@ class Metadata extends Model {
 
   static get modifiers() {
     return {
-      filterKey(query, value) {
+      filterKeyValue(query, value) {
         const subqueries = [];
 
         if (value.metadata && Object.keys(value.metadata).length) {
-          Object.entries(value.metadata).forEach(([key]) => {
+          Object.entries(value.metadata).forEach(([key, val]) => {
             const q = Metadata.query().distinct('key').where('key', 'ilike', `%${key}%`);
+            if (val.length) q.where('value', 'ilike', `%${val}%`);
             subqueries.push(q);
           });
         }
