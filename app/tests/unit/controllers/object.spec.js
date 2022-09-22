@@ -81,7 +81,7 @@ describe('addMetadata', () => {
     storageHeadObjectSpy.mockReturnValue(GoodResponse);
     storageCopyObjectSpy.mockResolvedValue(GoodResponse);
     trxWrapperSpy.mockImplementation(callback => callback({}));
-    versionCopySpy.mockReturnValue({id: '5dad1ec9-d3c0-4b0f-8ead-cb4d9fa98987'});
+    versionCopySpy.mockReturnValue({ id: '5dad1ec9-d3c0-4b0f-8ead-cb4d9fa98987' });
     metadataAssociateMetadataSpy.mockReturnValue({});
     setHeadersSpy.mockImplementation(x => x);
 
@@ -633,5 +633,71 @@ describe('replaceTags', () => {
       ],
       versionId: undefined
     });
+  });
+});
+
+describe('searchMetadata', () => {
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
+
+  // mock service calls
+  const objectSearchMetadataSpy = jest.spyOn(objectService, 'searchMetadata');
+
+  const next = jest.fn();
+
+  it('should return all metadata with no params', async () => {
+    // request object
+    const req = {
+      headers: {},
+      query: {}
+    };
+
+    const GoodResponse = [
+      {
+        key: 'foo',
+        value: 'bar'
+      },
+      {
+        key: 'baz',
+        value: 'quz'
+      }
+    ];
+
+    objectSearchMetadataSpy.mockReturnValue(GoodResponse);
+
+    await controller.searchMetadata(req, res, next);
+
+    expect(objectSearchMetadataSpy).toHaveBeenCalledWith({
+      metadata: undefined,
+    });
+
+    expect(res.json).toHaveBeenCalledWith(GoodResponse);
+    expect(res.status).toHaveBeenCalledWith(201);
+  });
+
+  it('should return only matching metadata', async () => {
+    // request object
+    const req = {
+      headers: { 'x-amz-meta-foo': '' },
+      query: {}
+    };
+
+    const GoodResponse = [
+      {
+        key: 'foo',
+        value: 'bar'
+      }
+    ];
+
+    objectSearchMetadataSpy.mockReturnValue(GoodResponse);
+
+    await controller.searchMetadata(req, res, next);
+
+    expect(objectSearchMetadataSpy).toHaveBeenCalledWith({
+      metadata: { foo: '' },
+    });
+    expect(res.json).toHaveBeenCalledWith(GoodResponse);
+    expect(res.status).toHaveBeenCalledWith(201);
   });
 });

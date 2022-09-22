@@ -368,6 +368,17 @@ describe('readObject', () => {
     });
   });
 
+  describe('searchMetadata', () => {
+
+    describe('headers', () => {
+      const headers = schema.searchMetadata.headers.describe();
+
+      it('is the expected schema', () => {
+        expect(headers).toEqual(type.metadata(0).describe());
+      });
+    });
+  });
+
   describe('searchObjects', () => {
 
     describe('headers', () => {
@@ -513,6 +524,21 @@ describe('readObject', () => {
 
         it('is the expected schema', () => {
           expect(active).toEqual(type.truthy.describe());
+        });
+      });
+    });
+  });
+
+  describe('searchTags', () => {
+    describe('query', () => {
+      const query = schema.searchTags.query.describe();
+
+
+      describe('tagset', () => {
+        const tagset = query.keys.tagset;
+
+        it('is the expected schema', () => {
+          expect(tagset).toEqual(type.tagset(1).describe());
         });
       });
     });
