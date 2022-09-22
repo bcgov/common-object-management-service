@@ -19,7 +19,7 @@ routes.get('/', requireDb, objectValidator.searchObjects, (req, res, next) => {
   objectController.searchObjects(req, res, next);
 });
 
-/** Search for tags */
+/** Search for metadata */
 routes.get('/metadata', requireDb, objectValidator.searchMetadata, (req, res, next) => {
   objectController.searchMetadata(req, res, next);
 });
