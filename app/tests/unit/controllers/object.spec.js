@@ -4,7 +4,7 @@ const { MAXCOPYOBJECTLENGTH, MetadataDirective } = require('../../../src/compone
 const utils = require('../../../src/db/models/utils');
 
 const controller = require('../../../src/controllers/object');
-const { storageService, objectService, metadataService, versionService, userService } = require('../../../src/services');
+const { storageService, objectService, metadataService, tagService, versionService, userService } = require('../../../src/services');
 
 const mockResponse = () => {
   const res = {};
@@ -642,7 +642,7 @@ describe('searchMetadata', () => {
   });
 
   // mock service calls
-  const objectSearchMetadataSpy = jest.spyOn(objectService, 'searchMetadata');
+  const metadataSearchMetadataSpy = jest.spyOn(metadataService, 'searchMetadata');
 
   const next = jest.fn();
 
@@ -664,11 +664,11 @@ describe('searchMetadata', () => {
       }
     ];
 
-    objectSearchMetadataSpy.mockReturnValue(GoodResponse);
+    metadataSearchMetadataSpy.mockReturnValue(GoodResponse);
 
     await controller.searchMetadata(req, res, next);
 
-    expect(objectSearchMetadataSpy).toHaveBeenCalledWith({
+    expect(metadataSearchMetadataSpy).toHaveBeenCalledWith({
       metadata: undefined,
     });
 
@@ -690,11 +690,11 @@ describe('searchMetadata', () => {
       }
     ];
 
-    objectSearchMetadataSpy.mockReturnValue(GoodResponse);
+    metadataSearchMetadataSpy.mockReturnValue(GoodResponse);
 
     await controller.searchMetadata(req, res, next);
 
-    expect(objectSearchMetadataSpy).toHaveBeenCalledWith({
+    expect(metadataSearchMetadataSpy).toHaveBeenCalledWith({
       metadata: { foo: '' },
     });
     expect(res.json).toHaveBeenCalledWith(GoodResponse);
@@ -708,7 +708,7 @@ describe('searchTags', () => {
   });
 
   // mock service calls
-  const objectSearchTagsSpy = jest.spyOn(objectService, 'searchTags');
+  const tagSearchTagsSpy = jest.spyOn(tagService, 'searchTags');
 
   const next = jest.fn();
 
@@ -730,11 +730,11 @@ describe('searchTags', () => {
       }
     ];
 
-    objectSearchTagsSpy.mockReturnValue(GoodResponse);
+    tagSearchTagsSpy.mockReturnValue(GoodResponse);
 
     await controller.searchTags(req, res, next);
 
-    expect(objectSearchTagsSpy).toHaveBeenCalledWith({
+    expect(tagSearchTagsSpy).toHaveBeenCalledWith({
       tags: undefined,
     });
 
@@ -760,11 +760,11 @@ describe('searchTags', () => {
       }
     ];
 
-    objectSearchTagsSpy.mockReturnValue(GoodResponse);
+    tagSearchTagsSpy.mockReturnValue(GoodResponse);
 
     await controller.searchTags(req, res, next);
 
-    expect(objectSearchTagsSpy).toHaveBeenCalledWith({
+    expect(tagSearchTagsSpy).toHaveBeenCalledWith({
       tag: { foo: '' },
     });
     expect(res.json).toHaveBeenCalledWith(GoodResponse);

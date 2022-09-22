@@ -1,6 +1,6 @@
 const permissionService = require('./permission');
 const { Permissions } = require('../components/constants');
-const { Metadata, ObjectModel, Tag } = require('../db/models');
+const { ObjectModel } = require('../db/models');
 
 /**
  * The Object DB Service
