@@ -86,7 +86,6 @@ const service = {
     return Metadata.query()
       .modify('filterKeyValue', { metadata: params.metadata })
       .then(result => result.map(row => {
-        // eslint-disable-next-line no-unused-vars
         return { key: row.key, value: row.value };
       }));
   },
@@ -136,7 +135,6 @@ const service = {
     return Tag.query()
       .modify('filterKeyValue', { tag: params.tag })
       .then(result => result.map(row => {
-        // eslint-disable-next-line no-unused-vars
         return { key: row.key, value: row.value };
       }));
   },
