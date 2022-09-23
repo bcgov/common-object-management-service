@@ -382,7 +382,7 @@ paths:
     get:
       summary: Returns a list of matching metadata
       description: >-
-        Gets a list of metadatat matching the given parameters. Multiple Key/Value pairs
+        Gets a list of metadata matching the given parameters. Multiple Key/Value pairs
         can be provided in the headers to narrow down results. If none are provided the full set of metadata will be returned.
       operationId: getMetadata
       tags:
