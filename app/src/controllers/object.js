@@ -649,6 +649,29 @@ const controller = {
   },
 
   /**
+   * @function searchMetadata
+   * Search and filter for specific metadata
+   * @param {object} req Express request object
+   * @param {object} res Express response object
+   * @param {function} next The next callback function
+   * @returns {function} Express middleware function
+   */
+  async searchMetadata(req, res, next) {
+    try {
+      const metadata = getMetadata(req.headers);
+
+      const params = {
+        metadata: metadata && Object.keys(metadata).length ? metadata : undefined
+      };
+
+      const response = await metadataService.searchMetadata(params);
+      res.status(200).json(response);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
    * @function searchObjects
    * Search and filter for specific objects
    * @param {object} req Express request object
@@ -681,6 +704,29 @@ const controller = {
       }
       const response = await objectService.searchObjects(params);
       res.status(201).json(response);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * @function searchTags
+   * Search and filter for specific tags
+   * @param {object} req Express request object
+   * @param {object} res Express response object
+   * @param {function} next The next callback function
+   * @returns {function} Express middleware function
+   */
+  async searchTags(req, res, next) {
+    try {
+      let tagging = req.query.tagset;
+
+      const params = {
+        tag: tagging && Object.keys(tagging).length ? tagging : undefined,
+      };
+
+      const response = await tagService.searchTags(params);
+      res.status(200).json(response);
     } catch (error) {
       next(error);
     }

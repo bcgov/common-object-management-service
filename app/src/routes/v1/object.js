@@ -19,6 +19,16 @@ routes.get('/', requireDb, objectValidator.searchObjects, (req, res, next) => {
   objectController.searchObjects(req, res, next);
 });
 
+/** Search for metadata */
+routes.get('/metadata', requireDb, objectValidator.searchMetadata, (req, res, next) => {
+  objectController.searchMetadata(req, res, next);
+});
+
+/** Search for tags */
+routes.get('/tagging', requireDb, objectValidator.searchTags, (req, res, next) => {
+  objectController.searchTags(req, res, next);
+});
+
 /** Returns object headers */
 routes.head('/:objId', currentObject, hasPermission(Permissions.READ), objectValidator.headObject, (req, res, next) => {
   // TODO: Add validation to reject unexpected query parameters

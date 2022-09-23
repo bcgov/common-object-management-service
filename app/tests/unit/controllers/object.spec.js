@@ -4,7 +4,7 @@ const { MAXCOPYOBJECTLENGTH, MetadataDirective } = require('../../../src/compone
 const utils = require('../../../src/db/models/utils');
 
 const controller = require('../../../src/controllers/object');
-const { storageService, objectService, metadataService, versionService, userService } = require('../../../src/services');
+const { storageService, objectService, metadataService, tagService, versionService, userService } = require('../../../src/services');
 
 const mockResponse = () => {
   const res = {};
@@ -81,7 +81,7 @@ describe('addMetadata', () => {
     storageHeadObjectSpy.mockReturnValue(GoodResponse);
     storageCopyObjectSpy.mockResolvedValue(GoodResponse);
     trxWrapperSpy.mockImplementation(callback => callback({}));
-    versionCopySpy.mockReturnValue({id: '5dad1ec9-d3c0-4b0f-8ead-cb4d9fa98987'});
+    versionCopySpy.mockReturnValue({ id: '5dad1ec9-d3c0-4b0f-8ead-cb4d9fa98987' });
     metadataAssociateMetadataSpy.mockReturnValue({});
     setHeadersSpy.mockImplementation(x => x);
 
@@ -633,5 +633,141 @@ describe('replaceTags', () => {
       ],
       versionId: undefined
     });
+  });
+});
+
+describe('searchMetadata', () => {
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
+
+  // mock service calls
+  const metadataSearchMetadataSpy = jest.spyOn(metadataService, 'searchMetadata');
+
+  const next = jest.fn();
+
+  it('should return all metadata with no params', async () => {
+    // request object
+    const req = {
+      headers: {},
+      query: {}
+    };
+
+    const GoodResponse = [
+      {
+        key: 'foo',
+        value: 'bar'
+      },
+      {
+        key: 'baz',
+        value: 'quz'
+      }
+    ];
+
+    metadataSearchMetadataSpy.mockReturnValue(GoodResponse);
+
+    await controller.searchMetadata(req, res, next);
+
+    expect(metadataSearchMetadataSpy).toHaveBeenCalledWith({
+      metadata: undefined,
+    });
+
+    expect(res.json).toHaveBeenCalledWith(GoodResponse);
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  it('should return only matching metadata', async () => {
+    // request object
+    const req = {
+      headers: { 'x-amz-meta-foo': '' },
+      query: {}
+    };
+
+    const GoodResponse = [
+      {
+        key: 'foo',
+        value: 'bar'
+      }
+    ];
+
+    metadataSearchMetadataSpy.mockReturnValue(GoodResponse);
+
+    await controller.searchMetadata(req, res, next);
+
+    expect(metadataSearchMetadataSpy).toHaveBeenCalledWith({
+      metadata: { foo: '' },
+    });
+    expect(res.json).toHaveBeenCalledWith(GoodResponse);
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+});
+
+describe('searchTags', () => {
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
+
+  // mock service calls
+  const tagSearchTagsSpy = jest.spyOn(tagService, 'searchTags');
+
+  const next = jest.fn();
+
+  it('should return all tags with no params', async () => {
+    // request object
+    const req = {
+      headers: {},
+      query: {}
+    };
+
+    const GoodResponse = [
+      {
+        key: 'foo',
+        value: 'bar'
+      },
+      {
+        key: 'baz',
+        value: 'quz'
+      }
+    ];
+
+    tagSearchTagsSpy.mockReturnValue(GoodResponse);
+
+    await controller.searchTags(req, res, next);
+
+    expect(tagSearchTagsSpy).toHaveBeenCalledWith({
+      tags: undefined,
+    });
+
+    expect(res.json).toHaveBeenCalledWith(GoodResponse);
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  it('should return only matching tags', async () => {
+    // request object
+    const req = {
+      headers: {},
+      query: {
+        tagset: {
+          foo: ''
+        }
+      }
+    };
+
+    const GoodResponse = [
+      {
+        key: 'foo',
+        value: 'bar'
+      }
+    ];
+
+    tagSearchTagsSpy.mockReturnValue(GoodResponse);
+
+    await controller.searchTags(req, res, next);
+
+    expect(tagSearchTagsSpy).toHaveBeenCalledWith({
+      tag: { foo: '' },
+    });
+    expect(res.json).toHaveBeenCalledWith(GoodResponse);
+    expect(res.status).toHaveBeenCalledWith(200);
   });
 });

@@ -378,6 +378,24 @@ paths:
           $ref: '#/components/responses/Forbidden'
         default:
           $ref: '#/components/responses/Error'
+  /object/metadata:
+    get:
+      summary: Returns a list of matching metadata
+      description: >-
+        Gets a list of metadata matching the given parameters. Multiple Key/Value pairs
+        can be provided in the headers to narrow down results. If none are provided the full set of metadata will be returned.
+      operationId: getMetadata
+      tags:
+        - Object Metadata
+      parameters:
+        - $ref: '#/components/parameters/Header-Metadata'
+      responses:
+        '200':
+          description: Returns an array of matching key/value pairs.
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        default:
+          $ref: '#/components/responses/Error'
   /object/{objId}/metadata:
     patch:
       summary: Adds metadata to an object
@@ -449,6 +467,24 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
+        default:
+          $ref: '#/components/responses/Error'
+  /object/tagging:
+    get:
+      summary: Returns a list of matching tags
+      description: >-
+        Gets a list of tags matching the given parameters. Multiple Key/Value pairs
+        can be provided in the query to narrow down results. If none are provided the full set of tags will be returned.
+      operationId: getTagging
+      tags:
+        - Object Tagging
+      parameters:
+        - $ref: '#/components/parameters/Query-TagSet'
+      responses:
+        '200':
+          description: Returns an array of matching key/value pairs.
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
         default:
           $ref: '#/components/responses/Error'
   /object/{objId}/tagging:
