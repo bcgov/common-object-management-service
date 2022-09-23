@@ -39,37 +39,19 @@ class Tag extends Model {
       filterKeyValue(query, value) {
         const subqueries = [];
 
-        let filterValues = false;
-
         if (value.tag && Object.keys(value.tag).length) {
           Object.entries(value.tag).forEach(([key, val]) => {
-            let q;
-
-            if (val.length) {
-              q = Tag.query().distinct('key', 'value').where('key', 'ilike', `%${key}%`).where('value', 'ilike', `%${val}%`);
-              filterValues = true;
-            }
-            else {
-              q = Tag.query().distinct('key').where('key', 'ilike', `%${key}%`);
-            }
-
+            const q = Tag.query().select('id').where('key', 'ilike', `%${key}%`);
+            if (val.length) q.where('value', 'ilike', `%${val}%`);
             subqueries.push(q);
           });
         }
 
         if (subqueries.length) {
-          if (filterValues) {
-            query
-              .whereIn(['key', 'value'], builder => {
-                builder.intersect(subqueries);
-              });
-          }
-          else {
-            query
-              .whereIn('key', builder => {
-                builder.intersect(subqueries);
-              });
-          }
+          query
+            .whereIn('id', builder => {
+              builder.intersect(subqueries);
+            });
         }
       },
     };
