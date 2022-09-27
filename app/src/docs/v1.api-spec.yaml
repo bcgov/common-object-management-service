@@ -392,6 +392,12 @@ paths:
       responses:
         '200':
           description: Returns an array of matching key/value pairs.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/S3-TagSet'
         '422':
           $ref: '#/components/responses/UnprocessableEntity'
         default:
@@ -412,7 +418,7 @@ paths:
         - $ref: '#/components/parameters/Query-VersionId'
       responses:
         '204':
-          description: The resource was added successfully.
+          $ref: '#/components/responses/NoContent'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -436,7 +442,7 @@ paths:
         - $ref: '#/components/parameters/Query-VersionId'
       responses:
         '204':
-          description: The resource was added successfully.
+          $ref: '#/components/responses/NoContent'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -462,7 +468,7 @@ paths:
         - $ref: '#/components/parameters/Query-VersionId'
       responses:
         '204':
-          description: The resource was deleted successfully.
+          $ref: '#/components/responses/NoContent'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -483,6 +489,12 @@ paths:
       responses:
         '200':
           description: Returns an array of matching key/value pairs.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/S3-TagSet'
         '422':
           $ref: '#/components/responses/UnprocessableEntity'
         default:
@@ -502,7 +514,7 @@ paths:
         - $ref: '#/components/parameters/Query-VersionId'
       responses:
         '204':
-          description: The resource was added successfully.
+          $ref: '#/components/responses/NoContent'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -525,7 +537,7 @@ paths:
         - $ref: '#/components/parameters/Query-VersionId'
       responses:
         '204':
-          description: The resource was added successfully.
+          $ref: '#/components/responses/NoContent'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -549,7 +561,7 @@ paths:
         - $ref: '#/components/parameters/Query-VersionId'
       responses:
         '204':
-          description: The resource was deleted successfully.
+          $ref: '#/components/responses/NoContent'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
