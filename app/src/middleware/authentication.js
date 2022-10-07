@@ -2,6 +2,7 @@ const Problem = require('api-problem');
 const config = require('config');
 const basicAuth = require('express-basic-auth');
 const jwt = require('jsonwebtoken');
+const axios = require('axios');
 
 const { AuthType } = require('../components/constants');
 const { userService } = require('../services');
@@ -10,7 +11,7 @@ const { userService } = require('../services');
  * Basic Auth configuration object
  * @see {@link https://github.com/LionC/express-basic-auth}
  */
-const _basicAuthConfig ={
+const _basicAuthConfig = {
   // Must be a synchronous function
   authorizer: (username, password) => {
     const userMatch = basicAuth.safeCompare(username, config.get('basicAuth.username'));
@@ -57,29 +58,24 @@ const currentUser = async (req, res, next) => {
       currentUser.authType = AuthType.BASIC;
     }
 
-    // OIDC JWT Authorization
+    // OIDC JWT Validation
     else if (config.has('keycloak.enabled') && authorization.toLowerCase().startsWith('bearer ')) {
       currentUser.authType = AuthType.BEARER;
 
       try {
         const bearerToken = authorization.substring(7);
-        let isValid = false;
 
-        if (config.has('keycloak.publicKey')) {
-          const publicKey = config.get('keycloak.publicKey');
-          const pemKey = publicKey.startsWith('-----BEGIN')
-            ? publicKey
-            : _spkiWrapper(publicKey);
-          isValid = jwt.verify(bearerToken, pemKey, {
-            issuer: `${config.get('keycloak.serverUrl')}/realms/${config.get('keycloak.realm')}`
-          });
-        } else {
-          const keycloak = require('../components/keycloak');
-          isValid = await keycloak.grantManager.validateAccessToken(bearerToken);
-        }
+        // decode token
+        const decodedJWT = jwt.decode(bearerToken);
+        const issuer = decodedJWT.iss;
+        // get public key from token issuer
+        const realm = await axios.get(issuer);
+        const publicKey = realm.data.public_key;
+        // verify token using public key
+        const isValid = jwt.verify(bearerToken, _spkiWrapper(publicKey), { issuer: `${decodedJWT.iss}` });
 
         if (isValid) {
-          currentUser.tokenPayload = jwt.decode(bearerToken);
+          currentUser.tokenPayload = decodedJWT;
           await userService.login(currentUser.tokenPayload);
         } else {
           throw new Error('Invalid authorization token');
