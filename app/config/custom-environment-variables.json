@@ -33,6 +33,7 @@
     "bodyLimit": "SERVER_BODYLIMIT",
     "logFile": "SERVER_LOGFILE",
     "logLevel": "SERVER_LOGLEVEL",
+    "passphrase": "SERVER_PASSPHRASE",
     "port": "SERVER_PORT"
   }
 }
