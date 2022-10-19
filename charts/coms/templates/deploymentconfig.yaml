@@ -151,6 +151,11 @@ spec:
                 secretKeyRef:
                   key: password
                   name: {{ include "coms.configname" . }}-objectstorage
+            - name: SERVER_PASSPHRASE
+              valueFrom:
+                secretKeyRef:
+                  key: password
+                  name: {{ include "coms.fullname" . }}-passphrase
           envFrom:
             - configMapRef:
                 name: {{ include "coms.configname" . }}-config
