@@ -24,4 +24,4 @@ const Timestamps = (Model) => {
   };
 };
 
-module.exports.Timestamps = Timestamps;
+module.exports = Timestamps;
