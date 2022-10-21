@@ -1,5 +1,7 @@
 const models = {
   // Tables
+  Bucket: require('./tables/bucket'),
+  BucketPermission: require('./tables/bucketPermission'),
   IdentityProvider: require('./tables/identityProvider'),
   Metadata: require('./tables/metadata'),
   ObjectModel: require('./tables/objectModel'),

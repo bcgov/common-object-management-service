@@ -51,17 +51,17 @@ module.exports = Object.freeze({
     REPLACE: 'REPLACE'
   },
 
-  /** Object permissions */
+  /** Resource permissions */
   Permissions: {
-    /** Grants object creation permission */
+    /** Grants resource creation permission */
     CREATE: 'CREATE',
-    /** Grants object read permission */
+    /** Grants resource read permission */
     READ: 'READ',
-    /** Grants object update permission */
+    /** Grants resource update permission */
     UPDATE: 'UPDATE',
-    /** Grants object deletion permission */
+    /** Grants resource deletion permission */
     DELETE: 'DELETE',
-    /** Grants object permission management */
+    /** Grants resource permission management */
     MANAGE: 'MANAGE'
   }
 });

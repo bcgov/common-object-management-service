@@ -11,10 +11,19 @@ class ObjectModel extends Timestamps(Model) {
   }
 
   static get relationMappings() {
+    const Bucket = require('./bucket');
     const ObjectPermission = require('./objectPermission');
     const Version = require('./version');
 
     return {
+      bucket: {
+        relation: Model.HasOneRelation,
+        modelClass: Bucket,
+        join: {
+          from: 'object.bucketId',
+          to: 'bucket.bucketId'
+        }
+      },
       objectPermission: {
         relation: Model.HasManyRelation,
         modelClass: ObjectPermission,
@@ -40,6 +49,9 @@ class ObjectModel extends Timestamps(Model) {
     return {
       filterIds(query, value) {
         filterOneOrMany(query, value, 'object.id');
+      },
+      filterBucketIds(query, value) {
+        filterOneOrMany(query, value, 'object.bucketId');
       },
       filterPath(query, value) {
         filterILike(query, value, 'object.path');
@@ -127,6 +139,7 @@ class ObjectModel extends Timestamps(Model) {
         path: { type: 'string', minLength: 1, maxLength: 1024 },
         public: { type: 'boolean' },
         active: { type: 'boolean' },
+        bucketId: { type: 'string', maxLength: 255 },
         ...stamps
       },
       additionalProperties: false
