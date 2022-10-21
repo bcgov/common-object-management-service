@@ -1,4 +1,5 @@
 const mixins = {
+  Encrypt: require('./encrypt'),
   Timestamps: require('./timestamps')
 };
 
