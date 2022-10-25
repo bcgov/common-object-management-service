@@ -23,6 +23,7 @@ function featureNoDb(service) {
 }
 
 module.exports = {
+  bucketService: featureNoDb(require('./bucket')),
   featureNoDb: featureNoDb,
   metadataService: featureNoDb(require('./metadata')),
   objectService: featureNoDb(require('./object')),
