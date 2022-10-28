@@ -20,13 +20,11 @@ const config = require('config');
 
 const { getPath } = require('../components/utils');
 const { MAXKEYS, MetadataDirective, TaggingDirective } = require('../components/constants');
+// const { read: readBucket } = require('./bucket');
 
 // Get app configuration
-const endpoint = config.get('objectStorage.endpoint');
 const bucket = config.get('objectStorage.bucket');
 const defaultTempExpiresIn = parseInt(config.get('objectStorage.defaultTempExpiresIn'), 10);
-const accessKeyId = config.get('objectStorage.accessKeyId');
-const secretAccessKey = config.get('objectStorage.secretAccessKey');
 
 /**
  * The Core S3 Object Storage Service
@@ -35,21 +33,30 @@ const secretAccessKey = config.get('objectStorage.secretAccessKey');
 const objectStorageService = {
   /**
    * @private
-   * @property _s3Client
+   * @function _getS3Client
    * The AWS S3Client used for interacting with S3 compatible storage
    * @param {Readable} stream A readable stream object
    * @returns {object} A pre-configured S3 Client object
    */
-  _s3Client: new S3Client({
-    apiVersion: '2006-03-01',
-    credentials: {
-      accessKeyId: accessKeyId,
-      secretAccessKey: secretAccessKey,
-    },
-    endpoint: endpoint,
-    forcePathStyle: true,
-    region: 'us-east-1' // Need to specify valid AWS region or it'll explode ('us-east-1' is default, 'ca-central-1' for Canada)
-  }),
+  _getS3Client: (bucketId = undefined) => {
+    const options = {
+      apiVersion: '2006-03-01',
+      credentials: {
+        accessKeyId: config.get('objectStorage.accessKeyId'),
+        secretAccessKey: config.get('objectStorage.secretAccessKey'),
+      },
+      endpoint: config.get('objectStorage.endpoint'),
+      forcePathStyle: true,
+      region: 'us-east-1' // Need to specify valid AWS region or it'll explode ('us-east-1' is default, 'ca-central-1' for Canada)
+    };
+
+    if (bucketId) {
+      // TODO: Overwrite
+      console.log(bucket); // eslint-disable-line no-console
+    }
+
+    return new S3Client(options);
+  },
 
   /**
    * @function copyObject
@@ -79,7 +86,7 @@ const objectStorageService = {
       }).join('&');
     }
 
-    return this._s3Client.send(new CopyObjectCommand(params));
+    return this._getS3Client().send(new CopyObjectCommand(params));
   },
 
   /**
@@ -96,7 +103,7 @@ const objectStorageService = {
       VersionId: versionId
     };
 
-    return this._s3Client.send(new DeleteObjectCommand(params));
+    return this._getS3Client().send(new DeleteObjectCommand(params));
   },
 
   /**
@@ -113,7 +120,7 @@ const objectStorageService = {
       VersionId: versionId
     };
 
-    return this._s3Client.send(new DeleteObjectTaggingCommand(params));
+    return this._getS3Client().send(new DeleteObjectTaggingCommand(params));
   },
 
   /**
@@ -125,7 +132,7 @@ const objectStorageService = {
       Bucket: bucket
     };
 
-    return this._s3Client.send(new GetBucketEncryptionCommand(params));
+    return this._getS3Client().send(new GetBucketEncryptionCommand(params));
   },
 
   /**
@@ -137,7 +144,7 @@ const objectStorageService = {
     const params = {
       Bucket: bucket
     };
-    const response = await this._s3Client.send(new GetBucketVersioningCommand(params));
+    const response = await this._getS3Client().send(new GetBucketVersioningCommand(params));
     return response.Status === 'Enabled';
   },
 
@@ -155,7 +162,7 @@ const objectStorageService = {
       VersionId: versionId
     };
 
-    return this._s3Client.send(new GetObjectTaggingCommand(params));
+    return this._getS3Client().send(new GetObjectTaggingCommand(params));
   },
 
   /**
@@ -163,12 +170,12 @@ const objectStorageService = {
    * Checks if a bucket exists and if the S3Client has correct access permissions
    * @returns {Promise<object>} The response of the head bucket operation
    */
-  headBucket() {
+  headBucket(bucketId) {
     const params = {
       Bucket: bucket,
     };
 
-    return this._s3Client.send(new HeadBucketCommand(params));
+    return this._getS3Client(bucketId).send(new HeadBucketCommand(params));
   },
 
   /**
@@ -184,7 +191,7 @@ const objectStorageService = {
       Key: filePath,
       VersionId: versionId
     };
-    return this._s3Client.send(new HeadObjectCommand(params));
+    return this._getS3Client().send(new HeadObjectCommand(params));
   },
 
   /**
@@ -201,7 +208,7 @@ const objectStorageService = {
       MaxKeys: maxKeys
     };
 
-    return this._s3Client.send(new ListObjectsCommand(params));
+    return this._getS3Client().send(new ListObjectsCommand(params));
   },
 
   /**
@@ -216,7 +223,7 @@ const objectStorageService = {
       Prefix: filePath // Must filter via "prefix" - https://stackoverflow.com/a/56569856
     };
 
-    return this._s3Client.send(new ListObjectVersionsCommand(params));
+    return this._getS3Client().send(new ListObjectVersionsCommand(params));
   },
 
   /**
@@ -226,7 +233,7 @@ const objectStorageService = {
    * @returns {Promise<string>} A presigned url for the direct S3 REST `command` operation
    */
   presignUrl(command, expiresIn = defaultTempExpiresIn) { // Default expire to 5 minutes
-    return getSignedUrl(this._s3Client, command, { expiresIn });
+    return getSignedUrl(this._getS3Client(), command, { expiresIn });
   },
 
   /**
@@ -245,7 +252,7 @@ const objectStorageService = {
       }
     };
 
-    return this._s3Client.send(new PutBucketEncryptionCommand(params));
+    return this._getS3Client().send(new PutBucketEncryptionCommand(params));
   },
 
   /**
@@ -279,7 +286,7 @@ const objectStorageService = {
     }
 
     // TODO: Consider refactoring to use Upload instead from @aws-sdk/lib-storage
-    return this._s3Client.send(new PutObjectCommand(params));
+    return this._getS3Client().send(new PutObjectCommand(params));
   },
 
   /**
@@ -300,7 +307,7 @@ const objectStorageService = {
       VersionId: versionId
     };
 
-    return this._s3Client.send(new PutObjectTaggingCommand(params));
+    return this._getS3Client().send(new PutObjectTaggingCommand(params));
   },
 
   /**
@@ -317,7 +324,7 @@ const objectStorageService = {
       VersionId: versionId
     };
 
-    return this._s3Client.send(new GetObjectCommand(params));
+    return this._getS3Client().send(new GetObjectCommand(params));
   },
 
   /**

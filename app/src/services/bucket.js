@@ -104,7 +104,13 @@ const service = {
       .modify('filterBucketIds', params.bucketId)
       .modify('filterBucketName', params.bucketName)
       .modify('filterKey', params.key)
-      .modify('filterActive', params.active);
+      .modify('filterActive', params.active)
+      .modify('filterUserId', params.userId)
+      .then(result => result.map(row => {
+        // eslint-disable-next-line no-unused-vars
+        const { bucketPermission, ...bucket } = row;
+        return bucket;
+      }));
   },
 
   /**
@@ -142,7 +148,6 @@ const service = {
 
       // Update bucket record in DB
       const response = await Bucket.query(trx).patchAndFetchById(data.bucketId, {
-        bucketId: data.bucketId,
         bucketName: data.bucketName,
         accessKeyId: data.accessKeyId,
         bucket: data.bucket,
