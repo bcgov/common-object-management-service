@@ -36,7 +36,7 @@ const Encrypt = opts => {
         this.encryptFields();
       }
       async $afterUpdate(queryOptions, context) {
-        await super.$afterInsert(queryOptions, context);
+        await super.$afterUpdate(queryOptions, context);
         return this.decryptFields();
       }
       async $afterGet(context) {
