@@ -12,6 +12,10 @@ class Bucket extends mixin(Model, [
     return 'bucket';
   }
 
+  static get idColumn() {
+    return 'bucketId';
+  }
+
   static get relationMappings() {
     const BucketPermission = require('./bucketPermission');
     const ObjectModel = require('./objectModel');
@@ -49,7 +53,17 @@ class Bucket extends mixin(Model, [
       },
       filterActive(query, value) {
         if (value !== undefined) query.where('bucket.active', value);
-      }
+      },
+      filterUserId(query, value) {
+        if (value) {
+          query
+            .withGraphJoined('bucketPermission')
+            .whereIn('bucketPermission.bucketId', builder => {
+              builder.distinct('bucketPermission.bucketId')
+                .where('bucketPermission.userId', value);
+            });
+        }
+      },
     };
   }
 
