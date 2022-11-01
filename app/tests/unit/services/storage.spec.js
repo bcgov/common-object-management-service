@@ -11,6 +11,7 @@ const {
   ListObjectVersionsCommand,
   PutObjectCommand,
   PutObjectTaggingCommand,
+  S3Client
 } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const { mockClient } = require('aws-sdk-client-mock');
@@ -25,7 +26,7 @@ const bucket = config.get('objectStorage.bucket');
 const key = utils.delimit(config.get('objectStorage.key'));
 const defaultTempExpiresIn = parseInt(config.get('objectStorage.defaultTempExpiresIn'), 10);
 
-const s3ClientMock = mockClient(service._s3Client);
+const s3ClientMock = mockClient(S3Client);
 
 jest.mock('@aws-sdk/s3-request-presigner', () => ({
   getSignedUrl: jest.fn()
@@ -37,10 +38,10 @@ beforeEach(() => {
   s3ClientMock.reset();
 });
 
-describe('_s3Client', () => {
-  it('should be an object', () => {
-    expect(service._s3Client).toBeTruthy();
-    expect(typeof service._s3Client).toBe('object');
+describe('_getS3Client', () => {
+  it('should be a function', () => {
+    expect(service._getS3Client).toBeTruthy();
+    expect(typeof service._getS3Client).toBe('function');
   });
 });
 
