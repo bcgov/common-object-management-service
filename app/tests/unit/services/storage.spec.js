@@ -15,6 +15,7 @@ const {
 } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const { mockClient } = require('aws-sdk-client-mock');
+require('aws-sdk-client-mock-jest'); // Must be globally imported
 const config = require('config');
 const { Readable } = require('stream');
 
@@ -22,8 +23,8 @@ const service = require('../../../src/services/storage');
 const utils = require('../../../src/components/utils');
 const { MetadataDirective, TaggingDirective } = require('../../../src/components/constants');
 
-const bucket = config.get('objectStorage.bucket');
-const key = utils.delimit(config.get('objectStorage.key'));
+const bucket = 'bucket';
+const key = 'filePath';
 const defaultTempExpiresIn = parseInt(config.get('objectStorage.defaultTempExpiresIn'), 10);
 
 const s3ClientMock = mockClient(S3Client);
@@ -36,6 +37,12 @@ jest.mock('config');
 
 beforeEach(() => {
   s3ClientMock.reset();
+  config.get
+    .mockReturnValueOnce('accessKeyId') // objectStorage.accessKeyId
+    .mockReturnValueOnce(bucket) // objectStorage.bucket
+    .mockReturnValueOnce('https://endpoint.com') // objectStorage.endpoint
+    .mockReturnValueOnce(key) // objectStorage.key
+    .mockReturnValueOnce('secretAccessKey'); // objectStorage.secretAccessKey
 });
 
 describe('_getS3Client', () => {
@@ -50,14 +57,14 @@ describe('copyObject', () => {
     s3ClientMock.on(CopyObjectCommand).resolves({});
   });
 
-  it('should send a copy object command copying the metadata and tags', () => {
+  it('should send a copy object command copying the metadata and tags', async () => {
     const copySource = 'filePath';
     const filePath = 'filePath';
-    const result = service.copyObject({ copySource, filePath });
+    const result = await service.copyObject({ copySource, filePath });
 
     expect(result).toBeTruthy();
-    expect(s3ClientMock.calls()).toHaveLength(1);
-    expect(s3ClientMock.commandCalls(CopyObjectCommand, {
+    expect(s3ClientMock).toHaveReceivedCommandTimes(CopyObjectCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(CopyObjectCommand, {
       Bucket: bucket,
       CopySource: `${bucket}/${copySource}`,
       Key: filePath,
@@ -65,18 +72,18 @@ describe('copyObject', () => {
       MetadataDirective: MetadataDirective.COPY,
       TaggingDirective: TaggingDirective.COPY,
       VersionId: undefined
-    }, true)).toHaveLength(1);
+    });
   });
 
-  it('should send a copy object command copying the metadata and tags for a specific version', () => {
+  it('should send a copy object command copying the metadata and tags for a specific version', async () => {
     const copySource = 'filePath';
     const filePath = 'filePath';
     const versionId = '1234';
-    const result = service.copyObject({ copySource, filePath, versionId });
+    const result = await service.copyObject({ copySource, filePath, versionId });
 
     expect(result).toBeTruthy();
-    expect(s3ClientMock.calls()).toHaveLength(1);
-    expect(s3ClientMock.commandCalls(CopyObjectCommand, {
+    expect(s3ClientMock).toHaveReceivedCommandTimes(CopyObjectCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(CopyObjectCommand, {
       Bucket: bucket,
       CopySource: `${bucket}/${copySource}`,
       Key: filePath,
@@ -84,19 +91,19 @@ describe('copyObject', () => {
       MetadataDirective: MetadataDirective.COPY,
       TaggingDirective: TaggingDirective.COPY,
       VersionId: versionId
-    }, true)).toHaveLength(1);
+    });
   });
 
-  it('should send a copy object command replacing the metadata', () => {
+  it('should send a copy object command replacing the metadata', async () => {
     const copySource = 'filePath';
     const filePath = 'filePath';
     const metadata = { 'x-amz-meta-test': 123 };
     const metadataDirective = MetadataDirective.REPLACE;
-    const result = service.copyObject({ copySource, filePath, metadata, metadataDirective });
+    const result = await service.copyObject({ copySource, filePath, metadata, metadataDirective });
 
     expect(result).toBeTruthy();
-    expect(s3ClientMock.calls()).toHaveLength(1);
-    expect(s3ClientMock.commandCalls(CopyObjectCommand, {
+    expect(s3ClientMock).toHaveReceivedCommandTimes(CopyObjectCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(CopyObjectCommand, {
       Bucket: bucket,
       CopySource: `${bucket}/${copySource}`,
       Key: filePath,
@@ -104,20 +111,20 @@ describe('copyObject', () => {
       MetadataDirective: metadataDirective,
       TaggingDirective: TaggingDirective.COPY,
       VersionId: undefined
-    }, true)).toHaveLength(1);
+    });
   });
 
-  it('should send a copy object command replacing the metadata for a specific version', () => {
+  it('should send a copy object command replacing the metadata for a specific version', async () => {
     const copySource = 'filePath';
     const filePath = 'filePath';
     const metadata = { 'x-amz-meta-test': 123 };
     const metadataDirective = MetadataDirective.REPLACE;
     const versionId = '1234';
-    const result = service.copyObject({ copySource, filePath, metadata, metadataDirective, versionId });
+    const result = await service.copyObject({ copySource, filePath, metadata, metadataDirective, versionId });
 
     expect(result).toBeTruthy();
-    expect(s3ClientMock.calls()).toHaveLength(1);
-    expect(s3ClientMock.commandCalls(CopyObjectCommand, {
+    expect(s3ClientMock).toHaveReceivedCommandTimes(CopyObjectCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(CopyObjectCommand, {
       Bucket: bucket,
       CopySource: `${bucket}/${copySource}`,
       Key: filePath,
@@ -125,19 +132,19 @@ describe('copyObject', () => {
       MetadataDirective: metadataDirective,
       TaggingDirective: TaggingDirective.COPY,
       VersionId: versionId
-    }, true)).toHaveLength(1);
+    });
   });
 
-  it('should send a copy object command replacing the tags', () => {
+  it('should send a copy object command replacing the tags', async () => {
     const copySource = 'filePath';
     const filePath = 'filePath';
     const tags = { 'test': 123 };
     const taggingDirective = TaggingDirective.REPLACE;
-    const result = service.copyObject({ copySource, filePath, tags, taggingDirective });
+    const result = await service.copyObject({ copySource, filePath, tags, taggingDirective });
 
     expect(result).toBeTruthy();
-    expect(s3ClientMock.calls()).toHaveLength(1);
-    expect(s3ClientMock.commandCalls(CopyObjectCommand, {
+    expect(s3ClientMock).toHaveReceivedCommandTimes(CopyObjectCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(CopyObjectCommand, {
       Bucket: bucket,
       CopySource: `${bucket}/${copySource}`,
       Key: filePath,
@@ -146,20 +153,20 @@ describe('copyObject', () => {
       Tagging: 'test=123',
       TaggingDirective: taggingDirective,
       VersionId: undefined
-    }, true)).toHaveLength(1);
+    });
   });
 
-  it('should send a copy object command replacing the tags for a specific version', () => {
+  it('should send a copy object command replacing the tags for a specific version', async () => {
     const copySource = 'filePath';
     const filePath = 'filePath';
     const tags = { 'test': 123 };
     const taggingDirective = TaggingDirective.REPLACE;
     const versionId = '1234';
-    const result = service.copyObject({ copySource, filePath, tags, taggingDirective, versionId });
+    const result = await service.copyObject({ copySource, filePath, tags, taggingDirective, versionId });
 
     expect(result).toBeTruthy();
-    expect(s3ClientMock.calls()).toHaveLength(1);
-    expect(s3ClientMock.commandCalls(CopyObjectCommand, {
+    expect(s3ClientMock).toHaveReceivedCommandTimes(CopyObjectCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(CopyObjectCommand, {
       Bucket: bucket,
       CopySource: `${bucket}/${copySource}`,
       Key: filePath,
@@ -168,7 +175,7 @@ describe('copyObject', () => {
       Tagging: 'test=123',
       TaggingDirective: taggingDirective,
       VersionId: versionId
-    }, true)).toHaveLength(1);
+    });
   });
 });
 
@@ -177,31 +184,31 @@ describe('deleteObject', () => {
     s3ClientMock.on(DeleteObjectCommand).resolves({});
   });
 
-  it('should send a delete object command for the entire object', () => {
+  it('should send a delete object command for the entire object', async () => {
     const filePath = 'filePath';
-    const result = service.deleteObject({ filePath });
+    const result = await service.deleteObject({ filePath });
 
     expect(result).toBeTruthy();
-    expect(s3ClientMock.calls()).toHaveLength(1);
-    expect(s3ClientMock.commandCalls(DeleteObjectCommand, {
+    expect(s3ClientMock).toHaveReceivedCommandTimes(DeleteObjectCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(DeleteObjectCommand, {
       Bucket: bucket,
       Key: filePath,
       VersionId: undefined
-    }, true)).toHaveLength(1);
+    });
   });
 
-  it('should send a delete object command for a specific version', () => {
+  it('should send a delete object command for a specific version', async () => {
     const filePath = 'filePath';
     const versionId = '1234';
-    const result = service.deleteObject({ filePath, versionId });
+    const result = await service.deleteObject({ filePath, versionId });
 
     expect(result).toBeTruthy();
-    expect(s3ClientMock.calls()).toHaveLength(1);
-    expect(s3ClientMock.commandCalls(DeleteObjectCommand, {
+    expect(s3ClientMock).toHaveReceivedCommandTimes(DeleteObjectCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(DeleteObjectCommand, {
       Bucket: bucket,
       Key: filePath,
       VersionId: versionId
-    }, true)).toHaveLength(1);
+    });
   });
 });
 
@@ -210,31 +217,31 @@ describe('deleteObjectTagging', () => {
     s3ClientMock.on(DeleteObjectTaggingCommand).resolves({});
   });
 
-  it('should send a delete object tagging command', () => {
+  it('should send a delete object tagging command', async () => {
     const filePath = 'filePath';
-    const result = service.deleteObjectTagging({ filePath });
+    const result = await service.deleteObjectTagging({ filePath });
 
     expect(result).toBeTruthy();
-    expect(s3ClientMock.calls()).toHaveLength(1);
-    expect(s3ClientMock.commandCalls(DeleteObjectTaggingCommand, {
+    expect(s3ClientMock).toHaveReceivedCommandTimes(DeleteObjectTaggingCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(DeleteObjectTaggingCommand, {
       Bucket: bucket,
       Key: filePath,
       VersionId: undefined
-    }, true)).toHaveLength(1);
+    });
   });
 
-  it('should send a delete object tagging command for a specific version', () => {
+  it('should send a delete object tagging command for a specific version', async () => {
     const filePath = 'filePath';
     const versionId = '1234';
-    const result = service.deleteObjectTagging({ filePath, versionId });
+    const result = await service.deleteObjectTagging({ filePath, versionId });
 
     expect(result).toBeTruthy();
-    expect(s3ClientMock.calls()).toHaveLength(1);
-    expect(s3ClientMock.commandCalls(DeleteObjectTaggingCommand, {
+    expect(s3ClientMock).toHaveReceivedCommandTimes(DeleteObjectTaggingCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(DeleteObjectTaggingCommand, {
       Bucket: bucket,
       Key: filePath,
       VersionId: versionId
-    }, true)).toHaveLength(1);
+    });
   });
 });
 
@@ -243,14 +250,14 @@ describe('headBucket', () => {
     s3ClientMock.on(HeadBucketCommand).resolves({});
   });
 
-  it('should send a head bucket command', () => {
-    const result = service.headBucket();
+  it('should send a head bucket command', async () => {
+    const result = await service.headBucket();
 
     expect(result).toBeTruthy();
-    expect(s3ClientMock.calls()).toHaveLength(1);
-    expect(s3ClientMock.commandCalls(HeadBucketCommand, {
+    expect(s3ClientMock).toHaveReceivedCommandTimes(HeadBucketCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(HeadBucketCommand, {
       Bucket: bucket
-    }, true)).toHaveLength(1);
+    });
   });
 });
 
@@ -259,14 +266,14 @@ describe('getBucketVersioning', () => {
     s3ClientMock.on(GetBucketVersioningCommand).resolves({});
   });
 
-  it('should send a get bucket versioning command', () => {
-    const result = service.getBucketVersioning();
+  it('should send a get bucket versioning command', async () => {
+    const result = await service.getBucketVersioning();
 
-    expect(result).toBeTruthy();
-    expect(s3ClientMock.calls()).toHaveLength(1);
-    expect(s3ClientMock.commandCalls(GetBucketVersioningCommand, {
+    expect(result).toBeFalsy();
+    expect(s3ClientMock).toHaveReceivedCommandTimes(GetBucketVersioningCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(GetBucketVersioningCommand, {
       Bucket: bucket
-    }, true)).toHaveLength(1);
+    });
   });
 });
 
@@ -275,31 +282,31 @@ describe('getObjectTagging', () => {
     s3ClientMock.on(GetObjectTaggingCommand).resolves({});
   });
 
-  it('should send a get object tagging command', () => {
+  it('should send a get object tagging command', async () => {
     const filePath = 'filePath';
-    const result = service.getObjectTagging({ filePath });
+    const result = await service.getObjectTagging({ filePath });
 
     expect(result).toBeTruthy();
-    expect(s3ClientMock.calls()).toHaveLength(1);
-    expect(s3ClientMock.commandCalls(GetObjectTaggingCommand, {
+    expect(s3ClientMock).toHaveReceivedCommandTimes(GetObjectTaggingCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(GetObjectTaggingCommand, {
       Bucket: bucket,
       Key: filePath,
       VersionId: undefined
-    }, true)).toHaveLength(1);
+    });
   });
 
-  it('should send a put object tagging command for a specific version', () => {
+  it('should send a put object tagging command for a specific version', async () => {
     const filePath = 'filePath';
     const versionId = '1234';
-    const result = service.getObjectTagging({ filePath, versionId });
+    const result = await service.getObjectTagging({ filePath, versionId });
 
     expect(result).toBeTruthy();
-    expect(s3ClientMock.calls()).toHaveLength(1);
-    expect(s3ClientMock.commandCalls(GetObjectTaggingCommand, {
+    expect(s3ClientMock).toHaveReceivedCommandTimes(GetObjectTaggingCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(GetObjectTaggingCommand, {
       Bucket: bucket,
       Key: filePath,
       VersionId: versionId
-    }, true)).toHaveLength(1);
+    });
   });
 });
 
@@ -308,32 +315,32 @@ describe('headObject', () => {
     s3ClientMock.on(HeadObjectCommand).resolves({});
   });
 
-  it('should send a head object command', () => {
+  it('should send a head object command', async () => {
     const filePath = 'filePath';
     const versionId = '123';
-    const result = service.headObject({ filePath, versionId });
+    const result = await service.headObject({ filePath, versionId });
 
     expect(result).toBeTruthy();
-    expect(s3ClientMock.calls()).toHaveLength(1);
-    expect(s3ClientMock.commandCalls(HeadObjectCommand, {
+    expect(s3ClientMock).toHaveReceivedCommandTimes(HeadObjectCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(HeadObjectCommand, {
       Bucket: bucket,
       Key: filePath,
       VersionId: versionId
-    }, true)).toHaveLength(1);
+    });
   });
 
-  it('should not require a version ID parameter', () => {
+  it('should not require a version ID parameter', async () => {
     const filePath = 'filePath';
     const versionId = undefined;
-    const result = service.headObject({ filePath, versionId });
+    const result = await service.headObject({ filePath, versionId });
 
     expect(result).toBeTruthy();
-    expect(s3ClientMock.calls()).toHaveLength(1);
-    expect(s3ClientMock.commandCalls(HeadObjectCommand, {
+    expect(s3ClientMock).toHaveReceivedCommandTimes(HeadObjectCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(HeadObjectCommand, {
       Bucket: bucket,
       Key: filePath,
       VersionId: versionId
-    }, true)).toHaveLength(1);
+    });
   });
 });
 
@@ -342,31 +349,31 @@ describe('listObjects', () => {
     s3ClientMock.on(ListObjectsCommand).resolves({});
   });
 
-  it('should send a list objects command with default 2^31-1 maxKeys', () => {
+  it('should send a list objects command with default 2^31-1 maxKeys', async () => {
     const filePath = 'filePath';
-    const result = service.listObjects({ filePath });
+    const result = await service.listObjects({ filePath });
 
     expect(result).toBeTruthy();
-    expect(s3ClientMock.calls()).toHaveLength(1);
-    expect(s3ClientMock.commandCalls(ListObjectsCommand, {
+    expect(s3ClientMock).toHaveReceivedCommandTimes(ListObjectsCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(ListObjectsCommand, {
       Bucket: bucket,
       Prefix: filePath,
       MaxKeys: (2 ** 31) - 1
-    }, true)).toHaveLength(1);
+    });
   });
 
-  it('should send a list objects command with 2000 maxKeys', () => {
+  it('should send a list objects command with 2000 maxKeys', async () => {
     const filePath = 'filePath';
     const maxKeys = 2000;
-    const result = service.listObjects({ filePath, maxKeys });
+    const result = await service.listObjects({ filePath, maxKeys });
 
     expect(result).toBeTruthy();
-    expect(s3ClientMock.calls()).toHaveLength(1);
-    expect(s3ClientMock.commandCalls(ListObjectsCommand, {
+    expect(s3ClientMock).toHaveReceivedCommandTimes(ListObjectsCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(ListObjectsCommand, {
       Bucket: bucket,
       Prefix: filePath,
       MaxKeys: maxKeys
-    }, true)).toHaveLength(1);
+    });
   });
 });
 
@@ -375,16 +382,16 @@ describe('listObjectVersion', () => {
     s3ClientMock.on(ListObjectVersionsCommand).resolves({});
   });
 
-  it('should send a list object versions command', () => {
+  it('should send a list object versions command', async () => {
     const filePath = 'filePath';
-    const result = service.listObjectVersion({ filePath });
+    const result = await service.listObjectVersion({ filePath });
 
     expect(result).toBeTruthy();
-    expect(s3ClientMock.calls()).toHaveLength(1);
-    expect(s3ClientMock.commandCalls(ListObjectVersionsCommand, {
+    expect(s3ClientMock).toHaveReceivedCommandTimes(ListObjectVersionsCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(ListObjectVersionsCommand, {
       Bucket: bucket,
       Prefix: filePath
-    }, true)).toHaveLength(1);
+    });
   });
 });
 
@@ -397,21 +404,21 @@ describe('presignUrl', () => {
     getSignedUrl.mockRestore();
   });
 
-  it('should call getSignedUrl with default expiry', () => {
-    getSignedUrl.mockResolvedValue('');
+  it('should call getSignedUrl with default expiry', async () => {
+    getSignedUrl.mockResolvedValue('foo');
     const command = {};
-    const result = service.presignUrl(command);
+    const result = await service.presignUrl(command);
 
     expect(result).toBeTruthy();
     expect(getSignedUrl).toHaveBeenCalledTimes(1);
     expect(getSignedUrl).toHaveBeenCalledWith(expect.any(Object), command, { expiresIn: defaultTempExpiresIn });
   });
 
-  it('should call getSignedUrl with custom expiry', () => {
-    getSignedUrl.mockResolvedValue('');
+  it('should call getSignedUrl with custom expiry', async () => {
+    getSignedUrl.mockResolvedValue('foo');
     const command = {};
     const expiresIn = 1234;
-    const result = service.presignUrl(command, expiresIn);
+    const result = await service.presignUrl(command, expiresIn);
 
     expect(result).toBeTruthy();
     expect(getSignedUrl).toHaveBeenCalledTimes(1);
@@ -420,64 +427,70 @@ describe('presignUrl', () => {
 });
 
 describe('putObject', () => {
+  const getPathSpy = jest.spyOn(utils, 'getPath');
+  const id = 'id';
+  const keyPath = utils.joinPath(key, id);
+
   beforeEach(() => {
+    getPathSpy.mockReturnValue(keyPath);
     s3ClientMock.on(PutObjectCommand).resolves({});
   });
 
-  it('should send a put object command', () => {
+  afterAll(() => {
+    getPathSpy.mockRestore();
+  });
+
+  it('should send a put object command', async () => {
     const stream = new Readable();
-    const id = 'id';
     const mimeType = 'mimeType';
     const metadata = { name: 'originalName', id: id };
-    const result = service.putObject({ stream, id, mimeType, metadata });
+    const result = await service.putObject({ stream, id, mimeType, metadata });
 
     expect(result).toBeTruthy();
-    expect(s3ClientMock.calls()).toHaveLength(1);
-    expect(s3ClientMock.commandCalls(PutObjectCommand, {
+    expect(s3ClientMock).toHaveReceivedCommandTimes(PutObjectCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(PutObjectCommand, {
       Bucket: bucket,
       ContentType: mimeType,
-      Key: utils.joinPath(key, id),
+      Key: keyPath,
       Body: stream,
       Metadata: metadata,
-    }, true)).toHaveLength(1);
+    });
   });
 
-  it('should send a put object command with custom metadata', () => {
+  it('should send a put object command with custom metadata', async () => {
     const stream = new Readable();
-    const id = 'id';
     const mimeType = 'mimeType';
     const metadata = { name: 'originalName', id: id, foo: 'foo', bar: 'bar' };
-    const result = service.putObject({ stream, id, mimeType, metadata });
+    const result = await service.putObject({ stream, id, mimeType, metadata });
 
     expect(result).toBeTruthy();
-    expect(s3ClientMock.calls()).toHaveLength(1);
-    expect(s3ClientMock.commandCalls(PutObjectCommand, {
+    expect(s3ClientMock).toHaveReceivedCommandTimes(PutObjectCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(PutObjectCommand, {
       Bucket: bucket,
       ContentType: mimeType,
-      Key: utils.joinPath(key, id),
+      Key: keyPath,
       Body: stream,
       Metadata: metadata
-    }, true)).toHaveLength(1);
+    });
   });
 
-  it('should send a put object command with custom tags', () => {
+  it('should send a put object command with custom tags', async () => {
     const stream = new Readable();
-    const id = 'id';
     const mimeType = 'mimeType';
     const metadata = { name: 'originalName', id: id };
     const tags = { foo: 'foo', bar: 'bar' };
-    const result = service.putObject({ stream, id, mimeType, metadata, tags });
+    const result = await service.putObject({ stream, id, mimeType, metadata, tags });
 
     expect(result).toBeTruthy();
-    expect(s3ClientMock.calls()).toHaveLength(1);
-    expect(s3ClientMock.commandCalls(PutObjectCommand, {
+    expect(s3ClientMock).toHaveReceivedCommandTimes(PutObjectCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(PutObjectCommand, {
       Bucket: bucket,
       ContentType: mimeType,
-      Key: utils.joinPath(key, id),
+      Key: keyPath,
       Body: stream,
       Metadata: metadata,
       Tagging: 'foo=foo&bar=bar'
-    }, true)).toHaveLength(1);
+    });
   });
 });
 
@@ -486,39 +499,39 @@ describe('putObjectTagging', () => {
     s3ClientMock.on(PutObjectTaggingCommand).resolves({});
   });
 
-  it('should send a put object tagging command', () => {
+  it('should send a put object tagging command', async () => {
     const filePath = 'filePath';
     const tags = [{ Key: 'abc', Value: '123' }];
-    const result = service.putObjectTagging({ filePath, tags });
+    const result = await service.putObjectTagging({ filePath, tags });
 
     expect(result).toBeTruthy();
-    expect(s3ClientMock.calls()).toHaveLength(1);
-    expect(s3ClientMock.commandCalls(PutObjectTaggingCommand, {
+    expect(s3ClientMock).toHaveReceivedCommandTimes(PutObjectTaggingCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(PutObjectTaggingCommand, {
       Bucket: bucket,
       Key: filePath,
       Tagging: {
         TagSet: [{ Key: 'abc', Value: '123' }]
       },
       VersionId: undefined
-    }, true)).toHaveLength(1);
+    });
   });
 
-  it('should send a put object tagging command for a specific version', () => {
+  it('should send a put object tagging command for a specific version', async () => {
     const filePath = 'filePath';
     const versionId = '1234';
     const tags = [{ Key: 'abc', Value: '123' }];
-    const result = service.putObjectTagging({ filePath, tags, versionId });
+    const result = await service.putObjectTagging({ filePath, tags, versionId });
 
     expect(result).toBeTruthy();
-    expect(s3ClientMock.calls()).toHaveLength(1);
-    expect(s3ClientMock.commandCalls(PutObjectTaggingCommand, {
+    expect(s3ClientMock).toHaveReceivedCommandTimes(PutObjectTaggingCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(PutObjectTaggingCommand, {
       Bucket: bucket,
       Key: filePath,
       Tagging: {
         TagSet: [{ Key: 'abc', Value: '123' }]
       },
       VersionId: versionId
-    }, true)).toHaveLength(1);
+    });
   });
 });
 
@@ -527,31 +540,31 @@ describe('readObject', () => {
     s3ClientMock.on(GetObjectCommand).resolves({});
   });
 
-  it('should send a get object command for the latest object', () => {
+  it('should send a get object command for the latest object', async () => {
     const filePath = 'filePath';
-    const result = service.readObject({ filePath });
+    const result = await service.readObject({ filePath });
 
     expect(result).toBeTruthy();
-    expect(s3ClientMock.calls()).toHaveLength(1);
-    expect(s3ClientMock.commandCalls(GetObjectCommand, {
+    expect(s3ClientMock).toHaveReceivedCommandTimes(GetObjectCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(GetObjectCommand, {
       Bucket: bucket,
       Key: filePath,
       VersionId: undefined
-    }, true)).toHaveLength(1);
+    });
   });
 
-  it('should send a get object command for a specific version', () => {
+  it('should send a get object command for a specific version', async () => {
     const filePath = 'filePath';
     const versionId = '1234';
-    const result = service.readObject({ filePath, versionId });
+    const result = await service.readObject({ filePath, versionId });
 
     expect(result).toBeTruthy();
-    expect(s3ClientMock.calls()).toHaveLength(1);
-    expect(s3ClientMock.commandCalls(GetObjectCommand, {
+    expect(s3ClientMock).toHaveReceivedCommandTimes(GetObjectCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(GetObjectCommand, {
       Bucket: bucket,
       Key: filePath,
       VersionId: versionId
-    }, true)).toHaveLength(1);
+    });
   });
 });
 
@@ -567,9 +580,9 @@ describe('readSignedUrl', () => {
     presignUrlMock.mockRestore();
   });
 
-  it('should call presignUrl with a get object command for the latest object and default expiration', () => {
+  it('should call presignUrl with a get object command for the latest object and default expiration', async () => {
     const filePath = 'filePath';
-    const result = service.readSignedUrl({ filePath });
+    const result = await service.readSignedUrl({ filePath });
 
     expect(result).toBeTruthy();
     expect(presignUrlMock).toHaveBeenCalledTimes(1);
@@ -581,10 +594,10 @@ describe('readSignedUrl', () => {
     }), defaultTempExpiresIn);
   });
 
-  it('should call presignUrl with a get object command for a specific version and default expiration', () => {
+  it('should call presignUrl with a get object command for a specific version and default expiration', async () => {
     const filePath = 'filePath';
     const versionId = '1234';
-    const result = service.readSignedUrl({ filePath, versionId });
+    const result = await service.readSignedUrl({ filePath, versionId });
 
     expect(result).toBeTruthy();
     expect(presignUrlMock).toHaveBeenCalledTimes(1);
@@ -597,11 +610,11 @@ describe('readSignedUrl', () => {
     }), defaultTempExpiresIn);
   });
 
-  it('should call presignUrl with a get object command for a specific version and custom expiration', () => {
+  it('should call presignUrl with a get object command for a specific version and custom expiration', async () => {
     const filePath = 'filePath';
     const versionId = '1234';
     const expires = '2345';
-    const result = service.readSignedUrl({ filePath, versionId, expiresIn: expires });
+    const result = await service.readSignedUrl({ filePath, versionId, expiresIn: expires });
 
     expect(result).toBeTruthy();
     expect(presignUrlMock).toHaveBeenCalledTimes(1);
