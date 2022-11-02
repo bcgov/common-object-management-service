@@ -31,7 +31,6 @@ routes.get('/tagging', requireDb, objectValidator.searchTags, (req, res, next) =
 
 /** Returns object headers */
 routes.head('/:objId', currentObject, hasPermission(Permissions.READ), objectValidator.headObject, (req, res, next) => {
-  // TODO: Add validation to reject unexpected query parameters
   objectController.headObject(req, res, next);
 });
 

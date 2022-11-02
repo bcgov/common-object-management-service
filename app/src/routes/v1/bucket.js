@@ -1,12 +1,12 @@
 const routes = require('express').Router();
 
 const { bucketController } = require('../../controllers');
-const { requireDb } = require('../../middleware/featureToggle');
+const { requireDb, requireSomeAuth } = require('../../middleware/featureToggle');
 const { checkAppMode } = require('../../middleware/authorization');
 
 routes.use(checkAppMode);
 routes.use(requireDb);
-// routes.use(requireSomeAuth);
+routes.use(requireSomeAuth);
 
 /** Creates a bucket */
 routes.put('/', (req, res, next) => {

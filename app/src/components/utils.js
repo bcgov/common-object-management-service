@@ -134,6 +134,7 @@ const utils = {
    * @returns {string} The path
    */
   getPath(objId) {
+    // TODO: Refactor this as default bucket assumption no longer holds
     const key = utils.delimit(config.get('objectStorage.key'));
     return utils.joinPath(key, objId);
   },

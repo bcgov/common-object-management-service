@@ -1,4 +1,3 @@
-const cors = require('cors');
 const { UniqueViolationError } = require('objection');
 const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 
@@ -124,17 +123,8 @@ const controller = {
   async headBucket(req, res, next) {
     try {
       const bucketId = addDashesToUuid(req.params.bucketId);
-      const response = await storageService.headBucket(bucketId);
+      await storageService.headBucket(bucketId);
 
-      // TODO: Proper 304 caching logic (with If-Modified-Since header support)
-      // Consider looking around for express-based caching middleware
-      // Perhaps npm express-preconditions is sufficient?
-
-      // Set Headers via CORS library
-      cors({
-        exposedHeaders: controller._processS3Headers(response, res),
-        origin: true // Set true to dynamically set Access-Control-Allow-Origin based on Origin
-      })(req, res, () => { });
       res.status(204).end();
     } catch (e) {
       next(errorToProblem(SERVICE, e));

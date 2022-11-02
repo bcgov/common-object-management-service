@@ -3,9 +3,9 @@ const config = require('config');
 
 const log = require('../components/log')(module.filename);
 const { AuthMode, AuthType, Permissions } = require('../components/constants');
-const { getAppAuthMode, getPath, getCurrentIdentity } = require('../components/utils');
+const { getAppAuthMode, getCurrentIdentity } = require('../components/utils');
 const { NIL: SYSTEM_USER } = require('uuid');
-const { objectService, permissionService, storageService, userService } = require('../services');
+const { objectService, permissionService, userService } = require('../services');
 
 /**
  * @function checkAppMode

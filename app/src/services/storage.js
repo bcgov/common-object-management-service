@@ -19,7 +19,7 @@ const {
 const config = require('config');
 
 const log = require('../components/log')(module.filename);
-const { getPath } = require('../components/utils');
+const utils = require('../components/utils');
 const { MAXKEYS, MetadataDirective, TaggingDirective } = require('../components/constants');
 const { read: readBucket } = require('./bucket');
 
@@ -46,6 +46,7 @@ const objectStorageService = {
       accessKeyId: config.get('objectStorage.accessKeyId'),
       bucket: config.get('objectStorage.bucket'),
       endpoint: config.get('objectStorage.endpoint'),
+      key: config.get('objectStorage.key'),
       region: defaultRegion,
       secretAccessKey: config.get('objectStorage.secretAccessKey')
     };
@@ -79,12 +80,10 @@ const objectStorageService = {
    */
   _getS3Client: ({ accessKeyId, endpoint, region, secretAccessKey } = {}) => {
     if (!accessKeyId || !endpoint || !region || !secretAccessKey) {
-      const errMsg = 'Unable to generate S3Client due to missing arguments';
-      log.error(errMsg, { function: '_getS3Client'});
-      throw new Error(errMsg);
+      log.error('Unable to generate S3Client due to missing arguments', { function: '_getS3Client'});
     }
 
-    const options = {
+    return new S3Client({
       apiVersion: '2006-03-01',
       credentials: {
         accessKeyId: accessKeyId,
@@ -93,9 +92,7 @@ const objectStorageService = {
       endpoint: endpoint,
       forcePathStyle: true,
       region: region
-    };
-
-    return new S3Client(options);
+    });
   },
 
   /**
@@ -114,8 +111,8 @@ const objectStorageService = {
   async copyObject({
     copySource,
     filePath,
-    metadata = {},
-    tags = {},
+    metadata,
+    tags,
     metadataDirective = MetadataDirective.COPY,
     taggingDirective = TaggingDirective.COPY,
     versionId = undefined,
@@ -347,7 +344,7 @@ const objectStorageService = {
     const data = await this._getBucket(bucketId);
     const params = {
       Bucket: data.bucket,
-      Key: getPath(id),
+      Key: utils.getPath(id),
       Body: stream,
       ContentType: mimeType,
       Metadata: {
