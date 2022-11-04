@@ -197,6 +197,7 @@ const controller = {
         endpoint: req.body.endpoint,
         key: req.body.key,
         secretAccessKey: req.body.secretAccessKey,
+        region: req.body.region,
         active: isTruthy(req.body.active),
         userId: userId
       });

@@ -15,6 +15,7 @@ const service = {
    * @param {string} data.endpoint The S3 bucket endpoint
    * @param {string} data.key The relative S3 key/subpath managed by this bucket
    * @param {string} data.secretAccessKey The S3 bucket secret access key
+   * @param {string} [data.region] The optional S3 bucket region
    * @param {boolean} [data.active] The optional active flag - defaults to true if undefined
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<object>} The result of running the insert operation
@@ -34,6 +35,7 @@ const service = {
         endpoint: data.endpoint,
         key: data.key,
         secretAccessKey: data.secretAccessKey,
+        region: data.region,
         active: data.active,
         createdBy: data.userId
       };
@@ -136,6 +138,7 @@ const service = {
    * @param {string} [data.endpoint] The optional S3 bucket endpoint
    * @param {string} [data.key] The optional relative S3 key/subpath managed by this bucket
    * @param {string} [data.secretAccessKey] The optional S3 bucket secret access key
+   * @param {string} [data.region] The optional S3 bucket region
    * @param {boolean} [data.active] The optional active flag - defaults to true if undefined
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<object>} The result of running the patch operation
@@ -154,6 +157,7 @@ const service = {
         endpoint: data.endpoint,
         key: data.key,
         secretAccessKey: data.secretAccessKey,
+        region: data.region,
         active: data.active,
         updatedBy: data.userId
       });
