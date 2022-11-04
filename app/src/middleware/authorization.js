@@ -3,9 +3,9 @@ const config = require('config');
 
 const log = require('../components/log')(module.filename);
 const { AuthMode, AuthType, Permissions } = require('../components/constants');
-const { getAppAuthMode, getPath, getCurrentIdentity } = require('../components/utils');
+const { getAppAuthMode, getCurrentIdentity } = require('../components/utils');
 const { NIL: SYSTEM_USER } = require('uuid');
-const { objectService, permissionService, storageService, userService } = require('../services');
+const { objectService, permissionService, userService } = require('../services');
 
 /**
  * @function checkAppMode
@@ -49,8 +49,9 @@ const currentObject = async (req, _res, next) => {
   try {
     if (req.params.objId) {
       req.currentObject = Object.freeze({
-        ...await objectService.read(req.params.objId),
-        ...await storageService.listObjectVersion({ filePath: getPath(req.params.objId) })
+        ...await objectService.read(req.params.objId)
+        // TODO: Determine if this is required or can be pushed down to controller level because this inflates all object related service call times by ~300ms
+        //...await storageService.listObjectVersion({ filePath: getPath(req.params.objId) })
       });
     }
   } catch (err) {

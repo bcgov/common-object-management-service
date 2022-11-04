@@ -42,6 +42,22 @@ const utils = {
     return `(array_length("${column}", 1) > 0 and (${clause}))`;
   },
 
+  /**
+   * @function redactSecrets
+   * Sanitizes objects by replacing sensitive data with a REDACTED string value
+   * @param {object} data An arbitrary object
+   * @param {string[]} fields An array of field strings to sanitize on
+   * @returns {object} An arbitrary object with specified secret fields marked as redacted
+   */
+  redactSecrets(data, fields) {
+    if (fields && Array.isArray(fields) && fields.length) {
+      fields.forEach(field => {
+        if (data[field]) data[field] = 'REDACTED';
+      });
+    }
+    return data;
+  },
+
   tableNames(models) {
     return Object.values(models).map(model => model.tableName);
   },

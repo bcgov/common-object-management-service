@@ -451,6 +451,7 @@ const controller = {
     try {
       const objId = addDashesToUuid(req.params.objId);
       const data = {
+        bucketId: req.currentObject.bucketId || undefined,
         filePath: getPath(objId),
         versionId: req.query.versionId ? req.query.versionId.toString() : undefined
       };

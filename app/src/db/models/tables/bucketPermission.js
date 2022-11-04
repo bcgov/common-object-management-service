@@ -4,30 +4,30 @@ const { stamps } = require('../jsonSchema');
 const { Timestamps } = require('../mixins');
 const { filterOneOrMany } = require('../utils');
 
-class ObjectPermission extends Timestamps(Model) {
+class BucketPermission extends Timestamps(Model) {
   static get tableName() {
-    return 'object_permission';
+    return 'bucket_permission';
   }
 
   static get relationMappings() {
-    const ObjectModel = require('./objectModel');
+    const Bucket = require('./bucket');
     const Permission = require('./permission');
     const User = require('./user');
 
     return {
-      object: {
+      bucket: {
         relation: Model.HasOneRelation,
-        modelClass: ObjectModel,
+        modelClass: Bucket,
         join: {
-          from: 'object_permission.objectId',
-          to: 'object.id'
+          from: 'bucket_permission.bucketId',
+          to: 'bucket.bucketId'
         }
       },
       permission: {
         relation: Model.HasOneRelation,
         modelClass: Permission,
         join: {
-          from: 'object_permission.permCode',
+          from: 'bucket_permission.permCode',
           to: 'permission.permCode'
         }
       },
@@ -35,7 +35,7 @@ class ObjectPermission extends Timestamps(Model) {
         relation: Model.HasOneRelation,
         modelClass: User,
         join: {
-          from: 'object_permission.userId',
+          from: 'bucket_permission.userId',
           to: 'user.userId'
         }
       }
@@ -72,4 +72,4 @@ class ObjectPermission extends Timestamps(Model) {
   }
 }
 
-module.exports = ObjectPermission;
+module.exports = BucketPermission;

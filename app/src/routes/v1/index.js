@@ -7,6 +7,7 @@ router.use(currentUser);
 router.get('/', (_req, res) => {
   res.status(200).json({
     endpoints: [
+      '/bucket',
       '/docs',
       '/object',
       '/permission',
@@ -14,6 +15,9 @@ router.get('/', (_req, res) => {
     ]
   });
 });
+
+/** Bucket Router */
+router.use('/bucket', require('./bucket'));
 
 /** Documentation Router */
 router.use('/docs', require('./docs'));

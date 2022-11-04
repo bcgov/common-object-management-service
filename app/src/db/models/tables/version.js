@@ -71,7 +71,7 @@ class Version extends Timestamps(Model) {
         id: { type: 'string', minLength: 1, maxLength: 255 },
         versionId: { type: ['string', 'null'], maxLength: 1024 },
         objectId:{ type: 'string', minLength: 1, maxLength: 255 },
-        mimeType: { type: ['string', 'null'], minLength: 1, maxLength: 255 },
+        mimeType: { type: 'string', maxLength: 255 },
         deleteMarker: { type: 'boolean' },
         ...stamps
       },

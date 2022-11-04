@@ -13,6 +13,8 @@ const service = {
    * @param {string} data.userId The uploading user userId
    * @param {string} data.path The relative S3 key/path of the object
    * @param {boolean} [data.public] The optional public flag - defaults to true if undefined
+   * @param {boolean} [data.active] The optional active flag - defaults to true if undefined
+   * @param {string} [data.bucketId] The optional associated bucketId
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<object>} The result of running the insert operation
    * @throws The error encountered upon db transaction failure
@@ -27,6 +29,8 @@ const service = {
         id: data.id,
         path: data.path,
         public: data.public,
+        active: data.active,
+        bucketId: data.bucketId,
         createdBy: data.userId
       };
       const response = await ObjectModel.query(trx).insert(obj).returning('*');
@@ -80,6 +84,7 @@ const service = {
    * @function searchObjects
    * Search and filter for specific object records
    * @param {string|string[]} [params.id] Optional string or array of uuids representing the object
+   * @param {string|string[]} [params.bucketId] Optional string or array of uuids representing bucket ids
    * @param {string} [params.path] Optional canonical S3 path string to match on
    * @param {boolean} [params.public] Optional boolean on object public status
    * @param {boolean} [params.active] Optional boolean on object active
@@ -94,6 +99,7 @@ const service = {
     return ObjectModel.query()
       .allowGraph('[objectPermission, version]')
       .modify('filterIds', params.id)
+      .modify('filterBucketIds', params.id)
       .modify('filterPath', params.path)
       .modify('filterPublic', params.public)
       .modify('filterActive', params.active)
@@ -114,7 +120,7 @@ const service = {
   /**
    * @function read
    * Get an object db record
-   * @param {string} objId The object uuid to delete
+   * @param {string} objId The object uuid to read
    * @returns {Promise<object>} The result of running the read operation
    * @throws If there are no records found
    */
@@ -131,6 +137,7 @@ const service = {
    * @param {string} data.userId The uploading user userId
    * @param {string} data.path The relative S3 key/path of the object
    * @param {boolean} [data.public] The optional public flag - defaults to true if undefined
+   * @param {boolean} [data.active] The optional active flag - defaults to true if undefined
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<object>} The result of running the patch operation
    * @throws The error encountered upon db transaction failure
@@ -144,6 +151,7 @@ const service = {
       const response = await ObjectModel.query(trx).patchAndFetchById(data.id, {
         path: data.path,
         public: data.public,
+        active: data.active,
         updatedBy: data.userId
       });
 
