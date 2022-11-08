@@ -1,4 +1,4 @@
-const permissionService = require('./permission');
+const objectPermissionService = require('./objectPermission');
 const { Permissions } = require('../components/constants');
 const { ObjectModel } = require('../db/models');
 
@@ -41,7 +41,7 @@ const service = {
           userId: data.userId,
           permCode: p
         }));
-        await permissionService.addPermissions(data.id, perms, data.userId, trx);
+        await objectPermissionService.addPermissions(data.id, perms, data.userId, trx);
       }
 
       if (!etrx) await trx.commit();

@@ -4,7 +4,7 @@ const { Permissions } = require('../components/constants');
 const { ObjectPermission } = require('../db/models');
 
 /**
- * The Permission DB Service
+ * The Object Permission DB Service
  */
 const service = {
   /**
@@ -112,7 +112,7 @@ const service = {
    * @function searchPermissions
    * Search and filter for specific object permissions
    * @param {string|string[]} [params.userId] Optional string or array of uuids representing the user
-   * @param {string|string[]} [params.objId] Optional string or array of uuid representing the object
+   * @param {string|string[]} [params.objId] Optional string or array of uuids representing the object
    * @param {string|string[]} [params.permCode] Optional string or array of permission codes
    * @returns {Promise<object>} The result of running the find operation
    */
