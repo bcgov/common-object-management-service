@@ -7,9 +7,9 @@ const {
   getCurrentIdentity
 } = require('../components/utils');
 const { NIL: SYSTEM_USER } = require('uuid');
-const { permissionService, userService } = require('../services');
+const { objectPermissionService, userService } = require('../services');
 
-const SERVICE = 'PermissionService';
+const SERVICE = 'ObjectPermissionService';
 
 /**
  * The Permission Controller
@@ -27,7 +27,7 @@ const controller = {
     try {
       const objIds = mixedQueryToArray(req.query.objId);
       const userIds = mixedQueryToArray(req.query.userId);
-      const response = await permissionService.searchPermissions({
+      const response = await objectPermissionService.searchPermissions({
         objId: objIds ? objIds.map(id => addDashesToUuid(id)) : objIds,
         userId: userIds ? userIds.map(id => addDashesToUuid(id)) : userIds,
         permCode: mixedQueryToArray(req.query.permCode)
@@ -49,7 +49,7 @@ const controller = {
   async listPermissions(req, res, next) {
     try {
       const userIds = mixedQueryToArray(req.query.userId);
-      const response = await permissionService.searchPermissions({
+      const response = await objectPermissionService.searchPermissions({
         objId: addDashesToUuid(req.params.objId),
         userId: userIds ? userIds.map(id => addDashesToUuid(id)) : userIds,
         permCode: mixedQueryToArray(req.query.permCode)
@@ -76,7 +76,7 @@ const controller = {
       }
 
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
-      const response = await permissionService.addPermissions(addDashesToUuid(req.params.objId), req.body, userId);
+      const response = await objectPermissionService.addPermissions(addDashesToUuid(req.params.objId), req.body, userId);
       res.status(201).json(response);
     } catch (e) {
       next(errorToProblem(SERVICE, e));
@@ -101,7 +101,7 @@ const controller = {
       const userArray = mixedQueryToArray(req.query.userId);
       const userIds = userArray ? userArray.map(id => addDashesToUuid(id)) : userArray;
       const permissions = mixedQueryToArray(req.query.permCode);
-      const response = await permissionService.removePermissions(req.params.objId, userIds, permissions);
+      const response = await objectPermissionService.removePermissions(req.params.objId, userIds, permissions);
       res.status(200).json(response);
     } catch (e) {
       next(errorToProblem(SERVICE, e));
