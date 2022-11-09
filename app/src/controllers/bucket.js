@@ -1,5 +1,6 @@
+const Problem = require('api-problem');
 const { UniqueViolationError } = require('objection');
-const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
+const { NIL: SYSTEM_USER } = require('uuid');
 
 const { AuthMode } = require('../components/constants');
 const errorToProblem = require('../components/errorToProblem');
@@ -75,22 +76,24 @@ const controller = {
    * @returns {function} Express middleware function
    */
   async createBucket(req, res, next) {
-    const data = {
-      bucketId: uuidv4(),
-      ...req.body
-    };
+    const data = { ...req.body };
     let response = undefined;
     try {
       // TODO: Check for credential accessibility/validity first via headBucket
       data.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
       response = await bucketService.create(data);
     } catch (e) {
+      // If bucket exists, check if credentials precisely match
       if (e instanceof UniqueViolationError) {
-        console.log('TODO: Match input with database and grant permissions'); // eslint-disable-line no-console
+        // Grant all permissions if credentials precisely match
+        response = await bucketService.checkGrantPermissions(data).catch(permErr => {
+          throw new Problem(401, { details: permErr.message }).send(res);
+        });
+      } else {
+        next(errorToProblem(SERVICE, e));
       }
-      next(errorToProblem(SERVICE, e));
     } finally {
-      if (response) res.status(201).json(response);
+      if (response) res.status(201).json(redactSecrets(response, secretFields));
     }
   },
 
