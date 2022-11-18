@@ -12,10 +12,10 @@ const {
   ListObjectsCommand,
   ListObjectVersionsCommand,
   PutBucketEncryptionCommand,
-  PutObjectCommand,
   PutObjectTaggingCommand,
   S3Client,
 } = require('@aws-sdk/client-s3');
+const { Upload } = require('@aws-sdk/lib-storage');
 const config = require('config');
 
 const log = require('../components/log')(module.filename);
@@ -342,27 +342,30 @@ const objectStorageService = {
    */
   async putObject({ stream, id, mimeType, metadata, tags, bucketId = undefined }) {
     const data = await this._getBucket(bucketId);
-    const params = {
-      Bucket: data.bucket,
-      Key: utils.getPath(id),
-      Body: stream,
-      ContentType: mimeType,
-      Metadata: {
-        ...metadata,
-        id: id // enforce metadata `id: <object ID>`
+
+    const upload = new Upload({
+      client: this._getS3Client(data),
+      params: {
+        Bucket: data.bucket,
+        Key: utils.getPath(id),
+        Body: stream,
+        ContentType: mimeType,
+        Metadata: {
+          ...metadata,
+          id: id // enforce metadata `id: <object ID>`
+        },
+        // TODO: Consider adding API param support for Server Side Encryption
+        // ServerSideEncryption: 'AES256'
       },
-      // TODO: Consider adding API param support for Server Side Encryption
-      // ServerSideEncryption: 'AES256'
-    };
+    });
 
     if (tags) {
-      params.Tagging = Object.entries(tags).map(([key, value]) => {
-        return `${key}=${encodeURIComponent(value)}`;
-      }).join('&');
+      upload.tags = Object.entries(tags).map(([key, value]) => { 
+        return { 'Key': key, 'Value': value }; 
+      });
     }
 
-    // TODO: Consider refactoring to use Upload instead from @aws-sdk/lib-storage
-    return this._getS3Client(data).send(new PutObjectCommand(params));
+    return upload.done();
   },
 
   /**
