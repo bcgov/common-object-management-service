@@ -1,5 +1,6 @@
 const {
   CopyObjectCommand,
+  CreateMultipartUploadCommand,
   DeleteObjectCommand,
   DeleteObjectTaggingCommand,
   GetBucketVersioningCommand,
@@ -11,7 +12,8 @@ const {
   ListObjectVersionsCommand,
   PutObjectCommand,
   PutObjectTaggingCommand,
-  S3Client
+  S3Client,
+  UploadPartCommand
 } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const { mockClient } = require('aws-sdk-client-mock');
@@ -625,5 +627,46 @@ describe('readSignedUrl', () => {
         VersionId: versionId
       }
     }), expires);
+  });
+});
+
+describe('upload', () => {
+  const getPathSpy = jest.spyOn(utils, 'getPath');
+  const id = 'id';
+  const keyPath = utils.joinPath(key, id);
+
+  beforeEach(() => {
+    getPathSpy.mockReturnValue(keyPath);
+    s3ClientMock.on(CreateMultipartUploadCommand).resolves({UploadId: '1'});
+    s3ClientMock.on(UploadPartCommand).resolves({ETag: '1'});
+  });
+
+  afterAll(() => {
+    getPathSpy.mockRestore();
+  });
+
+  it('should send a put object command', async () => {
+
+    const stream = new Readable({
+      read() {
+        this.push(null); // End the stream
+      }
+    }); 
+    const mimeType = 'mimeType';
+    const metadata = { name: 'originalName', id: id };
+    const result = await service.upload({ stream, id, mimeType, metadata });
+
+    expect(result).toBeTruthy();
+    expect(s3ClientMock).toHaveReceivedCommandTimes(PutObjectCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(PutObjectCommand, {
+      Bucket: bucket,
+      ContentType: mimeType,
+      Key: keyPath,
+      Body: { 
+        data: [], 
+        type: 'Buffer'
+      },
+      Metadata: metadata,
+    });
   });
 });
