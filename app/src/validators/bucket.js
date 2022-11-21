@@ -1,7 +1,6 @@
 const { validate, Joi } = require('express-validation');
 
 const { scheme, type } = require('./common');
-const { DownloadMode } = require('../components/constants');
 
 const schema = {
   createBucket: {

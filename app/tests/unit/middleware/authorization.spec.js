@@ -2,8 +2,8 @@ const Problem = require('api-problem');
 const config = require('config');
 const { NIL: SYSTEM_USER } = require('uuid');
 
-const { checkAppMode, currentObject, hasPermission } = require('../../../src/middleware/authorization');
-const { objectService, permissionService, userService } = require('../../../src/services');
+const mw = require('../../../src/middleware/authorization');
+const { bucketPermissionService, objectService, objectPermissionService, userService } = require('../../../src/services');
 const { AuthMode, AuthType, Permissions } = require('../../../src/components/constants');
 const utils = require('../../../src/components/utils');
 
@@ -12,12 +12,122 @@ jest.mock('config');
 // Mock out utils library and use a spy to observe behavior
 jest.mock('../../../src/components/utils');
 
+const checkPermissionSpy = jest.spyOn(mw, '_checkPermission');
+
 beforeEach(() => {
   jest.resetAllMocks();
 });
 
 afterAll(() => {
   jest.restoreAllMocks();
+});
+
+describe('_checkPermission', () => {
+  const getCurrentIdentitySpy = jest.spyOn(utils, 'getCurrentIdentity');
+  const getCurrentUserIdSpy = jest.spyOn(userService, 'getCurrentUserId');
+  const bucketSearchPermissionsSpy = jest.spyOn(bucketPermissionService, 'searchPermissions');
+  const objSearchPermissionsSpy = jest.spyOn(objectPermissionService, 'searchPermissions');
+
+  beforeAll(() => {
+    checkPermissionSpy.mockRestore(); // Run actual function here
+  });
+
+  it('should return false when nothing is provided', () => {
+    getCurrentIdentitySpy.mockReturnValue(SYSTEM_USER);
+    getCurrentUserIdSpy.mockResolvedValue(SYSTEM_USER);
+
+    const result = mw._checkPermission({}, undefined);
+
+    expect(result).resolves.toBe(false);
+    expect(getCurrentIdentitySpy).toHaveBeenCalledTimes(1);
+    expect(getCurrentIdentitySpy).toHaveBeenCalledWith(undefined, SYSTEM_USER);
+    expect(getCurrentUserIdSpy).toHaveBeenCalledTimes(1);
+    expect(getCurrentUserIdSpy).toHaveBeenCalledWith(SYSTEM_USER);
+    expect(bucketSearchPermissionsSpy).toHaveBeenCalledTimes(0);
+    expect(objSearchPermissionsSpy).toHaveBeenCalledTimes(0);
+  });
+
+  it.each([
+    [false, Permissions.READ, {}, [], []],
+    [false, Permissions.READ, { objId: SYSTEM_USER }, [], []],
+    [false, Permissions.READ, { objId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], []],
+    [true, Permissions.READ, { objId: SYSTEM_USER }, [{ permCode: Permissions.READ }], []],
+    [true, Permissions.READ, { objId: SYSTEM_USER }, [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }], []],
+    [false, Permissions.READ, { bucketId: SYSTEM_USER }, [], []],
+    [false, Permissions.READ, { bucketId: SYSTEM_USER }, [], [{ permCode: Permissions.UPDATE }]],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER }, [], [{ permCode: Permissions.READ }]],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER }, [], [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }]],
+    [false, Permissions.READ, { bucketId: SYSTEM_USER, objId: SYSTEM_USER }, [], []],
+    [false, Permissions.READ, { bucketId: SYSTEM_USER, objId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], []],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER, objId: SYSTEM_USER }, [{ permCode: Permissions.READ }], []],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER, objId: SYSTEM_USER }, [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }], []],
+    [false, Permissions.READ, { bucketId: SYSTEM_USER, objId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], [{ permCode: Permissions.UPDATE }]],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER, objId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], [{ permCode: Permissions.READ }]],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER, objId: SYSTEM_USER }, [{ permCode: Permissions.READ }], [{ permCode: Permissions.UPDATE }]],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER, objId: SYSTEM_USER }, [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }], [{ permCode: Permissions.UPDATE }]],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER, objId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }]],
+  ])('should return %s given a bucketless object, permission %s, params %j, objPerms %j and bucketPerms %j', async (expected, permission, params, objPerms, bucketPerms) => {
+    const req = {
+      currentObject: {},
+      currentUser: { authType: AuthType.BEARER },
+      params: params
+    };
+    getCurrentIdentitySpy.mockReturnValue(SYSTEM_USER);
+    getCurrentUserIdSpy.mockResolvedValue(SYSTEM_USER);
+    bucketSearchPermissionsSpy.mockResolvedValue(bucketPerms);
+    objSearchPermissionsSpy.mockResolvedValue(objPerms);
+
+    const result = await mw._checkPermission(req, permission);
+
+    expect(result).toBe(expected);
+    expect(getCurrentIdentitySpy).toHaveBeenCalledTimes(1);
+    expect(getCurrentIdentitySpy).toHaveBeenCalledWith(req.currentUser, SYSTEM_USER);
+    expect(getCurrentUserIdSpy).toHaveBeenCalledTimes(1);
+    expect(getCurrentUserIdSpy).toHaveBeenCalledWith(SYSTEM_USER);
+    expect(bucketSearchPermissionsSpy).toHaveBeenCalledTimes(params.bucketId ? 1 : 0);
+    expect(objSearchPermissionsSpy).toHaveBeenCalledTimes(params.objId ? 1 : 0);
+  });
+
+  it.each([
+    [false, Permissions.READ, {}, [], []],
+    [false, Permissions.READ, { objId: SYSTEM_USER }, [], []],
+    [false, Permissions.READ, { objId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], []],
+    [true, Permissions.READ, { objId: SYSTEM_USER }, [{ permCode: Permissions.READ }], []],
+    [true, Permissions.READ, { objId: SYSTEM_USER }, [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }], []],
+    [false, Permissions.READ, { bucketId: SYSTEM_USER }, [], []],
+    [false, Permissions.READ, { bucketId: SYSTEM_USER }, [], [{ permCode: Permissions.UPDATE }]],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER }, [], [{ permCode: Permissions.READ }]],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER }, [], [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }]],
+    [false, Permissions.READ, { bucketId: SYSTEM_USER, objId: SYSTEM_USER }, [], []],
+    [false, Permissions.READ, { bucketId: SYSTEM_USER, objId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], []],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER, objId: SYSTEM_USER }, [{ permCode: Permissions.READ }], []],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER, objId: SYSTEM_USER }, [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }], []],
+    [false, Permissions.READ, { bucketId: SYSTEM_USER, objId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], [{ permCode: Permissions.UPDATE }]],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER, objId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], [{ permCode: Permissions.READ }]],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER, objId: SYSTEM_USER }, [{ permCode: Permissions.READ }], [{ permCode: Permissions.UPDATE }]],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER, objId: SYSTEM_USER }, [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }], [{ permCode: Permissions.UPDATE }]],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER, objId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }]],
+  ])('should return %s given a bucketed object, permission %s, params %j, objPerms %j and bucketPerms %j', async (expected, permission, params, objPerms, bucketPerms) => {
+    const req = {
+      currentObject: { bucketId: SYSTEM_USER },
+      currentUser: { authType: AuthType.BEARER },
+      params: params
+    };
+    getCurrentIdentitySpy.mockReturnValue(SYSTEM_USER);
+    getCurrentUserIdSpy.mockResolvedValue(SYSTEM_USER);
+    bucketSearchPermissionsSpy.mockResolvedValue(bucketPerms);
+    objSearchPermissionsSpy.mockResolvedValue(objPerms);
+
+    const result = await mw._checkPermission(req, permission);
+
+    expect(result).toBe(expected);
+    expect(getCurrentIdentitySpy).toHaveBeenCalledTimes(1);
+    expect(getCurrentIdentitySpy).toHaveBeenCalledWith(req.currentUser, SYSTEM_USER);
+    expect(getCurrentUserIdSpy).toHaveBeenCalledTimes(1);
+    expect(getCurrentUserIdSpy).toHaveBeenCalledWith(SYSTEM_USER);
+    expect(bucketSearchPermissionsSpy).toHaveBeenCalledTimes(1);
+    expect(objSearchPermissionsSpy).toHaveBeenCalledTimes(params.objId ? 1 : 0);
+  });
 });
 
 describe('checkAppMode', () => {
@@ -55,7 +165,7 @@ describe('checkAppMode', () => {
     problemSendSpy.mockImplementation(() => { });
     if (type) req.currentUser = { authType: type };
 
-    checkAppMode(req, res, next);
+    mw.checkAppMode(req, res, next);
 
     expect(getAppAuthModeSpy).toHaveBeenCalledTimes(1);
     expect(getAppAuthModeSpy).toHaveBeenCalledWith();
@@ -84,7 +194,7 @@ describe('currentObject', () => {
   ])('does not inject any current object to request with objId %o', (objId) => {
     req.params = { objId: objId };
 
-    currentObject(req, res, next);
+    mw.currentObject(req, res, next);
 
     expect(req.currentObject).toBeUndefined();
     expect(objectReadSpy).toHaveBeenCalledTimes(0);
@@ -100,7 +210,7 @@ describe('currentObject', () => {
     objectReadSpy.mockImplementation(() => { throw new Error('test'); });
     // storageListObjectVersionSpy.mockResolvedValue({});
 
-    currentObject(req, res, next);
+    mw.currentObject(req, res, next);
 
     expect(req.currentObject).toBeUndefined();
     expect(objectReadSpy).toHaveBeenCalledTimes(1);
@@ -120,7 +230,7 @@ describe('currentObject', () => {
     // storageListObjectVersionSpy.mockResolvedValue(testStorage);
     // utils.getPath.mockReturnValue(`/path/${objId}`);
 
-    await currentObject(req, res, next);
+    await mw.currentObject(req, res, next);
 
     expect(req.currentObject).toBeTruthy();
     expect(req.currentObject).toEqual(expect.objectContaining(testRecord));
@@ -142,7 +252,7 @@ describe('hasPermission', () => {
   const getAppAuthModeSpy = jest.spyOn(utils, 'getAppAuthMode');
   const getCurrentIdentitySpy = jest.spyOn(utils, 'getCurrentIdentity');
   const getCurrentUserIdSpy = jest.spyOn(userService, 'getCurrentUserId');
-  const searchPermissionsSpy = jest.spyOn(permissionService, 'searchPermissions');
+  const objSearchPermissionsSpy = jest.spyOn(objectPermissionService, 'searchPermissions');
   const problemSendSpy = jest.spyOn(Problem.prototype, 'send');
 
   let req, res, next;
@@ -170,21 +280,22 @@ describe('hasPermission', () => {
       getAppAuthModeSpy.mockReturnValue(mode);
       config.has.mockReturnValueOnce(hasDb); // db.enabled
 
-      const mw = hasPermission(Permissions.READ);
-      expect(mw).toBeInstanceOf(Function);
-      mw(req, res, next);
+      const result = mw.hasPermission(Permissions.READ);
+      expect(result).toBeInstanceOf(Function);
+      result(req, res, next);
 
       expect(next).toHaveBeenCalledTimes(nextCount);
       if (nextCount) expect(next).toHaveBeenCalledWith();
       expect(problemSendSpy).toHaveBeenCalledTimes(sendCount);
       if (sendCount) expect(problemSendSpy).toHaveBeenCalledWith(res);
-      expect(searchPermissionsSpy).toHaveBeenCalledTimes(0);
+      expect(objSearchPermissionsSpy).toHaveBeenCalledTimes(0);
     });
   });
 
   describe('given a currentObject but no currentUser', () => {
     beforeEach(() => {
       req.currentObject = {};
+      req.params = {};
     });
 
     it.each([
@@ -203,33 +314,42 @@ describe('hasPermission', () => {
       getCurrentUserIdSpy.mockResolvedValue(SYSTEM_USER);
       getCurrentIdentitySpy.mockReturnValue(SYSTEM_USER);
 
-      const mw = hasPermission(Permissions.READ);
-      expect(mw).toBeInstanceOf(Function);
-      await mw(req, res, next);
+      const result = mw.hasPermission(Permissions.READ);
+      expect(result).toBeInstanceOf(Function);
+      await result(req, res, next);
 
       expect(next).toHaveBeenCalledTimes(nextCount);
       if (nextCount) expect(next).toHaveBeenCalledWith();
       expect(problemSendSpy).toHaveBeenCalledTimes(sendCount);
       if (sendCount) expect(problemSendSpy).toHaveBeenCalledWith(res);
-      expect(searchPermissionsSpy).toHaveBeenCalledTimes(0);
+      expect(objSearchPermissionsSpy).toHaveBeenCalledTimes(0);
+    });
+  });
+
+  describe('given a currentUser but no currentObject', () => {
+    beforeEach(() => {
+      req.currentUser = {};
     });
 
     it.each([
-      [true, AuthMode.OIDCAUTH],
-      [true, AuthMode.FULLAUTH],
-    ])('should call getCurrentUserId given hasDb %s and authMode %s', async (hasDb, mode) => {
-      getAppAuthModeSpy.mockReturnValue(mode);
-      config.has.mockReturnValueOnce(hasDb); // db.enabled
+      [{}],
+      [{ bucketId: SYSTEM_USER }],
+      [{ objId: SYSTEM_USER }],
+      [{ bucketId: SYSTEM_USER, objId: SYSTEM_USER }]
+    ])('should call next 0 times with params %j', async (params) => {
+      req.params = params;
+      getAppAuthModeSpy.mockReturnValue(AuthMode.FULLAUTH);
+      config.has.mockReturnValueOnce(true); // db.enabled
       getCurrentUserIdSpy.mockResolvedValue(SYSTEM_USER);
       getCurrentIdentitySpy.mockReturnValue(SYSTEM_USER);
 
-      const mw = hasPermission(Permissions.READ);
-      expect(mw).toBeInstanceOf(Function);
-      await mw(req, res, next);
+      const result = mw.hasPermission(Permissions.READ);
+      expect(result).toBeInstanceOf(Function);
+      await result(req, res, next);
 
-      expect(getCurrentUserIdSpy).toHaveBeenCalledTimes(1);
-      expect(getCurrentUserIdSpy).toHaveBeenCalledWith(SYSTEM_USER);
-      expect(getCurrentIdentitySpy).toHaveBeenCalledTimes(1);
+      expect(next).toHaveBeenCalledTimes(0);
+      expect(problemSendSpy).toHaveBeenCalledTimes(1);
+      expect(problemSendSpy).toHaveBeenCalledWith(res);
     });
   });
 
@@ -237,6 +357,7 @@ describe('hasPermission', () => {
     beforeEach(() => {
       req.currentObject = {};
       req.currentUser = {};
+      req.params = { objId: SYSTEM_USER };
     });
 
     it.each([
@@ -247,19 +368,19 @@ describe('hasPermission', () => {
     ])('should call next %i times when authType BASIC and authMode %s', async (nextCount, mode) => {
       const sendCount = 1 - nextCount;
       getAppAuthModeSpy.mockReturnValue(mode);
-      getCurrentUserIdSpy.mockResolvedValue(SYSTEM_USER);
+      checkPermissionSpy.mockResolvedValue(false);
       config.has.mockReturnValueOnce(true); // db.enabled
       req.currentUser.authType = AuthType.BASIC;
 
-      const mw = hasPermission(Permissions.READ);
-      expect(mw).toBeInstanceOf(Function);
-      await mw(req, res, next);
+      const result = mw.hasPermission(Permissions.READ);
+      expect(result).toBeInstanceOf(Function);
+      await result(req, res, next);
 
       expect(next).toHaveBeenCalledTimes(nextCount);
       if (nextCount) expect(next).toHaveBeenCalledWith();
       expect(problemSendSpy).toHaveBeenCalledTimes(sendCount);
       if (sendCount) expect(problemSendSpy).toHaveBeenCalledWith(res);
-      expect(searchPermissionsSpy).toHaveBeenCalledTimes(0);
+      expect(checkPermissionSpy).toHaveBeenCalledTimes(0);
     });
 
     it.each([
@@ -281,15 +402,15 @@ describe('hasPermission', () => {
       req.currentUser.authType = AuthType.OIDC;
       req.currentObject.public = isPublic;
 
-      const mw = hasPermission(perm);
-      expect(mw).toBeInstanceOf(Function);
-      await mw(req, res, next);
+      const result = mw.hasPermission(perm);
+      expect(result).toBeInstanceOf(Function);
+      await result(req, res, next);
 
       expect(next).toHaveBeenCalledTimes(nextCount);
       if (nextCount) expect(next).toHaveBeenCalledWith();
       expect(problemSendSpy).toHaveBeenCalledTimes(sendCount);
       if (sendCount) expect(problemSendSpy).toHaveBeenCalledWith(res);
-      expect(searchPermissionsSpy).toHaveBeenCalledTimes(0);
+      expect(objSearchPermissionsSpy).toHaveBeenCalledTimes(0);
     });
   });
 
@@ -314,24 +435,24 @@ describe('hasPermission', () => {
       const searchPermCount = +(type === AuthType.BEARER && !!userId);
       getAppAuthModeSpy.mockReturnValue(AuthMode.OIDCAUTH);
       getCurrentUserIdSpy.mockResolvedValue(userId);
-      searchPermissionsSpy.mockResolvedValue(perms);
+      objSearchPermissionsSpy.mockResolvedValue(perms);
       config.has.mockReturnValueOnce(true); // db.enabled
       req.currentObject.public = false;
       req.currentUser.authType = type;
       req.params.objId = SYSTEM_USER;
 
-      const mw = hasPermission(Permissions.READ);
-      expect(mw).toBeInstanceOf(Function);
-      await mw(req, res, next);
+      const result = mw.hasPermission(Permissions.READ);
+      expect(result).toBeInstanceOf(Function);
+      await result(req, res, next);
 
       expect(next).toHaveBeenCalledTimes(nextCount);
       if (nextCount) expect(next).toHaveBeenCalledWith();
       expect(problemSendSpy).toHaveBeenCalledTimes(sendCount);
       if (sendCount) expect(problemSendSpy).toHaveBeenCalledWith(res);
-      expect(searchPermissionsSpy).toHaveBeenCalledTimes(searchPermCount);
+      expect(objSearchPermissionsSpy).toHaveBeenCalledTimes(searchPermCount);
       if (searchPermCount) {
-        expect(searchPermissionsSpy).toHaveBeenCalledWith(expect.objectContaining({ objId: SYSTEM_USER }));
-        expect(searchPermissionsSpy).toHaveBeenCalledWith(expect.objectContaining({ userId: userId }));
+        expect(objSearchPermissionsSpy).toHaveBeenCalledWith(expect.objectContaining({ objId: SYSTEM_USER }));
+        expect(objSearchPermissionsSpy).toHaveBeenCalledWith(expect.objectContaining({ userId: userId }));
       }
     });
   });
