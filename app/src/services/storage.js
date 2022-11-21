@@ -11,6 +11,7 @@ const {
   HeadObjectCommand,
   ListObjectsCommand,
   ListObjectVersionsCommand,
+  PutObjectCommand,
   PutBucketEncryptionCommand,
   PutObjectTaggingCommand,
   S3Client,
@@ -341,6 +342,42 @@ const objectStorageService = {
    * @returns {Promise<object>} The response of the put object operation
    */
   async putObject({ stream, id, mimeType, metadata, tags, bucketId = undefined }) {
+    const data = await this._getBucket(bucketId);
+    const params = {
+      Bucket: data.bucket,
+      Key: utils.getPath(id),
+      Body: stream,
+      ContentType: mimeType,
+      Metadata: {
+        ...metadata,
+        id: id // enforce metadata `id: <object ID>`
+      },
+      // TODO: Consider adding API param support for Server Side Encryption
+      // ServerSideEncryption: 'AES256'
+    };
+
+    if (tags) {
+      params.Tagging = Object.entries(tags).map(([key, value]) => {
+        return `${key}=${encodeURIComponent(value)}`;
+      }).join('&');
+    }
+
+    // TODO: Consider refactoring to use Upload instead from @aws-sdk/lib-storage
+    return this._getS3Client(data).send(new PutObjectCommand(params));
+  },
+
+  /**
+   * @function upload
+   * Uploads the object `stream` at the `id` path
+   * @param {stream} options.stream The binary stream of the object
+   * @param {string} options.id The filePath id of the object
+   * @param {string} options.mimeType The mime type of the object
+   * @param {object} [options.metadata] Optional object containing key/value pairs for metadata
+   * @param {object} [options.tags] Optional object containing key/value pairs for tags
+   * @param {string} [options.bucketId] Optional bucketId
+   * @returns {Promise<object>} The response of the put object operation
+   */
+  async upload({ stream, id, mimeType, metadata, tags, bucketId = undefined }) {
     const data = await this._getBucket(bucketId);
 
     const upload = new Upload({
