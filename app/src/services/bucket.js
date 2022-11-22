@@ -99,7 +99,7 @@ const service = {
           userId: data.userId,
           permCode: p
         }));
-        await bucketPermissionService.addPermissions(data.bucketId, perms, data.userId, trx);
+        await bucketPermissionService.addPermissions(obj.bucketId, perms, data.userId, trx);
       }
 
       if (!etrx) await trx.commit();
