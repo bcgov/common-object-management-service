@@ -1,40 +1,42 @@
 const router = require('express').Router();
 
+const { Permissions } = require('../../components/constants');
 const { bucketController } = require('../../controllers');
+const { bucketValidator } = require('../../validators');
 const { requireDb, requireSomeAuth } = require('../../middleware/featureToggle');
-const { checkAppMode } = require('../../middleware/authorization');
+const { checkAppMode, hasPermission } = require('../../middleware/authorization');
 
 router.use(checkAppMode);
 router.use(requireDb);
 router.use(requireSomeAuth);
 
 /** Creates a bucket */
-router.put('/', (req, res, next) => {
+router.put('/', bucketValidator.createBucket, (req, res, next) => {
   bucketController.createBucket(req, res, next);
 });
 
 /** Search for buckets */
-router.get('/', (req, res, next) => {
+router.get('/', bucketValidator.searchBuckets, (req, res, next) => {
   bucketController.searchBuckets(req, res, next);
 });
 
 /** Returns bucket headers */
-router.head('/:bucketId', (req, res, next) => {
+router.head('/:bucketId', hasPermission(Permissions.READ), bucketValidator.headBucket, (req, res, next) => {
   bucketController.headBucket(req, res, next);
 });
 
 /** Returns a bucket */
-router.get('/:bucketId', (req, res, next) => {
+router.get('/:bucketId', hasPermission(Permissions.READ), bucketValidator.readBucket, (req, res, next) => {
   bucketController.readBucket(req, res, next);
 });
 
 /** Updates a bucket */
-router.patch('/:bucketId', (req, res, next) => {
+router.patch('/:bucketId', hasPermission(Permissions.UPDATE), bucketValidator.updateBucket, (req, res, next) => {
   bucketController.updateBucket(req, res, next);
 });
 
 /** Deletes the bucket */
-router.delete('/:bucketId', (req, res, next) => {
+router.delete('/:bucketId', hasPermission(Permissions.DELETE), bucketValidator.deleteBucket, (req, res, next) => {
   bucketController.deleteBucket(req, res, next);
 });
 
