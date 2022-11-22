@@ -2,7 +2,7 @@ const crypto = require('crypto');
 const jestJoi = require('jest-joi');
 expect.extend(jestJoi.matchers);
 
-const schema = require('../../../src/validators/user').schema;
+const { schema } = require('../../../src/validators/user');
 const { scheme, type } = require('../../../src/validators/common');
 
 

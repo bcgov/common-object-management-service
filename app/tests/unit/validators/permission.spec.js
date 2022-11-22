@@ -1,7 +1,7 @@
 const jestJoi = require('jest-joi');
 expect.extend(jestJoi.matchers);
 
-const schema = require('../../../src/validators/permission').schema;
+const { schema } = require('../../../src/validators/objectPermission');
 const { scheme, type } = require('../../../src/validators/common');
 const { Permissions } = require('../../../src/components/constants');
 

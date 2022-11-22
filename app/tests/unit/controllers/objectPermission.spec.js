@@ -1,7 +1,7 @@
 const Problem = require('api-problem');
 
-const controller = require('../../../src/controllers/permission');
-const { permissionService, userService } = require('../../../src/services');
+const controller = require('../../../src/controllers/objectPermission');
+const { objectPermissionService, userService } = require('../../../src/services');
 
 const mockResponse = () => {
   const res = {};
@@ -18,7 +18,7 @@ describe('searchPermissions', () => {
     jest.resetAllMocks();
   });
 
-  const searchPermissionsSpy = jest.spyOn(permissionService, 'searchPermissions');
+  const searchPermissionsSpy = jest.spyOn(objectPermissionService, 'searchPermissions');
 
   const req = {
     query: { objId: 'xyz-789', userId: 'oid-1d', permCode: 'pc' }
@@ -44,7 +44,7 @@ describe('searchPermissions', () => {
     await controller.searchPermissions(req, res, next);
     expect(searchPermissionsSpy).toHaveBeenCalledTimes(1);
     expect(next).toHaveBeenCalledTimes(1);
-    expect(next).toHaveBeenCalledWith(new Problem(502, 'Unknown PermissionService Error'));
+    expect(next).toHaveBeenCalledWith(new Problem(502, 'Unknown ObjectPermissionService Error'));
   });
 });
 
@@ -53,7 +53,7 @@ describe('listPermissions', () => {
     jest.resetAllMocks();
   });
 
-  const searchPermissionsSpy = jest.spyOn(permissionService, 'searchPermissions');
+  const searchPermissionsSpy = jest.spyOn(objectPermissionService, 'searchPermissions');
 
   const req = {
     params: { objId: 'xyz-789' },
@@ -80,7 +80,7 @@ describe('listPermissions', () => {
     await controller.listPermissions(req, res, next);
     expect(searchPermissionsSpy).toHaveBeenCalledTimes(1);
     expect(next).toHaveBeenCalledTimes(1);
-    expect(next).toHaveBeenCalledWith(new Problem(502, 'Unknown PermissionService Error'));
+    expect(next).toHaveBeenCalledWith(new Problem(502, 'Unknown ObjectPermissionService Error'));
   });
 });
 
@@ -89,7 +89,7 @@ describe('addPermissions', () => {
     jest.resetAllMocks();
   });
 
-  const addPermissionsSpy = jest.spyOn(permissionService, 'addPermissions');
+  const addPermissionsSpy = jest.spyOn(objectPermissionService, 'addPermissions');
   const getCurrentUserIdSpy = jest.spyOn(userService, 'getCurrentUserId');
 
   const req = {
@@ -118,7 +118,7 @@ describe('addPermissions', () => {
     await controller.addPermissions(req, res, next);
     expect(addPermissionsSpy).toHaveBeenCalledTimes(1);
     expect(next).toHaveBeenCalledTimes(1);
-    expect(next).toHaveBeenCalledWith(new Problem(502, 'Unknown PermissionService Error'));
+    expect(next).toHaveBeenCalledWith(new Problem(502, 'Unknown ObjectPermissionService Error'));
   });
 });
 
@@ -127,7 +127,7 @@ describe('removePermissions', () => {
     jest.resetAllMocks();
   });
 
-  const removePermissionsSpy = jest.spyOn(permissionService, 'removePermissions');
+  const removePermissionsSpy = jest.spyOn(objectPermissionService, 'removePermissions');
   const req = {
     params: { objId: 'xyz-789' },
     query: { userId: 'oid-1d,oid-2d', permCode: 'pc' }
@@ -153,6 +153,6 @@ describe('removePermissions', () => {
     await controller.removePermissions(req, res, next);
     expect(removePermissionsSpy).toHaveBeenCalledTimes(1);
     expect(next).toHaveBeenCalledTimes(1);
-    expect(next).toHaveBeenCalledWith(new Problem(502, 'Unknown PermissionService Error'));
+    expect(next).toHaveBeenCalledWith(new Problem(502, 'Unknown ObjectPermissionService Error'));
   });
 });
