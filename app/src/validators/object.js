@@ -30,7 +30,8 @@ const schema = {
       objId: type.uuidv4
     }),
     query: Joi.object({
-      tagset: type.tagset(1)
+      tagset: type.tagset(1),
+      bucketId: Joi.string(),
     })
   },
 

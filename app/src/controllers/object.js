@@ -202,14 +202,6 @@ const controller = {
       const objects = [];
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
-      let bucketId = undefined;
-      bb.on('field', (fieldname, val) => {
-        // We only handle 'bucketId' at this point
-        if(fieldname === 'bucketId') {
-          bucketId = val;
-        }
-      });
-
       bb.on('file', (name, stream, info) => {
         const objId = uuidv4();
 
@@ -223,7 +215,7 @@ const controller = {
             id: objId
           },
           tags: req.query.tagset,
-          bucketId: bucketId
+          bucketId: req.query.bucketId
         };
 
         // TODO: Consider refactoring to use Upload instead from @aws-sdk/lib-storage
