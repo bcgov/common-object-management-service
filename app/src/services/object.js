@@ -99,7 +99,7 @@ const service = {
     return ObjectModel.query()
       .allowGraph('[objectPermission, version]')
       .modify('filterIds', params.id)
-      .modify('filterBucketIds', params.id)
+      .modify('filterBucketIds', params.bucketId)
       .modify('filterPath', params.path)
       .modify('filterPublic', params.public)
       .modify('filterActive', params.active)
