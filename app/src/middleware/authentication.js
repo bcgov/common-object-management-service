@@ -10,7 +10,7 @@ const { userService } = require('../services');
  * Basic Auth configuration object
  * @see {@link https://github.com/LionC/express-basic-auth}
  */
-const _basicAuthConfig ={
+const _basicAuthConfig = {
   // Must be a synchronous function
   authorizer: (username, password) => {
     const userMatch = basicAuth.safeCompare(username, config.get('basicAuth.username'));

@@ -47,8 +47,8 @@ class BucketPermission extends Timestamps(Model) {
       filterUserId(query, value) {
         filterOneOrMany(query, value, 'userId');
       },
-      filterObjectId(query, value) {
-        filterOneOrMany(query, value, 'objectId');
+      filterBucketId(query, value) {
+        filterOneOrMany(query, value, 'bucketId');
       },
       filterPermissionCode(query, value) {
         filterOneOrMany(query, value, 'permCode');
@@ -59,11 +59,11 @@ class BucketPermission extends Timestamps(Model) {
   static get jsonSchema() {
     return {
       type: 'object',
-      required: ['id', 'userId', 'objectId', 'permCode'],
+      required: ['id', 'userId', 'bucketId', 'permCode'],
       properties: {
         id: { type: 'string', maxLength: 255 },
         userId: { type: 'string', maxLength: 255 },
-        objectId: { type: 'string', maxLength: 255 },
+        bucketId: { type: 'string', maxLength: 255 },
         permCode: { type: 'string', maxLength: 255 },
         ...stamps
       },

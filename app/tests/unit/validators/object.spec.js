@@ -4,7 +4,7 @@ const jestJoi = require('jest-joi');
 const { DownloadMode } = require('../../../src/components/constants');
 expect.extend(jestJoi.matchers);
 
-const schema = require('../../../src/validators/object').schema;
+const { schema } = require('../../../src/validators/object');
 const { scheme, type } = require('../../../src/validators/common');
 
 

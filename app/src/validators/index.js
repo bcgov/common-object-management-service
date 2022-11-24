@@ -1,5 +1,7 @@
 module.exports = {
+  bucketValidator: require('./bucket'),
+  bucketPermissionValidator: require('./bucketPermission'),
   objectValidator: require('./object'),
-  permissionValidator: require('./permission'),
+  objectPermissionValidator: require('./objectPermission'),
   userValidator: require('./user'),
 };

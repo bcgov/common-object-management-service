@@ -5,7 +5,46 @@ const log = require('../components/log')(module.filename);
 const { AuthMode, AuthType, Permissions } = require('../components/constants');
 const { getAppAuthMode, getCurrentIdentity } = require('../components/utils');
 const { NIL: SYSTEM_USER } = require('uuid');
-const { objectService, permissionService, userService } = require('../services');
+const { bucketPermissionService, objectService, objectPermissionService, userService } = require('../services');
+
+/**
+ * @function _checkPermission
+ * Checks if the current user is authorized to perform the operation
+ * @param {object} req.currentObject Express request object currentObject
+ * @param {object} req.currentUser Express request object currentUser
+ * @param {object} req.params Express request object params
+ * @param {string} permission The permission to check against
+ * @returns {boolean} True if permission exists; false otherwise
+ */
+const _checkPermission = async ({ currentObject, currentUser, params }, permission) => {
+  const authType = currentUser ? currentUser.authType : undefined;
+  let result = false;
+
+  // Guard against unauthorized access for all other cases
+  const userId = await userService.getCurrentUserId(getCurrentIdentity(currentUser, SYSTEM_USER));
+
+  if (authType === AuthType.BEARER && userId) {
+    const permissions = [];
+    const searchParams = { permCode: permission, userId: userId };
+
+    if (params.objId) {
+      permissions.push(...await objectPermissionService.searchPermissions({
+        objId: params.objId, ...searchParams
+      }));
+    }
+    if (params.bucketId || currentObject.bucketId) {
+      permissions.push(...await bucketPermissionService.searchPermissions({
+        bucketId: params.bucketId || currentObject.bucketId, ...searchParams
+      }));
+    }
+
+    // Check if user has the required permission in their permission set
+    result = permissions.some(p => p.permCode === permission);
+  }
+
+  log.debug('Missing user identification', { function: '_checkPermission' });
+  return result;
+};
 
 /**
  * @function checkAppMode
@@ -61,12 +100,6 @@ const currentObject = async (req, _res, next) => {
   next();
 };
 
-/**
- * @function hasPermission
- * Checks if the current user is authorized to perform the operation
- * @param {string} permission The permission to check against
- * @returns {function} Express middleware function
- */
 const hasPermission = (permission) => {
   return async (req, res, next) => {
     const authMode = getAppAuthMode();
@@ -78,30 +111,17 @@ const hasPermission = (permission) => {
     try {
       if (!config.has('db.enabled') || !canOidcMode(authMode)) {
         log.debug('Current application mode does not enforce permission checks', { function: 'hasPermission' });
-      } else if (!req.currentObject) {
+      } else if (!req.params.objId && !req.params.bucketId) {
+        throw new Error('Missing request parameter(s)');
+      } else if (req.params.objId && !req.currentObject) {
         // Force 403 on unauthorized or not found; do not allow 404 id brute force discovery
         throw new Error('Missing object record');
       } else if (authType === AuthType.BASIC && canBasicMode(authMode)) {
         log.debug('Basic authTypes are always permitted', { function: 'hasPermission' });
-      } else if (req.currentObject.public && permission === Permissions.READ) {
+      } else if (req.params.objId && req.currentObject.public && permission === Permissions.READ) {
         log.debug('Read requests on public objects are always permitted', { function: 'hasPermission' });
-      } else {
-        // Guard against unauthorized access for all other cases
-        const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
-
-        if (authType === AuthType.BEARER && userId) {
-          // Check if user has the required permission in their permission set
-          const permissions = await permissionService.searchPermissions({
-            objId: req.params.objId,
-            userId: userId
-          });
-
-          if (!permissions.some(p => p.permCode === permission)) {
-            throw new Error(`User lacks permission '${permission}' on object '${req.params.objId}'`);
-          }
-        } else {
-          throw new Error('Missing user identification');
-        }
+      } else if (!await _checkPermission(req, permission)) {
+        throw new Error(`User lacks required permission ${permission}`);
       }
     } catch (err) {
       log.verbose(err.message, { function: 'hasPermission' });
@@ -113,5 +133,5 @@ const hasPermission = (permission) => {
 };
 
 module.exports = {
-  checkAppMode, currentObject, hasPermission
+  _checkPermission, checkAppMode, currentObject, hasPermission
 };

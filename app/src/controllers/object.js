@@ -215,6 +215,7 @@ const controller = {
             id: objId
           },
           tags: req.query.tagset,
+          bucketId: req.query.bucketId
         };
 
         // TODO: Consider refactoring to use Upload instead from @aws-sdk/lib-storage
@@ -690,6 +691,7 @@ const controller = {
       const tagging = req.query.tagset;
       const params = {
         id: objIds ? objIds.map(id => addDashesToUuid(id)) : objIds,
+        bucketId: req.query.bucketId,
         name: req.query.name,
         path: req.query.path,
         mimeType: req.query.mimeType,
