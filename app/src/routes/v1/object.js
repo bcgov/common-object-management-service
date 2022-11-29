@@ -19,9 +19,9 @@ router.get('/', requireDb, objectValidator.searchObjects, (req, res, next) => {
   objectController.searchObjects(req, res, next);
 });
 
-/** Search for metadata */
-router.get('/metadata', requireDb, objectValidator.searchMetadata, (req, res, next) => {
-  objectController.searchMetadata(req, res, next);
+/** Fetch metadata for specific objects */
+router.get('/metadata', requireDb, objectValidator.fetchMetadata, (req, res, next) => {
+  objectController.fetchMetadata(req, res, next);
 });
 
 /** Search for tags */

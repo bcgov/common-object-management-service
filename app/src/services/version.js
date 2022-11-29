@@ -120,15 +120,15 @@ const service = {
   },
 
   /**
- * @function get
- * Get a given version from the database
- * @param {object[]} versionId S3 VersionId if null or undefined,
- * get latest version (excluding delete-makers)
- * @param {string} objectId id of the parent object
- * @param {object} [etrx=undefined] An optional Objection Transaction object
- * @returns {Promise<object>} the Version object from the database
- * @throws The error encountered upon db transaction failure
- */
+   * @function get
+   * Get a given version from the database
+   * @param {object[]} versionId S3 VersionId if null or undefined,
+   * get latest version (excluding delete-makers)
+   * @param {string} objectId id of the parent object
+   * @param {object} [etrx=undefined] An optional Objection Transaction object
+   * @returns {Promise<object>} the Version object from the database
+   * @throws The error encountered upon db transaction failure
+   */
   get: async (versionId, objectId, etrx = undefined) => {
     let trx;
     try {

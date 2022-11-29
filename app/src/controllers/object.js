@@ -441,6 +441,30 @@ const controller = {
   },
 
   /**
+   * @function fetchMetadata
+   * Fetch metadata for specific objects
+   * @param {object} req Express request object
+   * @param {object} res Express response object
+   * @param {function} next The next callback function
+   * @returns {function} Express middleware function
+   */
+  async fetchMetadata(req, res, next) {
+    try {
+      const objIds = mixedQueryToArray(req.query.objId);
+      const metadata = getMetadata(req.headers);
+      const params = {
+        objId: objIds ? objIds.map(id => addDashesToUuid(id)) : objIds,
+        metadata: metadata && Object.keys(metadata).length ? metadata : undefined
+      };
+
+      const response = await metadataService.fetchMetadata(params);
+      res.status(200).json(response);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
    * @function headObject
    * Returns object headers
    * @param {object} req Express request object
@@ -647,29 +671,6 @@ const controller = {
       }
     } catch (e) {
       next(errorToProblem(SERVICE, e));
-    }
-  },
-
-  /**
-   * @function searchMetadata
-   * Search and filter for specific metadata
-   * @param {object} req Express request object
-   * @param {object} res Express response object
-   * @param {function} next The next callback function
-   * @returns {function} Express middleware function
-   */
-  async searchMetadata(req, res, next) {
-    try {
-      const metadata = getMetadata(req.headers);
-
-      const params = {
-        metadata: metadata && Object.keys(metadata).length ? metadata : undefined
-      };
-
-      const response = await metadataService.searchMetadata(params);
-      res.status(200).json(response);
-    } catch (error) {
-      next(error);
     }
   },
 
