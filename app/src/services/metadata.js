@@ -1,13 +1,11 @@
 const { NIL: SYSTEM_USER } = require('uuid');
-const { Metadata, VersionMetadata } = require('../db/models');
+const { Metadata, VersionMetadata, Version } = require('../db/models');
 const { getObjectsByKeyValue } = require('../components/utils');
 
 /**
  * The Metadata DB Service
  */
 const service = {
-
-
   /**
    * @function associateMetadata
    * Makes the incoming list of metadata the definitive set associated with versionId
@@ -147,6 +145,30 @@ const service = {
       if (!etrx && trx) await trx.rollback();
       throw err;
     }
+  },
+
+  /**
+   * @function fetchMetadata
+   * Fetch metadata for specific objects
+   * @param {string[]} params.objId An array of uuids representing the object
+   * @param {object} [params.metadata] Optional object of metadata key/value pairs
+   * @returns {Promise<object[]>} The result of running the find operation
+   */
+  fetchMetadata: (params) => {
+    return Promise.all(params.objId.map(objId => {
+      const q = Version.query()
+        .allowGraph('metadata')
+        .withGraphJoined('metadata')
+        .where('version.objectId', objId)
+        .orderBy('version.createdAt', 'desc')
+        .first();
+      if (params.metadata) {
+        Object.keys(params.metadata).forEach(key => {
+          q.where('metadata.key', key);
+        });
+      }
+      return q;
+    }));
   },
 
   /**

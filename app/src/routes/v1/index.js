@@ -9,6 +9,7 @@ router.get('/', (_req, res) => {
     endpoints: [
       '/bucket',
       '/docs',
+      '/metadata',
       '/object',
       '/permission',
       '/user'
@@ -21,6 +22,9 @@ router.use('/bucket', require('./bucket'));
 
 /** Documentation Router */
 router.use('/docs', require('./docs'));
+
+/** Metadata Router */
+router.use('/metadata', require('./metadata'));
 
 /** Object Router */
 router.use('/object', require('./object'));

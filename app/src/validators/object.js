@@ -64,6 +64,13 @@ const schema = {
     })
   },
 
+  fetchMetadata: {
+    headers: type.metadata(0),
+    query: Joi.object({
+      objId: scheme.guid.required()
+    })
+  },
+
   headObject: {
     params: Joi.object({
       objId: type.uuidv4
@@ -108,10 +115,6 @@ const schema = {
       versionId: Joi.string(),
       tagset: type.tagset(1),
     })
-  },
-
-  searchMetadata: {
-    headers: type.metadata(0),
   },
 
   searchObjects: {
@@ -161,12 +164,12 @@ const validator = {
   deleteMetadata: validate(schema.deleteMetadata, { statusCode: 422 }),
   deleteObject: validate(schema.deleteObject, { statusCode: 422 }),
   deleteTags: validate(schema.deleteTags, { statusCode: 422 }),
+  fetchMetadata: validate(schema.fetchMetadata, { statusCode: 422 }),
   headObject: validate(schema.headObject, { statusCode: 422 }),
   listObjectVersion: validate(schema.listObjectVersion, { statusCode: 422 }),
   readObject: validate(schema.readObject, { statusCode: 422 }),
   replaceMetadata: validate(schema.replaceMetadata, { statusCode: 422 }),
   replaceTags: validate(schema.replaceTags, { statusCode: 422 }),
-  searchMetadata: validate(schema.searchMetadata, { statusCode: 422 }),
   searchObjects: validate(schema.searchObjects, { statusCode: 422 }),
   searchTags: validate(schema.searchTags, { statusCode: 422 }),
   togglePublic: validate(schema.togglePublic, { statusCode: 422 }),

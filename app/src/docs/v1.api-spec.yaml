@@ -18,6 +18,13 @@ security:
   - BearerAuth: []
     OpenID: []
 tags:
+  - name: Metadata
+    description: >-
+      Operations for inspecting known COMS metadata. Certain operations not
+      available without a database.
+    externalDocs:
+      url: >-
+        https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#metadata
   - name: Object
     description: >-
       Operations directly influencing an S3 Object. Certain operations not
@@ -50,6 +57,30 @@ tags:
       url: >-
         https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#user
 paths:
+  /metadata:
+    get:
+      summary: Returns a list of matching metadata
+      description: >-
+        Gets a list of metadata matching the given parameters. Multiple Key/Value pairs
+        can be provided in the headers to narrow down results. If none are provided the full set of metadata will be returned.
+      operationId: getMetadata
+      tags:
+        - Metadata
+      parameters:
+        - $ref: '#/components/parameters/Header-Metadata'
+      responses:
+        '200':
+          description: Returns an array of matching key/value pairs.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/S3-TagSet'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        default:
+          $ref: '#/components/responses/Error'
   /object:
     post:
       summary: Creates new objects
@@ -376,30 +407,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
-        default:
-          $ref: '#/components/responses/Error'
-  /object/metadata:
-    get:
-      summary: Returns a list of matching metadata
-      description: >-
-        Gets a list of metadata matching the given parameters. Multiple Key/Value pairs
-        can be provided in the headers to narrow down results. If none are provided the full set of metadata will be returned.
-      operationId: getMetadata
-      tags:
-        - Object Metadata
-      parameters:
-        - $ref: '#/components/parameters/Header-Metadata'
-      responses:
-        '200':
-          description: Returns an array of matching key/value pairs.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/S3-TagSet'
-        '422':
-          $ref: '#/components/responses/UnprocessableEntity'
         default:
           $ref: '#/components/responses/Error'
   /object/{objId}/metadata:
