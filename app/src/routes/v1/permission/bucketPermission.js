@@ -4,13 +4,13 @@ const { Permissions } = require('../../../components/constants');
 const { bucketPermissionController } = require('../../../controllers');
 const { bucketPermissionValidator } = require('../../../validators');
 const { checkAppMode, currentObject, hasPermission } = require('../../../middleware/authorization');
-const { requireBasicAuth, requireDb, requireSomeAuth } = require('../../../middleware/featureToggle');
+const { requireDb, requireSomeAuth } = require('../../../middleware/featureToggle');
 
 router.use(checkAppMode);
 router.use(requireDb);
 
 /** Search for bucket permissions */
-router.get('/', requireBasicAuth, bucketPermissionValidator.searchPermissions, (req, res, next) => {
+router.get('/', bucketPermissionValidator.searchPermissions, (req, res, next) => {
   bucketPermissionController.searchPermissions(req, res, next);
 });
 
