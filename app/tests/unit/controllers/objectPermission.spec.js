@@ -2,6 +2,7 @@ const Problem = require('api-problem');
 
 const controller = require('../../../src/controllers/objectPermission');
 const { objectPermissionService, userService } = require('../../../src/services');
+const utils = require('../../../src/components/utils');
 
 const mockResponse = () => {
   const res = {};
@@ -19,21 +20,23 @@ describe('searchPermissions', () => {
   });
 
   const searchPermissionsSpy = jest.spyOn(objectPermissionService, 'searchPermissions');
+  const groupByObjectSpy = jest.spyOn(utils, 'groupByObject');
 
   const req = {
-    query: { objId: 'xyz-789', userId: 'oid-1d', permCode: 'pc' }
+    query: { bucketId: 'abc', objId: 'xyz-789', userId: 'oid-1d', permCode: 'pc' }
   };
   const next = jest.fn();
 
   it('should return the permission service searchPermissions result', async () => {
     searchPermissionsSpy.mockReturnValue({ res: 123 });
+    groupByObjectSpy.mockReturnValue([]);
 
     const res = mockResponse();
     await controller.searchPermissions(req, res, next);
     expect(searchPermissionsSpy).toHaveBeenCalledTimes(1);
-    expect(searchPermissionsSpy).toHaveBeenCalledWith({ objId: [req.query.objId], userId: [req.query.userId], permCode: [req.query.permCode] });
+    expect(searchPermissionsSpy).toHaveBeenCalledWith({ bucketId: [req.query.bucketId], objId: [req.query.objId], userId: [req.query.userId], permCode: [req.query.permCode] });
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith({ res: 123 });
+    expect(res.json).toHaveBeenCalledWith([]);
     expect(next).toHaveBeenCalledTimes(0);
   });
 

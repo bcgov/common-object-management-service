@@ -44,6 +44,14 @@ class ObjectPermission extends Timestamps(Model) {
 
   static get modifiers() {
     return {
+      filterBucketId(query, value) {
+        if (value) {
+          query
+            .select('object_permission.*')
+            .joinRelated('object')
+            .whereIn('object.bucketId', value);
+        }
+      },
       filterUserId(query, value) {
         filterOneOrMany(query, value, 'userId');
       },
