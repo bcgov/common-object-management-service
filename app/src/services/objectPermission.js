@@ -111,6 +111,7 @@ const service = {
   /**
    * @function searchPermissions
    * Search and filter for specific object permissions
+   * @param {string|string[]} [params.bucketId] Optional string or array of uuids representing the bucket
    * @param {string|string[]} [params.userId] Optional string or array of uuids representing the user
    * @param {string|string[]} [params.objId] Optional string or array of uuids representing the object
    * @param {string|string[]} [params.permCode] Optional string or array of permission codes
@@ -118,6 +119,7 @@ const service = {
    */
   searchPermissions: (params) => {
     return ObjectPermission.query()
+      .modify('filterBucketId', params.bucketId)
       .modify('filterUserId', params.userId)
       .modify('filterObjectId', params.objId)
       .modify('filterPermissionCode', params.permCode);
