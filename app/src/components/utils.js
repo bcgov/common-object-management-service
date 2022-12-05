@@ -152,12 +152,12 @@ const utils = {
     return objectArray.reduce((acc, obj) => {
       // value of the 'property' attribute of obj
       const val = obj[property];
-      // does accumulator array contain an object with permissions matching obj
+      // does accumulator array have element with nested array containing current obj
       const el = acc.find((ob) => {
         return ob[group].some((p) => p[property] === val);
       });
       if (el) {
-        // add object to current object's permissions array
+        // add to current element's nested array
         el[group].push(obj);
       } else {
         // add to a new top level element in accumulator array

@@ -3,7 +3,6 @@ const cors = require('cors');
 const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 
 const {
-  AuthMode,
   DownloadMode,
   MAXCOPYOBJECTLENGTH,
   MetadataDirective
@@ -11,7 +10,6 @@ const {
 const errorToProblem = require('../components/errorToProblem');
 const {
   addDashesToUuid,
-  getAppAuthMode,
   getKeyValue,
   toLowerKeys,
   getMetadata,
@@ -32,8 +30,6 @@ const {
 } = require('../services');
 
 const SERVICE = 'ObjectService';
-
-const authMode = getAppAuthMode();
 
 /**
  * The Object Controller
@@ -691,6 +687,7 @@ const controller = {
       const params = {
         id: objIds ? objIds.map(id => addDashesToUuid(id)) : objIds,
         bucketId: req.query.bucketId,
+        userId: req.query.userId,
         name: req.query.name,
         path: req.query.path,
         mimeType: req.query.mimeType,
@@ -700,10 +697,6 @@ const controller = {
         active: isTruthy(req.query.active)
       };
 
-      // When using OIDC authentication, force populate current user as filter if available
-      if (authMode === AuthMode.OIDCAUTH || authMode === AuthMode.FULLAUTH) {
-        params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
-      }
       const response = await objectService.searchObjects(params);
       res.status(201).json(response);
     } catch (error) {

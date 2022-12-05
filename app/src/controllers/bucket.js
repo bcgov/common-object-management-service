@@ -2,11 +2,9 @@ const Problem = require('api-problem');
 const { UniqueViolationError } = require('objection');
 const { NIL: SYSTEM_USER } = require('uuid');
 
-const { AuthMode } = require('../components/constants');
 const errorToProblem = require('../components/errorToProblem');
 const {
   addDashesToUuid,
-  getAppAuthMode,
   isTruthy,
   mixedQueryToArray,
   getCurrentIdentity
@@ -16,9 +14,7 @@ const { redactSecrets } = require('../db/models/utils');
 const { bucketService, storageService, userService } = require('../services');
 
 const SERVICE = 'ObjectService';
-
-const authMode = getAppAuthMode();
-const secretFields = ['secretAccessKey'];
+const secretFields = ['accessKeyId', 'secretAccessKey'];
 
 /**
  * The Bucket Controller
@@ -164,16 +160,13 @@ const controller = {
     try {
       const bucketIds = mixedQueryToArray(req.query.bucketId);
       const params = {
+        userId: req.query.userId,
         bucketId: bucketIds ? bucketIds.map(id => addDashesToUuid(id)) : bucketIds,
         bucketName: req.query.bucketName,
         key: req.query.key,
         active: isTruthy(req.query.active)
       };
 
-      // When using OIDC authentication, force populate current user as filter if available
-      if (authMode === AuthMode.OIDCAUTH || authMode === AuthMode.FULLAUTH) {
-        params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
-      }
       const response = await bucketService.searchBuckets(params);
       res.status(201).json(response.map(bucket => redactSecrets(bucket, secretFields)));
     } catch (error) {

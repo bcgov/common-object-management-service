@@ -147,11 +147,7 @@ paths:
       summary: Search for objects
       description: >-
         Returns a list of objects matching all search criteria across all known
-        versions of objects. If the request is BasicAuth authenticated, all
-        search and filtered results will appear. However, If the request is
-        BearerAuth authenticated, only objects that the user has at least one
-        permission associated with, will appear in addition to their filtering
-        parameters.
+        versions of objects.
       operationId: searchObjects
       tags:
         - Object
@@ -163,6 +159,7 @@ paths:
         - $ref: '#/components/parameters/Query-Public'
         - $ref: '#/components/parameters/Query-MimeType'
         - $ref: '#/components/parameters/Query-Name'
+        - $ref: '#/components/parameters/Query-UserId'
         - $ref: '#/components/parameters/Query-TagSet'
       responses:
         '201':
