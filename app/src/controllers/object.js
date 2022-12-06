@@ -218,9 +218,7 @@ const controller = {
           bucketId: req.query.bucketId
         };
 
-        // TODO: Consider refactoring to use Upload instead from @aws-sdk/lib-storage
-        const s3Response = storageService.putObject({ ...data, stream });
-
+        const s3Response = storageService.upload({ ...data, stream });
         const dbResponse = utils.trxWrapper(async (trx) => {
           // create object
           const object = await objectService.create({ ...data, userId, path: getPath(objId) }, trx);
@@ -789,9 +787,7 @@ const controller = {
           tags: req.query.tagset
         };
 
-        // TODO: Consider refactoring to use Upload instead from @aws-sdk/lib-storage
-        const s3Response = storageService.putObject({ ...data, stream });
-
+        const s3Response = storageService.upload({ ...data, stream });
         const dbResponse = utils.trxWrapper(async (trx) => {
           // update object in DB
           const object = await objectService.update({ ...data, userId, path: getPath(objId) }, trx);

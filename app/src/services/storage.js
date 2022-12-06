@@ -58,6 +58,7 @@ const objectStorageService = {
         data.accessKeyId = bucketData.accessKeyId;
         data.bucket = bucketData.bucket;
         data.endpoint = bucketData.endpoint;
+        data.key = bucketData.key;
         data.secretAccessKey = bucketData.secretAccessKey;
         if (bucketData.region) data.region = bucketData.region;
       } catch (err) {
@@ -367,45 +368,6 @@ const objectStorageService = {
   },
 
   /**
-   * @function upload
-   * Uploads the object `stream` at the `id` path
-   * @param {stream} options.stream The binary stream of the object
-   * @param {string} options.id The filePath id of the object
-   * @param {string} options.mimeType The mime type of the object
-   * @param {object} [options.metadata] Optional object containing key/value pairs for metadata
-   * @param {object} [options.tags] Optional object containing key/value pairs for tags
-   * @param {string} [options.bucketId] Optional bucketId
-   * @returns {Promise<object>} The response of the put object operation
-   */
-  async upload({ stream, id, mimeType, metadata, tags, bucketId = undefined }) {
-    const data = await this._getBucket(bucketId);
-
-    const upload = new Upload({
-      client: this._getS3Client(data),
-      params: {
-        Bucket: data.bucket,
-        Key: utils.getPath(id),
-        Body: stream,
-        ContentType: mimeType,
-        Metadata: {
-          ...metadata,
-          id: id // enforce metadata `id: <object ID>`
-        },
-        // TODO: Consider adding API param support for Server Side Encryption
-        // ServerSideEncryption: 'AES256'
-      },
-    });
-
-    if (tags) {
-      upload.tags = Object.entries(tags).map(([key, value]) => { 
-        return { 'Key': key, 'Value': value }; 
-      });
-    }
-
-    return upload.done();
-  },
-
-  /**
    * @function putObjectTagging
    * Gets the tags of the object at `filePath`
    * @param {string} options.filePath The filePath of the object
@@ -466,6 +428,45 @@ const objectStorageService = {
     };
 
     return this.presignUrl(new GetObjectCommand(params), expires);
+  },
+
+  /**
+   * @function upload
+   * Uploads the object `stream` at the `id` path
+   * @param {stream} options.stream The binary stream of the object
+   * @param {string} options.id The filePath id of the object
+   * @param {string} options.mimeType The mime type of the object
+   * @param {object} [options.metadata] Optional object containing key/value pairs for metadata
+   * @param {object} [options.tags] Optional object containing key/value pairs for tags
+   * @param {string} [options.bucketId] Optional bucketId
+   * @returns {Promise<object>} The response of the put object operation
+   */
+  async upload({ stream, id, mimeType, metadata, tags, bucketId = undefined }) {
+    const data = await this._getBucket(bucketId);
+
+    const upload = new Upload({
+      client: this._getS3Client(data),
+      params: {
+        Bucket: data.bucket,
+        Key: utils.getPath(id),
+        Body: stream,
+        ContentType: mimeType,
+        Metadata: {
+          ...metadata,
+          id: id // enforce metadata `id: <object ID>`
+        },
+        // TODO: Consider adding API param support for Server Side Encryption
+        // ServerSideEncryption: 'AES256'
+      },
+    });
+
+    if (tags) {
+      upload.tags = Object.entries(tags).map(([key, value]) => {
+        return { 'Key': key, 'Value': value };
+      });
+    }
+
+    return upload.done();
   }
 };
 
