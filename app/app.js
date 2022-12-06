@@ -97,6 +97,7 @@ apiRouter.get('/', (_req, res) => {
         gitRev: state.gitRev,
         hasDb: config.has('db.enabled'),
         name: process.env.npm_package_name,
+        nodeVersion: process.version,
         version: process.env.npm_package_version
       },
       endpoints: ['/api/v1'],

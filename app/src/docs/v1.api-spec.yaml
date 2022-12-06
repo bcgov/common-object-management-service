@@ -1267,7 +1267,7 @@ components:
             title:
               example: Bad Request
             type:
-              example: https://httpstatuses.com/400
+              example: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400
     Response-Conflict:
       allOf:
         - $ref: '#/components/schemas/Response-Problem'
@@ -1278,7 +1278,7 @@ components:
             title:
               example: Conflict
             type:
-              example: https://httpstatuses.com/409
+              example: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/409
     Response-Error:
       allOf:
         - $ref: '#/components/schemas/Response-Problem'
@@ -1289,14 +1289,14 @@ components:
             title:
               example: Internal Server Error
             type:
-              example: https://httpstatuses.com/500
+              example: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500
     Response-Forbidden:
       allOf:
         - $ref: '#/components/schemas/Response-Problem'
         - type: object
           properties:
             type:
-              example: https://httpstatuses.com/403
+              example: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/403
             title:
               example: Forbidden
             status:
@@ -1313,7 +1313,7 @@ components:
             title:
               example: Not Found
             type:
-              example: https://httpstatuses.com/404
+              example: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404
     Response-NotImplemented:
       allOf:
         - $ref: '#/components/schemas/Response-Problem'
@@ -1324,7 +1324,7 @@ components:
             title:
               example: This action is not supported in the current authentication mode
             type:
-              example: https://httpstatuses.com/501
+              example: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/501
     Response-ObjectDeleted:
       title: Object Deleted
       type: object
@@ -1381,7 +1381,7 @@ components:
         - type: object
           properties:
             type:
-              example: https://httpstatuses.com/401
+              example: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401
             title:
               example: Unauthorized
             status:
@@ -1415,7 +1415,7 @@ components:
             title:
               example: Unprocessable Entity
             type:
-              example: https://httpstatuses.com/422
+              example: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/422
     Response-VersionDeleted:
       title: Version Deleted
       type: object

@@ -627,3 +627,73 @@ describe('readSignedUrl', () => {
     }), expires);
   });
 });
+
+describe('upload', () => {
+  const getPathSpy = jest.spyOn(utils, 'getPath');
+  const id = 'id';
+  const keyPath = utils.joinPath(key, id);
+
+  beforeEach(() => {
+    getPathSpy.mockReturnValue(keyPath);
+    s3ClientMock.on(PutObjectCommand).resolves({});
+    s3ClientMock.on(PutObjectTaggingCommand).resolves({});
+  });
+
+  afterEach(() => {
+    jest.resetAllMocks(); // TODO: Figure out why we can't do this at top level?
+  });
+
+  it('should send a put object command', async () => {
+    const stream = new Readable({
+      read() {
+        this.push(null); // End the stream
+      }
+    });
+    const mimeType = 'mimeType';
+    const metadata = { name: 'originalName', id: id };
+    const result = await service.upload({ stream, id, mimeType, metadata });
+
+    expect(result).toBeTruthy();
+    expect(s3ClientMock).toHaveReceivedCommandTimes(PutObjectCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(PutObjectCommand, {
+      Bucket: bucket,
+      ContentType: mimeType,
+      Key: expect.any(String), // TODO: Fix after getPath is refactored
+      Body: expect.any(Object),
+      Metadata: metadata,
+    });
+  });
+
+  it('should send a put object and put object tagging command', async () => {
+    const stream = new Readable({
+      read() {
+        this.push(null); // End the stream
+      }
+    });
+    const mimeType = 'mimeType';
+    const metadata = { name: 'originalName', id: id };
+    const tags = { foo: 'bar' };
+    const result = await service.upload({ stream, id, mimeType, metadata, tags });
+
+    expect(result).toBeTruthy();
+    expect(s3ClientMock).toHaveReceivedCommandTimes(PutObjectCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandTimes(PutObjectTaggingCommand, 1);
+    expect(s3ClientMock).toHaveReceivedNthCommandWith(1, PutObjectCommand, {
+      Bucket: bucket,
+      ContentType: mimeType,
+      Key: expect.any(String), // TODO: Fix after getPath is refactored
+      Body: expect.any(Buffer),
+      Metadata: metadata,
+    });
+    expect(s3ClientMock).toHaveReceivedNthCommandWith(2, PutObjectTaggingCommand, {
+      Bucket: bucket,
+      ContentType: mimeType,
+      Key: expect.any(String), // TODO: Fix after getPath is refactored
+      Body: expect.any(Readable),
+      Metadata: metadata,
+      Tagging: {
+        TagSet: [{ Key: 'foo', Value: 'bar' }]
+      }
+    });
+  });
+});
