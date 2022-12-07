@@ -7,6 +7,24 @@ const { requireDb, requireSomeAuth } = require('../../middleware/featureToggle')
 const { checkAppMode, currentObject, hasPermission } = require('../../middleware/authorization');
 
 router.use(checkAppMode);
+
+//-----------------------------------------------------------------------------------------------------------------------------
+// Routes here that are ALLOWED to be annonymousely callable in OIDC auth mode
+// Must still protect permissions on the individual route/object, but the requiresSomeAuth gate won't stop them
+//-----------------------------------------------------------------------------------------------------------------------------
+/** Returns object headers */
+router.head('/:objId', currentObject, hasPermission(Permissions.READ), objectValidator.headObject, (req, res, next) => {
+  objectController.headObject(req, res, next);
+});
+
+/** Returns the object */
+router.get('/:objId', currentObject, hasPermission(Permissions.READ), objectValidator.readObject, (req, res, next) => {
+  // TODO: Add validation to reject unexpected query parameters
+  objectController.readObject(req, res, next);
+});
+// ----------------------------------------------------------------------------------------------------------------------------
+
+// Routes below must always obey auth mode rules
 router.use(requireSomeAuth);
 
 /** Creates new objects */
@@ -27,17 +45,6 @@ router.get('/metadata', requireDb, objectValidator.fetchMetadata, (req, res, nex
 /** Search for tags */
 router.get('/tagging', requireDb, objectValidator.searchTags, (req, res, next) => {
   objectController.searchTags(req, res, next);
-});
-
-/** Returns object headers */
-router.head('/:objId', currentObject, hasPermission(Permissions.READ), objectValidator.headObject, (req, res, next) => {
-  objectController.headObject(req, res, next);
-});
-
-/** Returns the object */
-router.get('/:objId', currentObject, hasPermission(Permissions.READ), objectValidator.readObject, (req, res, next) => {
-  // TODO: Add validation to reject unexpected query parameters
-  objectController.readObject(req, res, next);
 });
 
 /** Updates an object */
