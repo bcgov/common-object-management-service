@@ -154,7 +154,7 @@ const utils = {
       const val = obj[property];
       // does accumulator array contain an object with permissions matching obj
       const el = acc.find((ob) => {
-        return ob[group].some((p) =>  p[property] === val );
+        return ob[group].some((p) => p[property] === val);
       });
       if (el) {
         // add object to current object's permissions array
@@ -221,7 +221,7 @@ const utils = {
    * @param {string} value the string to match in the objects's `value` property
    * @returns {object[]} an array of matching objects
    */
-  getObjectsByKeyValue(array, key, value){
+  getObjectsByKeyValue(array, key, value) {
     return array.find(obj => (obj.key === key && obj.value === value));
   },
 

@@ -7,7 +7,8 @@ const schema = {
     query: Joi.object({
       userId: scheme.guid,
       bucketId: scheme.guid,
-      permCode: scheme.permCode
+      permCode: scheme.permCode,
+      objectPerms: type.truthy
     }).min(1)
   },
 

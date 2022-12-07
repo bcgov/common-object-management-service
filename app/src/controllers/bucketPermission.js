@@ -4,7 +4,9 @@ const errorToProblem = require('../components/errorToProblem');
 const {
   addDashesToUuid,
   mixedQueryToArray,
-  getCurrentIdentity
+  getCurrentIdentity,
+  groupByObject,
+  isTruthy
 } = require('../components/utils');
 const { NIL: SYSTEM_USER } = require('uuid');
 const { bucketPermissionService, userService } = require('../services');
@@ -27,11 +29,26 @@ const controller = {
     try {
       const bucketIds = mixedQueryToArray(req.query.bucketId);
       const userIds = mixedQueryToArray(req.query.userId);
-      const response = await bucketPermissionService.searchPermissions({
+      const bucketPermissions = await bucketPermissionService.searchPermissions({
         bucketId: bucketIds ? bucketIds.map(id => addDashesToUuid(id)) : bucketIds,
         userId: userIds ? userIds.map(id => addDashesToUuid(id)) : userIds,
         permCode: mixedQueryToArray(req.query.permCode)
       });
+      const response = groupByObject('bucketId', 'permissions', bucketPermissions);
+
+      if (isTruthy(req.query.objectPerms)) { 
+        // Iteration through bucket and object permissions. If object permission not found, set empty array.   
+        const bucketIds = await bucketPermissionService.getBucketIdsWithObject(userIds);
+        bucketIds.forEach(bucketId => {
+          if (!response.map(r => r.bucketId).includes(bucketId)) {
+            response.push({
+              bucketId: bucketId,
+              permissions: []
+            });
+          }
+        });
+      }
+
       res.status(200).json(response);
     } catch (e) {
       next(errorToProblem(SERVICE, e));

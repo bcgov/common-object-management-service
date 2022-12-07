@@ -30,9 +30,7 @@ const controller = {
         userId: userIds ? userIds.map(id => utils.addDashesToUuid(id)) : userIds,
         permCode: utils.mixedQueryToArray(req.query.permCode)
       });
-
       const response = utils.groupByObject(result, 'objectId', 'permissions');
-
       res.status(200).json(response);
     } catch (e) {
       next(errorToProblem(SERVICE, e));
