@@ -81,6 +81,22 @@ const service = {
   },
 
   /**
+   * @function getBucketKey
+   * Gets the associated key path for a specific object record
+   * @param {string} objId The object uuid to read
+   * @returns {object.key} A single object an attribute key
+   * @throws If there are no records found
+   */
+  getBucketKey: (objId) => {
+    return ObjectModel.query()
+      .findById(objId)
+      .select('bucket.key')
+      .joinRelated('bucket')
+      .first()
+      .throwIfNotFound();
+  },
+
+  /**
    * @function searchObjects
    * Search and filter for specific object records
    * @param {string|string[]} [params.id] Optional string or array of uuids representing the object

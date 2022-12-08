@@ -131,11 +131,24 @@ const utils = {
    * @function getPath
    * Gets the relative path of `objId`
    * @param {string} objId The object id
-   * @returns {string} The path
+   * @returns {Promise<string>} The path
    */
-  getPath(objId) {
-    // TODO: Refactor this as default bucket assumption no longer holds
-    const key = utils.delimit(config.get('objectStorage.key'));
+  async getPath(objId) {
+    let key = utils.delimit(config.get('objectStorage.key'));
+
+    if (config.has('db.enabled')) {
+      // Function scoped import to avoid circular dependencies
+      const { objectService } = require('../services');
+
+      try {
+        key = (await objectService.getBucketKey(objId)).key;
+      } catch(err) {
+        log.verbose(`${err.message}. Using default fallback path instead.`, {
+          function: 'getPath', objId: objId
+        });
+      }
+    }
+
     return utils.joinPath(key, objId);
   },
 

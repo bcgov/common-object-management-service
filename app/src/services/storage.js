@@ -346,7 +346,7 @@ const objectStorageService = {
     const data = await this._getBucket(bucketId);
     const params = {
       Bucket: data.bucket,
-      Key: utils.getPath(id),
+      Key: await utils.getPath(id),
       Body: stream,
       ContentType: mimeType,
       Metadata: {
@@ -448,7 +448,7 @@ const objectStorageService = {
       client: this._getS3Client(data),
       params: {
         Bucket: data.bucket,
-        Key: utils.getPath(id),
+        Key: await utils.getPath(id),
         Body: stream,
         ContentType: mimeType,
         Metadata: {
