@@ -117,9 +117,9 @@ const service = {
   getBucketIdsWithObject: async (userId) => {
     return ObjectPermission.query()
       .select('bucketId')
-      .modify('filterUserId', userId)
+      .distinct('userId')
       .joinRelated('object')
-      .whereIn('userId', userId)
+      .modify('filterUserId', userId)
       .whereNotNull('bucketId')
       .then(response => response.map(entry => entry.bucketId));
   },
