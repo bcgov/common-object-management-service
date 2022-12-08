@@ -114,12 +114,12 @@ const service = {
    * @param {string|string[]} [params.userId] Optional string or array of uuids representing the user
    * @returns {Promise<object>} The result of running the find operation
    */
-  getBucketIdsWithObject: async (userIds) => {
+  getBucketIdsWithObject: async (userId) => {
     return ObjectPermission.query()
       .select('bucketId')
-      .distinct('bucketId')
+      .modify('filterUserId', userId)
       .joinRelated('object')
-      .whereIn('userId', userIds)
+      .whereIn('userId', userId)
       .whereNotNull('bucketId')
       .then(response => response.map(entry => entry.bucketId));
   },

@@ -39,6 +39,7 @@ const controller = {
       if (isTruthy(req.query.objectPerms)) { 
         // Iteration through bucket and object permissions. If object permission not found, set empty array.   
         const bucketIds = await bucketPermissionService.getBucketIdsWithObject(userIds);
+        
         bucketIds.forEach(bucketId => {
           if (!response.map(r => r.bucketId).includes(bucketId)) {
             response.push({
