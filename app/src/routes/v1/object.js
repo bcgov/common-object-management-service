@@ -7,25 +7,24 @@ const { requireDb, requireSomeAuth } = require('../../middleware/featureToggle')
 const { checkAppMode, currentObject, hasPermission } = require('../../middleware/authorization');
 
 router.use(checkAppMode);
-router.use(requireSomeAuth);
 
 /** Creates new objects */
-router.post('/', objectValidator.createObjects, (req, res, next) => {
+router.post('/', requireSomeAuth, objectValidator.createObjects, (req, res, next) => {
   objectController.createObjects(req, res, next);
 });
 
 /** Search for objects */
-router.get('/', requireDb, objectValidator.searchObjects, (req, res, next) => {
+router.get('/', requireSomeAuth, requireDb, objectValidator.searchObjects, (req, res, next) => {
   objectController.searchObjects(req, res, next);
 });
 
 /** Fetch metadata for specific objects */
-router.get('/metadata', requireDb, objectValidator.fetchMetadata, (req, res, next) => {
+router.get('/metadata', requireSomeAuth, requireDb, objectValidator.fetchMetadata, (req, res, next) => {
   objectController.fetchMetadata(req, res, next);
 });
 
 /** Search for tags */
-router.get('/tagging', requireDb, objectValidator.searchTags, (req, res, next) => {
+router.get('/tagging', requireSomeAuth, requireDb, objectValidator.searchTags, (req, res, next) => {
   objectController.searchTags(req, res, next);
 });
 
@@ -41,52 +40,52 @@ router.get('/:objId', currentObject, hasPermission(Permissions.READ), objectVali
 });
 
 /** Updates an object */
-router.post('/:objId', currentObject, hasPermission(Permissions.UPDATE), objectValidator.updateObject, (req, res, next) => {
+router.post('/:objId', requireSomeAuth, currentObject, hasPermission(Permissions.UPDATE), objectValidator.updateObject, (req, res, next) => {
   objectController.updateObject(req, res, next);
 });
 
 /** Deletes the object */
-router.delete('/:objId', currentObject, hasPermission(Permissions.DELETE), objectValidator.deleteObject, (req, res, next) => {
+router.delete('/:objId', requireSomeAuth, currentObject, hasPermission(Permissions.DELETE), objectValidator.deleteObject, (req, res, next) => {
   objectController.deleteObject(req, res, next);
 });
 
 /** Returns the object version history */
-router.get('/:objId/version', currentObject, hasPermission(Permissions.READ), objectValidator.listObjectVersion, (req, res, next) => {
+router.get('/:objId/version', requireSomeAuth, currentObject, hasPermission(Permissions.READ), objectValidator.listObjectVersion, (req, res, next) => {
   objectController.listObjectVersion(req, res, next);
 });
 
 /** Sets the public flag of an object */
-router.patch('/:objId/public', requireDb, currentObject, hasPermission(Permissions.MANAGE), objectValidator.togglePublic, (req, res, next) => {
+router.patch('/:objId/public', requireSomeAuth, requireDb, currentObject, hasPermission(Permissions.MANAGE), objectValidator.togglePublic, (req, res, next) => {
   objectController.togglePublic(req, res, next);
 });
 
 /** Add metadata to an object */
-router.patch('/:objId/metadata', currentObject, hasPermission(Permissions.UPDATE), objectValidator.addMetadata, (req, res, next) => {
+router.patch('/:objId/metadata', requireSomeAuth, currentObject, hasPermission(Permissions.UPDATE), objectValidator.addMetadata, (req, res, next) => {
   objectController.addMetadata(req, res, next);
 });
 
 /** Replace metadata on an object */
-router.put('/:objId/metadata', currentObject, hasPermission(Permissions.UPDATE), objectValidator.replaceMetadata, (req, res, next) => {
+router.put('/:objId/metadata', requireSomeAuth, currentObject, hasPermission(Permissions.UPDATE), objectValidator.replaceMetadata, (req, res, next) => {
   objectController.replaceMetadata(req, res, next);
 });
 
 /** Deletes an objects metadata */
-router.delete('/:objId/metadata', currentObject, hasPermission(Permissions.UPDATE), objectValidator.deleteMetadata, (req, res, next) => {
+router.delete('/:objId/metadata', requireSomeAuth, currentObject, hasPermission(Permissions.UPDATE), objectValidator.deleteMetadata, (req, res, next) => {
   objectController.deleteMetadata(req, res, next);
 });
 
 /** Add tags to an object */
-router.patch('/:objId/tagging', currentObject, hasPermission(Permissions.UPDATE), objectValidator.addTags, (req, res, next) => {
+router.patch('/:objId/tagging', requireSomeAuth, currentObject, hasPermission(Permissions.UPDATE), objectValidator.addTags, (req, res, next) => {
   objectController.addTags(req, res, next);
 });
 
 /** Add tags to an object */
-router.put('/:objId/tagging', currentObject, hasPermission(Permissions.UPDATE), objectValidator.replaceTags, (req, res, next) => {
+router.put('/:objId/tagging', requireSomeAuth, currentObject, hasPermission(Permissions.UPDATE), objectValidator.replaceTags, (req, res, next) => {
   objectController.replaceTags(req, res, next);
 });
 
 /** Add tags to an object */
-router.delete('/:objId/tagging', currentObject, hasPermission(Permissions.UPDATE), objectValidator.deleteTags, (req, res, next) => {
+router.delete('/:objId/tagging', requireSomeAuth, currentObject, hasPermission(Permissions.UPDATE), objectValidator.deleteTags, (req, res, next) => {
   objectController.deleteTags(req, res, next);
 });
 

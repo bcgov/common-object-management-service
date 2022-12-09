@@ -89,7 +89,7 @@ const controller = {
   async addMetadata(req, res, next) {
     try {
       const objId = addDashesToUuid(req.params.objId);
-      const objPath = getPath(objId);
+      const objPath = await getPath(objId);
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
       const sourceVersionId = req.query.versionId ? req.query.versionId.toString() : undefined;
 
@@ -147,7 +147,7 @@ const controller = {
   async addTags(req, res, next) {
     try {
       const objId = addDashesToUuid(req.params.objId);
-      const objPath = getPath(objId);
+      const objPath = await getPath(objId);
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
       const { versionId, tagset: newTags } = req.query;
       const objectTagging = await storageService.getObjectTagging({ filePath: objPath, versionId });
@@ -217,7 +217,7 @@ const controller = {
         const s3Response = storageService.upload({ ...data, stream });
         const dbResponse = utils.trxWrapper(async (trx) => {
           // create object
-          const object = await objectService.create({ ...data, userId, path: getPath(objId) }, trx);
+          const object = await objectService.create({ ...data, userId, path: await getPath(objId) }, trx);
 
           // create new version in DB
           const s3Resolved = await s3Response;
@@ -274,7 +274,7 @@ const controller = {
   async deleteMetadata(req, res, next) {
     try {
       const objId = addDashesToUuid(req.params.objId);
-      const objPath = getPath(objId);
+      const objPath = await getPath(objId);
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
       const sourceVersionId = req.query.versionId ? req.query.versionId.toString() : undefined;
@@ -335,7 +335,7 @@ const controller = {
     try {
       const objId = addDashesToUuid(req.params.objId);
       const data = {
-        filePath: getPath(objId),
+        filePath: await getPath(objId),
         versionId: req.query.versionId
       };
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
@@ -391,7 +391,7 @@ const controller = {
   async deleteTags(req, res, next) {
     try {
       const objId = addDashesToUuid(req.params.objId);
-      const objPath = getPath(objId);
+      const objPath = await getPath(objId);
       const versionId = req.query.versionId;
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
       const objectTagging = await storageService.getObjectTagging({ filePath: objPath, versionId });
@@ -471,7 +471,7 @@ const controller = {
       const objId = addDashesToUuid(req.params.objId);
       const data = {
         bucketId: req.currentObject.bucketId || undefined,
-        filePath: getPath(objId),
+        filePath: await getPath(objId),
         versionId: req.query.versionId ? req.query.versionId.toString() : undefined
       };
       const response = await storageService.headObject(data);
@@ -503,7 +503,7 @@ const controller = {
     try {
       const objId = addDashesToUuid(req.params.objId);
       const data = {
-        filePath: getPath(objId)
+        filePath: await getPath(objId)
       };
 
       const response = await storageService.listObjectVersion(data);
@@ -525,7 +525,7 @@ const controller = {
     try {
       const objId = addDashesToUuid(req.params.objId);
       const data = {
-        filePath: getPath(objId),
+        filePath: await getPath(objId),
         versionId: req.query.versionId ? req.query.versionId.toString() : undefined
       };
 
@@ -579,7 +579,7 @@ const controller = {
   async replaceMetadata(req, res, next) {
     try {
       const objId = addDashesToUuid(req.params.objId);
-      const objPath = getPath(objId);
+      const objPath = await getPath(objId);
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
       const sourceVersionId = req.query.versionId ? req.query.versionId.toString() : undefined;
 
@@ -636,7 +636,7 @@ const controller = {
   async replaceTags(req, res, next) {
     try {
       const objId = addDashesToUuid(req.params.objId);
-      const objPath = getPath(objId);
+      const objPath = await getPath(objId);
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
       const versionId = req.query.versionId;
       const newTags = req.query.tagset;
@@ -783,7 +783,7 @@ const controller = {
         const s3Response = storageService.upload({ ...data, stream });
         const dbResponse = utils.trxWrapper(async (trx) => {
           // update object in DB
-          const object = await objectService.update({ ...data, userId, path: getPath(objId) }, trx);
+          const object = await objectService.update({ ...data, userId, path: await getPath(objId) }, trx);
 
           // wait for S3 response
           const s3Resolved = await s3Response;

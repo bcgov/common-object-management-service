@@ -131,18 +131,31 @@ const utils = {
    * @function getPath
    * Gets the relative path of `objId`
    * @param {string} objId The object id
-   * @returns {string} The path
+   * @returns {Promise<string>} The path
    */
-  getPath(objId) {
-    // TODO: Refactor this as default bucket assumption no longer holds
-    const key = utils.delimit(config.get('objectStorage.key'));
+  async getPath(objId) {
+    let key = utils.delimit(config.get('objectStorage.key'));
+
+    if (config.has('db.enabled')) {
+      // Function scoped import to avoid circular dependencies
+      const { objectService } = require('../services');
+
+      try {
+        key = (await objectService.getBucketKey(objId)).key;
+      } catch (err) {
+        log.verbose(`${err.message}. Using default fallback path instead.`, {
+          function: 'getPath', objId: objId
+        });
+      }
+    }
+
     return utils.joinPath(key, objId);
   },
 
   /**
    * @function groupByObject
    * Re-structure array of nested objects
-   * ref: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce#grouping_objects_by_a_property
+   * @see {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce#grouping_objects_by_a_property}
    * @param {string} property key (or property accessor) to group by
    * @param {string} group attribute name for nested group
    * @param {object[]} objectArray array of objects
@@ -215,11 +228,11 @@ const utils = {
 
   /**
    * @function getObjectsByKeyValue
-   * get tag/metadata objects in array that have given key and value
-   * @param {object[]} array and array of objects (eg: [{ key: 'a', value: '1'}, { key: 'b', value: '1'}]
+   * Get tag/metadata objects in array that have given key and value
+   * @param {object[]} array an array of objects (eg: [{ key: 'a', value: '1'}, { key: 'b', value: '1'}]
    * @param {string} key the string to match in the objects's `key` property
    * @param {string} value the string to match in the objects's `value` property
-   * @returns {object[]} an array of matching objects
+   * @returns {object} the matching object, or undefined
    */
   getObjectsByKeyValue(array, key, value) {
     return array.find(obj => (obj.key === key && obj.value === value));
@@ -292,7 +305,7 @@ const utils = {
    * @returns {object[]} Array of objects (eg: [{key: k1, value: V1}]) or undefined if empty
    */
   toLowerKeys(arr) {
-    if (!arr) return undefined;
+    if (!arr || !Array.isArray(arr)) return undefined;
     return arr.map(obj => {
       return Object.fromEntries(
         Object.entries(obj).map(([key, value]) => {
