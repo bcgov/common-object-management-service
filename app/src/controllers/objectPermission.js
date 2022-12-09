@@ -23,11 +23,11 @@ const controller = {
     try {
       const bucketIds = utils.mixedQueryToArray(req.query.bucketId);
       const objIds = utils.mixedQueryToArray(req.query.objId);
-      const userIds = utils.mixedQueryToArray(req.query.userId);
+      const userId = req.query.userId;
       const result = await objectPermissionService.searchPermissions({
         bucketId: bucketIds ? bucketIds.map(id => utils.addDashesToUuid(id)) : bucketIds,
         objId: objIds ? objIds.map(id => utils.addDashesToUuid(id)) : objIds,
-        userId: userIds ? userIds.map(id => utils.addDashesToUuid(id)) : userIds,
+        userId: userId ? utils.addDashesToUuid(userId) : userId,
         permCode: utils.mixedQueryToArray(req.query.permCode)
       });
       const response = utils.groupByObject('objectId', 'permissions', result);

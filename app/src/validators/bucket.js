@@ -36,6 +36,7 @@ const schema = {
 
   searchBuckets: {
     query: Joi.object({
+      userId: type.uuidv4,
       bucketId: scheme.guid,
       bucketName: Joi.string().max(255),
       key: Joi.string().max(255),
