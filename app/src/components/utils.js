@@ -143,18 +143,18 @@ const utils = {
    * @function groupByObject
    * Re-structure array of nested objects
    * ref: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce#grouping_objects_by_a_property
-   * @param {object[]} objectArray  array of objects
    * @param {string} property key (or property accessor) to group by
    * @param {string} group attribute name for nested group
+   * @param {object[]} objectArray array of objects
    * @returns {object[]} returns an array of Objects, each with nested group of objects
    */
-  groupByObject(objectArray, property, group) {
+  groupByObject(property, group, objectArray) {
     return objectArray.reduce((acc, obj) => {
       // value of the 'property' attribute of obj
       const val = obj[property];
       // does accumulator array contain an object with permissions matching obj
       const el = acc.find((ob) => {
-        return ob[group].some((p) =>  p[property] === val );
+        return ob[group].some((p) => p[property] === val);
       });
       if (el) {
         // add object to current object's permissions array
@@ -221,7 +221,7 @@ const utils = {
    * @param {string} value the string to match in the objects's `value` property
    * @returns {object[]} an array of matching objects
    */
-  getObjectsByKeyValue(array, key, value){
+  getObjectsByKeyValue(array, key, value) {
     return array.find(obj => (obj.key === key && obj.value === value));
   },
 

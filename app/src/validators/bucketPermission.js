@@ -5,6 +5,7 @@ const { Permissions } = require('../components/constants');
 const schema = {
   searchPermissions: {
     query: Joi.object({
+      objectPerms: type.truthy,
       userId: scheme.guid,
       bucketId: scheme.guid,
       permCode: scheme.permCode

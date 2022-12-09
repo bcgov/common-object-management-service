@@ -1,7 +1,7 @@
 const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 
 const { Permissions } = require('../components/constants');
-const { BucketPermission } = require('../db/models');
+const { BucketPermission, ObjectPermission } = require('../db/models');
 
 /**
  * The Bucket Permission DB Service
@@ -106,6 +106,22 @@ const service = {
       if (!etrx && trx) await trx.rollback();
       throw err;
     }
+  },
+
+  /**
+   * @function getBucketIdsWithObject
+   * Searches for specific (bucket) object permissions
+   * @param {string|string[]} [params.userId] Optional string or array of uuids representing the user
+   * @returns {Promise<object>} The result of running the find operation
+   */
+  getBucketIdsWithObject: async (userId) => {
+    return ObjectPermission.query()
+      .select('bucketId')
+      .distinct('userId')
+      .joinRelated('object')
+      .modify('filterUserId', userId)
+      .whereNotNull('bucketId')
+      .then(response => response.map(entry => entry.bucketId));
   },
 
   /**
