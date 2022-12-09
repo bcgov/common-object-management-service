@@ -432,7 +432,7 @@ describe('putObject', () => {
   const keyPath = utils.joinPath(key, id);
 
   beforeEach(() => {
-    getPathSpy.mockReturnValue(keyPath);
+    getPathSpy.mockResolvedValue(keyPath);
     s3ClientMock.on(PutObjectCommand).resolves({});
   });
 
@@ -634,7 +634,7 @@ describe('upload', () => {
   const keyPath = utils.joinPath(key, id);
 
   beforeEach(() => {
-    getPathSpy.mockReturnValue(keyPath);
+    getPathSpy.mockResolvedValue(keyPath);
     s3ClientMock.on(PutObjectCommand).resolves({});
     s3ClientMock.on(PutObjectTaggingCommand).resolves({});
   });

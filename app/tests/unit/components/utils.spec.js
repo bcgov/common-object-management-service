@@ -1,6 +1,7 @@
 const config = require('config');
 
 const { AuthMode, AuthType } = require('../../../src/components/constants');
+const { objectService } = require('../../../src/services');
 const utils = require('../../../src/components/utils');
 
 // Mock config library - @see {@link https://stackoverflow.com/a/64819698}
@@ -50,20 +51,70 @@ describe('getMetadata', () => {
 describe('getPath', () => {
   const delimitSpy = jest.spyOn(utils, 'delimit');
   const joinPath = jest.spyOn(utils, 'joinPath');
+  const getBucketKey = jest.spyOn(objectService, 'getBucketKey');
 
-  it('should return whatever joinPath returns', () => {
+  it('should return a valid path without a database', async () => {
     const key = 'abc';
     const osKey = 'key';
+    const value = 'abc/obj';
     delimitSpy.mockReturnValue(key);
-    joinPath.mockReturnValue('abc/obj');
+    joinPath.mockReturnValue(value);
     config.get.mockReturnValueOnce(osKey); // objectStorage.key
+    config.has.mockReturnValueOnce(false); // db.enabled
 
-    expect(utils.getPath('obj')).toEqual('abc/obj');
+    const result = await utils.getPath('obj');
+
+    expect(result).toEqual(value);
 
     expect(delimitSpy).toHaveBeenCalledTimes(1);
     expect(delimitSpy).toHaveBeenCalledWith(osKey);
     expect(joinPath).toHaveBeenCalledTimes(1);
     expect(joinPath).toHaveBeenCalledWith(key, 'obj');
+    expect(getBucketKey).toHaveBeenCalledTimes(0);
+  });
+
+  it('should return a valid path with a good database lookup', async () => {
+    const key = 'abc';
+    const osKey = 'key';
+    const value = 'abc/obj';
+    delimitSpy.mockReturnValue('wrong');
+    joinPath.mockReturnValue(value);
+    getBucketKey.mockResolvedValue({ key: key });
+    config.get.mockReturnValueOnce(osKey); // objectStorage.key
+    config.has.mockReturnValueOnce(true); // db.enabled
+
+    const result = await utils.getPath('obj');
+
+    expect(result).toEqual(value);
+
+    expect(delimitSpy).toHaveBeenCalledTimes(1);
+    expect(delimitSpy).toHaveBeenCalledWith(osKey);
+    expect(joinPath).toHaveBeenCalledTimes(1);
+    expect(joinPath).toHaveBeenCalledWith(key, 'obj');
+    expect(getBucketKey).toHaveBeenCalledTimes(1);
+    expect(getBucketKey).toHaveBeenCalledWith('obj');
+  });
+
+  it('should return a valid path with a bad database lookup', async () => {
+    const key = 'abc';
+    const osKey = 'key';
+    const value = 'abc/obj';
+    delimitSpy.mockReturnValue(key);
+    joinPath.mockReturnValue(value);
+    getBucketKey.mockImplementation(() => { throw new Error(); });
+    config.get.mockReturnValueOnce(osKey); // objectStorage.key
+    config.has.mockReturnValueOnce(true); // db.enabled
+
+    const result = await utils.getPath('obj');
+
+    expect(result).toEqual(value);
+
+    expect(delimitSpy).toHaveBeenCalledTimes(1);
+    expect(delimitSpy).toHaveBeenCalledWith(osKey);
+    expect(joinPath).toHaveBeenCalledTimes(1);
+    expect(joinPath).toHaveBeenCalledWith(key, 'obj');
+    expect(getBucketKey).toHaveBeenCalledTimes(1);
+    expect(getBucketKey).toHaveBeenCalledWith('obj');
   });
 });
 
@@ -87,46 +138,6 @@ describe('delimit', () => {
     ['    /', '    ']
   ])('should return %o given %j', (expected, str) => {
     expect(utils.delimit(str)).toEqual(expected);
-  });
-});
-
-describe('isTruthy', () => {
-  it('should return undefined given undefined', () => {
-    expect(utils.isTruthy(undefined)).toBeUndefined();
-  });
-
-  it.each([
-    true, 1, 'true', 'TRUE', 't', 'T', 'yes', 'yEs', 'y', 'Y', '1', new String('true')
-  ])('should return true given %j', (value) => {
-    expect(utils.isTruthy(value)).toBeTruthy();
-  });
-
-  it.each([
-    false, 0, 'false', 'FALSE', 'f', 'F', 'no', 'nO', 'n', 'N', '0', new String('false'), {}
-  ])('should return false given %j', (value) => {
-    expect(utils.isTruthy(value)).toBeFalsy();
-  });
-});
-
-describe('joinPath', () => {
-  beforeAll(() => {
-    if (jest.isMockFunction(utils.joinPath)) {
-      utils.joinPath.mockRestore();
-    }
-  });
-
-  it('should return blank if nothing supplied', () => {
-    expect(utils.joinPath()).toEqual('');
-  });
-
-  it('should return multiple parts joined with the delimiter', () => {
-    expect(utils.joinPath('my', 'file', 'path')).toEqual('my/file/path');
-    expect(utils.joinPath('my', '', 'path')).toEqual('my/path');
-    expect(utils.joinPath('my', 'file/path/123', 'abc')).toEqual('my/file/path/123/abc');
-  });
-
-  it('should handle no-length sections', () => {
-    expect(utils.joinPath('my', 'file//123', 'abc')).toEqual('my/file/123/abc');
   });
 });
 
@@ -309,7 +320,77 @@ describe('getKeyValue', () => {
     expect(utils.getKeyValue(inputArr)).toEqual(outputArr);
     expect(utils.getKeyValue({})).toEqual([]);
   });
-}),
+});
+
+describe('getGitRevision', () => {
+  expect(utils.getGitRevision()).toBeTruthy();
+});
+
+describe('getObjectsByKeyValue', () => {
+  it.each([
+    [undefined, [], undefined, undefined],
+    [undefined, [], 'foo', 'bar'],
+    [{ key: 'a', value: '1' }, [{ key: 'a', value: '1' }, { key: 'b', value: '1' }], 'a', '1'],
+    [{ key: 'b', value: '1' }, [{ key: 'a', value: '1' }, { key: 'b', value: '1' }], 'b', '1'],
+  ])('should yield %j when given array %j, key %s and value %s', (expected, array, key, value) => {
+    expect(utils.getObjectsByKeyValue(array, key, value)).toEqual(expected);
+  });
+});
+
+describe('groupByObject', () => {
+  const test1 = { foo: 'baz', blah: 'test' };
+  const test2 = { foo: 'baz', blah: 'test2' };
+  const test3 = { foo: 'free', blah: 'test3' };
+
+  it.each([
+    [[], 'foo', 'bar', []],
+    [[{ foo: 'baz', bar: [test1] }], 'foo', 'bar', [test1]],
+    [[{ foo: 'baz', bar: [test1, test2] }], 'foo', 'bar', [test1, test2]],
+    [[{ foo: 'baz', bar: [test1, test2] }, { foo: 'free', bar: [test3] }], 'foo', 'bar', [test1, test2, test3]]
+  ])('should return %j given property %s, group %s and objectArray %j', (expected, property, group, objectArray) => {
+    expect(utils.groupByObject(property, group, objectArray)).toEqual(expected);
+  });
+});
+
+describe('isTruthy', () => {
+  it('should return undefined given undefined', () => {
+    expect(utils.isTruthy(undefined)).toBeUndefined();
+  });
+
+  it.each([
+    true, 1, 'true', 'TRUE', 't', 'T', 'yes', 'yEs', 'y', 'Y', '1', new String('true')
+  ])('should return true given %j', (value) => {
+    expect(utils.isTruthy(value)).toBeTruthy();
+  });
+
+  it.each([
+    false, 0, 'false', 'FALSE', 'f', 'F', 'no', 'nO', 'n', 'N', '0', new String('false'), {}
+  ])('should return false given %j', (value) => {
+    expect(utils.isTruthy(value)).toBeFalsy();
+  });
+});
+
+describe('joinPath', () => {
+  beforeAll(() => {
+    if (jest.isMockFunction(utils.joinPath)) {
+      utils.joinPath.mockRestore();
+    }
+  });
+
+  it('should return blank if nothing supplied', () => {
+    expect(utils.joinPath()).toEqual('');
+  });
+
+  it('should return multiple parts joined with the delimiter', () => {
+    expect(utils.joinPath('my', 'file', 'path')).toEqual('my/file/path');
+    expect(utils.joinPath('my', '', 'path')).toEqual('my/path');
+    expect(utils.joinPath('my', 'file/path/123', 'abc')).toEqual('my/file/path/123/abc');
+  });
+
+  it('should handle no-length sections', () => {
+    expect(utils.joinPath('my', 'file//123', 'abc')).toEqual('my/file/123/abc');
+  });
+});
 
 describe('mixedQueryToArray', () => {
   it('should return undefined if no param', () => {
@@ -361,6 +442,28 @@ describe('parseCSV', () => {
   });
 });
 
+describe('parseIdentityKeyClaims', () => {
+  beforeAll(() => {
+    if (jest.isMockFunction(utils.parseIdentityKeyClaims)) {
+      utils.parseIdentityKeyClaims.mockRestore();
+    }
+  });
+
+  it('should return array containing just "sub" when no identityKey', () => {
+    config.has.mockReturnValueOnce(false); // keycloak.identityKey
+    expect(utils.parseIdentityKeyClaims()).toEqual(['sub']);
+  });
+
+  it.each([
+    [['foo', 'sub'], 'foo'],
+    [['foo', 'bar', 'sub'], 'foo,bar']
+  ])('should return %j when identityKey is %j', (expected, value) => {
+    config.has.mockReturnValueOnce(true); // keycloak.identityKey
+    config.get.mockReturnValueOnce(value); // keycloak.identityKey
+    expect(utils.parseIdentityKeyClaims()).toEqual(expected);
+  });
+});
+
 describe('streamToBuffer', () => {
   it('should reject on a non-stream input', () => {
     expect(utils.streamToBuffer()).rejects.toThrow();
@@ -378,5 +481,17 @@ describe('streamToBuffer', () => {
 
     expect(result).resolves.toBeTruthy();
     expect(result).resolves.toBeInstanceOf(Buffer);
+  });
+});
+
+describe('toLowerKeys', () => {
+  it.each([
+    [undefined, undefined],
+    [undefined, 1],
+    [undefined, {}],
+    [[{ key: 'k1', value: 'V1' }], [{ Key: 'k1', Value: 'V1' }]],
+    [[{ key: 'k1', value: 'V1' }, { key: 'k2', value: 'V2' }], [{ Key: 'k1', Value: 'V1' }, { Key: 'k2', Value: 'V2' }]]
+  ])('should return %j given %j', (expected, value) => {
+    expect(utils.toLowerKeys(value)).toEqual(expected);
   });
 });
