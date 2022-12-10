@@ -53,10 +53,11 @@ describe('getPath', () => {
   const joinPath = jest.spyOn(utils, 'joinPath');
   const getBucketKey = jest.spyOn(objectService, 'getBucketKey');
 
+  const key = 'abc';
+  const osKey = 'key';
+  const value = 'abc/obj';
+
   it('should return a valid path without a database', async () => {
-    const key = 'abc';
-    const osKey = 'key';
-    const value = 'abc/obj';
     delimitSpy.mockReturnValue(key);
     joinPath.mockReturnValue(value);
     config.get.mockReturnValueOnce(osKey); // objectStorage.key
@@ -74,9 +75,6 @@ describe('getPath', () => {
   });
 
   it('should return a valid path with a good database lookup', async () => {
-    const key = 'abc';
-    const osKey = 'key';
-    const value = 'abc/obj';
     delimitSpy.mockReturnValue('wrong');
     joinPath.mockReturnValue(value);
     getBucketKey.mockResolvedValue({ key: key });
@@ -96,9 +94,6 @@ describe('getPath', () => {
   });
 
   it('should return a valid path with a bad database lookup', async () => {
-    const key = 'abc';
-    const osKey = 'key';
-    const value = 'abc/obj';
     delimitSpy.mockReturnValue(key);
     joinPath.mockReturnValue(value);
     getBucketKey.mockImplementation(() => { throw new Error(); });
@@ -323,7 +318,7 @@ describe('getKeyValue', () => {
 });
 
 describe('getGitRevision', () => {
-  expect(utils.getGitRevision()).toBeTruthy();
+  expect(typeof utils.getGitRevision()).toBe('string');
 });
 
 describe('getObjectsByKeyValue', () => {

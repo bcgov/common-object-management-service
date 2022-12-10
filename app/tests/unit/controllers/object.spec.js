@@ -21,11 +21,11 @@ beforeEach(() => {
   res = mockResponse();
 });
 
-describe('addMetadata', () => {
-  afterEach(() => {
-    jest.resetAllMocks();
-  });
+afterEach(() => {
+  jest.resetAllMocks();
+});
 
+describe('addMetadata', () => {
   // mock service calls
   const storageHeadObjectSpy = jest.spyOn(storageService, 'headObject');
   const storageCopyObjectSpy = jest.spyOn(storageService, 'copyObject');
@@ -107,10 +107,6 @@ describe('addMetadata', () => {
 });
 
 describe('addTags', () => {
-  afterEach(() => {
-    jest.resetAllMocks();
-  });
-
   // mock service calls
   const storageGetObjectTaggingSpy = jest.spyOn(storageService, 'getObjectTagging');
   const storagePutObjectTaggingSpy = jest.spyOn(storageService, 'putObjectTagging');
@@ -210,10 +206,6 @@ describe('addTags', () => {
 });
 
 describe('deleteMetadata', () => {
-  afterEach(() => {
-    jest.resetAllMocks();
-  });
-
   // mock service calls
   const storageHeadObjectSpy = jest.spyOn(storageService, 'headObject');
   const storageCopyObjectSpy = jest.spyOn(storageService, 'copyObject');
@@ -293,10 +285,6 @@ describe('deleteMetadata', () => {
 });
 
 describe('deleteObject', () => {
-  afterEach(() => {
-    jest.resetAllMocks();
-  });
-
   // mock service calls
   const getCurrentUserIdSpy = jest.spyOn(userService, 'getCurrentUserId');
   const storageDeleteObjectSpy = jest.spyOn(storageService, 'deleteObject');
@@ -398,10 +386,6 @@ describe('deleteObject', () => {
 });
 
 describe('deleteTags', () => {
-  afterEach(() => {
-    jest.resetAllMocks();
-  });
-
   // mock service calls
   const storageGetObjectTaggingSpy = jest.spyOn(storageService, 'getObjectTagging');
   const storagePutObjectTaggingSpy = jest.spyOn(storageService, 'putObjectTagging');
@@ -468,10 +452,6 @@ describe('deleteTags', () => {
 });
 
 describe('replaceMetadata', () => {
-  afterEach(() => {
-    jest.resetAllMocks();
-  });
-
   // mock service calls
   const storageHeadObjectSpy = jest.spyOn(storageService, 'headObject');
   const storageCopyObjectSpy = jest.spyOn(storageService, 'copyObject');
@@ -567,10 +547,6 @@ describe('replaceMetadata', () => {
 });
 
 describe('replaceTags', () => {
-  afterEach(() => {
-    jest.resetAllMocks();
-  });
-
   // mock service calls
   const storageGetObjectTaggingSpy = jest.spyOn(storageService, 'getObjectTagging');
   const storagePutObjectTaggingSpy = jest.spyOn(storageService, 'putObjectTagging');
@@ -636,78 +612,7 @@ describe('replaceTags', () => {
   });
 });
 
-// TODO: Move to metadata.spec.js
-describe.skip('searchMetadata', () => {
-  afterEach(() => {
-    jest.resetAllMocks();
-  });
-
-  // mock service calls
-  const metadataSearchMetadataSpy = jest.spyOn(metadataService, 'searchMetadata');
-
-  const next = jest.fn();
-
-  it('should return all metadata with no params', async () => {
-    // request object
-    const req = {
-      headers: {},
-      query: {}
-    };
-
-    const GoodResponse = [
-      {
-        key: 'foo',
-        value: 'bar'
-      },
-      {
-        key: 'baz',
-        value: 'quz'
-      }
-    ];
-
-    metadataSearchMetadataSpy.mockReturnValue(GoodResponse);
-
-    await controller.searchMetadata(req, res, next);
-
-    expect(metadataSearchMetadataSpy).toHaveBeenCalledWith({
-      metadata: undefined,
-    });
-
-    expect(res.json).toHaveBeenCalledWith(GoodResponse);
-    expect(res.status).toHaveBeenCalledWith(200);
-  });
-
-  it('should return only matching metadata', async () => {
-    // request object
-    const req = {
-      headers: { 'x-amz-meta-foo': '' },
-      query: {}
-    };
-
-    const GoodResponse = [
-      {
-        key: 'foo',
-        value: 'bar'
-      }
-    ];
-
-    metadataSearchMetadataSpy.mockReturnValue(GoodResponse);
-
-    await controller.searchMetadata(req, res, next);
-
-    expect(metadataSearchMetadataSpy).toHaveBeenCalledWith({
-      metadata: { foo: '' },
-    });
-    expect(res.json).toHaveBeenCalledWith(GoodResponse);
-    expect(res.status).toHaveBeenCalledWith(200);
-  });
-});
-
 describe('searchTags', () => {
-  afterEach(() => {
-    jest.resetAllMocks();
-  });
-
   // mock service calls
   const tagSearchTagsSpy = jest.spyOn(tagService, 'searchTags');
 
@@ -720,16 +625,14 @@ describe('searchTags', () => {
       query: {}
     };
 
-    const GoodResponse = [
-      {
-        key: 'foo',
-        value: 'bar'
-      },
-      {
-        key: 'baz',
-        value: 'quz'
-      }
-    ];
+    const GoodResponse = [{
+      key: 'foo',
+      value: 'bar'
+    },
+    {
+      key: 'baz',
+      value: 'quz'
+    }];
 
     tagSearchTagsSpy.mockReturnValue(GoodResponse);
 
@@ -754,12 +657,10 @@ describe('searchTags', () => {
       }
     };
 
-    const GoodResponse = [
-      {
-        key: 'foo',
-        value: 'bar'
-      }
-    ];
+    const GoodResponse = [{
+      key: 'foo',
+      value: 'bar'
+    }];
 
     tagSearchTagsSpy.mockReturnValue(GoodResponse);
 
