@@ -120,7 +120,6 @@ const schema = {
   searchObjects: {
     headers: type.metadata(0),
     query: Joi.object({
-      userId: type.uuidv4,
       objId: scheme.guid,
       bucketId: scheme.guid,
       name: Joi.string(),

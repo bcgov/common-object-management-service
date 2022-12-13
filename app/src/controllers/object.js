@@ -687,7 +687,6 @@ const controller = {
       const params = {
         id: objIds ? objIds.map(id => addDashesToUuid(id)) : objIds,
         bucketId: req.query.bucketId,
-        userId: req.query.userId,
         name: req.query.name,
         path: req.query.path,
         mimeType: req.query.mimeType,
