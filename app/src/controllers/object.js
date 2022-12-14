@@ -10,13 +10,15 @@ const {
 const errorToProblem = require('../components/errorToProblem');
 const {
   addDashesToUuid,
+  getCurrentIdentity,
   getKeyValue,
-  toLowerKeys,
   getMetadata,
   getPath,
+  joinPath,
   isTruthy,
   mixedQueryToArray,
-  getCurrentIdentity
+  toLowerKeys,
+  getBucket
 } = require('../components/utils');
 const utils = require('../db/models/utils');
 
@@ -26,7 +28,7 @@ const {
   storageService,
   tagService,
   userService,
-  versionService
+  versionService,
 } = require('../services');
 
 const SERVICE = 'ObjectService';
@@ -198,6 +200,9 @@ const controller = {
       const objects = [];
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
+      // Preflight check bucketId before proceeding with any object operations
+      const bucketKey = (await getBucket(req.query.bucketId, true)).key;
+
       bb.on('file', (name, stream, info) => {
         const objId = uuidv4();
 
@@ -217,7 +222,11 @@ const controller = {
         const s3Response = storageService.upload({ ...data, stream });
         const dbResponse = utils.trxWrapper(async (trx) => {
           // create object
-          const object = await objectService.create({ ...data, userId, path: await getPath(objId) }, trx);
+          const object = await objectService.create({
+            ...data,
+            userId: userId,
+            path: joinPath(bucketKey, objId)
+          }, trx);
 
           // create new version in DB
           const s3Resolved = await s3Response;
@@ -765,6 +774,9 @@ const controller = {
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
       let object = undefined;
 
+      // Preflight check bucketId before proceeding with any object operations
+      const bucketKey = (await getBucket(req.query.bucketId, true)).key;
+
       bb.on('file', (name, stream, info) => {
         const objId = addDashesToUuid(req.params.objId);
         const data = {
@@ -782,7 +794,11 @@ const controller = {
         const s3Response = storageService.upload({ ...data, stream });
         const dbResponse = utils.trxWrapper(async (trx) => {
           // update object in DB
-          const object = await objectService.update({ ...data, userId, path: await getPath(objId) }, trx);
+          const object = await objectService.update({
+            ...data,
+            userId: userId,
+            path: joinPath(bucketKey, objId)
+          }, trx);
 
           // wait for S3 response
           const s3Resolved = await s3Response;

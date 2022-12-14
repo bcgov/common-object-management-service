@@ -19,13 +19,11 @@ const {
 const { Upload } = require('@aws-sdk/lib-storage');
 const config = require('config');
 
+const { MAXKEYS, MetadataDirective, TaggingDirective } = require('../components/constants');
 const log = require('../components/log')(module.filename);
 const utils = require('../components/utils');
-const { MAXKEYS, MetadataDirective, TaggingDirective } = require('../components/constants');
-const { read: readBucket } = require('./bucket');
 
 // Get app configuration
-const defaultRegion = 'us-east-1'; // Need to specify valid AWS region or it'll explode ('us-east-1' is default, 'ca-central-1' for Canada)
 const defaultTempExpiresIn = parseInt(config.get('objectStorage.defaultTempExpiresIn'), 10);
 
 /**
@@ -33,42 +31,6 @@ const defaultTempExpiresIn = parseInt(config.get('objectStorage.defaultTempExpir
  * @see {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-s3/}
  */
 const objectStorageService = {
-  /**
-   * @private
-   * @function _getBucket
-   * Utility function for acquiring core S3 bucket credential information with
-   * graceful default fallback
-   * @param {string} [bucketId] An optional bucketId to lookup
-   * @returns {object} An object containing accessKeyId, bucket, endpoint,
-   * region and secretAccessKey attributes
-   */
-  _getBucket: async (bucketId = undefined) => {
-    const data = {
-      accessKeyId: config.get('objectStorage.accessKeyId'),
-      bucket: config.get('objectStorage.bucket'),
-      endpoint: config.get('objectStorage.endpoint'),
-      key: config.get('objectStorage.key'),
-      region: defaultRegion,
-      secretAccessKey: config.get('objectStorage.secretAccessKey')
-    };
-
-    if (bucketId && config.has('db.enabled')) {
-      try {
-        const bucketData = await readBucket(bucketId);
-        data.accessKeyId = bucketData.accessKeyId;
-        data.bucket = bucketData.bucket;
-        data.endpoint = bucketData.endpoint;
-        data.key = bucketData.key;
-        data.secretAccessKey = bucketData.secretAccessKey;
-        if (bucketData.region) data.region = bucketData.region;
-      } catch (err) {
-        log.warn(err.message, { function: '_getBucket'});
-      }
-    }
-
-    return data;
-  },
-
   /**
    * @private
    * @function _getS3Client
@@ -120,7 +82,7 @@ const objectStorageService = {
     versionId = undefined,
     bucketId = undefined
   }) {
-    const data = await this._getBucket(bucketId);
+    const data = await utils.getBucket(bucketId);
     const params = {
       Bucket: data.bucket,
       CopySource: `${data.bucket}/${copySource}`,
@@ -149,7 +111,7 @@ const objectStorageService = {
    * @returns {Promise<object>} The response of the delete object operation
    */
   async deleteObject({ filePath, versionId = undefined, bucketId = undefined }) {
-    const data = await this._getBucket(bucketId);
+    const data = await utils.getBucket(bucketId);
     const params = {
       Bucket: data.bucket,
       Key: filePath,
@@ -168,7 +130,7 @@ const objectStorageService = {
    * @returns {Promise<object>} The response of the delete object tagging operation
    */
   async deleteObjectTagging({ filePath, versionId = undefined, bucketId = undefined }) {
-    const data = await this._getBucket(bucketId);
+    const data = await utils.getBucket(bucketId);
     const params = {
       Bucket: data.bucket,
       Key: filePath,
@@ -185,7 +147,7 @@ const objectStorageService = {
    * @returns {Promise<object>} The response of the get bucket encryption operation
    */
   async getBucketEncryption(bucketId = undefined) {
-    const data = await this._getBucket(bucketId);
+    const data = await utils.getBucket(bucketId);
     const params = {
       Bucket: data.bucket
     };
@@ -200,7 +162,7 @@ const objectStorageService = {
    * @returns {Promise<boolean>} true if versioning enabled otherwise false
    */
   async getBucketVersioning(bucketId = undefined) {
-    const data = await this._getBucket(bucketId);
+    const data = await utils.getBucket(bucketId);
     const params = {
       Bucket: data.bucket
     };
@@ -217,7 +179,7 @@ const objectStorageService = {
    * @returns {Promise<object>} The response of the get object tagging operation
    */
   async getObjectTagging({ filePath, versionId = undefined, bucketId = undefined }) {
-    const data = await this._getBucket(bucketId);
+    const data = await utils.getBucket(bucketId);
     const params = {
       Bucket: data.bucket,
       Key: filePath,
@@ -234,7 +196,7 @@ const objectStorageService = {
    * @returns {Promise<object>} The response of the head bucket operation
    */
   async headBucket(bucketId = undefined) {
-    const data = await this._getBucket(bucketId);
+    const data = await utils.getBucket(bucketId);
     const params = {
       Bucket: data.bucket,
     };
@@ -251,7 +213,7 @@ const objectStorageService = {
    * @returns {Promise<object>} The response of the head object operation
    */
   async headObject({ filePath, versionId = undefined, bucketId = undefined }) {
-    const data = await this._getBucket(bucketId);
+    const data = await utils.getBucket(bucketId);
     const params = {
       Bucket: data.bucket,
       Key: filePath,
@@ -269,7 +231,7 @@ const objectStorageService = {
    * @returns {Promise<object>} The response of the list objects operation
    */
   async listObjects({ filePath, maxKeys = MAXKEYS, bucketId = undefined }) {
-    const data = await this._getBucket(bucketId);
+    const data = await utils.getBucket(bucketId);
     const params = {
       Bucket: data.bucket,
       Prefix: filePath, // Must filter via "prefix" - https://stackoverflow.com/a/56569856
@@ -287,7 +249,7 @@ const objectStorageService = {
    * @returns {Promise<object>} The response of the list object version operation
    */
   async listObjectVersion({ filePath, bucketId = undefined }) {
-    const data = await this._getBucket(bucketId);
+    const data = await utils.getBucket(bucketId);
     const params = {
       Bucket: data.bucket,
       Prefix: filePath // Must filter via "prefix" - https://stackoverflow.com/a/56569856
@@ -306,7 +268,7 @@ const objectStorageService = {
    * @returns {Promise<string>} A presigned url for the direct S3 REST `command` operation
    */
   async presignUrl(command, expiresIn = defaultTempExpiresIn, bucketId = undefined) {
-    const data = await this._getBucket(bucketId);
+    const data = await utils.getBucket(bucketId);
     return getSignedUrl(this._getS3Client(data), command, { expiresIn });
   },
 
@@ -316,7 +278,7 @@ const objectStorageService = {
    * @returns {Promise<object>} The response of the put bucket encryption operation
    */
   async putBucketEncryption(bucketId = undefined) {
-    const data = await this._getBucket(bucketId);
+    const data = await utils.getBucket(bucketId);
     const params = {
       Bucket: data.bucket,
       ServerSideEncryptionConfiguration: {
@@ -343,7 +305,7 @@ const objectStorageService = {
    * @returns {Promise<object>} The response of the put object operation
    */
   async putObject({ stream, id, mimeType, metadata, tags, bucketId = undefined }) {
-    const data = await this._getBucket(bucketId);
+    const data = await utils.getBucket(bucketId);
     const params = {
       Bucket: data.bucket,
       Key: await utils.getPath(id),
@@ -377,7 +339,7 @@ const objectStorageService = {
    * @returns {Promise<object>} The response of the put object tagging operation
    */
   async putObjectTagging({ filePath, tags, versionId = undefined, bucketId = undefined }) {
-    const data = await this._getBucket(bucketId);
+    const data = await utils.getBucket(bucketId);
     const params = {
       Bucket: data.bucket,
       Key: filePath,
@@ -399,7 +361,7 @@ const objectStorageService = {
    * @returns {Promise<object>} The response of the get object operation
    */
   async readObject({ filePath, versionId = undefined, bucketId = undefined }) {
-    const data = await this._getBucket(bucketId);
+    const data = await utils.getBucket(bucketId);
     const params = {
       Bucket: data.bucket,
       Key: filePath,
@@ -419,7 +381,7 @@ const objectStorageService = {
    * @returns {Promise<string>} A presigned url for the direct S3 REST `command` operation
    */
   async readSignedUrl({ filePath, expiresIn, versionId = undefined, bucketId = undefined }) {
-    const data = await this._getBucket(bucketId);
+    const data = await utils.getBucket(bucketId);
     const expires = expiresIn || defaultTempExpiresIn;
     const params = {
       Bucket: data.bucket,
@@ -442,13 +404,13 @@ const objectStorageService = {
    * @returns {Promise<object>} The response of the put object operation
    */
   async upload({ stream, id, mimeType, metadata, tags, bucketId = undefined }) {
-    const data = await this._getBucket(bucketId);
+    const data = await utils.getBucket(bucketId);
 
     const upload = new Upload({
       client: this._getS3Client(data),
       params: {
         Bucket: data.bucket,
-        Key: await utils.getPath(id),
+        Key: utils.joinPath(data.key, id),
         Body: stream,
         ContentType: mimeType,
         Metadata: {

@@ -23,6 +23,7 @@ const service = require('../../../src/services/storage');
 const utils = require('../../../src/components/utils');
 const { MetadataDirective, TaggingDirective } = require('../../../src/components/constants');
 
+const DEFAULTREGION = 'us-east-1'; // Need to specify valid AWS region or it'll explode ('us-east-1' is default, 'ca-central-1' for Canada)
 const bucket = 'bucket';
 const key = 'filePath';
 const defaultTempExpiresIn = parseInt(config.get('objectStorage.defaultTempExpiresIn'), 10);
@@ -43,6 +44,14 @@ beforeEach(() => {
     .mockReturnValueOnce('https://endpoint.com') // objectStorage.endpoint
     .mockReturnValueOnce(key) // objectStorage.key
     .mockReturnValueOnce('secretAccessKey'); // objectStorage.secretAccessKey
+  utils.getBucket = jest.fn(() => ({
+    accessKeyId: 'accessKeyId',
+    bucket: bucket,
+    endpoint: 'https://endpoint.com',
+    key: key,
+    region: DEFAULTREGION,
+    secretAccessKey: config.get('secretAccessKey')
+  }));
 });
 
 describe('_getS3Client', () => {
@@ -63,6 +72,7 @@ describe('copyObject', () => {
     const result = await service.copyObject({ copySource, filePath });
 
     expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(s3ClientMock).toHaveReceivedCommandTimes(CopyObjectCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(CopyObjectCommand, {
       Bucket: bucket,
@@ -82,6 +92,7 @@ describe('copyObject', () => {
     const result = await service.copyObject({ copySource, filePath, versionId });
 
     expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(s3ClientMock).toHaveReceivedCommandTimes(CopyObjectCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(CopyObjectCommand, {
       Bucket: bucket,
@@ -102,6 +113,7 @@ describe('copyObject', () => {
     const result = await service.copyObject({ copySource, filePath, metadata, metadataDirective });
 
     expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(s3ClientMock).toHaveReceivedCommandTimes(CopyObjectCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(CopyObjectCommand, {
       Bucket: bucket,
@@ -123,6 +135,7 @@ describe('copyObject', () => {
     const result = await service.copyObject({ copySource, filePath, metadata, metadataDirective, versionId });
 
     expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(s3ClientMock).toHaveReceivedCommandTimes(CopyObjectCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(CopyObjectCommand, {
       Bucket: bucket,
@@ -143,6 +156,7 @@ describe('copyObject', () => {
     const result = await service.copyObject({ copySource, filePath, tags, taggingDirective });
 
     expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(s3ClientMock).toHaveReceivedCommandTimes(CopyObjectCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(CopyObjectCommand, {
       Bucket: bucket,
@@ -165,6 +179,7 @@ describe('copyObject', () => {
     const result = await service.copyObject({ copySource, filePath, tags, taggingDirective, versionId });
 
     expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(s3ClientMock).toHaveReceivedCommandTimes(CopyObjectCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(CopyObjectCommand, {
       Bucket: bucket,
@@ -189,6 +204,7 @@ describe('deleteObject', () => {
     const result = await service.deleteObject({ filePath });
 
     expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(s3ClientMock).toHaveReceivedCommandTimes(DeleteObjectCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(DeleteObjectCommand, {
       Bucket: bucket,
@@ -203,6 +219,7 @@ describe('deleteObject', () => {
     const result = await service.deleteObject({ filePath, versionId });
 
     expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(s3ClientMock).toHaveReceivedCommandTimes(DeleteObjectCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(DeleteObjectCommand, {
       Bucket: bucket,
@@ -222,6 +239,7 @@ describe('deleteObjectTagging', () => {
     const result = await service.deleteObjectTagging({ filePath });
 
     expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(s3ClientMock).toHaveReceivedCommandTimes(DeleteObjectTaggingCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(DeleteObjectTaggingCommand, {
       Bucket: bucket,
@@ -236,6 +254,7 @@ describe('deleteObjectTagging', () => {
     const result = await service.deleteObjectTagging({ filePath, versionId });
 
     expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(s3ClientMock).toHaveReceivedCommandTimes(DeleteObjectTaggingCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(DeleteObjectTaggingCommand, {
       Bucket: bucket,
@@ -254,6 +273,7 @@ describe('headBucket', () => {
     const result = await service.headBucket();
 
     expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(s3ClientMock).toHaveReceivedCommandTimes(HeadBucketCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(HeadBucketCommand, {
       Bucket: bucket
@@ -270,6 +290,7 @@ describe('getBucketVersioning', () => {
     const result = await service.getBucketVersioning();
 
     expect(result).toBeFalsy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(s3ClientMock).toHaveReceivedCommandTimes(GetBucketVersioningCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(GetBucketVersioningCommand, {
       Bucket: bucket
@@ -287,6 +308,7 @@ describe('getObjectTagging', () => {
     const result = await service.getObjectTagging({ filePath });
 
     expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(s3ClientMock).toHaveReceivedCommandTimes(GetObjectTaggingCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(GetObjectTaggingCommand, {
       Bucket: bucket,
@@ -301,6 +323,7 @@ describe('getObjectTagging', () => {
     const result = await service.getObjectTagging({ filePath, versionId });
 
     expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(s3ClientMock).toHaveReceivedCommandTimes(GetObjectTaggingCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(GetObjectTaggingCommand, {
       Bucket: bucket,
@@ -321,6 +344,7 @@ describe('headObject', () => {
     const result = await service.headObject({ filePath, versionId });
 
     expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(s3ClientMock).toHaveReceivedCommandTimes(HeadObjectCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(HeadObjectCommand, {
       Bucket: bucket,
@@ -335,6 +359,7 @@ describe('headObject', () => {
     const result = await service.headObject({ filePath, versionId });
 
     expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(s3ClientMock).toHaveReceivedCommandTimes(HeadObjectCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(HeadObjectCommand, {
       Bucket: bucket,
@@ -354,6 +379,7 @@ describe('listObjects', () => {
     const result = await service.listObjects({ filePath });
 
     expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(s3ClientMock).toHaveReceivedCommandTimes(ListObjectsCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(ListObjectsCommand, {
       Bucket: bucket,
@@ -368,6 +394,7 @@ describe('listObjects', () => {
     const result = await service.listObjects({ filePath, maxKeys });
 
     expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(s3ClientMock).toHaveReceivedCommandTimes(ListObjectsCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(ListObjectsCommand, {
       Bucket: bucket,
@@ -387,6 +414,7 @@ describe('listObjectVersion', () => {
     const result = await service.listObjectVersion({ filePath });
 
     expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(s3ClientMock).toHaveReceivedCommandTimes(ListObjectVersionsCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(ListObjectVersionsCommand, {
       Bucket: bucket,
@@ -410,6 +438,7 @@ describe('presignUrl', () => {
     const result = await service.presignUrl(command);
 
     expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(getSignedUrl).toHaveBeenCalledTimes(1);
     expect(getSignedUrl).toHaveBeenCalledWith(expect.any(Object), command, { expiresIn: defaultTempExpiresIn });
   });
@@ -421,6 +450,7 @@ describe('presignUrl', () => {
     const result = await service.presignUrl(command, expiresIn);
 
     expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(getSignedUrl).toHaveBeenCalledTimes(1);
     expect(getSignedUrl).toHaveBeenCalledWith(expect.any(Object), command, { expiresIn: expiresIn });
   });
@@ -447,6 +477,7 @@ describe('putObject', () => {
     const result = await service.putObject({ stream, id, mimeType, metadata });
 
     expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(s3ClientMock).toHaveReceivedCommandTimes(PutObjectCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(PutObjectCommand, {
       Bucket: bucket,
@@ -464,6 +495,7 @@ describe('putObject', () => {
     const result = await service.putObject({ stream, id, mimeType, metadata });
 
     expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(s3ClientMock).toHaveReceivedCommandTimes(PutObjectCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(PutObjectCommand, {
       Bucket: bucket,
@@ -482,6 +514,7 @@ describe('putObject', () => {
     const result = await service.putObject({ stream, id, mimeType, metadata, tags });
 
     expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(s3ClientMock).toHaveReceivedCommandTimes(PutObjectCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(PutObjectCommand, {
       Bucket: bucket,
@@ -505,6 +538,7 @@ describe('putObjectTagging', () => {
     const result = await service.putObjectTagging({ filePath, tags });
 
     expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(s3ClientMock).toHaveReceivedCommandTimes(PutObjectTaggingCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(PutObjectTaggingCommand, {
       Bucket: bucket,
@@ -523,6 +557,7 @@ describe('putObjectTagging', () => {
     const result = await service.putObjectTagging({ filePath, tags, versionId });
 
     expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(s3ClientMock).toHaveReceivedCommandTimes(PutObjectTaggingCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(PutObjectTaggingCommand, {
       Bucket: bucket,
@@ -545,6 +580,7 @@ describe('readObject', () => {
     const result = await service.readObject({ filePath });
 
     expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(s3ClientMock).toHaveReceivedCommandTimes(GetObjectCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(GetObjectCommand, {
       Bucket: bucket,
@@ -559,6 +595,7 @@ describe('readObject', () => {
     const result = await service.readObject({ filePath, versionId });
 
     expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(s3ClientMock).toHaveReceivedCommandTimes(GetObjectCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(GetObjectCommand, {
       Bucket: bucket,
@@ -585,6 +622,7 @@ describe('readSignedUrl', () => {
     const result = await service.readSignedUrl({ filePath });
 
     expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(presignUrlMock).toHaveBeenCalledTimes(1);
     expect(presignUrlMock).toHaveBeenCalledWith(expect.objectContaining({
       input: {
@@ -600,6 +638,7 @@ describe('readSignedUrl', () => {
     const result = await service.readSignedUrl({ filePath, versionId });
 
     expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(presignUrlMock).toHaveBeenCalledTimes(1);
     expect(presignUrlMock).toHaveBeenCalledWith(expect.objectContaining({
       input: {
@@ -617,6 +656,7 @@ describe('readSignedUrl', () => {
     const result = await service.readSignedUrl({ filePath, versionId, expiresIn: expires });
 
     expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(presignUrlMock).toHaveBeenCalledTimes(1);
     expect(presignUrlMock).toHaveBeenCalledWith(expect.objectContaining({
       input: {
@@ -654,6 +694,7 @@ describe('upload', () => {
     const result = await service.upload({ stream, id, mimeType, metadata });
 
     expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(s3ClientMock).toHaveReceivedCommandTimes(PutObjectCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(PutObjectCommand, {
       Bucket: bucket,
@@ -676,6 +717,7 @@ describe('upload', () => {
     const result = await service.upload({ stream, id, mimeType, metadata, tags });
 
     expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(s3ClientMock).toHaveReceivedCommandTimes(PutObjectCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandTimes(PutObjectTaggingCommand, 1);
     expect(s3ClientMock).toHaveReceivedNthCommandWith(1, PutObjectCommand, {

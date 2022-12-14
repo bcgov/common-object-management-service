@@ -1,11 +1,14 @@
 const config = require('config');
 
 const { AuthMode, AuthType } = require('../../../src/components/constants');
-const { objectService } = require('../../../src/services');
+const { bucketService, objectService } = require('../../../src/services');
 const utils = require('../../../src/components/utils');
+const Problem = require('api-problem');
 
 // Mock config library - @see {@link https://stackoverflow.com/a/64819698}
 jest.mock('config');
+
+const DEFAULTREGION = 'us-east-1'; // Need to specify valid AWS region or it'll explode ('us-east-1' is default, 'ca-central-1' for Canada)
 
 beforeEach(() => {
   jest.resetAllMocks();
@@ -151,6 +154,145 @@ describe('getAppAuthMode', () => {
 
     expect(result).toEqual(expected);
     expect(config.has).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('getBucket', () => {
+  const cdata = {
+    accessKeyId: 'accessKeyId',
+    bucket: 'bucket',
+    endpoint: 'https://endpoint.com',
+    key: 'filePath',
+    region: DEFAULTREGION,
+    secretAccessKey: 'secretAccessKey'
+  };
+  const ddata = {
+    accessKeyId: 'foo',
+    bucket: 'bar',
+    endpoint: 'https://baz.com',
+    key: 'koo',
+    region: DEFAULTREGION,
+    secretAccessKey: 'soo'
+  };
+  const readBucketSpy = jest.spyOn(bucketService, 'read');
+
+  beforeEach(() => {
+    config.get
+      .mockReturnValueOnce(cdata.accessKeyId) // objectStorage.accessKeyId
+      .mockReturnValueOnce(cdata.bucket) // objectStorage.bucket
+      .mockReturnValueOnce(cdata.endpoint) // objectStorage.endpoint
+      .mockReturnValueOnce(cdata.key) // objectStorage.key
+      .mockReturnValueOnce(cdata.secretAccessKey); // objectStorage.secretAccessKey
+  });
+
+  it('should return config data given no db, no bucketId and not throwable', async () => {
+    config.has.mockReturnValueOnce(false); // db.enabled
+
+    const result = await utils.getBucket();
+
+    expect(result).toBeTruthy();
+    expect(result).toEqual(cdata);
+    expect(result).toHaveProperty('accessKeyId', cdata.accessKeyId);
+    expect(result).toHaveProperty('bucket', cdata.bucket);
+    expect(result).toHaveProperty('endpoint', cdata.endpoint);
+    expect(result).toHaveProperty('key', cdata.key);
+    expect(result).toHaveProperty('region', cdata.region);
+    expect(result).toHaveProperty('secretAccessKey', cdata.secretAccessKey);
+    expect(readBucketSpy).toHaveBeenCalledTimes(0);
+  });
+
+  it('should return config data given no db, a good bucketId and not throwable', async () => {
+    config.has.mockReturnValueOnce(false); // db.enabled
+
+    const result = await utils.getBucket('bucketId');
+
+    expect(result).toBeTruthy();
+    expect(result).toEqual(cdata);
+    expect(result).toHaveProperty('accessKeyId', cdata.accessKeyId);
+    expect(result).toHaveProperty('bucket', cdata.bucket);
+    expect(result).toHaveProperty('endpoint', cdata.endpoint);
+    expect(result).toHaveProperty('key', cdata.key);
+    expect(result).toHaveProperty('region', cdata.region);
+    expect(result).toHaveProperty('secretAccessKey', cdata.secretAccessKey);
+    expect(readBucketSpy).toHaveBeenCalledTimes(0);
+  });
+
+  it('should return config data given no db, no bucketId and is throwable', async () => {
+    config.has.mockReturnValueOnce(false); // db.enabled
+
+    const result = await utils.getBucket(undefined, true);
+
+    expect(result).toBeTruthy();
+    expect(result).toEqual(cdata);
+    expect(result).toHaveProperty('accessKeyId', cdata.accessKeyId);
+    expect(result).toHaveProperty('bucket', cdata.bucket);
+    expect(result).toHaveProperty('endpoint', cdata.endpoint);
+    expect(result).toHaveProperty('key', cdata.key);
+    expect(result).toHaveProperty('region', cdata.region);
+    expect(result).toHaveProperty('secretAccessKey', cdata.secretAccessKey);
+    expect(readBucketSpy).toHaveBeenCalledTimes(0);
+  });
+
+  it('should return config data given a db, no bucketId and not throwable', async () => {
+    config.has.mockReturnValueOnce(true); // db.enabled
+
+    const result = await utils.getBucket();
+
+    expect(result).toBeTruthy();
+    expect(result).toEqual(cdata);
+    expect(result).toHaveProperty('accessKeyId', cdata.accessKeyId);
+    expect(result).toHaveProperty('bucket', cdata.bucket);
+    expect(result).toHaveProperty('endpoint', cdata.endpoint);
+    expect(result).toHaveProperty('key', cdata.key);
+    expect(result).toHaveProperty('region', cdata.region);
+    expect(result).toHaveProperty('secretAccessKey', cdata.secretAccessKey);
+    expect(readBucketSpy).toHaveBeenCalledTimes(0);
+  });
+
+  it('should return database data given a db, a good bucketId and not throwable', async () => {
+    readBucketSpy.mockResolvedValue(ddata);
+    config.has.mockReturnValueOnce(true); // db.enabled
+
+    const result = await utils.getBucket('bucketId');
+
+    expect(result).toBeTruthy();
+    expect(result).toEqual(ddata);
+    expect(result).toHaveProperty('bucket', ddata.bucket);
+    expect(result).toHaveProperty('endpoint', ddata.endpoint);
+    expect(result).toHaveProperty('key', ddata.key);
+    expect(result).toHaveProperty('region', ddata.region);
+    expect(result).toHaveProperty('secretAccessKey', ddata.secretAccessKey);
+    expect(readBucketSpy).toHaveBeenCalledTimes(1);
+    expect(readBucketSpy).toHaveBeenCalledWith('bucketId');
+  });
+
+  it('should return config data given a db, a bad bucketId and not throwable', async () => {
+    readBucketSpy.mockImplementation(() => { throw new Problem(422); });
+    config.has.mockReturnValueOnce(true); // db.enabled
+
+    const result = await (() => utils.getBucket('bucketId'))();
+
+    expect(result).toBeTruthy();
+    expect(result).toEqual(cdata);
+    expect(result).toHaveProperty('accessKeyId', cdata.accessKeyId);
+    expect(result).toHaveProperty('bucket', cdata.bucket);
+    expect(result).toHaveProperty('endpoint', cdata.endpoint);
+    expect(result).toHaveProperty('key', cdata.key);
+    expect(result).toHaveProperty('region', cdata.region);
+    expect(result).toHaveProperty('secretAccessKey', cdata.secretAccessKey);
+    expect(readBucketSpy).toHaveBeenCalledTimes(1);
+    expect(readBucketSpy).toHaveBeenCalledWith('bucketId');
+  });
+
+  it('should throw given a db, a bucketId and is throwable', () => {
+    readBucketSpy.mockImplementation(() => { throw new Problem(422); });
+    config.has.mockReturnValueOnce(true); // db.enabled
+
+    const result = (() => utils.getBucket('bucketId', true))();
+
+    expect(result).rejects.toThrow();
+    expect(readBucketSpy).toHaveBeenCalledTimes(1);
+    expect(readBucketSpy).toHaveBeenCalledWith('bucketId');
   });
 });
 

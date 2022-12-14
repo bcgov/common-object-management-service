@@ -1,3 +1,4 @@
+const Problem = require('api-problem');
 const config = require('config');
 const { existsSync, readFileSync } = require('fs');
 const { join } = require('path');
@@ -5,6 +6,7 @@ const { join } = require('path');
 const { AuthMode, AuthType } = require('./constants');
 const log = require('./log')(module.filename);
 
+const DEFAULTREGION = 'us-east-1'; // Need to specify valid AWS region or it'll explode ('us-east-1' is default, 'ca-central-1' for Canada)
 const DELIMITER = '/';
 
 const utils = {
@@ -45,6 +47,46 @@ const utils = {
     else if (basicAuth && !oidcAuth) return AuthMode.BASICAUTH;
     else if (!basicAuth && oidcAuth) return AuthMode.OIDCAUTH;
     else return AuthMode.FULLAUTH; // basicAuth && oidcAuth
+  },
+
+  /**
+   * @function getBucket
+   * Acquire core S3 bucket credential information with graceful default fallback
+   * @param {string} [bucketId=undefined] An optional bucketId to lookup
+   * @param {boolean} [throwable=false] Throws an error if no `bucketId` is found
+   * @returns {object} An object containing accessKeyId, bucket, endpoint, key,
+   * region and secretAccessKey attributes
+   * @throws If there are no records found with `bucketId` and `throwable` is true
+   */
+  async getBucket(bucketId = undefined, throwable = false) {
+    const data = {
+      accessKeyId: config.get('objectStorage.accessKeyId'),
+      bucket: config.get('objectStorage.bucket'),
+      endpoint: config.get('objectStorage.endpoint'),
+      key: config.get('objectStorage.key'),
+      region: DEFAULTREGION,
+      secretAccessKey: config.get('objectStorage.secretAccessKey')
+    };
+
+    if (config.has('db.enabled') && bucketId) {
+      // Function scoped import to avoid circular dependencies
+      const { bucketService } = require('../services');
+
+      try {
+        const bucketData = await bucketService.read(bucketId);
+        data.accessKeyId = bucketData.accessKeyId;
+        data.bucket = bucketData.bucket;
+        data.endpoint = bucketData.endpoint;
+        data.key = bucketData.key;
+        data.secretAccessKey = bucketData.secretAccessKey;
+        if (bucketData.region) data.region = bucketData.region;
+      } catch (err) {
+        log.warn(err.message, { function: 'getBucket'});
+        if (throwable) throw new Problem(422, { details: err.message });
+      }
+    }
+
+    return data;
   },
 
   /**
@@ -203,12 +245,10 @@ const utils = {
   joinPath(...items) {
     if (items && items.length) {
       const parts = [];
-      items.map(p => {
-        if (p) {
-          p.split('/').map(x => {
-            if (x && x.trim().length) parts.push(x);
-          });
-        }
+      items.forEach(p => {
+        if (p) p.split(DELIMITER).forEach(x => {
+          if (x && x.trim().length) parts.push(x);
+        });
       });
       return parts.join(DELIMITER);
     }
