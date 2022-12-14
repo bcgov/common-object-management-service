@@ -203,10 +203,12 @@ const utils = {
   joinPath(...items) {
     if (items && items.length) {
       const parts = [];
-      items.forEach(p => {
-        if (p) p.split(DELIMITER).forEach(x => {
-          if (x && x.trim().length) parts.push(x);
-        });
+      items.map(p => {
+        if (p) {
+          p.split('/').map(x => {
+            if (x && x.trim().length) parts.push(x);
+          });
+        }
       });
       return parts.join(DELIMITER);
     }
