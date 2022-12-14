@@ -3,7 +3,10 @@ const Problem = require('api-problem');
 const log = require('./log')(module.filename);
 
 function errorToProblem(service, e) {
-  if (e.response) {
+  // If already problem type, just return as is
+  if (e instanceof Problem) {
+    return e;
+  } else if (e.response) {
     // Handle raw data
     let data;
     if (typeof e.response.data === 'string' || e.response.data instanceof String) {
