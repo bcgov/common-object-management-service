@@ -34,6 +34,9 @@ beforeEach(() => {
   MockTransaction.mockReset();
 });
 
+afterEach(() => {
+  jest.clearAllMocks();
+});
 
 describe('_tokenToUser', () => {
   // TODO: Add more edge case testing
@@ -45,17 +48,6 @@ describe('_tokenToUser', () => {
 
 
 describe('createIdp', () => {
-
-  beforeEach(() => {
-    MockModel.mockReset();
-    MockTransaction.mockReset();
-  });
-
-  afterAll(() => {
-    MockModel.mockReset();
-    MockTransaction.mockReset();
-  });
-
   it('Does nothing if no idp provided', async () => {
     const result = await service.createIdp(undefined);
 
@@ -93,22 +85,17 @@ describe('createIdp', () => {
 
 
 describe('createUser', () => {
-
   const readIdpSpy = jest.spyOn(service, 'readIdp');
   const createIdpSpy = jest.spyOn(service, 'createIdp');
 
   beforeEach(() => {
     readIdpSpy.mockReset();
     createIdpSpy.mockReset();
-    MockModel.mockReset();
-    MockTransaction.mockReset();
   });
 
   afterAll(() => {
     readIdpSpy.mockRestore();
     createIdpSpy.mockRestore();
-    MockModel.mockReset();
-    MockTransaction.mockReset();
   });
 
   it('Creates an idp if no matching idp exists in database', async () => {
@@ -150,7 +137,6 @@ describe('createUser', () => {
 
 
 describe('login', () => {
-
   const createUserSpy = jest.spyOn(service, 'createUser');
   const updateUserSpy = jest.spyOn(service, 'updateUser');
   const tokenToUserSpy = jest.spyOn(service, '_tokenToUser');
@@ -159,16 +145,12 @@ describe('login', () => {
     tokenToUserSpy.mockReset();
     createUserSpy.mockReset();
     updateUserSpy.mockReset();
-    MockModel.mockReset();
-    MockTransaction.mockReset();
   });
 
   afterAll(() => {
     tokenToUserSpy.mockRestore();
     createUserSpy.mockRestore();
     updateUserSpy.mockRestore();
-    MockModel.mockReset();
-    MockTransaction.mockReset();
   });
 
   service._tokenToUser = jest.fn().mockReturnValue(user);
@@ -201,14 +183,6 @@ describe('login', () => {
 });
 
 describe('getCurrentUserId', () => {
-  beforeEach(() => {
-    MockModel.mockReset();
-  });
-
-  afterAll(() => {
-    MockModel.mockReset();
-  });
-
   it('Query user by identityId', async () => {
     MockModel.mockResolvedValue({ ...user, userId: '123', identityId: '123-idir' });
 
@@ -223,17 +197,6 @@ describe('getCurrentUserId', () => {
 });
 
 describe('readIdp', () => {
-
-  beforeEach(() => {
-    MockModel.mockReset();
-    MockTransaction.mockReset();
-  });
-
-  afterAll(() => {
-    MockModel.mockReset();
-    MockTransaction.mockReset();
-  });
-
   it('Query identityProvider by code', () => {
     service.readIdp('idir');
 
@@ -246,17 +209,6 @@ describe('readIdp', () => {
 
 
 describe('readUser', () => {
-
-  beforeEach(() => {
-    MockModel.mockReset();
-    MockTransaction.mockReset();
-  });
-
-  afterAll(() => {
-    MockModel.mockReset();
-    MockTransaction.mockReset();
-  });
-
   it('Query user table by userId', () => {
     service.readUser(userId);
 
@@ -295,10 +247,11 @@ describe('updateUser', () => {
   service._tokenToUser = jest.fn().mockReturnValue(user);
 
   it('Does nothing if user is unchanged', async () => {
-    readUserSpy.mockReturnValue(user);
+    readUserSpy.mockResolvedValue(user);
     const etrx = await jest.fn().mockResolvedValue(MockTransaction);
     await service.updateUser(userId, user, etrx);
 
+    expect(readUserSpy).toHaveBeenCalledTimes(1);
     expect(readUserSpy).toHaveBeenCalledWith(userId);
     expect(readIdpSpy).toHaveBeenCalledTimes(0);
     expect(createIdpSpy).toHaveBeenCalledTimes(0);
@@ -307,10 +260,12 @@ describe('updateUser', () => {
   });
 
   it('Updates existing user if properties have changed', async () => {
-    readUserSpy.mockReturnValue(oldUser);
+    readUserSpy.mockResolvedValue(oldUser);
     const etrx = await jest.fn().mockResolvedValue(MockTransaction);
     await service.updateUser(userId, user, etrx);
 
+    expect(readUserSpy).toHaveBeenCalledTimes(1);
+    expect(readUserSpy).toHaveBeenCalledWith(userId);
     // TODO: MockModel is not being reset before this test
     // for next test we should expect it toHaveBeenCalledTimes(1)
     expect(MockModel.query).toHaveBeenCalledTimes(3);
@@ -324,10 +279,12 @@ describe('updateUser', () => {
   // for some reason, possibly related to transactions, the spied on functions below are not being called.
   it.skip('Creates idp if idp does not exist in db', async () => {
     let oldUser = { ...user, email: 'jsmith@yahoo.com', idp: 'bceid' };
-    readUserSpy.mockReturnValue(oldUser);
+    readUserSpy.mockResolvedValue(oldUser);
     const etrx = await jest.fn().mockResolvedValue(MockTransaction);
     await service.updateUser(userId, user, etrx);
 
+    expect(readUserSpy).toHaveBeenCalledTimes(1);
+    expect(readUserSpy).toHaveBeenCalledWith(userId);
     expect(readIdpSpy).toHaveBeenCalledTimes(1);
     expect(createIdpSpy).toHaveBeenCalledWith(user.idp, etrx);
     expect(createIdpSpy).toHaveBeenCalledTimes(1);

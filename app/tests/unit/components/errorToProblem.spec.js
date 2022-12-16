@@ -5,7 +5,20 @@ const errorToProblem = require('../../../src/components/errorToProblem');
 const SERVICE = 'TESTSERVICE';
 
 describe('errorToProblem', () => {
-  it('should return a 422 problem', () => {
+  it('should return a 422 problem given a problem', () => {
+    const msg = 'errMsg';
+    const e = new Problem(422, { detail: msg });
+    const result = errorToProblem(SERVICE, e);
+
+    expect(result).toBeTruthy();
+    expect(result instanceof Problem).toBeTruthy();
+    expect(result.title).toMatch('Unprocessable Entity');
+    expect(result.status).toBe(422);
+    expect(result.detail).toMatch(msg);
+    expect(result.errors).toBeUndefined();
+  });
+
+  it('should return a 422 problem given an error', () => {
     const e = {
       response: {
         data: { detail: 'detail' },

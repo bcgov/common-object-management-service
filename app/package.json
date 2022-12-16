@@ -29,9 +29,9 @@
     "seed": "knex seed:run"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.223.0",
-    "@aws-sdk/lib-storage": "^3.223.0",
-    "@aws-sdk/s3-request-presigner": "^3.223.0",
+    "@aws-sdk/client-s3": "^3.231.0",
+    "@aws-sdk/lib-storage": "^3.231.0",
+    "@aws-sdk/s3-request-presigner": "^3.231.0",
     "api-problem": "^9.0.0",
     "busboy": "^1.6.0",
     "compression": "^1.7.4",
@@ -45,7 +45,7 @@
     "express-winston": "^4.2.0",
     "js-yaml": "^4.1.0",
     "jsonwebtoken": "^8.5.1",
-    "keycloak-connect": "^20.0.1",
+    "keycloak-connect": "^20.0.2",
     "knex": "^2.3.0",
     "objection": "^3.0.1",
     "pg": "^8.8.0",
@@ -61,6 +61,6 @@
     "jest": "^29.3.1",
     "jest-joi": "^1.1.14",
     "nodemon": "^2.0.20",
-    "supertest": "^6.3.2"
+    "supertest": "^6.3.3"
   }
 }

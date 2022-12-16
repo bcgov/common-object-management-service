@@ -160,7 +160,6 @@ const controller = {
     try {
       const bucketIds = mixedQueryToArray(req.query.bucketId);
       const params = {
-        userId: req.query.userId,
         bucketId: bucketIds ? bucketIds.map(id => addDashesToUuid(id)) : bucketIds,
         bucketName: req.query.bucketName,
         key: req.query.key,

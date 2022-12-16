@@ -5,7 +5,7 @@ const { metadataService } = require('../services');
 const SERVICE = 'MetadataService';
 
 /**
- * The User Controller
+ * The Metadata Controller
  */
 const controller = {
   /**
