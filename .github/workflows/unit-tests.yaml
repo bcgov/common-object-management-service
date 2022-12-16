@@ -28,13 +28,13 @@ jobs:
       - name: Check CodeClimate Secrets
         id: check-secrets
         run: |
-          echo "::set-output name=HAS_CC_SECRETS::${{ secrets.CC_TEST_REPORTER_ID != '' }}"
+          echo "HAS_CC_SECRETS=${{ secrets.CC_TEST_REPORTER_ID != '' }}" >> $GITHUB_OUTPUT
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node-version }}
       - name: Cache node modules
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: cache-app
         env:
           cache-name: cache-node-modules
@@ -80,7 +80,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
       - name: Restore Coverage Results
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
       - name: Publish code coverage
         uses: paambaati/codeclimate-action@v2.7.5
         env:
