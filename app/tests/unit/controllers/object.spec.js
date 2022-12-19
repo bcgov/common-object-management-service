@@ -319,7 +319,6 @@ describe('deleteObject', () => {
       id: 'xyz-789',
       deleteMarker: true,
       versionId: '1234',
-      mimeType: null,
     }, 'user-123');
   });
 

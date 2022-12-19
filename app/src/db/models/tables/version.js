@@ -66,7 +66,7 @@ class Version extends Timestamps(Model) {
   static get jsonSchema() {
     return {
       type: 'object',
-      required: ['objectId', 'mimeType'],
+      required: ['objectId'],
       properties: {
         id: { type: 'string', minLength: 1, maxLength: 255 },
         versionId: { type: ['string', 'null'], maxLength: 1024 },
