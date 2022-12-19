@@ -370,8 +370,7 @@ const controller = {
           const deleteMarker = {
             id: objId,
             deleteMarker: true,
-            versionId: s3Response.VersionId,
-            mimeType: null
+            versionId: s3Response.VersionId
           };
           await versionService.create(deleteMarker, userId);
         } else { // else object in bucket is not versioned
