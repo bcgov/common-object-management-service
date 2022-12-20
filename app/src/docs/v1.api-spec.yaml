@@ -884,18 +884,15 @@ components:
       in: query
       name: identityId
       description: >-
-        Uuid or array of uuids representing the user (identified by optional
-        `KC_IDENTITYKEY` env variable)
+        String or array of strings representing the user (identified by optional KC_IDENTITYKEY env variable)
       schema:
         oneOf:
           - type: string
-            format: uuid
-            example: 00000000-0000-0000-0000-000000000000
+            example: 5dad1ec9d3c04b0f8eadcb4d9fa98987
           - type: array
             items:
               type: string
-              format: uuid
-              example: 00000000-0000-0000-0000-000000000000
+              example: 5dad1ec9d3c04b0f8eadcb4d9fa98987
     Query-FirstName:
       in: query
       name: firstName
@@ -1197,7 +1194,7 @@ components:
                 Identity id of the user (Usually the sub claim in a JWT but can
                 be redefined to a different claim with the `KC_IDENTITYKEY` env
                 variable)
-              example: 5dad1ec9-d3c0-4b0f-8ead-cb4d9fa98987
+              example: 5dad1ec9d3c04b0f8eadcb4d9fa98987
             idp:
               type: string
               description: Identity provider used by the OIDC server

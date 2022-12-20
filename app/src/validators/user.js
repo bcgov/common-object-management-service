@@ -6,7 +6,7 @@ const schema = {
   searchUsers: {
     query: Joi.object({
       userId: scheme.guid,
-      identityId: scheme.guid,
+      identityId: scheme.string,
       idp: scheme.string,
       username: type.alphanum,
       email: type.email,

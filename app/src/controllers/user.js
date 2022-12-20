@@ -38,10 +38,9 @@ const controller = {
   async searchUsers(req, res, next) {
     try {
       const userIds = mixedQueryToArray(req.query.userId);
-      const identityIds = mixedQueryToArray(req.query.identityId);
       const response = await userService.searchUsers({
         userId: userIds ? userIds.map(id => addDashesToUuid(id)) : userIds,
-        identityId: identityIds ? identityIds.map(id => addDashesToUuid(id)) : identityIds,
+        identityId: mixedQueryToArray(req.query.identityId),
         idp: mixedQueryToArray(req.query.idp),
         username: req.query.username,
         email: req.query.email,

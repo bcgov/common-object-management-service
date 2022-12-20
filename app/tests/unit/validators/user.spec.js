@@ -135,7 +135,7 @@ describe('searchUsers', () => {
 
     describe('identityId', () => {
       it('is the expected schema', () => {
-        expect(query.keys.identityId).toEqual(scheme.guid.describe());
+        expect(query.keys.identityId).toEqual(scheme.string.describe());
       });
     });
 
