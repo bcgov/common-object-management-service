@@ -20,14 +20,14 @@ security:
 tags:
   - name: Bucket
     description: >-
-      Operations for inspecting known COMS metadata. Certain operations not
+      Operations for managing S3 Bucket(s). Certain operations not
       available without a database.
     externalDocs:
       url: >-
         https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#bucket
   - name: Bucket Permission
     description: >-
-      Operations for managing User Access Control to S3 Buckets. Not available
+      Operations for managing S3 Bucket permissions. Not available
       without a database.
     externalDocs:
       url: >-
@@ -53,7 +53,7 @@ tags:
         https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#metadata
   - name: Object Permission
     description: >-
-      Operations for managing User Access Control to S3 Objects. Not available
+      Operations for managing User Access Control to S3 Object permissions. Not available
       without a database.
     externalDocs:
       url: >-
