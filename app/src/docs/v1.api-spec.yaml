@@ -164,8 +164,7 @@ paths:
 
     patch:
       summary: Updates a bucket
-      description: >-
-        Returns updated bucket
+      description: Returns updated bucket
       operationId: updateBucket
       tags:
         - Bucket
@@ -189,8 +188,7 @@ paths:
 
     delete:
       summary: Deletes a bucket
-      description: >-
-        Delete bucket based on bucketId
+      description: Delete bucket based on bucketId
       operationId: deleteBucket
       tags:
         - Bucket
