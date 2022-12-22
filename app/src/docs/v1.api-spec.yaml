@@ -74,18 +74,17 @@ paths:
   /bucket:
     put:
       summary: Creates a bucket
-      description: >-
-        Creates a bucket
+      description: Creates a bucket
       operationId: createBucket
       tags:
         - Bucket
       requestBody:
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/DB-Bucket'
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/DB-Bucket'
       responses:
         '201':
           description: Returns inserted DB bucket record
@@ -148,8 +147,7 @@ paths:
 
     get:
       summary: Returns a bucket
-      description: >-
-        Returns a bucket based on bucketId
+      description: Returns a bucket based on bucketId
       operationId: readBucket
       tags:
         - Bucket
@@ -158,6 +156,7 @@ paths:
       responses:
         '200':
           description: Returns bucket
+          $ref: '#/components/responses/Bucket'
         '403':
           $ref: '#/components/responses/Forbidden'
         default:
@@ -181,7 +180,8 @@ paths:
         - $ref: '#/components/parameters/Path-BucketId'
       responses:
         '200':
-          description: Returns bucket
+          description: Returns updated bucket
+          $ref: '#/components/responses/Bucket'
         '403':
           $ref: '#/components/responses/Forbidden'
         default:
@@ -724,7 +724,7 @@ paths:
       description: >-
         Returns an array of permissions meeting the filtering parameters
         provided
-      operationId: object.searchPermissions
+      operationId: objectSearchPermissions
       security:
         - BasicAuth: []
       tags:
@@ -758,7 +758,7 @@ paths:
       description: >-
         Returns an array of object permissions for a specific object meeting the
         filtering parameters provided
-      operationId: object.listPermissions
+      operationId: objectListPermissions
       tags:
         - Object Permission
       parameters:
@@ -790,7 +790,7 @@ paths:
         operation, so users that already have a requested permission will remain
         unaffected. Only permissions successfully added to COMS will appear in
         the response.
-      operationId: object.addPermissions
+      operationId: objectAddPermissions
       tags:
         - Object Permission
       parameters:
@@ -829,7 +829,7 @@ paths:
         appear in the response. WARNING: Specifying no parameters will delete
         all permissions associated with an object; it is possible to lock
         yourself out of your own object!
-      operationId: object.removePermissions
+      operationId: objectRemovePermissions
       tags:
         - Object Permission
       parameters:
@@ -857,7 +857,7 @@ paths:
       description: >-
         Returns an array of bucket permissions meeting the filtering parameters
         provided
-      operationId: bucket.searchPermissions
+      operationId: bucketSearchPermissions
       security:
         - BasicAuth: []
       tags:
@@ -891,7 +891,7 @@ paths:
       description: >-
         Returns an array of object permissions for a specific object meeting the
         filtering parameters provided
-      operationId: bucket.listPermissions
+      operationId: bucketListPermissions
       tags:
         - Bucket Permission
       parameters:
@@ -923,7 +923,7 @@ paths:
         operation, so users that already have a requested permission will remain
         unaffected. Only permissions successfully added to COMS will appear in
         the response.
-      operationId: bucket.addPermissions
+      operationId: bucketAddPermissions
       tags:
         - Bucket Permission
       parameters:
@@ -961,7 +961,7 @@ paths:
         appear in the response. WARNING: Specifying no parameters will delete
         all permissions associated with a bucket; it is possible to lock
         yourself out of your own bucket!
-      operationId: bucket.removePermissions
+      operationId: bucketRemovePermissions
       tags:
         - Bucket Permission
       parameters:
@@ -1274,7 +1274,7 @@ components:
       name: objectPerms
       description: Boolean representing whether to include (object) buckets or not
       schema:
-        type: string
+        type: boolean
         example: true/false
     Query-Key:
       in: query
@@ -1390,7 +1390,9 @@ components:
             - secretAccessKey
           properties:
             accessKeyId:
-              example: REDACTED
+              type: string
+              description: The access key id
+              example: 0000000000000+1111111111111
             active:
               type: boolean
               description: Determines whether this bucket is considered active
@@ -1398,6 +1400,8 @@ components:
               example: true
             bucket:
               type: string
+              description: The parent directory
+              example: parentDirectory
             bucketId:
               type: string
               description: The primary identifier for this bucket
@@ -1405,14 +1409,20 @@ components:
               example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
             bucketName:
               type: string
+              description: The primary name for this bucket
+              example: bucketName
             endpoint:
               type: string
+              description: The bucket resources end point (URL)
+              example: https://s3.dot.dot.dot
             key:
               type: string
               description: The prefix to path of all objects in the bucket
               example: coms/env
             region:
               type: string
+              description: The region
+              example: region name
             secretAccessKey:
               example: REDACTED
         - $ref: '#/components/schemas/DB-TimestampUserData'
@@ -1529,26 +1539,6 @@ components:
               example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
             permCode:
               $ref: '#/components/schemas/PermCode'
-            createdBy:
-              type: string
-              format: uuid
-              description: The unique identifier of the user
-              example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
-            createdAt:
-              type: string
-              format: yyyy-mm-ddThh:mm:ssZ
-              description: The created by date
-              example: 2022-12-02T18:13:09.954Z
-            updatedBy:
-              type: string
-              format: uuid
-              description: The unique identifier of the user
-              example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
-            updatedAt:
-              type: string
-              format: yyyy-mm-ddThh:mm:ssZ
-              description: The created by date
-              example: 2022-12-02T18:13:09.954Z
         - $ref: '#/components/schemas/DB-TimestampUserData'
     DB-Tags:
       allOf:
@@ -1677,6 +1667,10 @@ components:
               example: Bad Request
             type:
               example: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400
+    Response-Bucket:
+      title: Bucket
+      type: object
+      $ref: '#/components/schemas/DB-Bucket'
     Response-Conflict:
       allOf:
         - $ref: '#/components/schemas/Response-Problem'
@@ -1999,6 +1993,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Response-BadRequest'
+    Bucket:
+      description: Bucket
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Response-Bucket'
     Conflict:
       description: Request conflicts with server state
       content:
