@@ -98,7 +98,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         default:
           $ref: '#/components/responses/Error'
-
     get:
       summary: Search for buckets
       description: >-
@@ -127,7 +126,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         default:
           $ref: '#/components/responses/Error'
-
   /bucket/{bucketId}:
     head:
       summary: Checks if a given bucket or default bucket exists in S3
@@ -144,7 +142,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         default:
           $ref: '#/components/responses/Error'
-
     get:
       summary: Returns a bucket
       description: Returns a bucket based on bucketId
@@ -161,7 +158,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         default:
           $ref: '#/components/responses/Error'
-
     patch:
       summary: Updates a bucket
       description: Returns updated bucket
@@ -185,7 +181,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         default:
           $ref: '#/components/responses/Error'
-
     delete:
       summary: Deletes a bucket
       description: Delete bucket based on bucketId
@@ -240,6 +235,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/Header-Metadata'
         - $ref: '#/components/parameters/Query-TagSet'
+        # include bucketId query param
       requestBody:
         description: Form-data containing files
         required: true
@@ -282,6 +278,7 @@ paths:
                     - $ref: '#/components/schemas/DB-Metadata'
                     - $ref: '#/components/schemas/DB-Tags'
                     - $ref: '#/components/schemas/S3-Object'
+                    # response now includes Bucket, Key and Location, i think from S3.. should we document??
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -742,7 +739,18 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/DB-ObjectPermission'
+                  type: object
+                  properties:
+                    objectId:
+                      type: string
+                      format: uuid
+                      description: The unique identifier for the object
+                      example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
+                    permissions:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/DB-ObjectPermission'
+
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -853,7 +861,7 @@ paths:
     get:
       summary: Searches for bucket permissions
       description: >-
-        Returns an array of bucket permissions meeting the filtering parameters
+        Returns an array of buckets and their permissions meeting the filtering parameters
         provided
       operationId: bucketSearchPermissions
       security:
@@ -868,14 +876,24 @@ paths:
       responses:
         '200':
           description: >-
-            Returns an array of objectId/userId/permCode triplets that match the
+            Returns an array of bucketIds and permissions that match the
             provided parameters
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/DB-BucketPermission'
+                  type: object
+                  properties:
+                    bucketId:
+                      type: string
+                      format: uuid
+                      description: The unique identifier for the bucket
+                      example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
+                    permissions:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/DB-BucketPermission'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -887,7 +905,7 @@ paths:
     get:
       summary: Returns the bucket permissions
       description: >-
-        Returns an array of object permissions for a specific object meeting the
+        Returns an array of permissions for a specific bucket meeting the
         filtering parameters provided
       operationId: bucketListPermissions
       tags:
@@ -1270,7 +1288,7 @@ components:
     Query-ObjectPerms:
       in: query
       name: objectPerms
-      description: Boolean representing whether to include (object) buckets or not
+      description: Boolean representing whether or not to include buckets containing objects with permissions
       schema:
         type: boolean
         example: true/false
@@ -1518,17 +1536,16 @@ components:
             - bucketId
             - userId
             - permCode
-            - createdBy
           properties:
             id:
               type: string
               format: uuid
               description: The unique identifier for this permission tuple
               example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
-            objectId:
+            bucketId:
               type: string
               format: uuid
-              description: The unique identifier for the object
+              description: The unique identifier for the bucket
               example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
             userId:
               type: string
@@ -1633,7 +1650,7 @@ components:
       example: proxy
     PermCode:
       type: string
-      description: Permission code/type for an object
+      description: Permission code/type
       enum:
         - CREATE
         - READ
