@@ -94,25 +94,29 @@ class ObjectModel extends Timestamps(Model) {
       },
       filterLatest(query, value) {
         if (value !== undefined) {
+          // get an array of the latest version for all objects in db
+          // use distintOn() to get first of each group (ref: https://stackoverflow.com/questions/3800551/select-first-row-in-each-group-by-group)
+          // TODO: consider refactoring if performance issues
+          const subquery = Version.query()
+            .select('version.id')
+            .distinctOn('objectId')
+            .orderBy([
+              { column: 'objectId' },
+              { column: 'version.createdAt', order: 'desc' }
+            ]);
+          // intersect with main query
+          query.withGraphJoined('version');
           // if latest is true
-          if(value){
-            query
-              .withGraphJoined('version')
-              .whereIn('version.id', builder => {
-                builder.select('version.id')
-                  .orderBy('version.createdBy', 'DESC')
-                  .limit(1);
-              });
+          if (value) {
+            query.whereIn('version.id', builder => {
+              builder.intersect(subquery);
+            });
           }
           // if latest is false
-          else{
-            query
-              .withGraphJoined('version')
-              .whereNotIn('version.id', builder => {
-                builder.select('version.id')
-                  .orderBy('version.createdBy', 'DESC')
-                  .limit(1);
-              });
+          else {
+            query.whereNotIn('version.id', builder => {
+              builder.intersect(subquery);
+            });
           }
         }
       },
