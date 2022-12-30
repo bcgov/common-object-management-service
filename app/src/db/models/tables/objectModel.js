@@ -82,6 +82,40 @@ class ObjectModel extends Timestamps(Model) {
             });
         }
       },
+      filterDeleteMarker(query, value) {
+        if (value !== undefined) {
+          query
+            .withGraphJoined('version')
+            .whereIn('version.id', builder => {
+              builder.select('version.id')
+                .where('version.deleteMarker', value);
+            });
+        }
+      },
+      filterLatest(query, value) {
+        if (value !== undefined) {
+          // if latest is true
+          if(value){
+            query
+              .withGraphJoined('version')
+              .whereIn('version.id', builder => {
+                builder.select('version.id')
+                  .orderBy('version.createdBy', 'DESC')
+                  .limit(1);
+              });
+          }
+          // if latest is false
+          else{
+            query
+              .withGraphJoined('version')
+              .whereNotIn('version.id', builder => {
+                builder.select('version.id')
+                  .orderBy('version.createdBy', 'DESC')
+                  .limit(1);
+              });
+          }
+        }
+      },
       filterMetadataTag(query, value) {
         const subqueries = [];
 

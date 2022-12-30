@@ -104,6 +104,8 @@ const service = {
    * @param {string} [params.path] Optional canonical S3 path string to match on
    * @param {boolean} [params.public] Optional boolean on object public status
    * @param {boolean} [params.active] Optional boolean on object active
+   * @param {boolean} [params.deleteMarker] Optional boolean on object version deleteMarker
+   * @param {boolean} [params.latest] Optional boolean on object version is latest
    * @param {string} [params.userId] Optional uuid string representing the user
    * @param {string} [params.mimeType] Optional mimeType string to match on
    * @param {string} [params.name] Optional metadata name string to match on
@@ -121,6 +123,8 @@ const service = {
       .modify('filterActive', params.active)
       .modify('filterUserId', params.userId)
       .modify('filterMimeType', params.mimeType)
+      .modify('filterDeleteMarker', params.deleteMarker)
+      .modify('filterLatest', params.latest)
       .modify('filterMetadataTag', {
         name: params.name,
         metadata: params.metadata,

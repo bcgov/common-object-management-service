@@ -301,6 +301,8 @@ paths:
         - $ref: '#/components/parameters/Query-ObjectId'
         - $ref: '#/components/parameters/Query-Path'
         - $ref: '#/components/parameters/Query-Active'
+        - $ref: '#/components/parameters/Query-DeleteMarker'
+        - $ref: '#/components/parameters/Query-Latest'
         - $ref: '#/components/parameters/Query-Public'
         - $ref: '#/components/parameters/Query-MimeType'
         - $ref: '#/components/parameters/Query-Name'
@@ -1134,6 +1136,20 @@ components:
         type: string
         format: uuid
         example: 00000000-0000-0000-0000-000000000000
+    Query-DeleteMarker:
+      in: query
+      name: deleteMarker
+      description: Boolean on object version DeleteMarker status
+      schema:
+        type: boolean
+        example: true
+    Query-Latest:
+      in: query
+      name: latest
+      description: Boolean on object version is latest
+      schema:
+        type: boolean
+        example: true
     Query-Active:
       in: query
       name: active
@@ -1469,6 +1485,11 @@ components:
               description: Determines whether this object is considered active
               default: true
               example: true
+            bucketId:
+              type: string
+              description: The primary identifier for the bucket
+              format: uuid
+              example: c05c7650-5f48-4e51-bf17-762e8fc121a1
         - $ref: '#/components/schemas/DB-TimestampUserData'
     DB-Metadata:
       allOf:

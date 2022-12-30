@@ -701,7 +701,9 @@ const controller = {
         metadata: metadata && Object.keys(metadata).length ? metadata : undefined,
         tag: tagging && Object.keys(tagging).length ? tagging : undefined,
         public: isTruthy(req.query.public),
-        active: isTruthy(req.query.active)
+        active: isTruthy(req.query.active),
+        deleteMarker: isTruthy(req.query.deleteMarker),
+        latest: isTruthy(req.query.latest)
       };
 
       const response = await objectService.searchObjects(params);
