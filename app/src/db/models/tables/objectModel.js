@@ -62,16 +62,6 @@ class ObjectModel extends Timestamps(Model) {
       filterActive(query, value) {
         if (value !== undefined) query.where('object.active', value);
       },
-      filterUserId(query, value) {
-        if (value) {
-          query
-            .withGraphJoined('objectPermission')
-            .whereIn('objectPermission.objectId', builder => {
-              builder.distinct('objectPermission.objectId')
-                .where('objectPermission.userId', value);
-            });
-        }
-      },
       filterMimeType(query, value) {
         if (value) {
           query
@@ -82,16 +72,24 @@ class ObjectModel extends Timestamps(Model) {
             });
         }
       },
+      // filterDeleteMarker(query, value) {
+      //   if (value !== undefined) {
+      //     query
+      //       .withGraphJoined('version')
+      //       .whereIn('version.id', builder => {
+      //         builder.select('version.id')
+      //           .where('version.deleteMarker', value);
+      //       });
+      //   }
+      // },
       filterDeleteMarker(query, value) {
         if (value !== undefined) {
           query
             .withGraphJoined('version')
-            .whereIn('version.id', builder => {
-              builder.select('version.id')
-                .where('version.deleteMarker', value);
-            });
+            .where('version.deleteMarker', value);
         }
       },
+
       filterLatest(query, value) {
         if (value !== undefined) {
           // get an array of the latest version for all objects in db
@@ -118,6 +116,14 @@ class ObjectModel extends Timestamps(Model) {
               builder.intersect(subquery);
             });
           }
+
+          // query.withGraphJoined('version')
+          //   .orderBy([
+          //     { column: 'version.objectId' },
+          //     { column: 'version.createdAt', order: 'desc' }
+          //   ])
+          //   .distinctOn('version.objectId', 'object.*');
+
         }
       },
       filterMetadataTag(query, value) {
