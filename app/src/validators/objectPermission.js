@@ -6,6 +6,7 @@ const schema = {
   searchPermissions: {
     query: Joi.object({
       bucketId: scheme.guid,
+      bucketPerms: type.truthy,
       userId: scheme.guid,
       objId: scheme.guid,
       permCode: scheme.permCode
