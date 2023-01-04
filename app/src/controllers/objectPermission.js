@@ -33,7 +33,7 @@ const controller = {
       const response = utils.groupByObject('objectId', 'permissions', result);
 
       if (utils.isTruthy(req.query.bucketPerms)) {
-        const objectIds = await objectPermissionService.getObjectIdsWithBucket(userId);
+        const objectIds = await objectPermissionService.getObjectIdsWithBucket(userId, bucketIds);
 
         objectIds.forEach(objectId => {
           if (!response.map(r => r.objectId).includes(objectId)) {

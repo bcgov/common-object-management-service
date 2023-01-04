@@ -65,7 +65,7 @@ const service = {
    * @function getObjectIdsWithBucket
    * Searches for specific (object) bucket permissions
    * @param {string|string[]} [params.userId] Optional string or array of uuids representing the user
-   * @param {string|string[]} [params.bucketId]
+   * @param {string|string[]} [params.bucketId] Optional string or array of uuids representing the bucket id(s)
    * @returns {Promise<object>} The result of running the find operation
   */
   getObjectIdsWithBucket: async (userId, bucketId) => {
