@@ -1,7 +1,7 @@
 const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 
 const { Permissions } = require('../components/constants');
-const { ObjectPermission } = require('../db/models');
+const { ObjectPermission, BucketPermission } = require('../db/models');
 
 /**
  * The Object Permission DB Service
@@ -69,13 +69,11 @@ const service = {
    * @returns {Promise<object>} The result of running the find operation
   */
   getObjectIdsWithBucket: async (userId, bucketId) => {
-    return ObjectPermission.query()
-      .select('objectId')
-      .distinct('userId')
-      .joinRelated('object')
+    return BucketPermission.query()
+      .distinct('object.id AS objectId')
+      .rightJoin('object', 'bucket_permission.bucketId', '=', 'object.bucketId')
       .modify('filterUserId', userId)
-      .modify('filterBucketId', bucketId)
-      .whereNotNull('objectId')
+      .whereIn('bucket_permission.bucketId', bucketId)
       .then(response => response.map(entry => entry.objectId));
   },
 
