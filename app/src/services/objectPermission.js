@@ -62,6 +62,24 @@ const service = {
   },
 
   /**
+   * @function getObjectIdsWithBucket
+   * Searches for specific (object) bucket permissions
+   * @param {string|string[]} [params.userId] Optional string or array of uuids representing the user
+   * @param {string|string[]} [params.bucketId]
+   * @returns {Promise<object>} The result of running the find operation
+  */
+  getObjectIdsWithBucket: async (userId, bucketId) => {
+    return ObjectPermission.query()
+      .select('objectId')
+      .distinct('userId')
+      .joinRelated('object')
+      .modify('filterUserId', userId)
+      .modify('filterBucketId', bucketId)
+      .whereNotNull('objectId')
+      .then(response => response.map(entry => entry.objectId));
+  },
+
+  /**
    * @function removePermissions
    * Deletes object permissions for a user
    * @param {string} objId The objectId uuid
