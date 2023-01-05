@@ -62,6 +62,16 @@ class ObjectModel extends Timestamps(Model) {
       filterActive(query, value) {
         if (value !== undefined) query.where('object.active', value);
       },
+      filterUserId(query, value) {
+        if (value) {
+          query
+            .withGraphJoined('objectPermission')
+            .whereIn('objectPermission.objectId', builder => {
+              builder.distinct('objectPermission.objectId')
+                .where('objectPermission.userId', value);
+            });
+        }
+      },
       filterMimeType(query, value) {
         if (value) {
           query
@@ -72,16 +82,6 @@ class ObjectModel extends Timestamps(Model) {
             });
         }
       },
-      // filterDeleteMarker(query, value) {
-      //   if (value !== undefined) {
-      //     query
-      //       .withGraphJoined('version')
-      //       .whereIn('version.id', builder => {
-      //         builder.select('version.id')
-      //           .where('version.deleteMarker', value);
-      //       });
-      //   }
-      // },
       filterDeleteMarker(query, value) {
         if (value !== undefined) {
           query
@@ -89,41 +89,33 @@ class ObjectModel extends Timestamps(Model) {
             .where('version.deleteMarker', value);
         }
       },
-
       filterLatest(query, value) {
         if (value !== undefined) {
-          // get an array of the latest version for all objects in db
-          // use distintOn() to get first of each group (ref: https://stackoverflow.com/questions/3800551/select-first-row-in-each-group-by-group)
-          // TODO: consider refactoring if performance issues
-          const subquery = Version.query()
-            .select('version.id')
-            .distinctOn('objectId')
-            .orderBy([
-              { column: 'objectId' },
-              { column: 'version.createdAt', order: 'desc' }
-            ]);
-          // intersect with main query
+
           query.withGraphJoined('version');
-          // if latest is true
           if (value) {
-            query.whereIn('version.id', builder => {
-              builder.intersect(subquery);
+            query.modifyGraph('version', builder => {
+              builder
+                .select('version.*')
+                .distinctOn('version.objectId')
+                .orderBy([
+                  { column: 'version.objectId' },
+                  { column: 'version.createdAt', order: 'desc' }
+                ]);
             });
-          }
-          // if latest is false
-          else {
+          } else {
+            // TODO: Consider modifying graph to join on all versions except latest
+            const subquery = Version.query()
+              .select('version.id')
+              .distinctOn('objectId')
+              .orderBy([
+                { column: 'objectId' },
+                { column: 'version.createdAt', order: 'desc' }
+              ]);
             query.whereNotIn('version.id', builder => {
               builder.intersect(subquery);
             });
           }
-
-          // query.withGraphJoined('version')
-          //   .orderBy([
-          //     { column: 'version.objectId' },
-          //     { column: 'version.createdAt', order: 'desc' }
-          //   ])
-          //   .distinctOn('version.objectId', 'object.*');
-
         }
       },
       filterMetadataTag(query, value) {
@@ -168,9 +160,6 @@ class ObjectModel extends Timestamps(Model) {
             });
         }
       }
-      // TODO: consider chaining Version modifiers in a way that they are combined. Example:
-      // Version.modifiers.filterDeleteMarker(query.joinRelated('version'), value);
-      // Version.modifiers.filterLatest(query.joinRelated('version'), value);
     };
   }
 
