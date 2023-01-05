@@ -1,7 +1,7 @@
 const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 
 const { Permissions } = require('../components/constants');
-const { ObjectPermission, BucketPermission } = require('../db/models');
+const { BucketPermission, ObjectPermission } = require('../db/models');
 
 /**
  * The Object Permission DB Service
