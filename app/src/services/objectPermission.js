@@ -71,8 +71,8 @@ const service = {
   getObjectIdsWithBucket: async (userId, bucketId) => {
     return BucketPermission.query()
       .distinct('object.id AS objectId')
-      .rightJoin('object', 'bucket_permission.bucketId', '=', 'object.bucketId')
       .modify('filterUserId', userId)
+      .rightJoin('object', 'bucket_permission.bucketId', '=', 'object.bucketId')
       .whereIn('bucket_permission.bucketId', bucketId)
       .then(response => response.map(entry => entry.objectId));
   },
