@@ -31,6 +31,20 @@ const controller = {
         permCode: utils.mixedQueryToArray(req.query.permCode)
       });
       const response = utils.groupByObject('objectId', 'permissions', result);
+
+      if (utils.isTruthy(req.query.bucketPerms)) {
+        const objectIds = await objectPermissionService.getObjectIdsWithBucket(userId, bucketIds);
+
+        objectIds.forEach(objectId => {
+          if (!response.map(r => r.objectId).includes(objectId)) {
+            response.push({
+              objectId: objectId,
+              permissions: []
+            });
+          }
+        });
+      }
+
       res.status(200).json(response);
     } catch (e) {
       next(errorToProblem(SERVICE, e));
