@@ -121,6 +121,8 @@ const service = {
       .modify('filterActive', params.active)
       .modify('filterUserId', params.userId)
       .modify('filterMimeType', params.mimeType)
+      .modify('filterDeleteMarker', params.deleteMarker)
+      .modify('filterLatest', params.latest)
       .modify('filterMetadataTag', {
         name: params.name,
         metadata: params.metadata,

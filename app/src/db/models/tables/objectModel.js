@@ -82,6 +82,42 @@ class ObjectModel extends Timestamps(Model) {
             });
         }
       },
+      filterDeleteMarker(query, value) {
+        if (value !== undefined) {
+          query
+            .withGraphJoined('version')
+            .where('version.deleteMarker', value);
+        }
+      },
+      filterLatest(query, value) {
+        if (value !== undefined) {
+
+          query.withGraphJoined('version');
+          if (value) {
+            query.modifyGraph('version', builder => {
+              builder
+                .select('version.*')
+                .distinctOn('version.objectId')
+                .orderBy([
+                  { column: 'version.objectId' },
+                  { column: 'version.createdAt', order: 'desc' }
+                ]);
+            });
+          } else {
+            // TODO: Consider modifying graph to join on all versions except latest
+            const subquery = Version.query()
+              .select('version.id')
+              .distinctOn('objectId')
+              .orderBy([
+                { column: 'objectId' },
+                { column: 'version.createdAt', order: 'desc' }
+              ]);
+            query.whereNotIn('version.id', builder => {
+              builder.intersect(subquery);
+            });
+          }
+        }
+      },
       filterMetadataTag(query, value) {
         const subqueries = [];
 
@@ -124,9 +160,6 @@ class ObjectModel extends Timestamps(Model) {
             });
         }
       }
-      // TODO: consider chaining Version modifiers in a way that they are combined. Example:
-      // Version.modifiers.filterDeleteMarker(query.joinRelated('version'), value);
-      // Version.modifiers.filterLatest(query.joinRelated('version'), value);
     };
   }
 

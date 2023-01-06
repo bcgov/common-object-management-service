@@ -127,7 +127,9 @@ const schema = {
       mimeType: Joi.string().max(255),
       tagset: type.tagset(0),
       public: type.truthy,
-      active: type.truthy
+      active: type.truthy,
+      deleteMarker: type.truthy,
+      latest: type.truthy
     })
   },
 
