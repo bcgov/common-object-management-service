@@ -219,7 +219,7 @@ describe('scheme', () => {
       expect(model.matches).toEqual(expect.arrayContaining([
         expect.objectContaining({
           schema: expect.objectContaining({
-            type: 'array',
+            type: 'csvArray',
             items: expect.arrayContaining([
               expect.objectContaining({
                 type: 'string',
@@ -242,7 +242,7 @@ describe('scheme', () => {
       expect(model.matches).toEqual(expect.arrayContaining([
         expect.objectContaining({
           schema: expect.objectContaining({
-            type: 'array',
+            type: 'csvArray',
             items: expect.arrayContaining([
               expect.objectContaining({
                 type: 'string',
@@ -292,7 +292,7 @@ describe('scheme', () => {
       expect(model.matches).toEqual(expect.arrayContaining([
         expect.objectContaining({
           schema: expect.objectContaining({
-            type: 'array',
+            type: 'csvArray',
             items: expect.arrayContaining([
               expect.objectContaining({
                 type: 'string',
@@ -315,7 +315,7 @@ describe('scheme', () => {
       expect(model.matches).toEqual(expect.arrayContaining([
         expect.objectContaining({
           schema: expect.objectContaining({
-            type: 'array',
+            type: 'csvArray',
             items: expect.arrayContaining([
               expect.objectContaining({
                 type: 'string',
@@ -365,7 +365,7 @@ describe('scheme', () => {
       expect(model.matches).toEqual(expect.arrayContaining([
         expect.objectContaining({
           schema: expect.objectContaining({
-            type: 'array',
+            type: 'csvArray',
             items: expect.arrayContaining([
               expect.objectContaining({
                 type: 'string',
@@ -381,7 +381,7 @@ describe('scheme', () => {
       expect(model.matches).toEqual(expect.arrayContaining([
         expect.objectContaining({
           schema: expect.objectContaining({
-            type: 'array',
+            type: 'csvArray',
             items: expect.arrayContaining([
               expect.objectContaining({
                 type: 'string',
