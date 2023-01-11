@@ -1,16 +1,31 @@
-const { Joi } = require('express-validation');
+const { Joi: baseJoi } = require('express-validation');
+
 const { Permissions } = require('../components/constants');
 
 /**
+ * @constant Joi
+ * Extend Base Joi with a custom 'csvArray' parser
+ */
+const Joi = baseJoi.extend((joi) => {
+  return {
+    type: 'csvArray',
+    base: joi.array(),
+    coerce: (value) => ({
+      value: value.split ? value.split(',').map(item => item.trim()) : value,
+    })
+  };
+});
+
+/**
  * @function oneOrMany
- * Permits either a model or an array of models
+ * Permits a single or array of comma separated models
  * @param {any|any[]} param The model to process
  * @returns {object} A Joi object
  */
 function oneOrMany(param) {
   return Joi.alternatives().try(
-    Joi.array().items(param),
-    param
+    Joi.csvArray().items(param),
+    Joi.array().items(Joi.csvArray().items(param)),
   );
 }
 
