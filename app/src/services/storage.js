@@ -196,7 +196,7 @@ const objectStorageService = {
    * @returns {Promise<object>} The response of the head bucket operation
    */
   async headBucket(bucketId = undefined) {
-    const data = await utils.getBucket(bucketId);
+    const data = await utils.getBucket(bucketId, true);
     const params = {
       Bucket: data.bucket,
     };
