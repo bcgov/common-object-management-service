@@ -100,6 +100,17 @@ const currentObject = async (req, _res, next) => {
   next();
 };
 
+/**
+ * @function hasPermission
+ * fucntion checks:
+ * - request is allowed in current auth mode
+ * - request contains an objectId or bucketId param
+ * - request contains currentObject property if objectId param passed
+ * - if objectId param is for a public object and request requires READ permission
+ * - if passed permission exists for current user on object or bucket (see: _checkPermission)
+ * @param {string} permission a permission code (eg: READ)
+ * @returns {function} Express middleware function
+ */
 const hasPermission = (permission) => {
   return async (req, res, next) => {
     const authMode = getAppAuthMode();
