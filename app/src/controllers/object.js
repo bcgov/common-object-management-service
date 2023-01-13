@@ -845,7 +845,7 @@ const controller = {
           ...dbResponse,
           ...s3Response
         };
-        res.status(200).json(result);
+        res.status(201).json(result);
       });
 
       req.pipe(bb);

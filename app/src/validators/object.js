@@ -26,9 +26,6 @@ const schema = {
 
   createObjects: {
     headers: type.metadata(1),
-    params: Joi.object({
-      objId: type.uuidv4
-    }),
     query: Joi.object({
       tagset: type.tagset(1),
       bucketId: Joi.string(),
@@ -73,7 +70,7 @@ const schema = {
 
   headObject: {
     params: Joi.object({
-      objId: type.uuidv4
+      objId: type.uuidv4.required()
     }),
     query: Joi.object({
       versionId: Joi.string(),
