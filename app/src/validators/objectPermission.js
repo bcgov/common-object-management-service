@@ -31,7 +31,7 @@ const schema = {
       Joi.object().keys({
         userId: type.uuidv4.required(),
         permCode: Joi.string().required().valid(...Object.values(Permissions)),
-      })
+      }).required()
     ).required(),
   },
 

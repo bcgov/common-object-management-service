@@ -597,37 +597,30 @@ const controller = {
       }
 
       const newMetadata = getMetadata(req.headers);
-      if (!Object.keys(newMetadata).length) {
-        // TODO: Validation level logic. To be moved.
-        // 422 when no keys present
-        res.status(422).end();
-      }
-      else {
-        const data = {
-          copySource: objPath,
-          filePath: objPath,
-          metadata: {
-            name: source.Metadata.name,  // Always enforce name and id key behavior
-            ...newMetadata, // Add new metadata
-            id: source.Metadata.id
-          },
-          metadataDirective: MetadataDirective.REPLACE,
-          versionId: sourceVersionId
-        };
-        const s3Response = await storageService.copyObject(data);
+      const data = {
+        copySource: objPath,
+        filePath: objPath,
+        metadata: {
+          name: source.Metadata.name,  // Always enforce name and id key behavior
+          ...newMetadata, // Add new metadata
+          id: source.Metadata.id
+        },
+        metadataDirective: MetadataDirective.REPLACE,
+        versionId: sourceVersionId
+      };
+      const s3Response = await storageService.copyObject(data);
 
-        await utils.trxWrapper(async (trx) => {
-          // create or update version (if a non-versioned object)
-          const version = s3Response.VersionId ?
-            await versionService.copy(sourceVersionId, s3Response.VersionId, objId, userId, trx) :
-            await versionService.update({ ...data, id: objId }, userId, trx);
+      await utils.trxWrapper(async (trx) => {
+        // create or update version (if a non-versioned object)
+        const version = s3Response.VersionId ?
+          await versionService.copy(sourceVersionId, s3Response.VersionId, objId, userId, trx) :
+          await versionService.update({ ...data, id: objId }, userId, trx);
 
-          // add metadata
-          await metadataService.associateMetadata(version.id, getKeyValue(data.metadata), userId, trx);
-        });
+        // add metadata
+        await metadataService.associateMetadata(version.id, getKeyValue(data.metadata), userId, trx);
+      });
 
-        res.status(204).end();
-      }
+      res.status(204).end();
     } catch (e) {
       next(errorToProblem(SERVICE, e));
     }

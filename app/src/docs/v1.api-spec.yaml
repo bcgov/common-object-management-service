@@ -795,7 +795,6 @@ paths:
         - Object Permission
       parameters:
         - $ref: '#/components/parameters/Path-ObjectId'
-        - $ref: '#/components/parameters/Query-BucketId'
       requestBody:
         description: An array of objects, each containing a `permCode` and `userId`
         content:
