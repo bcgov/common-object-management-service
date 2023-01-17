@@ -37,11 +37,27 @@ describe('searchPermissions', () => {
       });
     });
 
+    describe('bucketId', () => {
+      const bucketId = query.keys.bucketId;
+
+      it('is the expected schema', () => {
+        expect(bucketId).toEqual(scheme.guid.describe());
+      });
+    });
+
     describe('permCode', () => {
       const permCode = query.keys.permCode;
 
       it('is the expected schema', () => {
         expect(permCode).toEqual(scheme.permCode.describe());
+      });
+    });
+
+    describe('bucketPerms', () => {
+      const bucketPerms = query.keys.bucketPerms;
+
+      it('is the expected schema', () => {
+        expect(bucketPerms).toEqual(scheme.bucketPerms.describe());
       });
     });
   });
