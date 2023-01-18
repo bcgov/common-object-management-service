@@ -28,7 +28,7 @@ const schema = {
     headers: type.metadata(0),
     query: Joi.object({
       tagset: type.tagset(0),
-      bucketId: Joi.string(),
+      bucketId: type.uuidv4,
     })
   },
 

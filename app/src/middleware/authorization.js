@@ -102,7 +102,7 @@ const currentObject = async (req, _res, next) => {
 
 /**
  * @function hasPermission
- * fucntion checks:
+ * function checks:
  * - request is allowed in current auth mode
  * - request contains an objectId or bucketId param
  * - request contains currentObject property if objectId param passed

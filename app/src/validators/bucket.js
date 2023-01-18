@@ -13,7 +13,7 @@ const schema = {
       secretAccessKey: Joi.string().max(255).required(),
       region: Joi.string().max(255),
       active: type.truthy
-    }),
+    }).required(),
   },
 
   deleteBucket: {

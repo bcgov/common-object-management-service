@@ -50,7 +50,7 @@ const type = {
     .unknown(),
 
   tagset: (min = 0) => Joi.object()
-    .pattern(/^.{1,128}$/, Joi.string().min(1).max(255), { matches: Joi.array().min(min) })
+    .pattern(/^.{1,255}$/, Joi.string().min(1).max(255), { matches: Joi.array().min(min) })
 };
 
 /**

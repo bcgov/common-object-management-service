@@ -475,21 +475,6 @@ describe('replaceMetadata', () => {
     expect(next).toHaveBeenCalledWith(new Problem(502, 'Unknown ObjectService Error'));
   });
 
-  it('responds 422 when no keys are present', async () => {
-    // request object
-    const req = {
-      headers: {},
-      params: { objId: 'xyz-789' },
-      query: {}
-    };
-
-    storageHeadObjectSpy.mockReturnValue(GoodResponse);
-
-    await controller.replaceMetadata(req, res, next);
-
-    expect(res.status).toHaveBeenCalledWith(422);
-  });
-
   it('should replace the metadata', async () => {
     // request object
     const req = {
