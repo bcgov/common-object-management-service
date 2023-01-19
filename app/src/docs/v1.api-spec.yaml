@@ -331,7 +331,7 @@ paths:
         - Object
       parameters:
         - $ref: '#/components/parameters/Path-ObjectId'
-        - $ref: '#/components/parameters/Query-VersionId'
+        - $ref: '#/components/parameters/Query-S3VersionId'
       responses:
         '204':
           description: Returns object headers
@@ -374,7 +374,7 @@ paths:
         - $ref: '#/components/parameters/Path-ObjectId'
         - $ref: '#/components/parameters/Query-Download'
         - $ref: '#/components/parameters/Query-ExpiresIn'
-        - $ref: '#/components/parameters/Query-VersionId'
+        - $ref: '#/components/parameters/Query-S3VersionId'
       responses:
         '200':
           description: Returns the object
@@ -565,7 +565,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/Header-Metadata'
         - $ref: '#/components/parameters/Path-ObjectId'
-        - $ref: '#/components/parameters/Query-VersionId'
+        - $ref: '#/components/parameters/Query-S3VersionId'
       responses:
         '204':
           $ref: '#/components/responses/NoContent'
@@ -589,7 +589,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/Header-Metadata'
         - $ref: '#/components/parameters/Path-ObjectId'
-        - $ref: '#/components/parameters/Query-VersionId'
+        - $ref: '#/components/parameters/Query-S3VersionId'
       responses:
         '204':
           $ref: '#/components/responses/NoContent'
@@ -615,7 +615,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/Header-Metadata'
         - $ref: '#/components/parameters/Path-ObjectId'
-        - $ref: '#/components/parameters/Query-VersionId'
+        - $ref: '#/components/parameters/Query-S3VersionId'
       responses:
         '204':
           $ref: '#/components/responses/NoContent'
@@ -661,7 +661,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/Path-ObjectId'
         - $ref: '#/components/parameters/Query-TagSet'
-        - $ref: '#/components/parameters/Query-VersionId'
+        - $ref: '#/components/parameters/Query-S3VersionId'
       responses:
         '204':
           $ref: '#/components/responses/NoContent'
@@ -684,7 +684,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/Path-ObjectId'
         - $ref: '#/components/parameters/Query-TagSet'
-        - $ref: '#/components/parameters/Query-VersionId'
+        - $ref: '#/components/parameters/Query-S3VersionId'
       responses:
         '204':
           $ref: '#/components/responses/NoContent'
@@ -708,7 +708,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/Path-ObjectId'
         - $ref: '#/components/parameters/Query-TagSet'
-        - $ref: '#/components/parameters/Query-VersionId'
+        - $ref: '#/components/parameters/Query-S3VersionId'
       responses:
         '204':
           $ref: '#/components/responses/NoContent'
@@ -1043,6 +1043,44 @@ paths:
           $ref: '#/components/responses/Forbidden'
         default:
           $ref: '#/components/responses/Error'
+
+  /version/metadata:
+    get:
+      summary: Returns a list of matching metadata for versions
+      description: >-
+        Gets a metadata matching the given versions. Multiple Key/Value pairs
+        can be provided in the headers to narrow down results. If none are provided the full set of metadata will be returned.
+      operationId: fetchMetadataForVersion
+      tags:
+        - Metadata
+      parameters:
+        - $ref: '#/components/parameters/Header-Metadata'
+        - $ref: '#/components/parameters/Query-VersionId'
+      responses:
+        '200':
+          description: Returns an array of versions with matching key/value pairs.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - versionId
+                    - metadata
+                  properties:
+                    versionId:
+                      type: string
+                      format: uuid
+                      example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
+                    metadata:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/S3-TagSet'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        default:
+          $ref: '#/components/responses/Error'
 components:
   headers:
     Content-Disposition:
@@ -1371,7 +1409,7 @@ components:
       schema:
         type: string
         example: bobsmith
-    Query-VersionId:
+    Query-S3VersionId:
       in: query
       name: versionId
       description: Request a specified version
@@ -1379,6 +1417,15 @@ components:
         type: string
         description: a version identifier created in S3
         example: '1647462569641'
+    Query-VersionId:
+      in: query
+      name: versionId
+      description: Request a specified version
+      schema:
+        type: string
+        description: a version identifier in COMS database
+        format: uuid
+        example: 00000000-0000-0000-0000-000000000000
     Query-VersionId-Delete:
       in: query
       name: versionId
