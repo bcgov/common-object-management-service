@@ -161,7 +161,8 @@ const service = {
         .withGraphJoined('metadata')
         .where('version.objectId', objId)
         .orderBy('version.createdAt', 'desc')
-        .first();
+        .first()
+        .throwIfNotFound({ message: 'Object(s) not found' });
       if (params.metadata) {
         Object.keys(params.metadata).forEach(key => {
           q.where('metadata.key', key);

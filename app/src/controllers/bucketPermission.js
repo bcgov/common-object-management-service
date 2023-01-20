@@ -1,5 +1,3 @@
-const Problem = require('api-problem');
-
 const errorToProblem = require('../components/errorToProblem');
 const {
   addDashesToUuid,
@@ -36,10 +34,10 @@ const controller = {
       });
       const response = groupByObject('bucketId', 'permissions', bucketPermissions);
 
-      if (isTruthy(req.query.objectPerms)) { 
-        // Iteration through bucket and object permissions. If object permission not found, set empty array.   
+      if (isTruthy(req.query.objectPerms)) {
+        // Iteration through bucket and object permissions. If object permission not found, set empty array.
         const bucketIds = await bucketPermissionService.getBucketIdsWithObject(userIds);
-        
+
         bucketIds.forEach(bucketId => {
           if (!response.map(r => r.bucketId).includes(bucketId)) {
             response.push({
@@ -88,11 +86,6 @@ const controller = {
    */
   async addPermissions(req, res, next) {
     try {
-      // TODO: Do this kind of logic in validation layer/library instead
-      if (!req.body || !Array.isArray(req.body) || !req.body.length) {
-        return new Problem(422).send(res);
-      }
-
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
       const response = await bucketPermissionService.addPermissions(addDashesToUuid(req.params.bucketId), req.body, userId);
       res.status(201).json(response);
@@ -111,11 +104,6 @@ const controller = {
    */
   async removePermissions(req, res, next) {
     try {
-      // TODO: Do this kind of logic in validation layer/library instead
-      if (!req.query.userId || !req.query.permCode) {
-        return new Problem(422).send(res);
-      }
-
       const userArray = mixedQueryToArray(req.query.userId);
       const userIds = userArray ? userArray.map(id => addDashesToUuid(id)) : userArray;
       const permissions = mixedQueryToArray(req.query.permCode);

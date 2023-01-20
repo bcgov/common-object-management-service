@@ -21,22 +21,22 @@ router.get('/', bucketValidator.searchBuckets, (req, res, next) => {
 });
 
 /** Returns bucket headers */
-router.head('/:bucketId', hasPermission(Permissions.READ), bucketValidator.headBucket, (req, res, next) => {
+router.head('/:bucketId', bucketValidator.headBucket, hasPermission(Permissions.READ), (req, res, next) => {
   bucketController.headBucket(req, res, next);
 });
 
 /** Returns a bucket */
-router.get('/:bucketId', hasPermission(Permissions.READ), bucketValidator.readBucket, (req, res, next) => {
+router.get('/:bucketId', bucketValidator.readBucket, hasPermission(Permissions.READ), (req, res, next) => {
   bucketController.readBucket(req, res, next);
 });
 
 /** Updates a bucket */
-router.patch('/:bucketId', hasPermission(Permissions.UPDATE), bucketValidator.updateBucket, (req, res, next) => {
+router.patch('/:bucketId', bucketValidator.updateBucket, hasPermission(Permissions.UPDATE), (req, res, next) => {
   bucketController.updateBucket(req, res, next);
 });
 
 /** Deletes the bucket */
-router.delete('/:bucketId', hasPermission(Permissions.DELETE), bucketValidator.deleteBucket, (req, res, next) => {
+router.delete('/:bucketId', bucketValidator.deleteBucket, hasPermission(Permissions.DELETE), (req, res, next) => {
   bucketController.deleteBucket(req, res, next);
 });
 

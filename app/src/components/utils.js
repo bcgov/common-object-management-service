@@ -82,7 +82,7 @@ const utils = {
         if (bucketData.region) data.region = bucketData.region;
       } catch (err) {
         log.warn(err.message, { function: 'getBucket'});
-        if (throwable) throw new Problem(422, { details: err.message });
+        if (throwable) throw new Problem(404, { details: err.message });
       }
     }
 

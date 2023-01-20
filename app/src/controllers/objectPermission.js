@@ -1,4 +1,3 @@
-const Problem = require('api-problem');
 const { NIL: SYSTEM_USER } = require('uuid');
 const errorToProblem = require('../components/errorToProblem');
 const utils = require('../components/utils');
@@ -83,11 +82,6 @@ const controller = {
    */
   async addPermissions(req, res, next) {
     try {
-      // TODO: Do this kind of logic in validation layer/library instead
-      if (!req.body || !Array.isArray(req.body) || !req.body.length) {
-        return new Problem(422).send(res);
-      }
-
       const userId = await userService.getCurrentUserId(utils.getCurrentIdentity(req.currentUser, SYSTEM_USER));
       const response = await objectPermissionService.addPermissions(utils.addDashesToUuid(req.params.objId), req.body, userId);
       res.status(201).json(response);
@@ -106,11 +100,6 @@ const controller = {
    */
   async removePermissions(req, res, next) {
     try {
-      // TODO: Do this kind of logic in validation layer/library instead
-      if (!req.query.userId || !req.query.permCode) {
-        return new Problem(422).send(res);
-      }
-
       const userArray = utils.mixedQueryToArray(req.query.userId);
       const userIds = userArray ? userArray.map(id => utils.addDashesToUuid(id)) : userArray;
       const permissions = utils.mixedQueryToArray(req.query.permCode);
@@ -120,7 +109,6 @@ const controller = {
       next(errorToProblem(SERVICE, e));
     }
   },
-
 
 };
 

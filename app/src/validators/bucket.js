@@ -13,7 +13,7 @@ const schema = {
       secretAccessKey: Joi.string().max(255).required(),
       region: Joi.string().max(255),
       active: type.truthy
-    }),
+    }).required(),
   },
 
   deleteBucket: {
@@ -24,7 +24,7 @@ const schema = {
 
   headBucket: {
     params: Joi.object({
-      bucketId: type.uuidv4
+      bucketId: type.uuidv4.required()
     })
   },
 

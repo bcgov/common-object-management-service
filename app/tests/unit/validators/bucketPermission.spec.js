@@ -1,7 +1,7 @@
 const jestJoi = require('jest-joi');
 expect.extend(jestJoi.matchers);
 
-const { schema } = require('../../../src/validators/objectPermission');
+const { schema } = require('../../../src/validators/bucketPermission');
 const { scheme, type } = require('../../../src/validators/common');
 const { Permissions } = require('../../../src/components/constants');
 
@@ -29,11 +29,11 @@ describe('searchPermissions', () => {
       });
     });
 
-    describe('objId', () => {
-      const objId = query.keys.objId;
+    describe('bucketId', () => {
+      const bucketId = query.keys.bucketId;
 
       it('is the expected schema', () => {
-        expect(objId).toEqual(scheme.guid.describe());
+        expect(bucketId).toEqual(scheme.guid.describe());
       });
     });
 
@@ -42,6 +42,14 @@ describe('searchPermissions', () => {
 
       it('is the expected schema', () => {
         expect(permCode).toEqual(scheme.permCode.describe());
+      });
+    });
+
+    describe('objectPerms', () => {
+      const objectPerms = query.keys.objectPerms;
+
+      it('is the expected schema', () => {
+        expect(objectPerms).toBeTruthy();
       });
     });
   });
@@ -61,11 +69,11 @@ describe('listPermissions', () => {
       });
     });
 
-    describe('objId', () => {
-      const objId = params.keys.objId;
+    describe('bucketId', () => {
+      const bucketId = params.keys.bucketId;
 
       it('is the expected schema', () => {
-        expect(objId).toEqual(scheme.guid.describe());
+        expect(bucketId).toEqual(scheme.guid.describe());
       });
     });
 
@@ -84,11 +92,11 @@ describe('addPermissions', () => {
   describe('params', () => {
     const params = schema.addPermissions.params.describe();
 
-    describe('objId', () => {
-      const objId = params.keys.objId;
+    describe('bucketId', () => {
+      const bucketId = params.keys.bucketId;
 
       it('is the expected schema', () => {
-        expect(objId).toEqual(type.uuidv4.describe());
+        expect(bucketId).toEqual(type.uuidv4.describe());
       });
     });
   });
@@ -149,8 +157,8 @@ describe('removePermissions', () => {
   describe('params', () => {
     const params = schema.removePermissions.params.describe();
 
-    describe('objId', () => {
-      const objId = params.keys.objId;
+    describe('bucketId', () => {
+      const objId = params.keys.bucketId;
 
       it('is the expected schema', () => {
         expect(objId).toEqual(type.uuidv4.describe());

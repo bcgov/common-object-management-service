@@ -25,13 +25,10 @@ const schema = {
   },
 
   createObjects: {
-    headers: type.metadata(1),
-    params: Joi.object({
-      objId: type.uuidv4
-    }),
+    headers: type.metadata(0),
     query: Joi.object({
-      tagset: type.tagset(1),
-      bucketId: Joi.string(),
+      tagset: type.tagset(0),
+      bucketId: type.uuidv4,
     })
   },
 
@@ -73,7 +70,7 @@ const schema = {
 
   headObject: {
     params: Joi.object({
-      objId: type.uuidv4
+      objId: type.uuidv4.required()
     }),
     query: Joi.object({
       versionId: Joi.string(),
@@ -113,7 +110,7 @@ const schema = {
     }),
     query: Joi.object({
       versionId: Joi.string(),
-      tagset: type.tagset(1),
+      tagset: type.tagset(0),
     })
   },
 
@@ -149,12 +146,12 @@ const schema = {
   },
 
   updateObject: {
-    headers: type.metadata(1),
+    headers: type.metadata(0),
     params: Joi.object({
       objId: type.uuidv4
     }),
     query: Joi.object({
-      tagset: type.tagset(1),
+      tagset: type.tagset(0),
     })
   },
 };

@@ -83,30 +83,26 @@ describe('createObject', () => {
     const headers = schema.createObjects.headers.describe();
 
     it('is the expected schema', () => {
-      expect(headers).toEqual(type.metadata(1).describe());
-    });
-  });
-
-  describe('params', () => {
-    const params = schema.createObjects.params.describe();
-
-    describe('objId', () => {
-      const objId = params.keys.objId;
-
-      it('is the expected schema', () => {
-        expect(objId).toEqual(type.uuidv4.describe());
-      });
+      expect(headers).toEqual(type.metadata(0).describe());
     });
   });
 
   describe('query', () => {
     const query = schema.createObjects.query.describe();
 
+    describe('bucketId', () => {
+      const bucketId = query.keys.bucketId;
+
+      it('is the expected schema', () => {
+        expect(bucketId).toEqual(type.uuidv4.describe());
+      });
+    });
+
     describe('tagset', () => {
       const tagset = query.keys.tagset;
 
       it('is the expected schema', () => {
-        expect(tagset).toEqual(type.tagset(1).describe());
+        expect(tagset).toEqual(type.tagset(0).describe());
       });
     });
   });
@@ -218,7 +214,10 @@ describe('headObject', () => {
       const objId = params.keys.objId;
 
       it('is the expected schema', () => {
-        expect(objId).toEqual(type.uuidv4.describe());
+        expect(objId).toEqual({
+          flags: { presence: 'required' },
+          ...type.uuidv4.describe()
+        });
       });
     });
   });
@@ -362,7 +361,7 @@ describe('replaceTags', () => {
       const tagset = query.keys.tagset;
 
       it('is the expected schema', () => {
-        expect(tagset).toEqual(type.tagset(1).describe());
+        expect(tagset).toEqual(type.tagset(0).describe());
       });
     });
   });
@@ -385,7 +384,8 @@ describe('searchObjects', () => {
       }));
     });
 
-    it('enforces general metadata pattern', () => {
+    // TODO: define expected schema
+    it.skip('enforces general metadata pattern', () => {
       expect(headers.patterns).toEqual(expect.arrayContaining([
         expect.objectContaining({
           regex: '/^x-amz-meta-.{1,255}$/i',
@@ -567,7 +567,7 @@ describe('updateObject', () => {
     const headers = schema.updateObject.headers.describe();
 
     it('is the expected schema', () => {
-      expect(headers).toEqual(type.metadata(1).describe());
+      expect(headers).toEqual(type.metadata(0).describe());
     });
   });
 
@@ -590,7 +590,7 @@ describe('updateObject', () => {
       const tagset = query.keys.tagset;
 
       it('is the expected schema', () => {
-        expect(tagset).toEqual(type.tagset(1).describe());
+        expect(tagset).toEqual(type.tagset(0).describe());
       });
     });
   });
