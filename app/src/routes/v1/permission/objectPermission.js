@@ -15,7 +15,7 @@ router.get('/', objectPermissionValidator.searchPermissions, (req, res, next) =>
 });
 
 /** Returns the object permissions */
-router.get('/:objId', objectPermissionValidator.listPermissions, requireSomeAuth, currentObject, hasPermission(Permissions.READ), (req, res, next) => {
+router.get('/:objId', objectPermissionValidator.listPermissions, requireSomeAuth, currentObject, hasPermission(Permissions.MANAGE), (req, res, next) => {
   objectPermissionController.listPermissions(req, res, next);
 });
 
