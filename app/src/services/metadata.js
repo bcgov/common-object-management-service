@@ -148,13 +148,13 @@ const service = {
   },
 
   /**
-   * @function fetchMetadata
+   * @function fetchMetadataForObject
    * Fetch metadata for specific objects
    * @param {string[]} params.objId An array of uuids representing the object
    * @param {object} [params.metadata] Optional object of metadata key/value pairs
    * @returns {Promise<object[]>} The result of running the find operation
    */
-  fetchMetadata: (params) => {
+  fetchMetadataForObject: (params) => {
     return Promise.all(params.objId.map(objId => {
       const q = Version.query()
         .allowGraph('metadata')
@@ -171,6 +171,29 @@ const service = {
       return q;
     }));
   },
+
+  /**
+  * @function fetchMetadataForVersion
+  * Fetch metadata for specific versions
+  * @param {string[]} [params.versionIds] An array of uuids representing versions
+  * @param {object} [params.metadata] Optional object of metadata key/value pairs
+  * @returns {Promise<object[]>} The result of running the database select
+  */
+  fetchMetadataForVersion: (params) => {
+    return Version.query()
+      .select('id as versionId')
+      .allowGraph('metadata')
+      .withGraphFetched('metadata')
+      .modifyGraph('metadata', builder => {
+        builder
+          .select('key', 'value')
+          .modify('filterKeyValue', { metadata: params.metadata });
+      })
+      .modify('filterId', params.versionIds)
+      .orderBy('createdAt', 'desc');
+    // .limit(1000); consider limiting result to avoid resource overuse
+  },
+
 
   /**
    * @function searchMetadata

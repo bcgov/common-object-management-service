@@ -5,4 +5,5 @@ module.exports = {
   objectValidator: require('./object'),
   objectPermissionValidator: require('./objectPermission'),
   userValidator: require('./user'),
+  versionValidator: require('./version'),
 };

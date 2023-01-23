@@ -54,6 +54,9 @@ class Version extends Timestamps(Model) {
 
   static get modifiers() {
     return {
+      filterId(query, value) {
+        filterOneOrMany(query, value, 'id');
+      },
       filterObjectId(query, value) {
         filterOneOrMany(query, value, 'objectId');
       },

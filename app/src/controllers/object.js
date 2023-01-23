@@ -459,7 +459,7 @@ const controller = {
         metadata: metadata && Object.keys(metadata).length ? metadata : undefined
       };
 
-      const response = await metadataService.fetchMetadata(params);
+      const response = await metadataService.fetchMetadataForObject(params);
       res.status(200).json(response);
     } catch (error) {
       next(error);

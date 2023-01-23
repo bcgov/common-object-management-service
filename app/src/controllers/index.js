@@ -4,5 +4,6 @@ module.exports = {
   metadataController: require('./metadata'),
   objectController: require('./object'),
   objectPermissionController: require('./objectPermission'),
-  userController: require('./user')
+  userController: require('./user'),
+  versionController: require('./version')
 };

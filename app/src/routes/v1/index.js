@@ -12,7 +12,8 @@ router.get('/', (_req, res) => {
       '/metadata',
       '/object',
       '/permission',
-      '/user'
+      '/user',
+      '/version'
     ]
   });
 });
@@ -34,5 +35,8 @@ router.use('/permission', require('./permission'));
 
 /** User Router */
 router.use('/user', require('./user'));
+
+/** Version Router */
+router.use('/version', require('./version'));
 
 module.exports = router;
