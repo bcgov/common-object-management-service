@@ -11,7 +11,7 @@ patroni:
       cpu: 250m
       memory: 384Mi
     requests:
-      cpu: 50m
+      cpu: 20m
       memory: 192Mi
   persistentVolume:
     enabled: false
