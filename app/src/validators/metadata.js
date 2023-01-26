@@ -4,7 +4,7 @@ const { type } = require('./common');
 
 const schema = {
   searchMetadata: {
-    headers: type.metadata(0),
+    headers: type.metadata(),
   }
 };
 
