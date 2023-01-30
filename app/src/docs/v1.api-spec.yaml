@@ -32,13 +32,6 @@ tags:
     externalDocs:
       url: >-
         https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#permission
-  - name: Metadata
-    description: >-
-      Operations for inspecting known COMS metadata. Certain operations not
-      available without a database.
-    externalDocs:
-      url: >-
-        https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#metadata
   - name: Object
     description: >-
       Operations directly influencing an S3 Object. Certain operations not
@@ -46,11 +39,6 @@ tags:
     externalDocs:
       url: >-
         https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#object
-  - name: Object Metadata
-    description: Operations directly influencing the Metadata of an S3 Object.
-    externalDocs:
-      url: >-
-        https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#metadata
   - name: Object Permission
     description: >-
       Operations for managing User Access Control to S3 Object permissions. Not available
@@ -58,7 +46,14 @@ tags:
     externalDocs:
       url: >-
         https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#permission
-  - name: Object Tagging
+  - name: Metadata
+    description: >-
+      Operations for inspecting known COMS metadata. Certain operations not
+      available without a database.
+    externalDocs:
+      url: >-
+        https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#metadata
+  - name: Tagging
     description: Operations directly influencing the Tags of an S3 Object.
     externalDocs:
       url: >-
@@ -127,7 +122,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         default:
           $ref: '#/components/responses/Error'
-
   /bucket/{bucketId}:
     head:
       summary: Checks if a given bucket or default bucket exists in S3
@@ -144,7 +138,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         default:
           $ref: '#/components/responses/Error'
-
     get:
       summary: Returns a bucket
       description: Returns a bucket based on bucketId
@@ -161,7 +154,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         default:
           $ref: '#/components/responses/Error'
-
     patch:
       summary: Updates a bucket
       description: Returns updated bucket
@@ -185,7 +177,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         default:
           $ref: '#/components/responses/Error'
-
     delete:
       summary: Deletes a bucket
       description: Delete bucket based on bucketId
@@ -202,30 +193,6 @@ paths:
         default:
           $ref: '#/components/responses/Error'
 
-  /metadata:
-    get:
-      summary: Returns a list of matching metadata
-      description: >-
-        Gets a list of metadata matching the given parameters. Multiple Key/Value pairs
-        can be provided in the headers to narrow down results. If none are provided the full set of metadata will be returned.
-      operationId: getMetadata
-      tags:
-        - Metadata
-      parameters:
-        - $ref: '#/components/parameters/Header-Metadata'
-      responses:
-        '200':
-          description: Returns an array of matching key/value pairs.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/S3-TagSet'
-        '422':
-          $ref: '#/components/responses/UnprocessableEntity'
-        default:
-          $ref: '#/components/responses/Error'
   /object:
     post:
       summary: Creates new objects
@@ -561,7 +528,7 @@ paths:
         header for the metadata.
       operationId: addMetadata
       tags:
-        - Object Metadata
+        - Metadata
       parameters:
         - $ref: '#/components/parameters/Header-Metadata'
         - $ref: '#/components/parameters/Path-ObjectId'
@@ -585,7 +552,7 @@ paths:
         header for the metadata.
       operationId: replaceMetadata
       tags:
-        - Object Metadata
+        - Metadata
       parameters:
         - $ref: '#/components/parameters/Header-Metadata'
         - $ref: '#/components/parameters/Path-ObjectId'
@@ -611,7 +578,7 @@ paths:
         persist.
       operationId: deleteMetadata
       tags:
-        - Object Metadata
+        - Metadata
       parameters:
         - $ref: '#/components/parameters/Header-Metadata'
         - $ref: '#/components/parameters/Path-ObjectId'
@@ -625,26 +592,39 @@ paths:
           $ref: '#/components/responses/Forbidden'
         default:
           $ref: '#/components/responses/Error'
-  /object/tagging:
+  /object/metadata:
     get:
-      summary: Returns a list of matching tags
+      summary: Returns a list of matching metadata for objects
       description: >-
-        Gets a list of tags matching the given parameters. Multiple Key/Value pairs
-        can be provided in the query to narrow down results. If none are provided the full set of tags will be returned.
-      operationId: getTagging
+        Gets a metadata matching the given objects. Multiple Key/Value pairs
+        can be provided in the headers to narrow down results. If none are provided the full set of metadata will be returned.
+      operationId: fetchMetadataForObject
       tags:
-        - Object Tagging
+        - Metadata
       parameters:
-        - $ref: '#/components/parameters/Query-TagSet'
+        - $ref: '#/components/parameters/Header-Metadata'
+        - $ref: '#/components/parameters/Query-ObjectId'
       responses:
         '200':
-          description: Returns an array of matching key/value pairs.
+          description: Returns an array of objects with matching key/value pairs.
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/S3-TagSet'
+                  type: object
+                  required:
+                    - objectId
+                    - metadata
+                  properties:
+                    versionId:
+                      type: string
+                      format: uuid
+                      example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
+                    metadata:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/S3-TagSet'
         '422':
           $ref: '#/components/responses/UnprocessableEntity'
         default:
@@ -657,7 +637,7 @@ paths:
         can be provided in the query.
       operationId: addTagging
       tags:
-        - Object Tagging
+        - Tagging
       parameters:
         - $ref: '#/components/parameters/Path-ObjectId'
         - $ref: '#/components/parameters/Query-TagSet'
@@ -680,7 +660,7 @@ paths:
         Multiple Key/Value pairs can be provided in the query.
       operationId: replaceTagging
       tags:
-        - Object Tagging
+        - Tagging
       parameters:
         - $ref: '#/components/parameters/Path-ObjectId'
         - $ref: '#/components/parameters/Query-TagSet'
@@ -704,7 +684,7 @@ paths:
         removed from the object if no tags are specified.
       operationId: deleteTagging
       tags:
-        - Object Tagging
+        - Tagging
       parameters:
         - $ref: '#/components/parameters/Path-ObjectId'
         - $ref: '#/components/parameters/Query-TagSet'
@@ -751,7 +731,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         default:
           $ref: '#/components/responses/Error'
-
   /permission/object/{objId}:
     get:
       summary: Returns the object permissions
@@ -883,7 +862,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         default:
           $ref: '#/components/responses/Error'
-
   /permission/bucket/{bucketId}:
     get:
       summary: Returns the bucket permissions
@@ -1043,7 +1021,30 @@ paths:
           $ref: '#/components/responses/Forbidden'
         default:
           $ref: '#/components/responses/Error'
-
+  /object/tagging:
+    get:
+      summary: Returns a list of matching tags for objects
+      description: >-
+        Gets a list of tags matching the given parameters. Multiple Key/Value pairs
+        can be provided in the query to narrow down results. If none are provided the full set of tags will be returned.
+      operationId: FethTagsForObjects
+      tags:
+        - Tagging
+      parameters:
+        - $ref: '#/components/parameters/Query-TagSet'
+      responses:
+        '200':
+          description: Returns an array of matching key/value pairs.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/S3-TagSet'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        default:
+          $ref: '#/components/responses/Error'
   /version/metadata:
     get:
       summary: Returns a list of matching metadata for versions
@@ -1081,6 +1082,93 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         default:
           $ref: '#/components/responses/Error'
+  /metadata:
+    get:
+      summary: Search Metadata
+      description: >-
+        Gets a list of metadata matching the given parameters. Multiple Key/Value pairs
+        can be provided in the headers to narrow down results. If none are provided the full set of metadata will be returned.
+      operationId: searchMetadata
+      tags:
+        - Metadata
+      parameters:
+        - $ref: '#/components/parameters/Header-Metadata'
+      responses:
+        '200':
+          description: Returns an array of matching key/value pairs.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/S3-TagSet'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        default:
+          $ref: '#/components/responses/Error'
+  /version/tagging:
+    get:
+      summary: Returns a list of matching tags for versions
+      description: >-
+        Gets a tags matching the given versions. Multiple Key/Value pairs
+        can be provided in the headers to narrow down results. If none are provided the full set of tags will be returned.
+      operationId: fetchTagsForVersion
+      tags:
+        - Tagging
+      parameters:
+        - $ref: '#/components/parameters/Query-TagSet'
+        - $ref: '#/components/parameters/Query-VersionId'
+      responses:
+        '200':
+          description: Returns an array of versions with matching key/value pairs.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - versionId
+                    - tagset
+                  properties:
+                    versionId:
+                      type: string
+                      format: uuid
+                      example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
+                    tagset:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/S3-TagSet'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        default:
+          $ref: '#/components/responses/Error'
+  /tagging:
+    get:
+      summary: Search Tags
+      description: >-
+        Gets a list of tags matching the given parameters. Multiple Key/Value pairs
+        can be provided in the headers to narrow down results. If none are provided the full set of tags will be returned.
+      operationId: searchTags
+      tags:
+        - Tagging
+      parameters:
+        - $ref: '#/components/parameters/Query-TagSet'
+      responses:
+        '200':
+          description: Returns an array of matching key/value pairs.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/S3-TagSet'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        default:
+          $ref: '#/components/responses/Error'
+
+
 components:
   headers:
     Content-Disposition:

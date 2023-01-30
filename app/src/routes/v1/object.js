@@ -23,9 +23,9 @@ router.get('/metadata', objectValidator.fetchMetadata, requireSomeAuth, requireD
   objectController.fetchMetadata(req, res, next);
 });
 
-/** Search for tags */
-router.get('/tagging', objectValidator.searchTags, requireSomeAuth, requireDb, (req, res, next) => {
-  objectController.searchTags(req, res, next);
+/** Fetch tags for specific objects */
+router.get('/tagging', objectValidator.fetchTags, requireSomeAuth, requireDb, (req, res, next) => {
+  objectController.fetchTags(req, res, next);
 });
 
 /** Returns object headers */

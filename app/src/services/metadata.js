@@ -1,5 +1,5 @@
 const { NIL: SYSTEM_USER } = require('uuid');
-const { Metadata, VersionMetadata, Version } = require('../db/models');
+const { ObjectModel, Metadata, VersionMetadata, Version } = require('../db/models');
 const { getObjectsByKeyValue } = require('../components/utils');
 
 /**
@@ -155,21 +155,36 @@ const service = {
    * @returns {Promise<object[]>} The result of running the find operation
    */
   fetchMetadataForObject: (params) => {
-    return Promise.all(params.objId.map(objId => {
-      const q = Version.query()
-        .allowGraph('metadata')
-        .withGraphJoined('metadata')
-        .where('version.objectId', objId)
-        .orderBy('version.createdAt', 'desc')
-        .first()
-        .throwIfNotFound({ message: 'Object(s) not found' });
-      if (params.metadata) {
-        Object.keys(params.metadata).forEach(key => {
-          q.where('metadata.key', key);
-        });
-      }
-      return q;
-    }));
+    return ObjectModel.query()
+      .select('object.id AS objectId')
+      .allowGraph('version.metadata')
+      .withGraphFetched('version.metadata')
+      // get latest version that isn't a delete marker by default
+      .modifyGraph('version', builder => {
+        builder
+          .select('version.id', 'version.objectId')
+          .orderBy([
+            'version.objectId',
+            { column: 'version.createdAt', order: 'desc' }
+          ])
+          .where('deleteMarker', false)
+          .distinctOn('version.objectId');
+      })
+      // match on metadata parameter
+      .modifyGraph('version.metadata', builder => {
+        builder
+          .select('key', 'value')
+          .modify('filterKeyValue', { tag: params.metadata });
+      })
+      // match on objId parameter
+      .modify('filterIds', params.objId)
+      // re-structure result like: [{ objectId: abc, metadata: [{ key: a, value: b }] }]
+      .then(result => result.map(row => {
+        return {
+          objectId: row.objectId,
+          metadata: row.version[0].metadata
+        };
+      }));
   },
 
   /**

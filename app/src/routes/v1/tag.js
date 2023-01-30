@@ -1,7 +1,7 @@
 const router = require('express').Router();
 
-const { metadataController } = require('../../controllers');
-const { metadataValidator } = require('../../validators');
+const { tagController } = require('../../controllers');
+const { tagValidator } = require('../../validators');
 const { requireDb, requireSomeAuth } = require('../../middleware/featureToggle');
 const { checkAppMode } = require('../../middleware/authorization');
 
@@ -9,9 +9,10 @@ router.use(checkAppMode);
 router.use(requireSomeAuth);
 router.use(requireDb);
 
-/** Search for metadata */
-router.get('/', metadataValidator.searchMetadata, requireDb, (req, res, next) => {
-  metadataController.searchMetadata(req, res, next);
+/** Search for tags */
+router.get('/', tagValidator.searchTags, requireSomeAuth, requireDb, (req, res, next) => {
+  tagController.searchTags(req, res, next);
 });
+
 
 module.exports = router;

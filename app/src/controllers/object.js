@@ -467,6 +467,30 @@ const controller = {
   },
 
   /**
+   * @function fetchTags
+   * Fetch tags for specific objects
+   * @param {object} req Express request object
+   * @param {object} res Express response object
+   * @param {function} next The next callback function
+   * @returns {function} Express middleware function
+   */
+  async fetchTags(req, res, next) {
+    try {
+      const objIds = mixedQueryToArray(req.query.objId);
+      const tagset = req.query.tagset;
+      const params = {
+        objectIds: objIds ? objIds.map(id => addDashesToUuid(id)) : objIds,
+        tagset: tagset && Object.keys(tagset).length ? tagset : undefined,
+      };
+
+      const response = await tagService.fetchTagsForObject(params);
+      res.status(200).json(response);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
    * @function headObject
    * Returns object headers
    * @param {object} req Express request object
@@ -700,29 +724,6 @@ const controller = {
       };
 
       const response = await objectService.searchObjects(params);
-      res.status(200).json(response);
-    } catch (error) {
-      next(error);
-    }
-  },
-
-  /**
-   * @function searchTags
-   * Search and filter for specific tags
-   * @param {object} req Express request object
-   * @param {object} res Express response object
-   * @param {function} next The next callback function
-   * @returns {function} Express middleware function
-   */
-  async searchTags(req, res, next) {
-    try {
-      let tagging = req.query.tagset;
-
-      const params = {
-        tag: tagging && Object.keys(tagging).length ? tagging : undefined,
-      };
-
-      const response = await tagService.searchTags(params);
       res.status(200).json(response);
     } catch (error) {
       next(error);

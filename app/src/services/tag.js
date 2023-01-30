@@ -1,5 +1,5 @@
 const { NIL: SYSTEM_USER } = require('uuid');
-const { Tag, VersionTag, Version } = require('../db/models');
+const { ObjectModel, Tag, VersionTag, Version } = require('../db/models');
 const { getObjectsByKeyValue } = require('../components/utils');
 
 /**
@@ -219,6 +219,46 @@ const service = {
       if (!etrx && trx) await trx.rollback();
       throw err;
     }
+  },
+
+  /**
+  * @function fetchTagsForObject
+  * Fetch matching tags on latest version of provided objects
+  * @param {string[]} [params.objectIds] An array of uuids representing objects
+  * @param {object} [params.tagset] Optional object of tags key/value pairs
+  * @returns {Promise<object[]>} The result of running the database select
+  */
+  fetchTagsForObject: (params) => {
+    return ObjectModel.query()
+      .select('object.id AS objectId')
+      .allowGraph('version.tag')
+      .withGraphFetched('version.tag')
+      // get latest version that isn't a delete marker by default
+      .modifyGraph('version', builder => {
+        builder
+          .select('version.id', 'version.objectId')
+          .orderBy([
+            'version.objectId',
+            { column: 'version.createdAt', order: 'desc' }
+          ])
+          .where('deleteMarker', false)
+          .distinctOn('version.objectId');
+      })
+      // match on tagset parameter
+      .modifyGraph('version.tag', builder => {
+        builder
+          .select('key', 'value')
+          .modify('filterKeyValue', { tag: params.tagset });
+      })
+      // match on objectIds parameter
+      .modify('filterIds', params.objectIds)
+      // re-structure result like: [{ objectId: abc, tagset: [{ key: a, value: b }] }]
+      .then(result => result.map(row => {
+        return {
+          objectId: row.objectId,
+          tagset: row.version[0].tag
+        };
+      }));
   },
 
   /**
