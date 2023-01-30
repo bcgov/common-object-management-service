@@ -138,7 +138,7 @@ describe('type', () => {
   });
 
   describe('metadata', () => {
-    const func = type.metadata(1);
+    const func = type.metadata(1, 1);
     const model = func.describe();
 
     it('enforces general metadata pattern', () => {
@@ -168,7 +168,7 @@ describe('type', () => {
   });
 
   describe('tagset', () => {
-    const func = type.tagset(1);
+    const func = type.tagset(1, 1);
     const model = func.describe();
 
     it('is an object', () => {

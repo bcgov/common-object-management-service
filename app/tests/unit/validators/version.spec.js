@@ -9,7 +9,7 @@ describe('fetchMetadata', () => {
     const headers = schema.fetchMetadata.headers.describe();
 
     it('is the expected schema', () => {
-      expect(headers).toEqual(type.metadata(0).describe());
+      expect(headers).toEqual(type.metadata().describe());
     });
   });
 
@@ -20,8 +20,32 @@ describe('fetchMetadata', () => {
       const versionId = query.keys.versionId;
 
       it('is the expected schema', () => {
-        expect(versionId).toEqual(scheme.guid.describe());
+        expect(versionId).toEqual(scheme.guid.required().describe());
       });
     });
+  });
+});
+
+
+describe('fetchTags', () => {
+
+  describe('query', () => {
+
+    const query = schema.fetchTags.query.describe();
+
+    describe('versionId', () => {
+      const versionId = query.keys.versionId;
+
+      it('is the expected schema', () => {
+        expect(versionId).toEqual(scheme.guid.required().describe());
+      });
+    });
+
+    const tagset = query.keys.tagset;
+
+    it('is the expected schema', () => {
+      expect(tagset).toEqual(type.tagset().describe());
+    });
+
   });
 });

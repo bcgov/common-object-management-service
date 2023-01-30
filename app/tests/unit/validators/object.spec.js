@@ -13,7 +13,7 @@ describe('addMetadata', () => {
     const headers = schema.addMetadata.headers.describe();
 
     it('is the expected schema', () => {
-      expect(headers).toEqual(type.metadata(1).describe());
+      expect(headers).toEqual(type.metadata(1, 1).required().describe());
     });
   });
 
@@ -71,7 +71,7 @@ describe('addTags', () => {
       const tagset = query.keys.tagset;
 
       it('is the expected schema', () => {
-        expect(tagset).toEqual(type.tagset(1).describe());
+        expect(tagset).toEqual(type.tagset(1, 1).required().describe());
       });
     });
   });
@@ -83,7 +83,7 @@ describe('createObject', () => {
     const headers = schema.createObjects.headers.describe();
 
     it('is the expected schema', () => {
-      expect(headers).toEqual(type.metadata(0).describe());
+      expect(headers).toEqual(type.metadata().describe());
     });
   });
 
@@ -102,7 +102,7 @@ describe('createObject', () => {
       const tagset = query.keys.tagset;
 
       it('is the expected schema', () => {
-        expect(tagset).toEqual(type.tagset(0).describe());
+        expect(tagset).toEqual(type.tagset().describe());
       });
     });
   });
@@ -114,7 +114,7 @@ describe('deleteMetadata', () => {
     const headers = schema.deleteMetadata.headers.describe();
 
     it('is the expected schema', () => {
-      expect(headers).toEqual(type.metadata(0).describe());
+      expect(headers).toEqual(type.metadata().describe());
     });
   });
 
@@ -199,7 +199,7 @@ describe('deleteTags', () => {
       const tagset = query.keys.tagset;
 
       it('is the expected schema', () => {
-        expect(tagset).toEqual(type.tagset(0).describe());
+        expect(tagset).toEqual(type.tagset().describe());
       });
     });
   });
@@ -302,7 +302,7 @@ describe('replaceMetadata', () => {
     const headers = schema.replaceMetadata.headers.describe();
 
     it('is the expected schema', () => {
-      expect(headers).toEqual(type.metadata(1).describe());
+      expect(headers).toEqual(type.metadata().describe());
     });
   });
 
@@ -361,7 +361,7 @@ describe('replaceTags', () => {
       const tagset = query.keys.tagset;
 
       it('is the expected schema', () => {
-        expect(tagset).toEqual(type.tagset(0).describe());
+        expect(tagset).toEqual(type.tagset().describe());
       });
     });
   });
@@ -496,7 +496,7 @@ describe('searchObjects', () => {
       const tagset = query.keys.tagset;
 
       it('is the expected schema', () => {
-        expect(tagset).toEqual(type.tagset(0).describe());
+        expect(tagset).toEqual(type.tagset().describe());
       });
     });
 
@@ -527,7 +527,7 @@ describe('searchTags', () => {
       const tagset = query.keys.tagset;
 
       it('is the expected schema', () => {
-        expect(tagset).toEqual(type.tagset(0).describe());
+        expect(tagset).toEqual(type.tagset().describe());
       });
     });
   });
@@ -567,7 +567,7 @@ describe('updateObject', () => {
     const headers = schema.updateObject.headers.describe();
 
     it('is the expected schema', () => {
-      expect(headers).toEqual(type.metadata(0).describe());
+      expect(headers).toEqual(type.metadata().describe());
     });
   });
 
@@ -590,7 +590,7 @@ describe('updateObject', () => {
       const tagset = query.keys.tagset;
 
       it('is the expected schema', () => {
-        expect(tagset).toEqual(type.tagset(0).describe());
+        expect(tagset).toEqual(type.tagset().describe());
       });
     });
   });

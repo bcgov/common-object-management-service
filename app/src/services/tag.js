@@ -1,5 +1,5 @@
 const { NIL: SYSTEM_USER } = require('uuid');
-const { Tag, VersionTag } = require('../db/models');
+const { Tag, VersionTag, Version } = require('../db/models');
 const { getObjectsByKeyValue } = require('../components/utils');
 
 /**
@@ -221,6 +221,26 @@ const service = {
     }
   },
 
+  /**
+  * @function fetchTagsForVersion
+  * Fetch tags for specific versions
+  * @param {string[]} [params.versionIds] An array of uuids representing versions
+  * @param {object} [params.tags] Optional object of tags key/value pairs
+  * @returns {Promise<object[]>} The result of running the database select
+  */
+  fetchTagsForVersion: (params) => {
+    return Version.query()
+      .select('id as versionId')
+      .allowGraph('tag as tagset')
+      .withGraphFetched('tag as tagset')
+      .modifyGraph('tagset', builder => {
+        builder
+          .select('key', 'value')
+          .modify('filterKeyValue', { tag: params.tags });
+      })
+      .modify('filterId', params.versionIds)
+      .orderBy('createdAt', 'desc');
+  },
   /**
    * @function searchTags
    * Search and filter for specific tag keys

@@ -45,12 +45,12 @@ const type = {
     version: 'uuidv4'
   }),
 
-  metadata: (min = 0) => Joi.object()
-    .pattern(/^x-amz-meta-.{1,255}$/i, Joi.string().min(1).max(255), { matches: Joi.array().min(min) })
+  metadata: (minKeyCount = 0, minValueStringLength = 0) => Joi.object()
+    .pattern(/^x-amz-meta-.{1,255}$/i, Joi.string().min(minValueStringLength).max(255), { matches: Joi.array().min(minKeyCount) })
     .unknown(),
 
-  tagset: (min = 0) => Joi.object()
-    .pattern(/^.{1,255}$/, Joi.string().min(1).max(255), { matches: Joi.array().min(min) })
+  tagset: (minKeyCount = 1, minValueStringLength = 0) => Joi.object()
+    .pattern(/^.{1,255}$/, Joi.string().min(minValueStringLength).max(255), { matches: Joi.array().min(minKeyCount) })
 };
 
 /**

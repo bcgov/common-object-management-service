@@ -14,4 +14,9 @@ router.get('/metadata', versionValidator.fetchMetadata, (req, res, next) => {
   versionController.fetchMetadata(req, res, next);
 });
 
+/** Fetch tags for specific version */
+router.get('/tagging', versionValidator.fetchTags, (req, res, next) => {
+  versionController.fetchTags(req, res, next);
+});
+
 module.exports = router;
