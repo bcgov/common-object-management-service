@@ -518,21 +518,6 @@ describe('searchObjects', () => {
   });
 });
 
-describe('searchTags', () => {
-  describe('query', () => {
-    const query = schema.searchTags.query.describe();
-
-
-    describe('tagset', () => {
-      const tagset = query.keys.tagset;
-
-      it('is the expected schema', () => {
-        expect(tagset).toEqual(type.tagset().describe());
-      });
-    });
-  });
-});
-
 describe('togglePublic', () => {
 
   describe('params', () => {

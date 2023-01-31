@@ -4,7 +4,7 @@ const { MAXCOPYOBJECTLENGTH, MetadataDirective } = require('../../../src/compone
 const utils = require('../../../src/db/models/utils');
 
 const controller = require('../../../src/controllers/object');
-const { storageService, objectService, metadataService, tagService, versionService, userService } = require('../../../src/services');
+const { storageService, objectService, metadataService, versionService, userService } = require('../../../src/services');
 
 const mockResponse = () => {
   const res = {};
@@ -596,64 +596,3 @@ describe('replaceTags', () => {
   });
 });
 
-describe('searchTags', () => {
-  // mock service calls
-  const tagSearchTagsSpy = jest.spyOn(tagService, 'searchTags');
-
-  const next = jest.fn();
-
-  it('should return all tags with no params', async () => {
-    // request object
-    const req = {
-      headers: {},
-      query: {}
-    };
-
-    const GoodResponse = [{
-      key: 'foo',
-      value: 'bar'
-    },
-    {
-      key: 'baz',
-      value: 'quz'
-    }];
-
-    tagSearchTagsSpy.mockReturnValue(GoodResponse);
-
-    await controller.searchTags(req, res, next);
-
-    expect(tagSearchTagsSpy).toHaveBeenCalledWith({
-      tags: undefined,
-    });
-
-    expect(res.json).toHaveBeenCalledWith(GoodResponse);
-    expect(res.status).toHaveBeenCalledWith(200);
-  });
-
-  it('should return only matching tags', async () => {
-    // request object
-    const req = {
-      headers: {},
-      query: {
-        tagset: {
-          foo: ''
-        }
-      }
-    };
-
-    const GoodResponse = [{
-      key: 'foo',
-      value: 'bar'
-    }];
-
-    tagSearchTagsSpy.mockReturnValue(GoodResponse);
-
-    await controller.searchTags(req, res, next);
-
-    expect(tagSearchTagsSpy).toHaveBeenCalledWith({
-      tag: { foo: '' },
-    });
-    expect(res.json).toHaveBeenCalledWith(GoodResponse);
-    expect(res.status).toHaveBeenCalledWith(200);
-  });
-});

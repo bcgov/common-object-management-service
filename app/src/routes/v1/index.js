@@ -33,6 +33,9 @@ router.use('/object', require('./object'));
 /** Permission Router */
 router.use('/permission', require('./permission'));
 
+/** Tagging Router */
+router.use('/tagging', require('./tag'));
+
 /** User Router */
 router.use('/user', require('./user'));
 

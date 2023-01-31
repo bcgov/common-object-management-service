@@ -2,7 +2,7 @@ const errorToProblem = require('../components/errorToProblem');
 const { addDashesToUuid, getMetadata, mixedQueryToArray } = require('../components/utils');
 const { metadataService, tagService } = require('../services');
 
-const SERVICE = 'UserService';
+const SERVICE = 'VersionService';
 
 /**
  * The Version Controller
