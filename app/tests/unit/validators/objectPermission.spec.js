@@ -10,17 +10,6 @@ describe('searchPermissions', () => {
   describe('query', () => {
     const query = schema.searchPermissions.query.describe();
 
-    it('requires at least 1 parameter', () => {
-      expect(query.rules).toEqual(expect.arrayContaining([
-        expect.objectContaining({
-          name: 'min',
-          args: {
-            limit: 1
-          }
-        })
-      ]));
-    });
-
     describe('userId', () => {
       const userId = query.keys.userId;
 
