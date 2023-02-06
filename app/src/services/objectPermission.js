@@ -64,16 +64,20 @@ const service = {
   /**
    * @function getObjectIdsWithBucket
    * Searches for specific (object) bucket permissions
-   * @param {string|string[]} [params.userId] Optional string or array of uuids representing the user
-   * @param {string|string[]} [params.bucketId] Optional string or array of bucket id(s)
+   * @param {string[]} [params.userIds] Optional array of user id(s)
+   * @param {string[]} [params.bucketIds] Optional array of bucket id(s)
+   * @param {string[]} [params.permCodes] Optional array of PermCode(s)
    * @returns {Promise<object>} The result of running the find operation
   */
-  getObjectIdsWithBucket: async (userId, bucketId) => {
+  getObjectIdsWithBucket: async (userIds = [], bucketIds = [], permCodes = []) => {
     return BucketPermission.query()
       .distinct('object.id AS objectId')
-      .modify('filterUserId', userId)
       .rightJoin('object', 'bucket_permission.bucketId', '=', 'object.bucketId')
-      .whereIn('bucket_permission.bucketId', bucketId)
+      .modify((query) => {
+        if (userIds.length) query.modify('filterUserId', userIds);
+        if (bucketIds.length) query.whereIn('bucket_permission.bucketId', bucketIds);
+        if (permCodes.length) query.whereIn('bucket_permission.permCode', permCodes);
+      })
       .then(response => response.map(entry => entry.objectId));
   },
 
@@ -136,7 +140,7 @@ const service = {
   searchPermissions: (params) => {
     return ObjectPermission.query()
       .modify('filterBucketId', params.bucketId)
-      .modify('filterUserId', params.userId)
+      .modify('filterUserId', params.userIds)
       .modify('filterObjectId', params.objId)
       .modify('filterPermissionCode', params.permCode);
   }

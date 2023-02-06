@@ -10,7 +10,7 @@ const schema = {
       userId: scheme.guid,
       objId: scheme.guid,
       permCode: scheme.permCode
-    }).min(1)
+    })
   },
 
   listPermissions: {

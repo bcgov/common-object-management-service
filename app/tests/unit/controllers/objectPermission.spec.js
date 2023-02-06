@@ -34,7 +34,7 @@ describe('searchPermissions', () => {
     const res = mockResponse();
     await controller.searchPermissions(req, res, next);
     expect(searchPermissionsSpy).toHaveBeenCalledTimes(1);
-    expect(searchPermissionsSpy).toHaveBeenCalledWith({ bucketId: [req.query.bucketId], objId: [req.query.objId], userId: req.query.userId, permCode: [req.query.permCode] });
+    expect(searchPermissionsSpy).toHaveBeenCalledWith({ bucketId: [req.query.bucketId], objId: [req.query.objId], userId: [req.query.userId], permCode: [req.query.permCode] });
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith([]);
     expect(next).toHaveBeenCalledTimes(0);
