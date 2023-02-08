@@ -20,7 +20,7 @@ describe('fetchMetadata', () => {
       const versionId = query.keys.versionId;
 
       it('is the expected schema', () => {
-        expect(versionId).toEqual(scheme.guid.required().describe());
+        expect(versionId).toEqual(scheme.guid.describe());
       });
     });
   });
@@ -37,7 +37,7 @@ describe('fetchTags', () => {
       const versionId = query.keys.versionId;
 
       it('is the expected schema', () => {
-        expect(versionId).toEqual(scheme.guid.required().describe());
+        expect(versionId).toEqual(scheme.guid.describe());
       });
     });
 
