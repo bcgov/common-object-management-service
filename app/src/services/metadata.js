@@ -149,16 +149,17 @@ const service = {
 
   /**
    * @function fetchMetadataForObject
-   * Fetch metadata for specific objects
+   * Fetch metadata for specific objects, optionally scoped to a user's object/bucket READ permission
    * @param {string[]} params.objId An array of uuids representing the object
    * @param {object} [params.metadata] Optional object of metadata key/value pairs
+  * @param {string} [params.userId] Optional uuid representing a user
    * @returns {Promise<object[]>} The result of running the find operation
    */
   fetchMetadataForObject: (params) => {
     return ObjectModel.query()
       .select('object.id AS objectId')
       .allowGraph('version.metadata')
-      .withGraphFetched('version.metadata')
+      .withGraphJoined('version.metadata')
       // get latest version that isn't a delete marker by default
       .modifyGraph('version', builder => {
         builder
@@ -178,6 +179,8 @@ const service = {
       })
       // match on objId parameter
       .modify('filterIds', params.objId)
+      // scope to objects that user(s) has READ permission for either at object or bucket-level
+      .modify('hasPermission', params.userId)
       // re-structure result like: [{ objectId: abc, metadata: [{ key: a, value: b }] }]
       .then(result => result.map(row => {
         return {
@@ -189,24 +192,44 @@ const service = {
 
   /**
   * @function fetchMetadataForVersion
-  * Fetch metadata for specific versions
+  * Fetch metadata for specific versions, optionally scoped to a user's object/bucket READ permission
   * @param {string[]} [params.versionIds] An array of uuids representing versions
   * @param {object} [params.metadata] Optional object of metadata key/value pairs
+  * @param {string} [params.userId] Optional uuid representing a user
   * @returns {Promise<object[]>} The result of running the database select
   */
   fetchMetadataForVersion: (params) => {
     return Version.query()
-      .select('id as versionId')
+      .select('version.id as versionId')
       .allowGraph('metadata')
-      .withGraphFetched('metadata')
+      .withGraphJoined('metadata')
       .modifyGraph('metadata', builder => {
         builder
           .select('key', 'value')
           .modify('filterKeyValue', { metadata: params.metadata });
       })
       .modify('filterId', params.versionIds)
-      .orderBy('createdAt', 'desc');
-    // .limit(1000); consider limiting result to avoid resource overuse
+      // filter by objects that user(s) has READ permission for either at object or bucket-level
+      // TODO: consider instead doing `.whereIn('version.objectId', <objects with permission>)`
+      .modify((query) => {
+        if (params.userId) {
+          query
+            .allowGraph('object.[objectPermission, bucketPermission]')
+            .withGraphJoined('object.[objectPermission, bucketPermission]')
+            .modifyGraph('object', query => {
+              query
+                .modify('hasPermission', params.userId);
+            })
+            .whereNotNull('object.id');
+        }
+      })
+      // format result
+      .orderBy('version.createdAt', 'desc')
+      .then(result => result.map(row => {
+        // eslint-disable-next-line no-unused-vars
+        const { object, ...data} = row;
+        return data ;
+      }));
   },
 
 

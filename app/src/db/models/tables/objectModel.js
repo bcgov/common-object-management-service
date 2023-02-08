@@ -13,6 +13,7 @@ class ObjectModel extends Timestamps(Model) {
   static get relationMappings() {
     const Bucket = require('./bucket');
     const ObjectPermission = require('./objectPermission');
+    const BucketPermission = require('./bucketPermission');
     const Version = require('./version');
 
     return {
@@ -40,6 +41,14 @@ class ObjectModel extends Timestamps(Model) {
           to: 'version.objectId',
         }
       },
+      bucketPermission: {
+        relation: Model.HasManyRelation,
+        modelClass: BucketPermission,
+        join: {
+          from: 'object.bucketId',
+          to: 'bucket_permission.bucketId'
+        }
+      }
     };
   }
 
@@ -61,16 +70,6 @@ class ObjectModel extends Timestamps(Model) {
       },
       filterActive(query, value) {
         if (value !== undefined) query.where('object.active', value);
-      },
-      filterUserId(query, value) {
-        if (value) {
-          query
-            .withGraphJoined('objectPermission')
-            .whereIn('objectPermission.objectId', builder => {
-              builder.distinct('objectPermission.objectId')
-                .where('objectPermission.userId', value);
-            });
-        }
       },
       filterMimeType(query, value) {
         if (value) {
@@ -157,6 +156,25 @@ class ObjectModel extends Timestamps(Model) {
             .withGraphJoined('version')
             .whereIn('version.id', builder => {
               builder.intersect(subqueries);
+            });
+        }
+      },
+      hasPermission(query, value) {
+        if (value) {
+          query
+            // .allowGraph('[objectPermission, bucketPermission]')
+            .withGraphJoined('[objectPermission, bucketPermission]')
+            .whereIn('objectPermission.objectId', query => {
+              query
+                .distinct('objectPermission.objectId')
+                .where('objectPermission.permCode', 'READ')
+                .where('objectPermission.userId', value);
+            })
+            .orWhereIn('object.bucketId', query => {
+              query
+                .distinct('bucketPermission.bucketId')
+                .where('bucketPermission.permCode', 'READ')
+                .where('bucketPermission.userId', value);
             });
         }
       }

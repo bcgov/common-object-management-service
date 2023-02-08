@@ -223,16 +223,17 @@ const service = {
 
   /**
   * @function fetchTagsForObject
-  * Fetch matching tags on latest version of provided objects
+  * Fetch matching tags on latest version of provided objects, optionally scoped to a user's object/bucket READ permission
   * @param {string[]} [params.objectIds] An array of uuids representing objects
   * @param {object} [params.tagset] Optional object of tags key/value pairs
+  * @param {string} [params.userId] Optional uuid representing a user
   * @returns {Promise<object[]>} The result of running the database select
   */
   fetchTagsForObject: (params) => {
     return ObjectModel.query()
       .select('object.id AS objectId')
       .allowGraph('version.tag')
-      .withGraphFetched('version.tag')
+      .withGraphJoined('version.tag')
       // get latest version that isn't a delete marker by default
       .modifyGraph('version', builder => {
         builder
@@ -252,6 +253,8 @@ const service = {
       })
       // match on objectIds parameter
       .modify('filterIds', params.objectIds)
+      // scope to objects that user(s) has READ permission for either at object or bucket-level
+      .modify('hasPermission', params.userId)
       // re-structure result like: [{ objectId: abc, tagset: [{ key: a, value: b }] }]
       .then(result => result.map(row => {
         return {
@@ -263,23 +266,43 @@ const service = {
 
   /**
   * @function fetchTagsForVersion
-  * Fetch tags for specific versions
+  * Fetch tags for specific versions, optionally scoped to a user's object/bucket READ permission
   * @param {string[]} [params.versionIds] An array of uuids representing versions
   * @param {object} [params.tags] Optional object of tags key/value pairs
+  * @param {string} [params.userId] Optional uuid representing a user
   * @returns {Promise<object[]>} The result of running the database select
   */
   fetchTagsForVersion: (params) => {
     return Version.query()
-      .select('id as versionId')
+      .select('version.id as versionId')
       .allowGraph('tag as tagset')
-      .withGraphFetched('tag as tagset')
+      .withGraphJoined('tag as tagset')
       .modifyGraph('tagset', builder => {
         builder
           .select('key', 'value')
           .modify('filterKeyValue', { tag: params.tags });
       })
       .modify('filterId', params.versionIds)
-      .orderBy('createdAt', 'desc');
+      // filter by objects that user(s) has READ permission for either at object or bucket-level
+      // TODO: consider instead doing `.whereIn('version.objectId', <objects with permission>)`
+      .modify((query) => {
+        if (params.userId) {
+          query
+            .allowGraph('object.[objectPermission, bucketPermission]')
+            .withGraphJoined('object.[objectPermission, bucketPermission]')
+            .modifyGraph('object', query => {
+              query
+                .modify('hasPermission', params.userId);
+            })
+            .whereNotNull('object.id');
+        }
+      })
+      .orderBy('version.createdAt', 'desc')
+      .then(result => result.map(row => {
+        // eslint-disable-next-line no-unused-vars
+        const { object, ...data} = row;
+        return data ;
+      }));
   },
   /**
    * @function searchTags
