@@ -15,6 +15,7 @@ const {
   getKeyValue,
   getMetadata,
   getPath,
+  getPrivacyMask,
   joinPath,
   isTruthy,
   mixedQueryToArray,
@@ -468,7 +469,10 @@ const controller = {
         objId: objIds ? objIds.map(id => addDashesToUuid(id)) : objIds,
         metadata: metadata && Object.keys(metadata).length ? metadata : undefined
       };
-
+      // if scoping to current user permissions on objects
+      if (getPrivacyMask) {
+        params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
+      }
       const response = await metadataService.fetchMetadataForObject(params);
       res.status(200).json(response);
     } catch (error) {
@@ -492,7 +496,10 @@ const controller = {
         objectIds: objIds ? objIds.map(id => addDashesToUuid(id)) : objIds,
         tagset: tagset && Object.keys(tagset).length ? tagset : undefined,
       };
-
+      // if scoping to current user permissions on objects
+      if (getPrivacyMask) {
+        params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
+      }
       const response = await tagService.fetchTagsForObject(params);
       res.status(200).json(response);
     } catch (error) {
@@ -732,7 +739,10 @@ const controller = {
         deleteMarker: isTruthy(req.query.deleteMarker),
         latest: isTruthy(req.query.latest)
       };
-
+      // if scoping to current user permissions on objects
+      if (getPrivacyMask) {
+        params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
+      }
       const response = await objectService.searchObjects(params);
       res.status(200).json(response);
     } catch (error) {
