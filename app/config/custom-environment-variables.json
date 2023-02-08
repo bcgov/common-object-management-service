@@ -10,8 +10,7 @@
     "host": "DB_HOST",
     "username": "DB_USERNAME",
     "password": "DB_PASSWORD",
-    "port": "DB_PORT",
-    "privacyMask": "DB_PRIVACY_MASK"
+    "port": "DB_PORT"
   },
   "keycloak": {
     "enabled": "KC_ENABLED",
@@ -35,6 +34,7 @@
     "logFile": "SERVER_LOGFILE",
     "logLevel": "SERVER_LOGLEVEL",
     "passphrase": "SERVER_PASSPHRASE",
-    "port": "SERVER_PORT"
+    "port": "SERVER_PORT",
+    "privacyMask": "SERVER_PRIVACY_MASK"
   }
 }

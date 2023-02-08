@@ -254,7 +254,7 @@ const service = {
       // match on objectIds parameter
       .modify('filterIds', params.objectIds)
       // scope to objects that user(s) has READ permission for either at object or bucket-level
-      .modify('hasPermission', params.userId)
+      .modify('hasPermission', params.userId, 'READ')
       // re-structure result like: [{ objectId: abc, tagset: [{ key: a, value: b }] }]
       .then(result => result.map(row => {
         return {
@@ -290,18 +290,15 @@ const service = {
           query
             .allowGraph('object.[objectPermission, bucketPermission]')
             .withGraphJoined('object.[objectPermission, bucketPermission]')
-            .modifyGraph('object', query => {
-              query
-                .modify('hasPermission', params.userId);
-            })
+            .modifyGraph('object', query => { query.modify('hasPermission', params.userId, 'READ'); })
             .whereNotNull('object.id');
         }
       })
       .orderBy('version.createdAt', 'desc')
       .then(result => result.map(row => {
         // eslint-disable-next-line no-unused-vars
-        const { object, ...data} = row;
-        return data ;
+        const { object, ...data } = row;
+        return data;
       }));
   },
   /**

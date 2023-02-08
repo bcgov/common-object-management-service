@@ -75,6 +75,13 @@ if (state.authMode === AuthMode.OIDCAUTH || state.authMode === AuthMode.FULLAUTH
   app.use(keycloak.middleware());
 }
 
+// Application privacy Mode mode
+if (config.has('server.privacyMask')) {
+  log.info('Running COMS with strict content privacy masking');
+} else {
+  log.info('Running COMS with permissive content privacy masking');
+}
+
 // Block requests until service is ready
 app.use((_req, res, next) => {
   if (state.shutdown) {
@@ -98,6 +105,7 @@ apiRouter.get('/', (_req, res) => {
         hasDb: config.has('db.enabled'),
         name: process.env.npm_package_name,
         nodeVersion: process.version,
+        privacyMask: config.has('server.privacyMask'),
         version: process.env.npm_package_version
       },
       endpoints: ['/api/v1'],

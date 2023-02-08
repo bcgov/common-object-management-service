@@ -1,6 +1,6 @@
-const { NIL: SYSTEM_USER } = require('uuid');
+const config = require('config');
 const errorToProblem = require('../components/errorToProblem');
-const { addDashesToUuid, getCurrentIdentity, getMetadata, mixedQueryToArray, getPrivacyMask } = require('../components/utils');
+const { addDashesToUuid, getCurrentIdentity, getMetadata, mixedQueryToArray } = require('../components/utils');
 const { metadataService, tagService, userService } = require('../services');
 
 const SERVICE = 'VersionService';
@@ -27,8 +27,8 @@ const controller = {
         metadata: metadata && Object.keys(metadata).length ? metadata : undefined,
       };
       // if scoping to current user permissions on objects
-      if (getPrivacyMask) {
-        params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
+      if (config.has('server.privacyMask')) {
+        params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, undefined));
       }
       const response = await metadataService.fetchMetadataForVersion(params);
       res.status(200).json(response);
@@ -55,8 +55,8 @@ const controller = {
         tags: tagging && Object.keys(tagging).length ? tagging : undefined,
       };
       // if scoping to current user permissions on objects
-      if (getPrivacyMask) {
-        params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
+      if (config.has('server.privacyMask')) {
+        params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, undefined));
       }
       const response = await tagService.fetchTagsForVersion(params);
       res.status(200).json(response);

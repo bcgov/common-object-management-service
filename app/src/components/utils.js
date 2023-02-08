@@ -195,15 +195,6 @@ const utils = {
   },
 
   /**
-   * @function privacyMask
-   * Gets privacyMask configuration
-   * @returns {Boolean} Is privacyMask enabled
-   */
-  async getPrivacyMask() {
-    return config.has('db.privacyMask') ? true : false;
-  },
-
-  /**
    * @function groupByObject
    * Re-structure array of nested objects
    * @see {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce#grouping_objects_by_a_property}

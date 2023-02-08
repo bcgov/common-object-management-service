@@ -127,7 +127,7 @@ const service = {
         metadata: params.metadata,
         tag: params.tag
       })
-      .modify('hasPermission', params.userId)
+      .modify('hasPermission', params.userId, 'READ')
       .then(result => result.map(row => {
         // eslint-disable-next-line no-unused-vars
         const { objectPermission, bucketPermission, version, ...object } = row;

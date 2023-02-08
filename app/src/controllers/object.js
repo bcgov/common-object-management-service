@@ -1,5 +1,6 @@
 const Problem = require('api-problem');
 const busboy = require('busboy');
+const config = require('config');
 const cors = require('cors');
 const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 
@@ -15,7 +16,6 @@ const {
   getKeyValue,
   getMetadata,
   getPath,
-  getPrivacyMask,
   joinPath,
   isTruthy,
   mixedQueryToArray,
@@ -470,8 +470,8 @@ const controller = {
         metadata: metadata && Object.keys(metadata).length ? metadata : undefined
       };
       // if scoping to current user permissions on objects
-      if (getPrivacyMask) {
-        params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
+      if (config.has('server.privacyMask')) {
+        params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, undefined));
       }
       const response = await metadataService.fetchMetadataForObject(params);
       res.status(200).json(response);
@@ -497,8 +497,8 @@ const controller = {
         tagset: tagset && Object.keys(tagset).length ? tagset : undefined,
       };
       // if scoping to current user permissions on objects
-      if (getPrivacyMask) {
-        params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
+      if (config.has('server.privacyMask')) {
+        params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, undefined));
       }
       const response = await tagService.fetchTagsForObject(params);
       res.status(200).json(response);
@@ -740,8 +740,8 @@ const controller = {
         latest: isTruthy(req.query.latest)
       };
       // if scoping to current user permissions on objects
-      if (getPrivacyMask) {
-        params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
+      if (config.has('server.privacyMask')) {
+        params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, undefined));
       }
       const response = await objectService.searchObjects(params);
       res.status(200).json(response);
