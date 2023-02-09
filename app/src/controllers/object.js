@@ -1,3 +1,4 @@
+const Problem = require('api-problem');
 const busboy = require('busboy');
 const cors = require('cors');
 const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
@@ -23,6 +24,7 @@ const {
 const utils = require('../db/models/utils');
 
 const {
+  bucketPermissionService,
   metadataService,
   objectService,
   storageService,
@@ -198,10 +200,18 @@ const controller = {
     try {
       const bb = busboy({ headers: req.headers });
       const objects = [];
+      const bucketId = req.query.bucketId ? addDashesToUuid(req.query.bucketId) : undefined;
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
-
+      // if target bucket specified AND request is by an OIDC user,
+      // check for CREATE permission on bucket
+      if (bucketId && userId) {
+        const permission = await bucketPermissionService.searchPermissions({ userId: userId, bucketId: bucketId, permCode: 'CREATE' });
+        if (!permission.length) {
+          return new Problem(403, { detail: 'User lacks permission to complete this action' }).send(res);
+        }
+      }
       // Preflight check bucketId before proceeding with any object operations
-      const bucketKey = (await getBucket(req.query.bucketId, true)).key;
+      const bucketKey = (await getBucket(bucketId, true)).key;
 
       bb.on('file', (name, stream, info) => {
         const objId = uuidv4();
@@ -216,7 +226,7 @@ const controller = {
             id: objId
           },
           tags: req.query.tagset,
-          bucketId: req.query.bucketId
+          bucketId: bucketId
         };
 
         const s3Response = storageService.upload({ ...data, stream });

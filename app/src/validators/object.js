@@ -1,4 +1,5 @@
 const { validate, Joi } = require('express-validation');
+const config = require('config');
 
 const { scheme, type } = require('./common');
 const { DownloadMode } = require('../components/constants');
@@ -24,12 +25,15 @@ const schema = {
     })
   },
 
+  // TODO: Make this schema definition unit-testable
+  // bucketId property was undefined in unit test
   createObjects: {
     headers: type.metadata(),
-    query: Joi.object({
-      tagset: type.tagset(),
-      bucketId: type.uuidv4,
-    })
+    query: Joi.object((() => {
+      const query = { tagset: type.tagset() };
+      if (config.has('db.enabled')) query.bucketId = type.uuidv4;
+      return query;
+    })())
   },
 
   deleteMetadata: {
