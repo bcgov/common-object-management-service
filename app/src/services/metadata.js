@@ -179,7 +179,7 @@ const service = {
       })
       // match on objId parameter
       .modify('filterIds', params.objId)
-      // scope to objects that user(s) has READ permission for either at object or bucket-level
+      // scope to objects that user(s) has READ permission at object or bucket-level
       .modify('hasPermission', params.userId, 'READ')
       // re-structure result like: [{ objectId: abc, metadata: [{ key: a, value: b }] }]
       .then(result => result.map(row => {
@@ -209,7 +209,7 @@ const service = {
           .modify('filterKeyValue', { metadata: params.metadata });
       })
       .modify('filterId', params.versionIds)
-      // filter by objects that user(s) has READ permission for either at object or bucket-level
+      // filter by objects that user(s) has READ permission at object or bucket-level
       // TODO: consider instead doing `.whereIn('version.objectId', <objects with permission>)`
       .modify((query) => {
         if (params.userId) {
@@ -234,11 +234,22 @@ const service = {
    * @function searchMetadata
     * Search and filter for specific metadata keys
    * @param {object} [params.metadata] Optional object of metadata keys to filter on
+  * @param {string} [params.userId] Optional uuid representing a user
    * @returns {Promise<object[]>} The result of running the find operation
    */
   searchMetadata: (params) => {
     return Metadata.query()
       .modify('filterKeyValue', { metadata: params.metadata })
+      // filter to include only metadata on objects where user has READ permission at object or bucket-level
+      .modify((query) => {
+        if (params.userId) {
+          query
+            .allowGraph('version.object.[objectPermission, bucketPermission]')
+            .withGraphJoined('version.object.[objectPermission, bucketPermission]')
+            .modifyGraph('version.object', query => { query.modify('hasPermission', params.userId, 'READ'); })
+            .whereNotNull('version:object.id');
+        }
+      })
       .then(result => result.map(row => {
         return { key: row.key, value: row.value };
       }));

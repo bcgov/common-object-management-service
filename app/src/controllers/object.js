@@ -471,7 +471,7 @@ const controller = {
       };
       // if scoping to current user permissions on objects
       if (config.has('server.privacyMask')) {
-        params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, undefined));
+        params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
       }
       const response = await metadataService.fetchMetadataForObject(params);
       res.status(200).json(response);
@@ -498,7 +498,7 @@ const controller = {
       };
       // if scoping to current user permissions on objects
       if (config.has('server.privacyMask')) {
-        params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, undefined));
+        params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
       }
       const response = await tagService.fetchTagsForObject(params);
       res.status(200).json(response);
@@ -741,7 +741,7 @@ const controller = {
       };
       // if scoping to current user permissions on objects
       if (config.has('server.privacyMask')) {
-        params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, undefined));
+        params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
       }
       const response = await objectService.searchObjects(params);
       res.status(200).json(response);

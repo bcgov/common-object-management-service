@@ -253,7 +253,7 @@ const service = {
       })
       // match on objectIds parameter
       .modify('filterIds', params.objectIds)
-      // scope to objects that user(s) has READ permission for either at object or bucket-level
+      // scope to objects that user(s) has READ permission at object or bucket-level
       .modify('hasPermission', params.userId, 'READ')
       // re-structure result like: [{ objectId: abc, tagset: [{ key: a, value: b }] }]
       .then(result => result.map(row => {
@@ -283,7 +283,7 @@ const service = {
           .modify('filterKeyValue', { tag: params.tags });
       })
       .modify('filterId', params.versionIds)
-      // filter by objects that user(s) has READ permission for either at object or bucket-level
+      // filter by objects that user(s) has READ permission at object or bucket-level
       // TODO: consider instead doing `.whereIn('version.objectId', <objects with permission>)`
       .modify((query) => {
         if (params.userId) {
@@ -305,11 +305,22 @@ const service = {
    * @function searchTags
    * Search and filter for specific tag keys
    * @param {object} [params.tag] Optional object of tag keys to filter on
+   * @param {string} [params.userId] Optional uuid representing a user
    * @returns {Promise<object[]>} The result of running the find operation
    */
   searchTags: (params) => {
     return Tag.query()
       .modify('filterKeyValue', { tag: params.tag })
+      // filter to include only tags on objects where user has READ permission at object or bucket-level
+      .modify((query) => {
+        if (params.userId) {
+          query
+            .allowGraph('version.object.[objectPermission, bucketPermission]')
+            .withGraphJoined('version.object.[objectPermission, bucketPermission]')
+            .modifyGraph('version.object', query => { query.modify('hasPermission', params.userId, 'READ'); })
+            .whereNotNull('version:object.id');
+        }
+      })
       .then(result => result.map(row => {
         return { key: row.key, value: row.value };
       }));
