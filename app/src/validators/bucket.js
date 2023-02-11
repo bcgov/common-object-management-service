@@ -30,7 +30,7 @@ const schema = {
 
   readBucket: {
     params: Joi.object({
-      bucketId: type.uuidv4
+      bucketId: type.uuidv4.required()
     })
   },
 

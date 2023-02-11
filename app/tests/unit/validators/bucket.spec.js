@@ -76,7 +76,7 @@ describe('readBucket', () => {
       const bucketId = params.keys.bucketId;
 
       it('is the expected schema', () => {
-        expect(bucketId).toEqual(type.uuidv4.describe());
+        expect(bucketId).toEqual(type.uuidv4.required().describe());
       });
     });
   });
