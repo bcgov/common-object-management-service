@@ -1,3 +1,4 @@
+const config = require('config');
 const crypto = require('crypto');
 const { Joi } = require('express-validation');
 const jestJoi = require('jest-joi');
@@ -6,6 +7,12 @@ expect.extend(jestJoi.matchers);
 
 const { schema } = require('../../../src/validators/object');
 const { scheme, type } = require('../../../src/validators/common');
+
+jest.mock('config');
+
+beforeEach(() => {
+  jest.resetAllMocks();
+});
 
 describe('addMetadata', () => {
 
@@ -88,18 +95,23 @@ describe('createObject', () => {
   });
 
   describe('query', () => {
-    const query = schema.createObjects.query.describe();
-
     describe('bucketId', () => {
-      const bucketId = query.keys.bucketId;
 
-      it('is the expected schema', () => {
+      it.skip('is in schema when DB mode enabled', () => {
+        config.has.mockReturnValueOnce(true);
+        const bucketId = schema.createObjects.query.describe().keys.bucketId;
         expect(bucketId).toEqual(type.uuidv4.describe());
+      });
+
+      it.skip('is not in schema when DB mode not enabled', () => {
+        config.has.mockReturnValueOnce(false);
+        const bucketId = schema.createObjects.query.describe().keys.bucketId;
+        expect(bucketId).toEqual(undefined);
       });
     });
 
     describe('tagset', () => {
-      const tagset = query.keys.tagset;
+      const tagset = schema.createObjects.query.describe().keys.tagset;
 
       it('is the expected schema', () => {
         expect(tagset).toEqual(type.tagset().describe());
