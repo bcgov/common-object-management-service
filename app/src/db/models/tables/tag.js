@@ -41,7 +41,7 @@ class Tag extends Model {
 
         if (value.tag && Object.keys(value.tag).length) {
           Object.entries(value.tag).forEach(([key, val]) => {
-            const q = Tag.query().select('id').where('key', 'ilike', `%${key}%`);
+            const q = Tag.query().select('tag.id').where('key', 'ilike', `%${key}%`);
             if (val.length) q.where('value', 'ilike', `%${val}%`);
             subqueries.push(q);
           });
@@ -49,7 +49,7 @@ class Tag extends Model {
 
         if (subqueries.length) {
           query
-            .whereIn('id', builder => {
+            .whereIn('tag.id', builder => {
               builder.intersect(subqueries);
             });
         }

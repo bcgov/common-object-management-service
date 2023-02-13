@@ -40,7 +40,7 @@ class Metadata extends Model {
 
         if (value.metadata && Object.keys(value.metadata).length) {
           Object.entries(value.metadata).forEach(([key, val]) => {
-            const q = Metadata.query().select('id').where('key', 'ilike', `%${key}%`);
+            const q = Metadata.query().select('metadata.id').where('key', 'ilike', `%${key}%`);
             if (val.length) q.where('value', 'ilike', `%${val}%`);
             subqueries.push(q);
           });
@@ -48,7 +48,7 @@ class Metadata extends Model {
 
         if (subqueries.length) {
           query
-            .whereIn('id', builder => {
+            .whereIn('metadata.id', builder => {
               builder.intersect(subqueries);
             });
         }
