@@ -305,25 +305,23 @@ const service = {
    * @function searchTags
    * Search and filter for specific tag keys
    * @param {object} [params.tag] Optional object of tag keys to filter on
-   * @param {string} [params.userId] Optional uuid representing a user
+   * @param {string} [params.privacyMask] Optional, if results should ignore and hide value from result
    * @returns {Promise<object[]>} The result of running the find operation
    */
   searchTags: (params) => {
     return Tag.query()
-      .modify('filterKeyValue', { tag: params.tag })
-      // filter to include only tags on objects where user has READ permission at object or bucket-level
       .modify((query) => {
-        if (params.userId) {
+        if (params.privacyMask) {
           query
-            .allowGraph('version.object.[objectPermission, bucketPermission]')
-            .withGraphJoined('version.object.[objectPermission, bucketPermission]')
-            .modifyGraph('version.object', query => { query.modify('hasPermission', params.userId, 'READ'); })
-            .whereNotNull('version:object.id');
+            .select('key')
+            .modify( 'filterKey', { tag: params.tag });
         }
-      })
-      .then(result => result.map(row => {
-        return { key: row.key, value: row.value };
-      }));
+        else{
+          query
+            .select('key', 'value')
+            .modify('filterKeyValue', { tag: params.tag });
+        }
+      });
   },
 
 };

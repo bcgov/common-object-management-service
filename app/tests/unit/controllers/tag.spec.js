@@ -33,6 +33,7 @@ describe('searchTags', () => {
   it('should return all tags with no params', async () => {
     // request object
     const req = {
+      currentUser: { authType: 'BEARER' },
       headers: {},
       query: {}
     };
@@ -61,6 +62,7 @@ describe('searchTags', () => {
   it('should return only matching tags', async () => {
     // request object
     const req = {
+      currentUser: { authType: 'BEARER' },
       headers: {},
       query: {
         tagset: {

@@ -1,8 +1,6 @@
 const config = require('config');
-const { NIL: SYSTEM_USER } = require('uuid');
 const errorToProblem = require('../components/errorToProblem');
-const { getCurrentIdentity } = require('../components/utils');
-const { tagService, userService } = require('../services');
+const { tagService } = require('../services');
 
 const SERVICE = 'TagService';
 
@@ -24,11 +22,8 @@ const controller = {
       const tagging = req.query.tagset;
       const params = {
         tag: tagging && Object.keys(tagging).length ? tagging : undefined,
+        privacyMask : req.currentUser.authType !== 'BASIC' ? config.has('server.privacyMask') : false
       };
-      // if scoping to current user permissions on objects
-      if (config.has('server.privacyMask')) {
-        params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
-      }
 
       const response = await tagService.searchTags(params);
       res.status(200).json(response);

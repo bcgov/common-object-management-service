@@ -239,20 +239,18 @@ const service = {
    */
   searchMetadata: (params) => {
     return Metadata.query()
-      .modify('filterKeyValue', { metadata: params.metadata })
-      // filter to include only metadata on objects where user has READ permission at object or bucket-level
       .modify((query) => {
-        if (params.userId) {
+        if (params.privacyMask) {
           query
-            .allowGraph('version.object.[objectPermission, bucketPermission]')
-            .withGraphJoined('version.object.[objectPermission, bucketPermission]')
-            .modifyGraph('version.object', query => { query.modify('hasPermission', params.userId, 'READ'); })
-            .whereNotNull('version:object.id');
+            .select('key')
+            .modify('filterKey', { metadata: params.metadata });
         }
-      })
-      .then(result => result.map(row => {
-        return { key: row.key, value: row.value };
-      }));
+        else {
+          query
+            .select('key', 'value')
+            .modify('filterKeyValue', { metadata: params.metadata });
+        }
+      });
   },
 };
 

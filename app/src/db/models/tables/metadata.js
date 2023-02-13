@@ -35,9 +35,24 @@ class Metadata extends Model {
 
   static get modifiers() {
     return {
+      filterKey(query, value) {
+        const subqueries = [];
+        if (value.metadata && Object.keys(value.metadata).length) {
+          Object.entries(value.metadata).forEach(metadata => {
+            const q = Metadata.query().select('metadata.id').where('key', 'ilike', `%${metadata[0]}%`);
+            subqueries.push(q);
+          });
+        }
+        if (subqueries.length) {
+          query
+            .whereIn('metadata.id', builder => {
+              builder.intersect(subqueries);
+            });
+        }
+      },
+
       filterKeyValue(query, value) {
         const subqueries = [];
-
         if (value.metadata && Object.keys(value.metadata).length) {
           Object.entries(value.metadata).forEach(([key, val]) => {
             const q = Metadata.query().select('metadata.id').where('key', 'ilike', `%${key}%`);
@@ -45,7 +60,6 @@ class Metadata extends Model {
             subqueries.push(q);
           });
         }
-
         if (subqueries.length) {
           query
             .whereIn('metadata.id', builder => {

@@ -1,8 +1,7 @@
 const config = require('config');
-const { NIL: SYSTEM_USER } = require('uuid');
 const errorToProblem = require('../components/errorToProblem');
-const { getCurrentIdentity, getMetadata } = require('../components/utils');
-const { metadataService, userService } = require('../services');
+const { getMetadata } = require('../components/utils');
+const { metadataService } = require('../services');
 
 const SERVICE = 'MetadataService';
 
@@ -22,12 +21,9 @@ const controller = {
     try {
       const metadata = getMetadata(req.headers);
       const params = {
-        metadata: metadata && Object.keys(metadata).length ? metadata : undefined
+        metadata: metadata && Object.keys(metadata).length ? metadata : undefined,
+        privacyMask : req.currentUser.authType !== 'BASIC' ? config.has('server.privacyMask') : false
       };
-      // if scoping to current user permissions on objects
-      if (config.has('server.privacyMask')) {
-        params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
-      }
 
       const response = await metadataService.searchMetadata(params);
       res.status(200).json(response);
