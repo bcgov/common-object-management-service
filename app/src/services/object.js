@@ -119,7 +119,6 @@ const service = {
       .modify('filterPath', params.path)
       .modify('filterPublic', params.public)
       .modify('filterActive', params.active)
-      .modify('filterUserId', params.userId)
       .modify('filterMimeType', params.mimeType)
       .modify('filterDeleteMarker', params.deleteMarker)
       .modify('filterLatest', params.latest)
@@ -128,9 +127,10 @@ const service = {
         metadata: params.metadata,
         tag: params.tag
       })
+      .modify('hasPermission', params.userId, 'READ')
       .then(result => result.map(row => {
         // eslint-disable-next-line no-unused-vars
-        const { objectPermission, version, ...object } = row;
+        const { objectPermission, bucketPermission, version, ...object } = row;
         return object;
       }));
   },

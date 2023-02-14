@@ -68,7 +68,7 @@ const schema = {
   fetchMetadata: {
     headers: type.metadata(),
     query: Joi.object({
-      objId: scheme.guid.required()
+      objId: scheme.guid
     })
   },
 
@@ -136,7 +136,7 @@ const schema = {
 
   fetchTags: {
     query: Joi.object({
-      objId: scheme.guid.required(),
+      objId: scheme.guid,
       tagset: type.tagset(),
     })
   },

@@ -35,20 +35,34 @@ class Metadata extends Model {
 
   static get modifiers() {
     return {
+      filterKey(query, value) {
+        const subqueries = [];
+        if (value.metadata && Object.keys(value.metadata).length) {
+          Object.entries(value.metadata).forEach(metadata => {
+            const q = Metadata.query().select('metadata.id').where('key', 'ilike', `%${metadata[0]}%`);
+            subqueries.push(q);
+          });
+        }
+        if (subqueries.length) {
+          query
+            .whereIn('metadata.id', builder => {
+              builder.intersect(subqueries);
+            });
+        }
+      },
+
       filterKeyValue(query, value) {
         const subqueries = [];
-
         if (value.metadata && Object.keys(value.metadata).length) {
           Object.entries(value.metadata).forEach(([key, val]) => {
-            const q = Metadata.query().select('id').where('key', 'ilike', `%${key}%`);
+            const q = Metadata.query().select('metadata.id').where('key', 'ilike', `%${key}%`);
             if (val.length) q.where('value', 'ilike', `%${val}%`);
             subqueries.push(q);
           });
         }
-
         if (subqueries.length) {
           query
-            .whereIn('id', builder => {
+            .whereIn('metadata.id', builder => {
               builder.intersect(subqueries);
             });
         }

@@ -6,13 +6,13 @@ const schema = {
   fetchMetadata: {
     headers: type.metadata(),
     query: Joi.object({
-      versionId: scheme.guid.required(),
+      versionId: scheme.guid,
     })
   },
 
   fetchTags: {
     query: Joi.object({
-      versionId: scheme.guid.required(),
+      versionId: scheme.guid,
       tagset: type.tagset(),
     })
   },

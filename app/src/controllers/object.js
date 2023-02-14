@@ -1,5 +1,6 @@
 const Problem = require('api-problem');
 const busboy = require('busboy');
+const config = require('config');
 const cors = require('cors');
 const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 
@@ -468,7 +469,10 @@ const controller = {
         objId: objIds ? objIds.map(id => addDashesToUuid(id)) : objIds,
         metadata: metadata && Object.keys(metadata).length ? metadata : undefined
       };
-
+      // if scoping to current user permissions on objects
+      if (config.has('server.privacyMask')) {
+        params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
+      }
       const response = await metadataService.fetchMetadataForObject(params);
       res.status(200).json(response);
     } catch (error) {
@@ -492,7 +496,10 @@ const controller = {
         objectIds: objIds ? objIds.map(id => addDashesToUuid(id)) : objIds,
         tagset: tagset && Object.keys(tagset).length ? tagset : undefined,
       };
-
+      // if scoping to current user permissions on objects
+      if (config.has('server.privacyMask')) {
+        params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
+      }
       const response = await tagService.fetchTagsForObject(params);
       res.status(200).json(response);
     } catch (error) {
@@ -732,7 +739,10 @@ const controller = {
         deleteMarker: isTruthy(req.query.deleteMarker),
         latest: isTruthy(req.query.latest)
       };
-
+      // if scoping to current user permissions on objects
+      if (config.has('server.privacyMask')) {
+        params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
+      }
       const response = await objectService.searchObjects(params);
       res.status(200).json(response);
     } catch (error) {
