@@ -140,7 +140,7 @@ const service = {
   searchPermissions: (params) => {
     return ObjectPermission.query()
       .modify('filterBucketId', params.bucketId)
-      .modify('filterUserId', params.userIds)
+      .modify('filterUserId', params.userId)
       .modify('filterObjectId', params.objId)
       .modify('filterPermissionCode', params.permCode);
   }
