@@ -7,9 +7,17 @@ const schema = {
     query: Joi.object({
       bucketId: scheme.guid,
       bucketPerms: type.truthy,
-      userId: scheme.guid,
       objId: scheme.guid,
-      permCode: scheme.permCode
+      permCode: scheme.permCode,
+      userId: Joi.alternatives()
+        .conditional('bucketPerms', {
+          is: true,
+          then: type.uuidv4
+            .required()
+            .messages({
+              'string.guid': 'One userId required when `bucketPerms=true`',
+            }),
+          otherwise: scheme.guid })
     })
   },
 

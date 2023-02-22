@@ -1,4 +1,5 @@
 const jestJoi = require('jest-joi');
+const Joi = require('joi');
 expect.extend(jestJoi.matchers);
 
 const { schema } = require('../../../src/validators/objectPermission');
@@ -13,8 +14,17 @@ describe('searchPermissions', () => {
     describe('userId', () => {
       const userId = query.keys.userId;
 
+      // TODO: test against schema in our code instead of recreating object
       it('is the expected schema', () => {
-        expect(userId).toEqual(scheme.guid.describe());
+        expect(userId).toEqual(Joi.alternatives()
+          .conditional('bucketPerms', {
+            is: true,
+            then: type.uuidv4
+              .required()
+              .messages({
+                'string.guid': 'One userId required when `bucketPerms=true`',
+              }),
+            otherwise: scheme.guid }).describe());
       });
     });
 

@@ -5,11 +5,19 @@ const { Permissions } = require('../components/constants');
 const schema = {
   searchPermissions: {
     query: Joi.object({
-      objectPerms: type.truthy,
-      userId: scheme.guid,
       bucketId: scheme.guid,
-      permCode: scheme.permCode
-    }).min(1)
+      objectPerms: type.truthy,
+      permCode: scheme.permCode,
+      userId: Joi.alternatives()
+        .conditional('objectPerms', {
+          is: true,
+          then: type.uuidv4
+            .required()
+            .messages({
+              'string.guid': 'One userId required when `objectPerms=true`',
+            }),
+          otherwise: scheme.guid })
+    })
   },
 
   listPermissions: {
