@@ -1,3 +1,4 @@
+const Joi = require('joi');
 const jestJoi = require('jest-joi');
 expect.extend(jestJoi.matchers);
 
@@ -10,22 +11,20 @@ describe('searchPermissions', () => {
   describe('query', () => {
     const query = schema.searchPermissions.query.describe();
 
-    it('requires at least 1 parameter', () => {
-      expect(query.rules).toEqual(expect.arrayContaining([
-        expect.objectContaining({
-          name: 'min',
-          args: {
-            limit: 1
-          }
-        })
-      ]));
-    });
-
     describe('userId', () => {
       const userId = query.keys.userId;
 
+      // TODO: test against schema in our code instead of recreating object
       it('is the expected schema', () => {
-        expect(userId).toEqual(scheme.guid.describe());
+        expect(userId).toEqual(Joi.alternatives()
+          .conditional('objectPerms', {
+            is: true,
+            then: type.uuidv4
+              .required()
+              .messages({
+                'string.guid': 'One userId required when `objectPerms=true`',
+              }),
+            otherwise: scheme.guid }).describe());
       });
     });
 
