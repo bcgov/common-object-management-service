@@ -197,6 +197,7 @@ const service = {
       .modify('filterLastName', params.lastName)
       .modify('filterActive', params.active)
       .modify('filterSearch', params.search)
+      .whereNotNull('identityId')
       .modify('orderLastFirstAscending');
   },
 
