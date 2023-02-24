@@ -551,11 +551,12 @@ const controller = {
   async listObjectVersion(req, res, next) {
     try {
       const objId = addDashesToUuid(req.params.objId);
-      const data = {
-        filePath: await getPath(objId)
-      };
 
-      const response = await storageService.listObjectVersion(data);
+      const response = await versionService.list(objId);
+      // TODO: sync with current versions in S3
+      // const data = { filePath: await getPath(objId) };
+      // const s3Versions = await storageService.listObjectVersion(data);
+
       res.status(200).json(response);
     } catch (e) {
       next(errorToProblem(SERVICE, e));

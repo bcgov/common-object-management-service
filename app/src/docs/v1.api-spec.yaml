@@ -530,8 +530,10 @@ paths:
           $ref: '#/components/responses/Error'
   /object/{objId}/version:
     get:
-      summary: Returns the object version history
-      description: Returns an array of an object's version history
+      summary: List versions for an object
+      description: >-
+        Returns an array of an object's versions, including delete-markers, ordered by creation date.
+        Not available without a database.
       operationId: listObjectVersion
       tags:
         - Version
@@ -543,7 +545,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/S3-VersionList'
+                type: array
+                items:
+                  $ref: '#/components/schemas/DB-Version'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1310,7 +1314,7 @@ components:
       schema:
         type: string
         format: uuid
-        example: 00000000-0000-0000-0000-000000000000
+        example: 48a65990-2e48-46b2-94eb-7f4fe13468ea
     Query-DeleteMarker:
       in: query
       name: deleteMarker
@@ -1407,14 +1411,6 @@ components:
       schema:
         type: string
         example: smith
-    Query-MessageId:
-      in: query
-      name: msgId
-      description: Uuid of a message
-      schema:
-        type: string
-        format: uuid
-        example: 00000000-0000-0000-0000-000000000000
     Query-MimeType:
       in: query
       name: mimeType
@@ -1865,6 +1861,39 @@ components:
               description: Determines whether this user is considered active
               default: true
               example: true
+        - $ref: '#/components/schemas/DB-TimestampUserData'
+    DB-Version:
+      allOf:
+        - type: object
+          required:
+            - id
+            - versionId
+            - objectId
+            - mimeType
+            - deleteMarker
+          properties:
+            id:
+              type: string
+              description: The primary identifier for this version
+              format: uuid
+              example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
+            versionId:
+              type: string
+              description: a version identifier created in S3
+              example: '1647462569641'
+            objectId:
+              type: string
+              description: The primary identifier for the parent object
+              format: uuid
+              example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
+            mimeType:
+              type: string
+              description: The MIME Type of the version
+              example: application/octet-stream
+            deleteMarker:
+              type: boolean
+              description: Whether or not this version is a S3 delete-marker
+              example: false
         - $ref: '#/components/schemas/DB-TimestampUserData'
     DownloadMode:
       type: string
