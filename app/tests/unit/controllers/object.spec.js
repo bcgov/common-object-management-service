@@ -450,6 +450,25 @@ describe('deleteTags', () => {
   });
 });
 
+describe('listObjectVersions', () => {
+  // mock service calls
+  const versionListSpy = jest.spyOn(versionService, 'list');
+  const next = jest.fn();
+  // mock request parameters
+  const req = {
+    params: { objId: 'abc' },
+  };
+
+  it('should call version Service list', async () => {
+    versionListSpy.mockReturnValue({});
+
+    await controller.listObjectVersion(req, res, next);
+
+    expect(versionListSpy).toHaveBeenCalledWith('abc');
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+});
+
 describe('replaceMetadata', () => {
   // mock service calls
   const storageHeadObjectSpy = jest.spyOn(storageService, 'headObject');

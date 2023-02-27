@@ -170,9 +170,9 @@ const service = {
     let trx;
     try {
       trx = etrx ? etrx : await Version.startTransaction();
-      // update version record
       const response = await Version.query(trx)
-        .where({ objectId: objId });
+        .where({ objectId: objId })
+        .orderBy('createdAt', 'DESC');
       if (!etrx) await trx.commit();
       return Promise.resolve(response);
     } catch (err) {

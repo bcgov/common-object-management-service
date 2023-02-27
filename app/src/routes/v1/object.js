@@ -50,7 +50,7 @@ router.delete('/:objId', objectValidator.deleteObject, requireSomeAuth, currentO
 });
 
 /** Returns the object version history */
-router.get('/:objId/version', objectValidator.listObjectVersion, requireSomeAuth, currentObject, hasPermission(Permissions.READ), (req, res, next) => {
+router.get('/:objId/version', objectValidator.listObjectVersion, requireSomeAuth, requireDb, currentObject, hasPermission(Permissions.READ), (req, res, next) => {
   objectController.listObjectVersion(req, res, next);
 });
 
