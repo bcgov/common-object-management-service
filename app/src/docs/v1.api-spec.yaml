@@ -1,7 +1,7 @@
 ---
 openapi: 3.0.3
 info:
-  version: 0.4.0
+  version: 1.0.0
   title: Common Object Management Service (COMS)
   description: A microservice for managing access control to S3 Objects
   license:
@@ -238,7 +238,13 @@ paths:
       parameters:
         - $ref: '#/components/parameters/Header-Metadata'
         - $ref: '#/components/parameters/Query-TagSet'
-        - $ref: '#/components/parameters/Query-BucketId-Single'
+        - in: query
+          name: bucketId
+          description: Uuid representing the bucket
+          schema:
+            type: string
+            format: uuid
+            example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
       requestBody:
         description: Form-data containing files
         required: true
@@ -305,7 +311,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/Header-Metadata'
         - $ref: '#/components/parameters/Query-ObjectId'
-        - $ref: '#/components/parameters/Query-BucketId-Single'
+        - $ref: '#/components/parameters/Query-BucketId'
         - $ref: '#/components/parameters/Query-Path'
         - $ref: '#/components/parameters/Query-Active'
         - $ref: '#/components/parameters/Query-DeleteMarker'
@@ -1444,14 +1450,6 @@ components:
               type: string
               format: uuid
               example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
-    Query-BucketId-Single:
-      in: query
-      name: bucketId
-      description: Uuid representing the bucket
-      schema:
-        type: string
-        format: uuid
-        example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
     Query-BucketName:
       in: query
       name: name
