@@ -723,12 +723,13 @@ const controller = {
     // TODO: Consider support for filtering by set of permissions?
     // TODO: handle additional parameters. Eg: deleteMarker, latest
     try {
+      const bucketIds = mixedQueryToArray(req.query.bucketId);
       const objIds = mixedQueryToArray(req.query.objId);
       const metadata = getMetadata(req.headers);
       const tagging = req.query.tagset;
       const params = {
         id: objIds ? objIds.map(id => addDashesToUuid(id)) : objIds,
-        bucketId: req.query.bucketId,
+        bucketId: bucketIds ? bucketIds.map(id => addDashesToUuid(id)) : bucketIds,
         name: req.query.name,
         path: req.query.path,
         mimeType: req.query.mimeType,

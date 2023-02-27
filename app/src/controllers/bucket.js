@@ -83,7 +83,7 @@ const controller = {
       if (e instanceof UniqueViolationError) {
         // Grant all permissions if credentials precisely match
         response = await bucketService.checkGrantPermissions(data).catch(permErr => {
-          throw new Problem(401, { details: permErr.message }).send(res);
+          throw new Problem(403, { details: permErr.message }).send(res);
         });
       } else {
         next(errorToProblem(SERVICE, e));
@@ -167,7 +167,7 @@ const controller = {
       };
 
       const response = await bucketService.searchBuckets(params);
-      res.status(201).json(response.map(bucket => redactSecrets(bucket, secretFields)));
+      res.status(200).json(response.map(bucket => redactSecrets(bucket, secretFields)));
     } catch (error) {
       next(error);
     }

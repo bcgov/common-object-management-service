@@ -15,12 +15,12 @@ router.put('/', bucketValidator.createBucket, (req, res, next) => {
   bucketController.createBucket(req, res, next);
 });
 
-/** Search for buckets */
-router.get('/', bucketValidator.searchBuckets, (req, res, next) => {
-  bucketController.searchBuckets(req, res, next);
-});
-
-/** Returns bucket headers */
+/**
+ * Returns bucket headers
+ * Notes:
+ * - router.head() should appear before router.get() method using same path, otherwise router.get() will be called instead.
+ * - if bucketId path param is not given, router.get('/') (the bucket search endpoint) is called instead.
+ */
 router.head('/:bucketId', bucketValidator.headBucket, hasPermission(Permissions.READ), (req, res, next) => {
   bucketController.headBucket(req, res, next);
 });
@@ -28,6 +28,11 @@ router.head('/:bucketId', bucketValidator.headBucket, hasPermission(Permissions.
 /** Returns a bucket */
 router.get('/:bucketId', bucketValidator.readBucket, hasPermission(Permissions.READ), (req, res, next) => {
   bucketController.readBucket(req, res, next);
+});
+
+/** Search for buckets */
+router.get('/', bucketValidator.searchBuckets, (req, res, next) => {
+  bucketController.searchBuckets(req, res, next);
 });
 
 /** Updates a bucket */
