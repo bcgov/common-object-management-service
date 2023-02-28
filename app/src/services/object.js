@@ -113,7 +113,7 @@ const service = {
    */
   searchObjects: (params) => {
     return ObjectModel.query()
-      .allowGraph('[objectPermission, version]')
+      .allowGraph('version')
       .modify('filterIds', params.id)
       .modify('filterBucketIds', params.bucketId)
       .modify('filterPath', params.path)
@@ -127,21 +127,48 @@ const service = {
         metadata: params.metadata,
         tag: params.tag
       })
-      .modify('hasPermission', params.userId, 'READ')
-      .then(result => result.map(row => {
-        // eslint-disable-next-line no-unused-vars
-        const { objectPermission, bucketPermission, version, ...object } = row;
-        return object;
-      }));
+      .modify((query) => {
+        // if filtering on current user's object/bucket READ permission
+        if (params.userId) {
+          query
+            .joinRelated('[objectPermission, bucketPermission]')
+            .where(builder => {
+              builder
+                .whereIn('objectPermission.objectId', query => {
+                  query
+                    .distinct('objectPermission.objectId')
+                    .where('objectPermission.permCode', 'READ')
+                    .where('objectPermission.userId', params.userId);
+                })
+                .orWhereIn('object.bucketId', query => {
+                  query
+                    .distinct('bucketPermission.bucketId')
+                    .where('bucketPermission.permCode', 'READ')
+                    .where('bucketPermission.userId', params.userId);
+                });
+            });
+        }
+      })
+      // format result
+      .then(result => {
+        // just return object table records
+        const res = result.map(row => {
+          // eslint-disable-next-line no-unused-vars
+          const { objectPermission, bucketPermission, version, ...object } = row;
+          return object;
+        });
+        // remove duplicates
+        return [...new Map(res.map(item => [item.id, item])).values()];
+      });
   },
 
   /**
    * @function read
    * Get an object db record
    * @param {string} objId The object uuid to read
-   * @returns {Promise<object>} The result of running the read operation
-   * @throws If there are no records found
-   */
+     * @returns {Promise<object>} The result of running the read operation
+     * @throws If there are no records found
+     */
   read: (objId) => {
     return ObjectModel.query()
       .findById(objId)
