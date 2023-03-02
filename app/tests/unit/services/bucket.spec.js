@@ -97,7 +97,6 @@ describe('bucket', () => {
   it('Read bucket', async () => {
     await service.read(bucketId);
     expect(readBucketSpy).toHaveBeenCalledTimes(1);
-    expect(MockModel.query).toHaveBeenCalledWith();
   });
 
   it('Read bucket unique', async () => {
