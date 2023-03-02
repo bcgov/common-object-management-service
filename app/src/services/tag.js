@@ -284,12 +284,11 @@ const service = {
       })
       .modify('filterId', params.versionIds)
       // filter by objects that user(s) has READ permission at object or bucket-level
-      // TODO: consider instead doing `.whereIn('version.objectId', <objects with permission>)`
       .modify((query) => {
         if (params.userId) {
           query
-            .allowGraph('object.[objectPermission, bucketPermission]')
-            .withGraphJoined('object.[objectPermission, bucketPermission]')
+            .allowGraph('object')
+            .withGraphJoined('object')
             .modifyGraph('object', query => { query.modify('hasPermission', params.userId, 'READ'); })
             .whereNotNull('object.id');
         }
@@ -314,9 +313,9 @@ const service = {
         if (params.privacyMask) {
           query
             .select('key')
-            .modify( 'filterKey', { tag: params.tag });
+            .modify('filterKey', { tag: params.tag });
         }
-        else{
+        else {
           query
             .select('key', 'value')
             .modify('filterKeyValue', { tag: params.tag });

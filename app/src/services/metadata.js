@@ -175,7 +175,7 @@ const service = {
       .modifyGraph('version.metadata', builder => {
         builder
           .select('key', 'value')
-          .modify('filterKeyValue', { tag: params.metadata });
+          .modify('filterKeyValue', { metadata: params.metadata });
       })
       // match on objId parameter
       .modify('filterIds', params.objId)
@@ -210,12 +210,11 @@ const service = {
       })
       .modify('filterId', params.versionIds)
       // filter by objects that user(s) has READ permission at object or bucket-level
-      // TODO: consider instead doing `.whereIn('version.objectId', <objects with permission>)`
       .modify((query) => {
         if (params.userId) {
           query
-            .allowGraph('object.[objectPermission, bucketPermission]')
-            .withGraphJoined('object.[objectPermission, bucketPermission]')
+            .allowGraph('object')
+            .withGraphJoined('object')
             .modifyGraph('object', query => { query.modify('hasPermission', params.userId, 'READ'); })
             .whereNotNull('object.id');
         }

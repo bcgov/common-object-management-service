@@ -113,7 +113,7 @@ const service = {
    */
   searchObjects: (params) => {
     return ObjectModel.query()
-      .allowGraph('[objectPermission, version]')
+      .allowGraph('version')
       .modify('filterIds', params.id)
       .modify('filterBucketIds', params.bucketId)
       .modify('filterPath', params.path)
@@ -128,11 +128,17 @@ const service = {
         tag: params.tag
       })
       .modify('hasPermission', params.userId, 'READ')
-      .then(result => result.map(row => {
-        // eslint-disable-next-line no-unused-vars
-        const { objectPermission, bucketPermission, version, ...object } = row;
-        return object;
-      }));
+      // format result
+      .then(result => {
+        // just return object table records
+        const res = result.map(row => {
+          // eslint-disable-next-line no-unused-vars
+          const { objectPermission, bucketPermission, version, ...object } = row;
+          return object;
+        });
+        // remove duplicates
+        return [...new Map(res.map(item => [item.id, item])).values()];
+      });
   },
 
   /**
