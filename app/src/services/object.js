@@ -127,28 +127,7 @@ const service = {
         metadata: params.metadata,
         tag: params.tag
       })
-      .modify((query) => {
-        // if filtering on current user's object/bucket READ permission
-        if (params.userId) {
-          query
-            .joinRelated('[objectPermission, bucketPermission]')
-            .where(builder => {
-              builder
-                .whereIn('objectPermission.objectId', query => {
-                  query
-                    .distinct('objectPermission.objectId')
-                    .where('objectPermission.permCode', 'READ')
-                    .where('objectPermission.userId', params.userId);
-                })
-                .orWhereIn('object.bucketId', query => {
-                  query
-                    .distinct('bucketPermission.bucketId')
-                    .where('bucketPermission.permCode', 'READ')
-                    .where('bucketPermission.userId', params.userId);
-                });
-            });
-        }
-      })
+      .modify('hasPermission', params.userId, 'READ')
       // format result
       .then(result => {
         // just return object table records
@@ -166,9 +145,9 @@ const service = {
    * @function read
    * Get an object db record
    * @param {string} objId The object uuid to read
-     * @returns {Promise<object>} The result of running the read operation
-     * @throws If there are no records found
-     */
+   * @returns {Promise<object>} The result of running the read operation
+   * @throws If there are no records found
+   */
   read: (objId) => {
     return ObjectModel.query()
       .findById(objId)

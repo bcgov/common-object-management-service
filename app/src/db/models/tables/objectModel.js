@@ -159,23 +159,27 @@ class ObjectModel extends Timestamps(Model) {
             });
         }
       },
-      // TODO: consider handling an array of permCodes
       hasPermission(query, userId, permCode) {
         if (userId && permCode) {
           query
-            .allowGraph('[objectPermission, bucketPermission]')
-            .withGraphJoined('[objectPermission, bucketPermission]')
-            .whereIn('objectPermission.objectId', query => {
+            .fullOuterJoinRelated('[objectPermission, bucketPermission]')
+            // wrap in WHERE to make contained clauses exclusive of root query
+            .where(query => {
               query
-                .distinct('objectPermission.objectId')
-                .where('objectPermission.permCode', permCode)
-                .where('objectPermission.userId', userId);
-            })
-            .orWhereIn('object.bucketId', query => {
-              query
-                .distinct('bucketPermission.bucketId')
-                .where('bucketPermission.permCode', permCode)
-                .where('bucketPermission.userId', userId);
+                .where(query => {
+                  query
+                    .where({
+                      'objectPermission.permCode': permCode,
+                      'objectPermission.userId': userId
+                    });
+                })
+                .orWhere(query => {
+                  query
+                    .where({
+                      'bucketPermission.permCode': permCode,
+                      'bucketPermission.userId': userId
+                    });
+                });
             });
         }
       }
