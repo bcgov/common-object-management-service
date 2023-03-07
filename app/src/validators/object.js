@@ -10,19 +10,33 @@ const schema = {
     params: Joi.object({
       objId: type.uuidv4
     }),
-    query: Joi.object({
-      s3VersionId: Joi.string(),
-    })
+    query: Joi.object((() => {
+      const query = {
+        s3VersionId: Joi.string()
+      };
+      if (config.has('db.enabled')) {
+        query.versionId = type.uuidv4;
+      }
+      return query;
+    })())
+      .nand('s3VersionId', 'versionId')
   },
 
   addTags: {
     params: Joi.object({
       objId: type.uuidv4
     }),
-    query: Joi.object({
-      s3VersionId: Joi.string(),
-      tagset: type.tagset(1, 1).required()
-    })
+    query: Joi.object((() => {
+      const query = {
+        tagset: type.tagset(1, 1).required(),
+        s3VersionId: Joi.string()
+      };
+      if (config.has('db.enabled')) {
+        query.versionId = type.uuidv4;
+      }
+      return query;
+    })())
+      .nand('s3VersionId', 'versionId')
   },
 
   // TODO: Make this schema definition unit-testable
@@ -41,28 +55,49 @@ const schema = {
     params: Joi.object({
       objId: type.uuidv4
     }),
-    query: Joi.object({
-      s3VersionId: Joi.string()
-    })
+    query: Joi.object((() => {
+      const query = {
+        s3VersionId: Joi.string()
+      };
+      if (config.has('db.enabled')) {
+        query.versionId = type.uuidv4;
+      }
+      return query;
+    })())
+      .nand('s3VersionId', 'versionId')
   },
 
   deleteObject: {
     params: Joi.object({
       objId: type.uuidv4
     }),
-    query: Joi.object({
-      s3VersionId: Joi.string()
-    })
+    query: Joi.object((() => {
+      const query = {
+        s3VersionId: Joi.string()
+      };
+      if (config.has('db.enabled')) {
+        query.versionId = type.uuidv4;
+      }
+      return query;
+    })())
+      .nand('s3VersionId', 'versionId')
   },
 
   deleteTags: {
     params: Joi.object({
       objId: type.uuidv4
     }),
-    query: Joi.object({
-      s3VersionId: Joi.string(),
-      tagset: type.tagset(),
-    })
+    query: Joi.object((() => {
+      const query = {
+        tagset: type.tagset(),
+        s3VersionId: Joi.string()
+      };
+      if (config.has('db.enabled')) {
+        query.versionId = type.uuidv4;
+      }
+      return query;
+    })())
+      .nand('s3VersionId', 'versionId')
   },
 
   fetchMetadata: {
@@ -76,9 +111,16 @@ const schema = {
     params: Joi.object({
       objId: type.uuidv4.required()
     }),
-    query: Joi.object({
-      s3VersionId: Joi.string(),
-    })
+    query: Joi.object((() => {
+      const query = {
+        s3VersionId: Joi.string()
+      };
+      if (config.has('db.enabled')) {
+        query.versionId = type.uuidv4;
+      }
+      return query;
+    })())
+      .nand('s3VersionId', 'versionId')
   },
 
   listObjectVersion: {
@@ -91,11 +133,19 @@ const schema = {
     params: Joi.object({
       objId: type.uuidv4
     }),
-    query: Joi.object({
-      s3VersionId: Joi.string(),
-      expiresIn: Joi.number(),
-      download: Joi.string().valid(...Object.values(DownloadMode)),
-    })
+    query: Joi.object((() => {
+      const query = {
+        expiresIn: Joi.number(),
+        download: Joi.string().valid(...Object.values(DownloadMode)),
+        s3VersionId: Joi.string()
+      };
+      if (config.has('db.enabled')) {
+        query.versionId = type.uuidv4;
+      }
+      return query;
+    })())
+      // not both can be present
+      .nand('s3VersionId', 'versionId')
   },
 
   replaceMetadata: {
@@ -103,19 +153,33 @@ const schema = {
     params: Joi.object({
       objId: type.uuidv4
     }),
-    query: Joi.object({
-      s3VersionId: Joi.string(),
-    })
+    query: Joi.object((() => {
+      const query = {
+        s3VersionId: Joi.string()
+      };
+      if (config.has('db.enabled')) {
+        query.versionId = type.uuidv4;
+      }
+      return query;
+    })())
+      .nand('s3VersionId', 'versionId')
   },
 
   replaceTags: {
     params: Joi.object({
       objId: type.uuidv4
     }),
-    query: Joi.object({
-      s3VersionId: Joi.string(),
-      tagset: type.tagset(),
-    })
+    query: Joi.object((() => {
+      const query = {
+        tagset: type.tagset(),
+        s3VersionId: Joi.string()
+      };
+      if (config.has('db.enabled')) {
+        query.versionId = type.uuidv4;
+      }
+      return query;
+    })())
+      .nand('s3VersionId', 'versionId')
   },
 
   searchObjects: {
