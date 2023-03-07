@@ -11,7 +11,7 @@ const schema = {
       objId: type.uuidv4
     }),
     query: Joi.object({
-      versionId: Joi.string(),
+      s3VersionId: Joi.string(),
     })
   },
 
@@ -20,7 +20,7 @@ const schema = {
       objId: type.uuidv4
     }),
     query: Joi.object({
-      versionId: Joi.string(),
+      s3VersionId: Joi.string(),
       tagset: type.tagset(1, 1).required()
     })
   },
@@ -42,7 +42,7 @@ const schema = {
       objId: type.uuidv4
     }),
     query: Joi.object({
-      versionId: Joi.string()
+      s3VersionId: Joi.string()
     })
   },
 
@@ -51,7 +51,7 @@ const schema = {
       objId: type.uuidv4
     }),
     query: Joi.object({
-      versionId: Joi.string()
+      s3VersionId: Joi.string()
     })
   },
 
@@ -60,7 +60,7 @@ const schema = {
       objId: type.uuidv4
     }),
     query: Joi.object({
-      versionId: Joi.string(),
+      s3VersionId: Joi.string(),
       tagset: type.tagset(),
     })
   },
@@ -77,7 +77,7 @@ const schema = {
       objId: type.uuidv4.required()
     }),
     query: Joi.object({
-      versionId: Joi.string(),
+      s3VersionId: Joi.string(),
     })
   },
 
@@ -92,7 +92,7 @@ const schema = {
       objId: type.uuidv4
     }),
     query: Joi.object({
-      versionId: Joi.string(),
+      s3VersionId: Joi.string(),
       expiresIn: Joi.number(),
       download: Joi.string().valid(...Object.values(DownloadMode)),
     })
@@ -104,7 +104,7 @@ const schema = {
       objId: type.uuidv4
     }),
     query: Joi.object({
-      versionId: Joi.string(),
+      s3VersionId: Joi.string(),
     })
   },
 
@@ -113,7 +113,7 @@ const schema = {
       objId: type.uuidv4
     }),
     query: Joi.object({
-      versionId: Joi.string(),
+      s3VersionId: Joi.string(),
       tagset: type.tagset(),
     })
   },

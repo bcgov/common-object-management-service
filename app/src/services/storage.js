@@ -68,7 +68,7 @@ const objectStorageService = {
    * @param {object} [options.tags] Optional tags to store with the object
    * @param {string} [options.metadataDirective=COPY] Optional metadata operation directive
    * @param {string} [options.taggingDirective=COPY] Optional tagging operation directive
-   * @param {string} [options.versionId] Optional versionId to copy from
+   * @param {string} [options.s3VersionId] Optional s3VersionId to copy from
    * @param {string} [options.bucketId] Optional bucketId
    * @returns {Promise<object>} The response of the delete object operation
    */
@@ -79,7 +79,7 @@ const objectStorageService = {
     tags,
     metadataDirective = MetadataDirective.COPY,
     taggingDirective = TaggingDirective.COPY,
-    versionId = undefined,
+    s3VersionId = undefined,
     bucketId = undefined
   }) {
     const data = await utils.getBucket(bucketId);
@@ -90,7 +90,7 @@ const objectStorageService = {
       Metadata: metadata,
       MetadataDirective: metadataDirective,
       TaggingDirective: taggingDirective,
-      VersionId: versionId
+      VersionId: s3VersionId
     };
 
     if (tags) {
@@ -106,16 +106,16 @@ const objectStorageService = {
    * @function deleteObject
    * Deletes the object at `filePath`
    * @param {string} options.filePath The filePath of the object
-   * @param {number} [options.versionId] Optional specific versionId for the object
+   * @param {number} [options.s3VersionId] Optional specific s3VersionId for the object
    * @param {string} [options.bucketId] Optional bucketId
    * @returns {Promise<object>} The response of the delete object operation
    */
-  async deleteObject({ filePath, versionId = undefined, bucketId = undefined }) {
+  async deleteObject({ filePath, s3VersionId = undefined, bucketId = undefined }) {
     const data = await utils.getBucket(bucketId);
     const params = {
       Bucket: data.bucket,
       Key: filePath,
-      VersionId: versionId
+      VersionId: s3VersionId
     };
 
     return this._getS3Client(data).send(new DeleteObjectCommand(params));
@@ -125,16 +125,16 @@ const objectStorageService = {
    * @function deleteObjectTagging
    * Deletes the tags of the object at `filePath`
    * @param {string} options.filePath The filePath of the object
-   * @param {number} [options.versionId] Optional specific versionId for the object
+   * @param {number} [options.s3VersionId] Optional specific s3VersionId for the object
    * @param {string} [options.bucketId] Optional bucketId
    * @returns {Promise<object>} The response of the delete object tagging operation
    */
-  async deleteObjectTagging({ filePath, versionId = undefined, bucketId = undefined }) {
+  async deleteObjectTagging({ filePath, s3VersionId = undefined, bucketId = undefined }) {
     const data = await utils.getBucket(bucketId);
     const params = {
       Bucket: data.bucket,
       Key: filePath,
-      VersionId: versionId
+      VersionId: s3VersionId
     };
 
     return this._getS3Client(data).send(new DeleteObjectTaggingCommand(params));
@@ -174,16 +174,16 @@ const objectStorageService = {
    * @function getObjectTagging
    * Gets the tags of the object at `filePath`
    * @param {string} options.filePath The filePath of the object
-   * @param {number} [options.versionId=undefined] Optional specific versionId for the object
+   * @param {number} [options.s3VersionId=undefined] Optional specific s3VersionId for the object
    * @param {string} [options.bucketId] Optional bucketId
    * @returns {Promise<object>} The response of the get object tagging operation
    */
-  async getObjectTagging({ filePath, versionId = undefined, bucketId = undefined }) {
+  async getObjectTagging({ filePath, s3VersionId = undefined, bucketId = undefined }) {
     const data = await utils.getBucket(bucketId);
     const params = {
       Bucket: data.bucket,
       Key: filePath,
-      VersionId: versionId
+      VersionId: s3VersionId
     };
 
     return this._getS3Client(data).send(new GetObjectTaggingCommand(params));
@@ -208,16 +208,16 @@ const objectStorageService = {
    * @function headObject
    * Gets the object headers for the object at `filePath`
    * @param {string} options.filePath The filePath of the object
-   * @param {string} [options.versionId] Optional version ID used to reference a speciific version of the object
+   * @param {string} [options.s3VersionId] Optional version ID used to reference a speciific version of the object
    * @param {string} [options.bucketId] Optional bucketId
    * @returns {Promise<object>} The response of the head object operation
    */
-  async headObject({ filePath, versionId = undefined, bucketId = undefined }) {
+  async headObject({ filePath, s3VersionId = undefined, bucketId = undefined }) {
     const data = await utils.getBucket(bucketId);
     const params = {
       Bucket: data.bucket,
       Key: filePath,
-      VersionId: versionId
+      VersionId: s3VersionId
     };
     return this._getS3Client(data).send(new HeadObjectCommand(params));
   },
@@ -334,11 +334,11 @@ const objectStorageService = {
    * Gets the tags of the object at `filePath`
    * @param {string} options.filePath The filePath of the object
    * @param {string} options.tags Array of key/value pairs
-   * @param {number} [options.versionId] Optional specific versionId for the object
+   * @param {number} [options.s3VersionId] Optional specific s3VersionId for the object
    * @param {string} [options.bucketId] Optional bucketId
    * @returns {Promise<object>} The response of the put object tagging operation
    */
-  async putObjectTagging({ filePath, tags, versionId = undefined, bucketId = undefined }) {
+  async putObjectTagging({ filePath, tags, s3VersionId = undefined, bucketId = undefined }) {
     const data = await utils.getBucket(bucketId);
     const params = {
       Bucket: data.bucket,
@@ -346,7 +346,7 @@ const objectStorageService = {
       Tagging: {
         TagSet: tags
       },
-      VersionId: versionId
+      VersionId: s3VersionId
     };
 
     return this._getS3Client(data).send(new PutObjectTaggingCommand(params));
@@ -356,16 +356,16 @@ const objectStorageService = {
    * @function readObject
    * Reads the object at `filePath`
    * @param {string} options.filePath The filePath of the object
-   * @param {number} [options.versionId] Optional specific versionId for the object
+   * @param {number} [options.s3VersionId] Optional specific s3VersionId for the object
    * @param {string} [options.bucketId] Optional bucketId
    * @returns {Promise<object>} The response of the get object operation
    */
-  async readObject({ filePath, versionId = undefined, bucketId = undefined }) {
+  async readObject({ filePath, s3VersionId = undefined, bucketId = undefined }) {
     const data = await utils.getBucket(bucketId);
     const params = {
       Bucket: data.bucket,
       Key: filePath,
-      VersionId: versionId
+      VersionId: s3VersionId
     };
 
     return this._getS3Client(data).send(new GetObjectCommand(params));
@@ -376,17 +376,17 @@ const objectStorageService = {
    * Yields a presigned url for the get object operation with a limited expiration window
    * @param {string} options.filePath The filePath of the object
    * @param {number} [options.expiresIn] The number of seconds this signed url will be valid for
-   * @param {number} [options.versionId] Optional specific versionId for the object
+   * @param {number} [options.s3VersionId] Optional specific s3VersionId for the object
    * @param {string} [options.bucketId] Optional bucketId
    * @returns {Promise<string>} A presigned url for the direct S3 REST `command` operation
    */
-  async readSignedUrl({ filePath, expiresIn, versionId = undefined, bucketId = undefined }) {
+  async readSignedUrl({ filePath, expiresIn, s3VersionId = undefined, bucketId = undefined }) {
     const data = await utils.getBucket(bucketId);
     const expires = expiresIn || defaultTempExpiresIn;
     const params = {
       Bucket: data.bucket,
       Key: filePath,
-      VersionId: versionId
+      VersionId: s3VersionId
     };
 
     return this.presignUrl(new GetObjectCommand(params), expires);

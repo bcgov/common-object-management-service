@@ -96,7 +96,7 @@ describe('addMetadata', () => {
         id: 1
       },
       metadataDirective: MetadataDirective.REPLACE,
-      versionId: undefined
+      s3VersionId: undefined
     });
 
     expect(trxWrapperSpy).toHaveBeenCalledTimes(1);
@@ -169,7 +169,7 @@ describe('addTags', () => {
         { Key: 'foo', Value: 'bar' },
         { Key: 'baz', Value: 'bam' },
       ],
-      versionId: undefined
+      s3VersionId: undefined
     });
   });
 
@@ -200,7 +200,7 @@ describe('addTags', () => {
         { Key: 'baz', Value: 'bam' },
         { Key: 'abc', Value: '123' },
       ],
-      versionId: undefined
+      s3VersionId: undefined
     });
   });
 });
@@ -253,7 +253,7 @@ describe('deleteMetadata', () => {
         name: 'test',
       },
       metadataDirective: MetadataDirective.REPLACE,
-      versionId: undefined
+      s3VersionId: undefined
     });
   });
 
@@ -279,7 +279,7 @@ describe('deleteMetadata', () => {
         name: 'test'
       },
       metadataDirective: MetadataDirective.REPLACE,
-      versionId: undefined
+      s3VersionId: undefined
     });
   });
 });
@@ -306,7 +306,7 @@ describe('deleteObject', () => {
   };
 
   it('should call version service to create a delete marker in db', async () => {
-    // request is to delete an object (no versionId query parameter passed)
+    // request is to delete an object (no s3VersionId query parameter passed)
     req.query = {};
     getCurrentUserIdSpy.mockReturnValue('user-123');
     // storage response is a DeleteMarker
@@ -318,7 +318,7 @@ describe('deleteObject', () => {
     expect(versionCreateSpy).toHaveBeenCalledWith({
       id: 'xyz-789',
       deleteMarker: true,
-      versionId: '1234',
+      s3VersionId: '1234',
     }, 'user-123');
   });
 
@@ -347,8 +347,8 @@ describe('deleteObject', () => {
   });
 
   it('should call version service to delete a version', async () => {
-    // version delete request includes versionId query param
-    req.query = { versionId: '123' };
+    // version delete request includes s3VersionId query param
+    req.query = { s3VersionId: '123' };
     // S3 returns version that was deleted
     storageDeleteObjectSpy.mockReturnValue({
       VersionId: '123'
@@ -360,7 +360,7 @@ describe('deleteObject', () => {
   });
 
   it('should delete object if object has no other remaining versions', async () => {
-    req.query = { versionId: '123' };
+    req.query = { s3VersionId: '123' };
     storageDeleteObjectSpy.mockReturnValue({
       VersionId: '123'
     });
@@ -411,7 +411,7 @@ describe('deleteTags', () => {
     expect(storageDeleteObjectTaggingSpy).toHaveBeenCalledWith({
       filePath: 'xyz-789',
       tags: undefined,
-      versionId: undefined
+      s3VersionId: undefined
     });
     expect(storagePutObjectTaggingSpy).toHaveBeenCalledTimes(0);
   });
@@ -444,7 +444,7 @@ describe('deleteTags', () => {
       tags: [
         { Key: 'abc', Value: '123' }
       ],
-      versionId: undefined
+      s3VersionId: undefined
     });
     expect(storageDeleteObjectTaggingSpy).toHaveBeenCalledTimes(0);
   });
@@ -517,7 +517,7 @@ describe('replaceMetadata', () => {
         baz: 'quz'
       },
       metadataDirective: MetadataDirective.REPLACE,
-      versionId: undefined
+      s3VersionId: undefined
     });
   });
 
@@ -544,7 +544,7 @@ describe('replaceMetadata', () => {
         baz: 'quz'
       },
       metadataDirective: MetadataDirective.REPLACE,
-      versionId: undefined
+      s3VersionId: undefined
     });
   });
 });
@@ -610,7 +610,7 @@ describe('replaceTags', () => {
         { Key: 'foo', Value: 'bar' },
         { Key: 'baz', Value: 'bam' },
       ],
-      versionId: undefined
+      s3VersionId: undefined
     });
   });
 });

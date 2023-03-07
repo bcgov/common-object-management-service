@@ -73,7 +73,7 @@ const service = {
       const response = await Version.query(trx)
         .insert({
           id: uuidv4(),
-          versionId: data.versionId,
+          versionId: data.s3VersionId,
           mimeType: data.mimeType,
           objectId: data.id,
           createdBy: userId,
@@ -197,9 +197,9 @@ const service = {
     try {
       trx = etrx ? etrx : await Version.startTransaction();
       // update version record
-      const versionId = data.versionId ? data.versionId : null;
+      const s3VersionId = data.s3VersionId ? data.s3VersionId : null;
       const version = await Version.query(trx)
-        .where({ objectId: data.id, versionId: versionId })
+        .where({ objectId: data.id, versionId: s3VersionId })
         .patch({
           objectId: data.id,
           updatedBy: userId,

@@ -81,7 +81,7 @@ const utils = {
         data.secretAccessKey = bucketData.secretAccessKey;
         if (bucketData.region) data.region = bucketData.region;
       } catch (err) {
-        log.warn(err.message, { function: 'getBucket'});
+        log.warn(err.message, { function: 'getBucket' });
         if (throwable) throw new Problem(404, { details: err.message });
       }
     }
@@ -320,6 +320,26 @@ const utils = {
       claims.push(...utils.parseCSV(config.get('keycloak.identityKey')));
     }
     return claims.concat('sub');
+  },
+
+  /**
+ * @function renameObjectProperty
+ * Rename a property in given object
+ * @param {object} obj The object with a property you are changing
+ * @param {string} oldName The property to rename
+ * @param {string} newName The new name for the property
+ * @returns {object} the given object with property renamed
+ */
+  renameObjectProperty(obj, oldName, newName) {
+    // if oldName property exists
+    if (obj[oldName] &&
+        // and property newName is different
+        (oldName !== newName)) {
+      Object.defineProperty(obj, newName,
+        Object.getOwnPropertyDescriptor(obj, oldName));
+      delete obj[oldName];
+    }
+    return obj;
   },
 
   /**

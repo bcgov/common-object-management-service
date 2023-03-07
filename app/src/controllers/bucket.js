@@ -55,9 +55,9 @@ const controller = {
       exposedHeaders.push(sse);
     }
     if (s3Resp.VersionId) {
-      const versionId = 'x-amz-version-id';
-      res.set(versionId, s3Resp.VersionId);
-      exposedHeaders.push(versionId);
+      const s3VersionId = 'x-amz-version-id';
+      res.set(s3VersionId, s3Resp.VersionId);
+      exposedHeaders.push(s3VersionId);
     }
 
     return exposedHeaders;

@@ -88,8 +88,8 @@ describe('copyObject', () => {
   it('should send a copy object command copying the metadata and tags for a specific version', async () => {
     const copySource = 'filePath';
     const filePath = 'filePath';
-    const versionId = '1234';
-    const result = await service.copyObject({ copySource, filePath, versionId });
+    const s3VersionId = '1234';
+    const result = await service.copyObject({ copySource, filePath, s3VersionId });
 
     expect(result).toBeTruthy();
     expect(utils.getBucket).toHaveBeenCalledTimes(1);
@@ -101,7 +101,7 @@ describe('copyObject', () => {
       Metadata: undefined,
       MetadataDirective: MetadataDirective.COPY,
       TaggingDirective: TaggingDirective.COPY,
-      VersionId: versionId
+      VersionId: s3VersionId
     });
   });
 
@@ -131,8 +131,8 @@ describe('copyObject', () => {
     const filePath = 'filePath';
     const metadata = { 'x-amz-meta-test': 123 };
     const metadataDirective = MetadataDirective.REPLACE;
-    const versionId = '1234';
-    const result = await service.copyObject({ copySource, filePath, metadata, metadataDirective, versionId });
+    const s3VersionId = '1234';
+    const result = await service.copyObject({ copySource, filePath, metadata, metadataDirective, s3VersionId });
 
     expect(result).toBeTruthy();
     expect(utils.getBucket).toHaveBeenCalledTimes(1);
@@ -144,7 +144,7 @@ describe('copyObject', () => {
       Metadata: metadata,
       MetadataDirective: metadataDirective,
       TaggingDirective: TaggingDirective.COPY,
-      VersionId: versionId
+      VersionId: s3VersionId
     });
   });
 
@@ -175,8 +175,8 @@ describe('copyObject', () => {
     const filePath = 'filePath';
     const tags = { 'test': 123 };
     const taggingDirective = TaggingDirective.REPLACE;
-    const versionId = '1234';
-    const result = await service.copyObject({ copySource, filePath, tags, taggingDirective, versionId });
+    const s3VersionId = '1234';
+    const result = await service.copyObject({ copySource, filePath, tags, taggingDirective, s3VersionId });
 
     expect(result).toBeTruthy();
     expect(utils.getBucket).toHaveBeenCalledTimes(1);
@@ -189,7 +189,7 @@ describe('copyObject', () => {
       MetadataDirective: MetadataDirective.COPY,
       Tagging: 'test=123',
       TaggingDirective: taggingDirective,
-      VersionId: versionId
+      VersionId: s3VersionId
     });
   });
 });
@@ -215,8 +215,8 @@ describe('deleteObject', () => {
 
   it('should send a delete object command for a specific version', async () => {
     const filePath = 'filePath';
-    const versionId = '1234';
-    const result = await service.deleteObject({ filePath, versionId });
+    const s3VersionId = '1234';
+    const result = await service.deleteObject({ filePath, s3VersionId });
 
     expect(result).toBeTruthy();
     expect(utils.getBucket).toHaveBeenCalledTimes(1);
@@ -224,7 +224,7 @@ describe('deleteObject', () => {
     expect(s3ClientMock).toHaveReceivedCommandWith(DeleteObjectCommand, {
       Bucket: bucket,
       Key: filePath,
-      VersionId: versionId
+      VersionId: s3VersionId
     });
   });
 });
@@ -250,8 +250,8 @@ describe('deleteObjectTagging', () => {
 
   it('should send a delete object tagging command for a specific version', async () => {
     const filePath = 'filePath';
-    const versionId = '1234';
-    const result = await service.deleteObjectTagging({ filePath, versionId });
+    const s3VersionId = '1234';
+    const result = await service.deleteObjectTagging({ filePath, s3VersionId });
 
     expect(result).toBeTruthy();
     expect(utils.getBucket).toHaveBeenCalledTimes(1);
@@ -259,7 +259,7 @@ describe('deleteObjectTagging', () => {
     expect(s3ClientMock).toHaveReceivedCommandWith(DeleteObjectTaggingCommand, {
       Bucket: bucket,
       Key: filePath,
-      VersionId: versionId
+      VersionId: s3VersionId
     });
   });
 });
@@ -319,8 +319,8 @@ describe('getObjectTagging', () => {
 
   it('should send a put object tagging command for a specific version', async () => {
     const filePath = 'filePath';
-    const versionId = '1234';
-    const result = await service.getObjectTagging({ filePath, versionId });
+    const s3VersionId = '1234';
+    const result = await service.getObjectTagging({ filePath, s3VersionId });
 
     expect(result).toBeTruthy();
     expect(utils.getBucket).toHaveBeenCalledTimes(1);
@@ -328,7 +328,7 @@ describe('getObjectTagging', () => {
     expect(s3ClientMock).toHaveReceivedCommandWith(GetObjectTaggingCommand, {
       Bucket: bucket,
       Key: filePath,
-      VersionId: versionId
+      VersionId: s3VersionId
     });
   });
 });
@@ -340,8 +340,8 @@ describe('headObject', () => {
 
   it('should send a head object command', async () => {
     const filePath = 'filePath';
-    const versionId = '123';
-    const result = await service.headObject({ filePath, versionId });
+    const s3VersionId = '123';
+    const result = await service.headObject({ filePath, s3VersionId });
 
     expect(result).toBeTruthy();
     expect(utils.getBucket).toHaveBeenCalledTimes(1);
@@ -349,14 +349,14 @@ describe('headObject', () => {
     expect(s3ClientMock).toHaveReceivedCommandWith(HeadObjectCommand, {
       Bucket: bucket,
       Key: filePath,
-      VersionId: versionId
+      VersionId: s3VersionId
     });
   });
 
   it('should not require a version ID parameter', async () => {
     const filePath = 'filePath';
-    const versionId = undefined;
-    const result = await service.headObject({ filePath, versionId });
+    const s3VersionId = undefined;
+    const result = await service.headObject({ filePath, s3VersionId });
 
     expect(result).toBeTruthy();
     expect(utils.getBucket).toHaveBeenCalledTimes(1);
@@ -364,7 +364,7 @@ describe('headObject', () => {
     expect(s3ClientMock).toHaveReceivedCommandWith(HeadObjectCommand, {
       Bucket: bucket,
       Key: filePath,
-      VersionId: versionId
+      VersionId: s3VersionId
     });
   });
 });
@@ -552,9 +552,9 @@ describe('putObjectTagging', () => {
 
   it('should send a put object tagging command for a specific version', async () => {
     const filePath = 'filePath';
-    const versionId = '1234';
+    const s3VersionId = '1234';
     const tags = [{ Key: 'abc', Value: '123' }];
-    const result = await service.putObjectTagging({ filePath, tags, versionId });
+    const result = await service.putObjectTagging({ filePath, tags, s3VersionId });
 
     expect(result).toBeTruthy();
     expect(utils.getBucket).toHaveBeenCalledTimes(1);
@@ -565,7 +565,7 @@ describe('putObjectTagging', () => {
       Tagging: {
         TagSet: [{ Key: 'abc', Value: '123' }]
       },
-      VersionId: versionId
+      VersionId: s3VersionId
     });
   });
 });
@@ -591,8 +591,8 @@ describe('readObject', () => {
 
   it('should send a get object command for a specific version', async () => {
     const filePath = 'filePath';
-    const versionId = '1234';
-    const result = await service.readObject({ filePath, versionId });
+    const s3VersionId = '1234';
+    const result = await service.readObject({ filePath, s3VersionId });
 
     expect(result).toBeTruthy();
     expect(utils.getBucket).toHaveBeenCalledTimes(1);
@@ -600,7 +600,7 @@ describe('readObject', () => {
     expect(s3ClientMock).toHaveReceivedCommandWith(GetObjectCommand, {
       Bucket: bucket,
       Key: filePath,
-      VersionId: versionId
+      VersionId: s3VersionId
     });
   });
 });
@@ -634,8 +634,8 @@ describe('readSignedUrl', () => {
 
   it('should call presignUrl with a get object command for a specific version and default expiration', async () => {
     const filePath = 'filePath';
-    const versionId = '1234';
-    const result = await service.readSignedUrl({ filePath, versionId });
+    const s3VersionId = '1234';
+    const result = await service.readSignedUrl({ filePath, s3VersionId });
 
     expect(result).toBeTruthy();
     expect(utils.getBucket).toHaveBeenCalledTimes(1);
@@ -644,16 +644,16 @@ describe('readSignedUrl', () => {
       input: {
         Bucket: bucket,
         Key: filePath,
-        VersionId: versionId
+        VersionId: s3VersionId
       }
     }), defaultTempExpiresIn);
   });
 
   it('should call presignUrl with a get object command for a specific version and custom expiration', async () => {
     const filePath = 'filePath';
-    const versionId = '1234';
+    const s3VersionId = '1234';
     const expires = '2345';
-    const result = await service.readSignedUrl({ filePath, versionId, expiresIn: expires });
+    const result = await service.readSignedUrl({ filePath, s3VersionId, expiresIn: expires });
 
     expect(result).toBeTruthy();
     expect(utils.getBucket).toHaveBeenCalledTimes(1);
@@ -662,7 +662,7 @@ describe('readSignedUrl', () => {
       input: {
         Bucket: bucket,
         Key: filePath,
-        VersionId: versionId
+        VersionId: s3VersionId
       }
     }), expires);
   });
