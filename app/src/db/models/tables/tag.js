@@ -77,8 +77,8 @@ class Tag extends Model {
       required: ['key', 'value'],
       properties: {
         id: { type: 'integer' },
-        key: { type: 'string', minLength: 1, maxLength: 255 },
-        value: { type: 'string', minLength: 1, maxLength: 255 }
+        key: { type: 'string', minLength: 1, maxLength: 128 },
+        value: { type: 'string', minLength: 1, maxLength: 256 }
       },
       additionalProperties: false
     };
