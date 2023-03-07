@@ -97,9 +97,23 @@ const controller = {
       const objId = addDashesToUuid(req.params.objId);
       const objPath = await getPath(objId);
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
-      const sourceVersionId = req.query.s3VersionId ? req.query.s3VersionId.toString() : undefined;
 
-      const source = await storageService.headObject({ filePath: objPath, s3VersionId: sourceVersionId });
+      // get source S3 VersionId
+      let sourceS3VersionId = undefined;
+      if (req.query.versionId) {
+        const version = await versionService.get({ versionId: addDashesToUuid(req.query.versionId), objectId: objId });
+        if (version.length) {
+          // todo: 3s
+          sourceS3VersionId = version[0].versionId;
+        } else {
+          throw new Error('Version not found matching given versionId');
+        }
+      } else if (req.query.s3VersionId) {
+        sourceS3VersionId = req.query.s3VersionId.toString();
+      }
+
+      // get version from S3
+      const source = await storageService.headObject({ filePath: objPath, s3VersionId: sourceS3VersionId });
       if (source.ContentLength > MAXCOPYOBJECTLENGTH) {
         throw new Error('Cannot copy an object larger than 5GB');
       }
@@ -120,7 +134,7 @@ const controller = {
             id: source.Metadata.id // Always enforce id key behavior
           },
           metadataDirective: MetadataDirective.REPLACE,
-          s3VersionId: sourceVersionId
+          s3VersionId: sourceS3VersionId
         };
         // create new version with metadata in S3
         const s3Response = await storageService.copyObject(data);
@@ -128,7 +142,7 @@ const controller = {
         await utils.trxWrapper(async (trx) => {
           // create or update version in DB (if a non-versioned object)
           const version = s3Response.VersionId ?
-            await versionService.copy(sourceVersionId, s3Response.VersionId, objId, userId, trx) :
+            await versionService.copy(sourceS3VersionId, s3Response.VersionId, objId, userId, trx) :
             await versionService.update({ ...data, id: objId }, userId, trx);
 
           // update metadata for version in DB
@@ -155,10 +169,24 @@ const controller = {
       const objId = addDashesToUuid(req.params.objId);
       const objPath = await getPath(objId);
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
-      const { s3VersionId, tagset: newTags } = req.query;
+      const { s3VersionId, tagset: newTags, versionId } = req.query;
+
+      // get source S3 Version to add to
+      let sourceS3VersionId = undefined;
+      if (versionId) {
+        const version = await versionService.get({ versionId: addDashesToUuid(versionId), objectId: objId });
+        if (version.length) {
+          // todo: 3s
+          sourceS3VersionId = version[0].versionId;
+        } else {
+          throw new Error('Version not found matching given versionId');
+        }
+      } else if (s3VersionId) {
+        sourceS3VersionId = s3VersionId.toString();
+      }
 
       // get current tags on latest or specified version
-      const objectTagging = await storageService.getObjectTagging({ filePath: objPath, s3VersionId });
+      const objectTagging = await storageService.getObjectTagging({ filePath: objPath, s3VersionId: sourceS3VersionId });
 
       // Join new and existing tags then filter duplicates
       let newSet = newTags ? Object.entries(newTags).map(([k, v]) => ({ Key: k, Value: v })) : [];
@@ -173,14 +201,14 @@ const controller = {
         const data = {
           filePath: objPath,
           tags: newSet,
-          s3VersionId: s3VersionId ? s3VersionId.toString() : undefined
+          s3VersionId: sourceS3VersionId ? sourceS3VersionId.toString() : undefined
         };
         // Add tags to the version in S3
         await storageService.putObjectTagging(data);
 
         // Add tags to version in DB
         await utils.trxWrapper(async (trx) => {
-          const version = await versionService.get(data.s3VersionId, objId, trx);
+          const version = await versionService.get({ s3VersionId: data.s3VersionId, objectId: objId }, trx);
           // use replaceTags() in case they are replacing an existing tag with same key which we need to dissociate
           await tagService.replaceTags(version.id, toLowerKeys(data.tags), userId, trx);
         });
@@ -301,9 +329,21 @@ const controller = {
       const objPath = await getPath(objId);
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
-      const sourceVersionId = req.query.s3VersionId ? req.query.s3VersionId.toString() : undefined;
+      // Source S3 Version to copy from
+      let sourceS3VersionId = undefined;
+      if (req.query.versionId) {
+        const version = await versionService.get({ versionId: addDashesToUuid(req.query.versionId), objectId: objId });
+        if (version.length) {
+          // todo: 3s
+          sourceS3VersionId = version[0].versionId;
+        } else {
+          throw new Error('Version not found matching given versionId');
+        }
+      } else if (req.query.s3VersionId) {
+        sourceS3VersionId = req.query.s3VersionId.toString();
+      }
 
-      const source = await storageService.headObject({ filePath: objPath, s3VersionId: sourceVersionId });
+      const source = await storageService.headObject({ filePath: objPath, s3VersionId: sourceS3VersionId });
       if (source.ContentLength > MAXCOPYOBJECTLENGTH) {
         throw new Error('Cannot copy an object larger than 5GB');
       }
@@ -327,7 +367,7 @@ const controller = {
           id: source.Metadata.id
         },
         metadataDirective: MetadataDirective.REPLACE,
-        s3VersionId: sourceVersionId
+        s3VersionId: sourceS3VersionId
       };
       // create new version with metadata in S3
       const s3Response = await storageService.copyObject(data);
@@ -335,7 +375,7 @@ const controller = {
       await utils.trxWrapper(async (trx) => {
         // create or update version in DB(if a non-versioned object)
         const version = s3Response.VersionId ?
-          await versionService.copy(sourceVersionId, s3Response.VersionId, objId, userId, trx) :
+          await versionService.copy(sourceS3VersionId, s3Response.VersionId, objId, userId, trx) :
           await versionService.update({ ...data, id: objId }, userId, trx);
         // add metadata to version in DB
         await metadataService.associateMetadata(version.id, getKeyValue(data.metadata), userId, trx);
@@ -358,11 +398,26 @@ const controller = {
   async deleteObject(req, res, next) {
     try {
       const objId = addDashesToUuid(req.params.objId);
+      const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
+
+      // target S3 version to delete
+      let targetS3VersionId = undefined;
+      if (req.query.versionId) {
+        const version = await versionService.get({ versionId: addDashesToUuid(req.query.versionId), objectId: objId });
+        if (version.length) {
+          // todo: 3s
+          targetS3VersionId = version[0].versionId;
+        } else {
+          throw new Error('Version not found matching given versionId');
+        }
+      } else if (req.query.s3VersionId) {
+        targetS3VersionId = req.query.s3VersionId.toString();
+      }
+
       const data = {
         filePath: await getPath(objId),
-        s3VersionId: req.query.s3VersionId
+        s3VersionId: targetS3VersionId
       };
-      const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
       // delete version on S3
       const s3Response = await storageService.deleteObject(data);
@@ -415,9 +470,23 @@ const controller = {
     try {
       const objId = addDashesToUuid(req.params.objId);
       const objPath = await getPath(objId);
-      const s3VersionId = req.query.s3VersionId;
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
-      const objectTagging = await storageService.getObjectTagging({ filePath: objPath, s3VersionId });
+
+      // Target S3 version
+      let targetS3VersionId = undefined;
+      if (req.query.versionId) {
+        const version = await versionService.get({ versionId: addDashesToUuid(req.query.versionId), objectId: objId });
+        if (version.length) {
+          // todo: 3s
+          targetS3VersionId = version[0].versionId;
+        } else {
+          throw new Error('Version not found matching given versionId');
+        }
+      } else if (req.query.s3VersionId) {
+        targetS3VersionId = req.query.s3VersionId.toString();
+      }
+
+      const objectTagging = await storageService.getObjectTagging({ filePath: objPath, s3VersionId: targetS3VersionId });
 
       // Generate object subset by subtracting/omitting defined keys via filter/inclusion
       const keysToRemove = req.query.tagset ? Object.keys(req.query.tagset) : [];
@@ -429,7 +498,7 @@ const controller = {
       const data = {
         filePath: objPath,
         tags: newTags,
-        s3VersionId: s3VersionId ? s3VersionId.toString() : undefined
+        s3VersionId: targetS3VersionId
       };
 
       // Update tags for version in S3
@@ -440,7 +509,7 @@ const controller = {
       }
       // dissociate provided tags or all tags if no tagset passed in query parameter
       await utils.trxWrapper(async (trx) => {
-        const version = await versionService.get(data.s3VersionId, objId, trx);
+        const version = await versionService.get({ s3VersionId: data.s3VersionId, objectId: objId }, trx);
 
         let dissociateTags = [];
         if (req.query.tagset) {
@@ -522,10 +591,25 @@ const controller = {
   async headObject(req, res, next) {
     try {
       const objId = addDashesToUuid(req.params.objId);
+
+      // target S3 version
+      let targetS3VersionId = undefined;
+      if (req.query.versionId) {
+        const version = await versionService.get({ versionId: addDashesToUuid(req.query.versionId), objectId: objId });
+        if (version.length) {
+          // todo: 3s
+          targetS3VersionId = version[0].versionId;
+        } else {
+          throw new Error('Version not found matching given versionId');
+        }
+      } else if (req.query.s3VersionId) {
+        targetS3VersionId = req.query.s3VersionId.toString();
+      }
+
       const data = {
         bucketId: req.currentObject.bucketId || undefined,
         filePath: await getPath(objId),
-        s3VersionId: req.query.s3VersionId ? req.query.s3VersionId.toString() : undefined
+        s3VersionId: targetS3VersionId
       };
       const response = await storageService.headObject(data);
 
@@ -578,9 +662,24 @@ const controller = {
   async readObject(req, res, next) {
     try {
       const objId = addDashesToUuid(req.params.objId);
+
+      // target S3 version
+      let targetS3VersionId = undefined;
+      if (req.query.versionId) {
+        const version = await versionService.get({ versionId: addDashesToUuid(req.query.versionId), objectId: objId });
+        if (version.length) {
+          // todo: 3s
+          targetS3VersionId = version[0].versionId;
+        } else {
+          throw new Error('Version not found matching given versionId');
+        }
+      } else if (req.query.s3VersionId) {
+        targetS3VersionId = req.query.s3VersionId.toString();
+      }
+
       const data = {
         filePath: await getPath(objId),
-        s3VersionId: req.query.s3VersionId ? req.query.s3VersionId.toString() : undefined
+        s3VersionId: targetS3VersionId
       };
 
       // Download via service proxy
@@ -635,9 +734,22 @@ const controller = {
       const objId = addDashesToUuid(req.params.objId);
       const objPath = await getPath(objId);
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
-      const sourceVersionId = req.query.s3VersionId ? req.query.s3VersionId.toString() : undefined;
 
-      const source = await storageService.headObject({ filePath: objPath, s3VersionId: sourceVersionId });
+      // source S3 version
+      let sourceS3VersionId = undefined;
+      if (req.query.versionId) {
+        const version = await versionService.get({ versionId: addDashesToUuid(req.query.versionId), objectId: objId });
+        if (version.length) {
+          // todo: 3s
+          sourceS3VersionId = version[0].versionId;
+        } else {
+          throw new Error('Version not found matching given versionId');
+        }
+      } else if (req.query.s3VersionId) {
+        sourceS3VersionId = req.query.s3VersionId.toString();
+      }
+
+      const source = await storageService.headObject({ filePath: objPath, s3VersionId: sourceS3VersionId });
       if (source.ContentLength > MAXCOPYOBJECTLENGTH) {
         throw new Error('Cannot copy an object larger than 5GB');
       }
@@ -652,14 +764,14 @@ const controller = {
           id: source.Metadata.id
         },
         metadataDirective: MetadataDirective.REPLACE,
-        s3VersionId: sourceVersionId
+        s3VersionId: sourceS3VersionId
       };
       const s3Response = await storageService.copyObject(data);
 
       await utils.trxWrapper(async (trx) => {
         // create or update version (if a non-versioned object)
         const version = s3Response.VersionId ?
-          await versionService.copy(sourceVersionId, s3Response.VersionId, objId, userId, trx) :
+          await versionService.copy(sourceS3VersionId, s3Response.VersionId, objId, userId, trx) :
           await versionService.update({ ...data, id: objId }, userId, trx);
 
         // add metadata
@@ -685,8 +797,21 @@ const controller = {
       const objId = addDashesToUuid(req.params.objId);
       const objPath = await getPath(objId);
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
-      const s3VersionId = req.query.s3VersionId;
       const newTags = req.query.tagset;
+
+      // source S3 version
+      let sourceS3VersionId = undefined;
+      if (req.query.versionId) {
+        const version = await versionService.get({ versionId: addDashesToUuid(req.query.versionId), objectId: objId });
+        if (version.length) {
+          // todo: 3s
+          sourceS3VersionId = version[0].versionId;
+        } else {
+          throw new Error('Version not found matching given versionId');
+        }
+      } else if (req.query.s3VersionId) {
+        sourceS3VersionId = req.query.s3VersionId.toString();
+      }
 
       if (!newTags || !Object.keys(newTags).length || Object.keys(newTags).length > 10) {
         // TODO: Validation level logic. To be moved.
@@ -696,7 +821,7 @@ const controller = {
         const data = {
           filePath: objPath,
           tags: Object.entries(newTags).map(([k, v]) => ({ Key: k, Value: v })),
-          s3VersionId: s3VersionId ? s3VersionId.toString() : undefined
+          s3VersionId: sourceS3VersionId
         };
 
         // Add tags to the object in S3
@@ -704,7 +829,7 @@ const controller = {
 
         // update tags on version in DB
         await utils.trxWrapper(async (trx) => {
-          const version = await versionService.get(data.s3VersionId, objId, trx);
+          const version = await versionService.get({ s3VersionId: data.s3VersionId, objectId: objId }, trx);
           await tagService.replaceTags(version.id, toLowerKeys(data.tags), userId, trx);
         });
 

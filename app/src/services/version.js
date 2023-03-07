@@ -121,24 +121,33 @@ const service = {
 
   /**
    * @function get
-   * Get a given version from the database
-   * @param {object[]} versionId S3 VersionId if null or undefined,
-   * get latest version (excluding delete-makers)
-   * @param {string} objectId id of the parent object
+   * Get a given version from the database.
+   * if s3VersionId and versionId are null or undefined, get latest version (excluding delete-makers)
+   * @param {object} options object containing s3VersionId, versionId, objectId
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<object>} the Version object from the database
    * @throws The error encountered upon db transaction failure
    */
-  get: async (versionId, objectId, etrx = undefined) => {
+  get: async ({ s3VersionId, versionId, objectId }, etrx = undefined) => {
     let trx;
     try {
       trx = etrx ? etrx : await Version.startTransaction();
 
       let response = undefined;
-      if (versionId) {
+      if (s3VersionId) {
         response = await Version.query(trx)
           .where({
-            versionId: versionId,
+            // todo: s3
+            versionId: s3VersionId,
+            objectId: objectId
+          })
+          .first();
+      }
+      else if (versionId) {
+        response = await Version.query(trx)
+          .where({
+            // todo: s3
+            id: s3VersionId,
             objectId: objectId
           })
           .first();
