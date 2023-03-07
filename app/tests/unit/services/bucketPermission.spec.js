@@ -1,31 +1,31 @@
 const { MockModel, MockTransaction } = require('../../common/dbHelper');
 const { NIL: SYSTEM_USER } = require('uuid');
 
+jest.mock('../../../src/db/models/tables/objectPermission', () => MockModel);
 jest.mock('../../../src/db/models/tables/bucketPermission', () => MockModel);
+
+const { Permissions } = require('../../../src/components/constants');
 
 const service = require('../../../src/services/bucketPermission');
 
 const bucketId = '00000000-0000-0000-0000-000000000000';
+const objectId = '00000000-0000-0000-0000-000000000000';
 const userId = '00000000-0000-0000-0000-000000000000';
 
-const data = {
+const data = [{
+  id: objectId,
   bucketId: bucketId,
-  bucketName: 'bucketName',
-  accessKeyId: 'accessKeyId',
-  bucket: 'bucket',
-  endpoint: 'endpoint',
-  key: 'key',
-  secretAccessKey: 'secretAccessKey',
-  region: 'region',
+  path: 'path',
+  public: 'true',
   active: 'true',
-  createdBy: undefined,
-  userId: userId
-};
+  createdBy: userId,
+  permCode: 'READ'
+}];
 
 const params = {
   bucketId: bucketId,
-  userId: userId,
-  permCode: 'READ'
+  permCode: 'READ',
+  userId: userId
 };
 
 beforeEach(() => {
@@ -37,57 +37,45 @@ afterEach(() => {
   jest.clearAllMocks();
 });
 
-describe('Bucket permission', () => {
-  const addPermissionsSpy = jest.spyOn(service, 'addPermissions');
-  const removePermissionsSpy = jest.spyOn(service, 'removePermissions');
-  const getBucketIdsWithObjectSpy = jest.spyOn(service, 'getBucketIdsWithObject');
-  const searchPermissionsSpy = jest.spyOn(service, 'searchPermissions');
 
-  beforeEach(() => {
-    addPermissionsSpy.mockReset();
-    removePermissionsSpy.mockReset();
-    getBucketIdsWithObjectSpy.mockReset();
-    searchPermissionsSpy.mockReset();
-  });
+describe('add permissions', () => {
 
-  afterAll(() => {
-    addPermissionsSpy.mockRestore();
-    removePermissionsSpy.mockRestore();
-    getBucketIdsWithObjectSpy.mockRestore();
-    searchPermissionsSpy.mockRestore();
-  });
+  it('search permissions', async () => {
+    // add userId property
+    const dataWithUser = { ...data, userId: userId };
 
-  it('Add permissions', async () => {
+    const perms = Object.values(Permissions).map((p) => ({
+      userId: dataWithUser.userId,
+      permCode: p
+    }));
+
+    const searchPermissionSpy = jest.spyOn(service, 'searchPermissions');
+    searchPermissionSpy.mockResolvedValue(perms);
+
     const etrx = await jest.fn().mockResolvedValue(MockTransaction);
-    await service.addPermissions(bucketId, data, {currentUserId: SYSTEM_USER}, etrx);
-    expect(addPermissionsSpy).toHaveBeenCalledTimes(1);
+    await service.addPermissions(objectId, data, {currentUserId: SYSTEM_USER}, etrx);
   });
 
-  it('Add permissions - no bucketId', async () => {
-    const etrx = await jest.fn().mockResolvedValue(MockTransaction);
-    await service.addPermissions(null, data, {currentUserId: SYSTEM_USER}, etrx);
-    expect(addPermissionsSpy).toHaveBeenCalledWith(null, data, {currentUserId: SYSTEM_USER}, etrx);
-    expect(addPermissionsSpy).toHaveBeenCalledTimes(1);
-  });
+});
 
-  it('Add permissions - no data', async () => {
-    const etrx = await jest.fn().mockResolvedValue(MockTransaction);
-    await service.addPermissions(bucketId, null, {currentUserId: SYSTEM_USER}, etrx);
-    expect(addPermissionsSpy).toHaveBeenCalledTimes(1);
-  });
+describe('remove permissions', () => {
 
-  it('Remove permissions', async () => {
-    await service.removePermissions(bucketId);
-    expect(removePermissionsSpy).toHaveBeenCalledTimes(1);
+  it('delete', async () => {
+    await service.removePermissions(objectId);
   });
+});
 
-  it('Get bucket ids with object', async () => {
-    await service.getBucketIdsWithObject(userId);
-    expect(getBucketIdsWithObjectSpy).toHaveBeenCalledTimes(1);
+describe('Get bucket ids with object', () => {
+
+  it('bucket permission', async () => {
+    MockModel.mockResolvedValue([{}, {}]);
+    await service.getBucketIdsWithObject();
   });
+});
 
-  it('Search permissions', async () => {
+describe('search permissions', () => {
+
+  it('filter', async () => {
     service.searchPermissions(params);
-    expect(searchPermissionsSpy).toHaveBeenCalledTimes(1);
   });
 });

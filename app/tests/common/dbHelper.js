@@ -34,6 +34,11 @@ class MockModel {}
 
 // Mocked Objection Functions
 MockModel.findById = jest.fn().mockReturnThis();
+MockModel.joinRelated = jest.fn().mockReturnThis();
+MockModel.whereNotNull = jest.fn().mockReturnThis();
+MockModel.distinct = jest.fn().mockReturnThis();
+MockModel.rightJoin = jest.fn().mockReturnThis();
+MockModel.allowGraph = jest.fn().mockReturnThis();
 MockModel.first = jest.fn().mockReturnThis();
 MockModel.delete = jest.fn().mockReturnThis();
 MockModel.deleteById = jest.fn().mockReturnThis();

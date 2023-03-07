@@ -2,6 +2,9 @@ const { MockModel, MockTransaction } = require('../../common/dbHelper');
 const { NIL: SYSTEM_USER } = require('uuid');
 
 jest.mock('../../../src/db/models/tables/objectPermission', () => MockModel);
+jest.mock('../../../src/db/models/tables/bucketPermission', () => MockModel);
+
+const { Permissions } = require('../../../src/components/constants');
 
 const service = require('../../../src/services/objectPermission');
 
@@ -9,20 +12,22 @@ const bucketId = '00000000-0000-0000-0000-000000000000';
 const objectId = '00000000-0000-0000-0000-000000000000';
 const userId = '00000000-0000-0000-0000-000000000000';
 
-const data = {
+const data = [{
   id: objectId,
   bucketId: bucketId,
   path: 'path',
   public: 'true',
   active: 'true',
-  createdBy: userId
-};
+  createdBy: userId,
+  permCode: 'READ'
+}];
 
 const params = {
   objId: objectId,
   bucketId: bucketId,
   createdBy: userId,
-  permCode: 'READ'
+  permCode: 'READ',
+  userId: userId
 };
 
 beforeEach(() => {
@@ -34,44 +39,52 @@ afterEach(() => {
   jest.clearAllMocks();
 });
 
-describe('Bucket permission', () => {
-  const addPermissionsSpy = jest.spyOn(service, 'addPermissions');
-  const getObjectIdsWithBucketSpy = jest.spyOn(service, 'getObjectIdsWithBucket');
-  const removePermissionsSpy = jest.spyOn(service, 'removePermissions');
-  const searchPermissionsSpy = jest.spyOn(service, 'searchPermissions');
 
-  beforeEach(() => {
-    addPermissionsSpy.mockReset();
-    removePermissionsSpy.mockReset();
-    getObjectIdsWithBucketSpy.mockReset();
-    searchPermissionsSpy.mockReset();
-  });
+describe('add permissions', () => {
 
-  afterAll(() => {
-    addPermissionsSpy.mockRestore();
-    removePermissionsSpy.mockRestore();
-    getObjectIdsWithBucketSpy.mockRestore();
-    searchPermissionsSpy.mockRestore();
-  });
+  it('search permissions', async () => {
+    // add userId property
+    const dataWithUser = { ...data, userId: userId };
 
-  it('Add permissions', async () => {
+    const perms = Object.values(Permissions).map((p) => ({
+      userId: dataWithUser.userId,
+      permCode: p
+    }));
+
+    const searchPermissionSpy = jest.spyOn(service, 'searchPermissions');
+    searchPermissionSpy.mockResolvedValue(perms);
+
     const etrx = await jest.fn().mockResolvedValue(MockTransaction);
     await service.addPermissions(objectId, data, {currentUserId: SYSTEM_USER}, etrx);
-    expect(addPermissionsSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('Get bucket ids with object', async () => {
+});
+
+describe('get object ids with bucket', () => {
+
+  it('bucket permission', async () => {
+    MockModel.mockResolvedValue([{}, {}]);
     await service.getObjectIdsWithBucket();
-    expect(getObjectIdsWithBucketSpy).toHaveBeenCalledTimes(1);
   });
+});
 
-  it('Remove permissions', async () => {
+describe('remove permissions', () => {
+
+  it('delete', async () => {
     await service.removePermissions(objectId);
-    expect(removePermissionsSpy).toHaveBeenCalledTimes(1);
   });
+});
 
-  it('Search permissions', async () => {
+describe('search permissions', () => {
+
+  it('filter', async () => {
+    MockModel.mockResolvedValue({
+      objId: objectId,
+      bucketId: bucketId,
+      createdBy: userId,
+      permCode: 'READ',
+      userId: userId
+    });
     service.searchPermissions(params);
-    expect(searchPermissionsSpy).toHaveBeenCalledTimes(1);
   });
 });

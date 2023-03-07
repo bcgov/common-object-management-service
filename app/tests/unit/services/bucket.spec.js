@@ -3,6 +3,7 @@ const { MockModel, MockTransaction } = require('../../common/dbHelper');
 jest.mock('../../../src/db/models/tables/bucket', () => MockModel);
 
 const service = require('../../../src/services/bucket');
+const bucketPermissionService = require('../../../src/services/bucketPermission');
 
 const bucketId = '00000000-0000-0000-0000-000000000000';
 const userId = '00000000-0000-0000-0000-000000000000';
@@ -10,11 +11,11 @@ const userId = '00000000-0000-0000-0000-000000000000';
 const data = {
   bucketId: bucketId,
   bucketName: 'bucketName',
-  accessKeyId: 'accessKeyId',
+  accessKeyId: 'accesskeyid',
   bucket: 'bucket',
   endpoint: 'endpoint',
   key: 'key',
-  secretAccessKey: 'secretAccessKey',
+  secretAccessKey: 'secretaccesskey',
   region: 'region',
   active: 'true',
   createdBy: undefined,
@@ -38,76 +39,66 @@ afterEach(() => {
   jest.clearAllMocks();
 });
 
-describe('bucket', () => {
-  const checkGrantPermissionsSpy = jest.spyOn(service, 'checkGrantPermissions');
-  const createBucketSpy = jest.spyOn(service, 'create');
-  const deleteBucketSpy = jest.spyOn(service, 'delete');
-  const searchBucketsSpy = jest.spyOn(service, 'searchBuckets');
-  const readBucketSpy = jest.spyOn(service, 'read');
-  const readUniqueBucketSpy = jest.spyOn(service, 'readUnique');
-  const updateBucketSpy = jest.spyOn(service, 'update');
+describe('Check grant permissions', () => {
 
-  beforeEach(() => {
-    checkGrantPermissionsSpy.mockReset();
-    createBucketSpy.mockReset();
-    deleteBucketSpy.mockReset();
-    searchBucketsSpy.mockReset();
-    readBucketSpy.mockReset();
-    readUniqueBucketSpy.mockReset();
-    updateBucketSpy.mockReset();
-  });
-
-  afterAll(() => {
-    checkGrantPermissionsSpy.mockRestore();
-    createBucketSpy.mockRestore();
-    deleteBucketSpy.mockRestore();
-    searchBucketsSpy.mockRestore();
-    readBucketSpy.mockRestore();
-    readUniqueBucketSpy.mockRestore();
-    updateBucketSpy.mockRestore();
-  });
-
-  it('Check grant permissions', async () => {
-    const bucket = { accessKeyId: 'accessKeyId', secretAccessKey: 'secretAccessKey' };
+  it('add permissions', async () => {
+    const readUniqueBucketSpy = jest.spyOn(service, 'readUnique');
+    const bucket =
+    {
+      accessKeyId: 'accesskeyid',
+      secretAccessKey: 'secretaccesskey'
+    };
     readUniqueBucketSpy.mockResolvedValue(bucket);
     const etrx = await jest.fn().mockResolvedValue(MockTransaction);
     await service.checkGrantPermissions(data, etrx);
-    expect(checkGrantPermissionsSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('Create bucket', async () => {
+});
+
+describe('Create', () => {
+
+  it('insert', async () => {
+    const addPermissionSpy = jest.spyOn(bucketPermissionService, 'addPermissions');
+    addPermissionSpy.mockResolvedValue({});
     const etrx = await jest.fn().mockResolvedValue(MockTransaction);
     await service.create(data, etrx);
-    expect(createBucketSpy).toHaveBeenCalledTimes(1);
   });
+});
 
-  it('Delete bucket', async () => {
+describe('Delete', () => {
+
+  it('delete by id', async () => {
     const etrx = await jest.fn().mockResolvedValue(MockTransaction);
     await service.delete(bucketId, etrx);
-    expect(deleteBucketSpy).toHaveBeenCalledTimes(1);
   });
+});
 
-  it('Search buckets', async () => {
-    const bucket = { accessKeyId: 'accessKeyId', secretAccessKey: 'secretAccessKey' };
-    searchBucketsSpy.mockResolvedValue(bucket);
-    await service.searchBuckets(params);
-    expect(searchBucketsSpy).toHaveBeenCalledTimes(1);
+describe('Search buckets', () => {
+
+  it('filter', async () => {
+    MockModel.mockResolvedValue([{}, {}]);
+    service.searchBuckets(params);
   });
+});
 
-  it('Read bucket', async () => {
+describe('Read', () => {
+
+  it('find by id', async () => {
     await service.read(bucketId);
-    expect(readBucketSpy).toHaveBeenCalledTimes(1);
   });
+});
 
-  it('Read bucket unique', async () => {
+describe('Read unique', () => {
+
+  it('find by id', async () => {
     await service.readUnique(data);
-    expect(readUniqueBucketSpy).toHaveBeenCalledTimes(1);
   });
+});
 
-  it('Update bucket', async () => {
+describe('Update', () => {
+
+  it('find by id', async () => {
     const etrx = await jest.fn().mockResolvedValue(MockTransaction);
     await service.update(data, etrx);
-    expect(updateBucketSpy).toHaveBeenCalledTimes(1);
   });
-
 });
