@@ -51,7 +51,7 @@ const service = {
         if (newJoins.length) {
           response = await VersionMetadata.query(trx)
             .insert(newJoins.map(({ id }) => ({
-              versionId: versionId,
+              s3VersionId: versionId,
               metadataId: id,
               createdBy: currentUserId
             })));

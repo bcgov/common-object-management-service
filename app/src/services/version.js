@@ -25,7 +25,7 @@ const service = {
       const sourceVersion = sourceVersionId ?
         await Version.query(trx)
           .where({
-            versionId: sourceVersionId,
+            s3VersionId: sourceVersionId,
             objectId: objectId
           })
           .first() :
@@ -42,7 +42,7 @@ const service = {
       const response = await Version.query(trx)
         .insert({
           id: uuidv4(),
-          versionId: newVersionId,
+          s3VersionId: newVersionId,
           objectId: objectId,
           mimeType: sourceVersion.mimeType,
           deleteMarker: sourceVersion.deleteMarker,
@@ -73,7 +73,7 @@ const service = {
       const response = await Version.query(trx)
         .insert({
           id: uuidv4(),
-          versionId: data.s3VersionId,
+          s3VersionId: data.s3VersionId,
           mimeType: data.mimeType,
           objectId: data.id,
           createdBy: userId,
@@ -93,7 +93,7 @@ const service = {
    * @function delete
    * Delete a version record of an object
    * @param {string} objId The object uuid
-   * @param {string} versionId The version ID or null if deleting an object
+   * @param {string} s3VersionId The version ID or null if deleting an object
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<integer>} The number of remaining versions in db after the delete
    * @throws The error encountered upon db transaction failure
@@ -105,7 +105,7 @@ const service = {
       const response = await Version.query(trx)
         .delete()
         .where('objectId', objId)
-        .where('versionId', versionId)
+        .where('s3VersionId', versionId)
         // Returns array of deleted rows instead of count
         // https://vincit.github.io/objection.js/recipes/returning-tricks.html
         .returning('*')
@@ -137,8 +137,7 @@ const service = {
       if (s3VersionId) {
         response = await Version.query(trx)
           .where({
-            // todo: s3
-            versionId: s3VersionId,
+            s3VersionId: s3VersionId,
             objectId: objectId
           })
           .first();
@@ -146,8 +145,7 @@ const service = {
       else if (versionId) {
         response = await Version.query(trx)
           .where({
-            // todo: s3
-            id: s3VersionId,
+            id: versionId,
             objectId: objectId
           })
           .first();
@@ -208,7 +206,7 @@ const service = {
       // update version record
       const s3VersionId = data.s3VersionId ? data.s3VersionId : null;
       const version = await Version.query(trx)
-        .where({ objectId: data.id, versionId: s3VersionId })
+        .where({ objectId: data.id, s3VersionId: s3VersionId })
         .patch({
           objectId: data.id,
           updatedBy: userId,

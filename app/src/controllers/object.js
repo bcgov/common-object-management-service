@@ -103,8 +103,7 @@ const controller = {
       if (req.query.versionId) {
         const version = await versionService.get({ versionId: addDashesToUuid(req.query.versionId), objectId: objId });
         if (version.length) {
-          // todo: 3s
-          sourceS3VersionId = version[0].versionId;
+          sourceS3VersionId = version[0].s3VersionId;
         } else {
           throw new Error('Version not found matching given versionId');
         }
@@ -176,8 +175,7 @@ const controller = {
       if (versionId) {
         const version = await versionService.get({ versionId: addDashesToUuid(versionId), objectId: objId });
         if (version.length) {
-          // todo: 3s
-          sourceS3VersionId = version[0].versionId;
+          sourceS3VersionId = version[0].s3VersionId;
         } else {
           throw new Error('Version not found matching given versionId');
         }
@@ -334,8 +332,7 @@ const controller = {
       if (req.query.versionId) {
         const version = await versionService.get({ versionId: addDashesToUuid(req.query.versionId), objectId: objId });
         if (version.length) {
-          // todo: 3s
-          sourceS3VersionId = version[0].versionId;
+          sourceS3VersionId = version[0].s3VersionId;
         } else {
           throw new Error('Version not found matching given versionId');
         }
@@ -405,8 +402,7 @@ const controller = {
       if (req.query.versionId) {
         const version = await versionService.get({ versionId: addDashesToUuid(req.query.versionId), objectId: objId });
         if (version.length) {
-          // todo: 3s
-          targetS3VersionId = version[0].versionId;
+          targetS3VersionId = version[0].s3VersionId;
         } else {
           throw new Error('Version not found matching given versionId');
         }
@@ -477,8 +473,7 @@ const controller = {
       if (req.query.versionId) {
         const version = await versionService.get({ versionId: addDashesToUuid(req.query.versionId), objectId: objId });
         if (version.length) {
-          // todo: 3s
-          targetS3VersionId = version[0].versionId;
+          targetS3VersionId = version[0].s3VersionId;
         } else {
           throw new Error('Version not found matching given versionId');
         }
@@ -597,8 +592,7 @@ const controller = {
       if (req.query.versionId) {
         const version = await versionService.get({ versionId: addDashesToUuid(req.query.versionId), objectId: objId });
         if (version.length) {
-          // todo: 3s
-          targetS3VersionId = version[0].versionId;
+          targetS3VersionId = version[0].s3VersionId;
         } else {
           throw new Error('Version not found matching given versionId');
         }
@@ -668,8 +662,7 @@ const controller = {
       if (req.query.versionId) {
         const version = await versionService.get({ versionId: addDashesToUuid(req.query.versionId), objectId: objId });
         if (version.length) {
-          // todo: 3s
-          targetS3VersionId = version[0].versionId;
+          targetS3VersionId = version[0].s3VersionId;
         } else {
           throw new Error('Version not found matching given versionId');
         }
@@ -740,8 +733,7 @@ const controller = {
       if (req.query.versionId) {
         const version = await versionService.get({ versionId: addDashesToUuid(req.query.versionId), objectId: objId });
         if (version.length) {
-          // todo: 3s
-          sourceS3VersionId = version[0].versionId;
+          sourceS3VersionId = version[0].s3VersionId;
         } else {
           throw new Error('Version not found matching given versionId');
         }
@@ -804,8 +796,7 @@ const controller = {
       if (req.query.versionId) {
         const version = await versionService.get({ versionId: addDashesToUuid(req.query.versionId), objectId: objId });
         if (version.length) {
-          // todo: 3s
-          sourceS3VersionId = version[0].versionId;
+          sourceS3VersionId = version[0].s3VersionId;
         } else {
           throw new Error('Version not found matching given versionId');
         }
