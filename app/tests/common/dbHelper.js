@@ -33,20 +33,17 @@ MockTransaction.mockReset = () => {
 class MockModel {}
 
 // Mocked Objection Functions
-MockModel.findById = jest.fn().mockReturnThis();
-MockModel.joinRelated = jest.fn().mockReturnThis();
-MockModel.whereNotNull = jest.fn().mockReturnThis();
-MockModel.distinct = jest.fn().mockReturnThis();
-MockModel.rightJoin = jest.fn().mockReturnThis();
 MockModel.allowGraph = jest.fn().mockReturnThis();
+MockModel.findById = jest.fn().mockReturnThis();
 MockModel.first = jest.fn().mockReturnThis();
 MockModel.delete = jest.fn().mockReturnThis();
 MockModel.deleteById = jest.fn().mockReturnThis();
+MockModel.distinct = jest.fn().mockReturnThis();
 MockModel.insert = jest.fn().mockReturnThis();
 MockModel.insertAndFetch = jest.fn().mockReturnThis();
 MockModel.insertGraph = jest.fn().mockReturnThis();
 MockModel.insertGraphAndFetch = jest.fn().mockReturnThis();
-MockModel.findById = jest.fn().mockReturnThis();
+MockModel.joinRelated = jest.fn().mockReturnThis();
 MockModel.modify = jest.fn().mockReturnThis();
 MockModel.modifiers = jest.fn().mockReturnThis();
 MockModel.orderBy = jest.fn().mockReturnThis();
@@ -54,6 +51,7 @@ MockModel.patchAndFetchById = jest.fn().mockReturnThis();
 MockModel.query = jest.fn().mockReturnThis();
 MockModel.resolve = jest.fn().mockResolvedValue(returnValue);
 MockModel.returning = jest.fn().mockReturnThis();
+MockModel.rightJoin = jest.fn().mockReturnThis();
 MockModel.select = jest.fn().mockReturnThis();
 MockModel.skipUndefined = jest.fn(() => {
   throw new Error('skipUndefined() is deprecated in Objection 3.0. Refactor to not use this method!');
@@ -62,6 +60,7 @@ MockModel.startTransaction = jest.fn().mockResolvedValue(MockTransaction);
 MockModel.then = jest.fn((done) => { done(returnValue); });
 MockModel.throwIfNotFound = jest.fn().mockReturnThis();
 MockModel.where = jest.fn().mockReturnThis();
+MockModel.whereNotNull = jest.fn().mockReturnThis();
 MockModel.withGraphFetched = jest.fn().mockReturnThis();
 
 // Utility Functions
