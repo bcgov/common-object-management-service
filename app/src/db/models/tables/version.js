@@ -57,6 +57,9 @@ class Version extends Timestamps(Model) {
       filterId(query, value) {
         filterOneOrMany(query, value, 'version.id');
       },
+      filterS3VersionId(query, value) {
+        filterOneOrMany(query, value, 'version.s3VersionId');
+      },
       filterObjectId(query, value) {
         filterOneOrMany(query, value, 'objectId');
       },

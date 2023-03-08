@@ -195,6 +195,32 @@ const utils = {
   },
 
   /**
+   * @function getS3VersionId
+   * Gets the s3VersionId from database using given internal COMS version id
+   * or returns given s3VersionId
+   * @param {string} s3VersionId S3 Version id
+   * @param {string} versionId A COMS version id
+   * @param {string} objectId The related COMS object id
+   * @returns {Promise<string>} s3 Version id as string type or undefined
+   */
+  async getS3VersionId(s3VersionId, versionId, objectId){
+    let result = undefined;
+    if (s3VersionId) {
+      result = s3VersionId.toString();
+    }
+    else if (config.has('db.enabled') && versionId) {
+      const { versionService } = require('../services');
+      const version = await versionService.get({ versionId: versionId, s3VersionId: undefined, objectId: objectId });
+      if (version.s3VersionId) {
+        result = version.s3VersionId;
+      } else {
+        throw new Error('Version not found matching given versionId');
+      }
+    }
+    return result;
+  },
+
+  /**
    * @function groupByObject
    * Re-structure array of nested objects
    * @see {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce#grouping_objects_by_a_property}

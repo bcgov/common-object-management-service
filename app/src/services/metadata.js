@@ -51,7 +51,7 @@ const service = {
         if (newJoins.length) {
           response = await VersionMetadata.query(trx)
             .insert(newJoins.map(({ id }) => ({
-              s3VersionId: versionId,
+              versionId: versionId,
               metadataId: id,
               createdBy: currentUserId
             })));
@@ -200,13 +200,22 @@ const service = {
   */
   fetchMetadataForVersion: (params) => {
     return Version.query()
-      .select('version.id as versionId')
+      .select('version.id as versionId', 'version.s3VersionId')
       .allowGraph('metadata')
       .withGraphJoined('metadata')
       .modifyGraph('metadata', builder => {
         builder
           .select('key', 'value')
           .modify('filterKeyValue', { metadata: params.metadata });
+      })
+      .modify((query) => {
+        if (params.s3VersionIds) {
+          query
+            .modify('filterS3VersionId', params.s3VersionIds);
+        } else {
+          query
+            .modify('filterId', params.versionIds);
+        }
       })
       .modify('filterId', params.versionIds)
       // filter by objects that user(s) has READ permission at object or bucket-level

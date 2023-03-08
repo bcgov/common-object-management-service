@@ -16,6 +16,7 @@ const {
   getKeyValue,
   getMetadata,
   getPath,
+  getS3VersionId,
   joinPath,
   isTruthy,
   mixedQueryToArray,
@@ -75,6 +76,7 @@ const controller = {
       res.set(sse, s3Resp.ServerSideEncryption);
       exposedHeaders.push(sse);
     }
+    // TODO: has this property been renamed to s3VersionId at this stage?
     if (s3Resp.VersionId) {
       const s3VersionId = 'x-amz-version-id';
       res.set(s3VersionId, s3Resp.VersionId);
@@ -99,17 +101,7 @@ const controller = {
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
       // get source S3 VersionId
-      let sourceS3VersionId = undefined;
-      if (req.query.versionId) {
-        const version = await versionService.get({ versionId: addDashesToUuid(req.query.versionId), objectId: objId });
-        if (version.length) {
-          sourceS3VersionId = version[0].s3VersionId;
-        } else {
-          throw new Error('Version not found matching given versionId');
-        }
-      } else if (req.query.s3VersionId) {
-        sourceS3VersionId = req.query.s3VersionId.toString();
-      }
+      let sourceS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid( req.query.versionId), objId);
 
       // get version from S3
       const source = await storageService.headObject({ filePath: objPath, s3VersionId: sourceS3VersionId });
@@ -168,20 +160,10 @@ const controller = {
       const objId = addDashesToUuid(req.params.objId);
       const objPath = await getPath(objId);
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
-      const { s3VersionId, tagset: newTags, versionId } = req.query;
+      const newTags = req.query.tagset;
 
       // get source S3 Version to add to
-      let sourceS3VersionId = undefined;
-      if (versionId) {
-        const version = await versionService.get({ versionId: addDashesToUuid(versionId), objectId: objId });
-        if (version.length) {
-          sourceS3VersionId = version[0].s3VersionId;
-        } else {
-          throw new Error('Version not found matching given versionId');
-        }
-      } else if (s3VersionId) {
-        sourceS3VersionId = s3VersionId.toString();
-      }
+      let sourceS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid( req.query.versionId), objId);
 
       // get current tags on latest or specified version
       const objectTagging = await storageService.getObjectTagging({ filePath: objPath, s3VersionId: sourceS3VersionId });
@@ -271,14 +253,14 @@ const controller = {
           // create new version in DB
           const s3Resolved = await s3Response;
           const s3VersionId = s3Resolved.VersionId ? s3Resolved.VersionId : null;
-          const versions = await versionService.create({ ...data, s3VersionId: s3VersionId }, userId, trx);
-          object['versionId'] = versions.id;
+          const version = await versionService.create({ ...data, s3VersionId: s3VersionId }, userId, trx);
+          object['versionId'] = version.id;
 
           // add metadata to version in DB
-          await metadataService.associateMetadata(versions.id, getKeyValue(data.metadata), userId, trx);
+          await metadataService.associateMetadata(version.id, getKeyValue(data.metadata), userId, trx);
 
           // add tags to version in DB
-          if (data.tags && Object.keys(data.tags).length) await tagService.associateTags(versions.id, getKeyValue(data.tags), userId, trx);
+          if (data.tags && Object.keys(data.tags).length) await tagService.associateTags(version.id, getKeyValue(data.tags), userId, trx);
 
           return object;
         });
@@ -328,17 +310,7 @@ const controller = {
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
       // Source S3 Version to copy from
-      let sourceS3VersionId = undefined;
-      if (req.query.versionId) {
-        const version = await versionService.get({ versionId: addDashesToUuid(req.query.versionId), objectId: objId });
-        if (version.length) {
-          sourceS3VersionId = version[0].s3VersionId;
-        } else {
-          throw new Error('Version not found matching given versionId');
-        }
-      } else if (req.query.s3VersionId) {
-        sourceS3VersionId = req.query.s3VersionId.toString();
-      }
+      let sourceS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid( req.query.versionId), objId);
 
       const source = await storageService.headObject({ filePath: objPath, s3VersionId: sourceS3VersionId });
       if (source.ContentLength > MAXCOPYOBJECTLENGTH) {
@@ -398,17 +370,7 @@ const controller = {
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
       // target S3 version to delete
-      let targetS3VersionId = undefined;
-      if (req.query.versionId) {
-        const version = await versionService.get({ versionId: addDashesToUuid(req.query.versionId), objectId: objId });
-        if (version.length) {
-          targetS3VersionId = version[0].s3VersionId;
-        } else {
-          throw new Error('Version not found matching given versionId');
-        }
-      } else if (req.query.s3VersionId) {
-        targetS3VersionId = req.query.s3VersionId.toString();
-      }
+      let targetS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid( req.query.versionId), objId);
 
       const data = {
         filePath: await getPath(objId),
@@ -469,17 +431,7 @@ const controller = {
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
       // Target S3 version
-      let targetS3VersionId = undefined;
-      if (req.query.versionId) {
-        const version = await versionService.get({ versionId: addDashesToUuid(req.query.versionId), objectId: objId });
-        if (version.length) {
-          targetS3VersionId = version[0].s3VersionId;
-        } else {
-          throw new Error('Version not found matching given versionId');
-        }
-      } else if (req.query.s3VersionId) {
-        targetS3VersionId = req.query.s3VersionId.toString();
-      }
+      let targetS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid( req.query.versionId), objId);
 
       const objectTagging = await storageService.getObjectTagging({ filePath: objPath, s3VersionId: targetS3VersionId });
 
@@ -588,17 +540,7 @@ const controller = {
       const objId = addDashesToUuid(req.params.objId);
 
       // target S3 version
-      let targetS3VersionId = undefined;
-      if (req.query.versionId) {
-        const version = await versionService.get({ versionId: addDashesToUuid(req.query.versionId), objectId: objId });
-        if (version.length) {
-          targetS3VersionId = version[0].s3VersionId;
-        } else {
-          throw new Error('Version not found matching given versionId');
-        }
-      } else if (req.query.s3VersionId) {
-        targetS3VersionId = req.query.s3VersionId.toString();
-      }
+      let targetS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid( req.query.versionId), objId);
 
       const data = {
         bucketId: req.currentObject.bucketId || undefined,
@@ -658,17 +600,7 @@ const controller = {
       const objId = addDashesToUuid(req.params.objId);
 
       // target S3 version
-      let targetS3VersionId = undefined;
-      if (req.query.versionId) {
-        const version = await versionService.get({ versionId: addDashesToUuid(req.query.versionId), objectId: objId });
-        if (version.length) {
-          targetS3VersionId = version[0].s3VersionId;
-        } else {
-          throw new Error('Version not found matching given versionId');
-        }
-      } else if (req.query.s3VersionId) {
-        targetS3VersionId = req.query.s3VersionId.toString();
-      }
+      let targetS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid( req.query.versionId), objId);
 
       const data = {
         filePath: await getPath(objId),
@@ -729,17 +661,7 @@ const controller = {
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
       // source S3 version
-      let sourceS3VersionId = undefined;
-      if (req.query.versionId) {
-        const version = await versionService.get({ versionId: addDashesToUuid(req.query.versionId), objectId: objId });
-        if (version.length) {
-          sourceS3VersionId = version[0].s3VersionId;
-        } else {
-          throw new Error('Version not found matching given versionId');
-        }
-      } else if (req.query.s3VersionId) {
-        sourceS3VersionId = req.query.s3VersionId.toString();
-      }
+      let sourceS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid(req.query.versionId), objId);
 
       const source = await storageService.headObject({ filePath: objPath, s3VersionId: sourceS3VersionId });
       if (source.ContentLength > MAXCOPYOBJECTLENGTH) {
@@ -792,17 +714,7 @@ const controller = {
       const newTags = req.query.tagset;
 
       // source S3 version
-      let sourceS3VersionId = undefined;
-      if (req.query.versionId) {
-        const version = await versionService.get({ versionId: addDashesToUuid(req.query.versionId), objectId: objId });
-        if (version.length) {
-          sourceS3VersionId = version[0].s3VersionId;
-        } else {
-          throw new Error('Version not found matching given versionId');
-        }
-      } else if (req.query.s3VersionId) {
-        sourceS3VersionId = req.query.s3VersionId.toString();
-      }
+      let sourceS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid( req.query.versionId), objId);
 
       if (!newTags || !Object.keys(newTags).length || Object.keys(newTags).length > 10) {
         // TODO: Validation level logic. To be moved.
@@ -943,7 +855,7 @@ const controller = {
           let version = undefined;
           if (s3Resolved.VersionId) {
             const s3VersionId = s3Resolved.VersionId;
-            version = await versionService.create({ ...data, s3versionId: s3VersionId }, userId, trx);
+            version = await versionService.create({ ...data, s3VersionId: s3VersionId }, userId, trx);
           }
           // else update only version in DB
           else {

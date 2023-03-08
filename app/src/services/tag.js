@@ -274,7 +274,7 @@ const service = {
   */
   fetchTagsForVersion: (params) => {
     return Version.query()
-      .select('version.id as versionId')
+      .select('version.id as versionId', 'version.s3VersionId')
       .allowGraph('tag as tagset')
       .withGraphJoined('tag as tagset')
       .modifyGraph('tagset', builder => {
@@ -282,7 +282,15 @@ const service = {
           .select('key', 'value')
           .modify('filterKeyValue', { tag: params.tags });
       })
-      .modify('filterId', params.versionIds)
+      .modify((query) => {
+        if (params.s3VersionIds) {
+          query
+            .modify('filterS3VersionId', params.s3VersionIds);
+        } else {
+          query
+            .modify('filterId', params.versionIds);
+        }
+      })
       // filter by objects that user(s) has READ permission at object or bucket-level
       .modify((query) => {
         if (params.userId) {
