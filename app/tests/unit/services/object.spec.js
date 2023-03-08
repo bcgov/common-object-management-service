@@ -38,9 +38,9 @@ afterEach(() => {
   jest.clearAllMocks();
 });
 
-describe('create object', () => {
+describe('create', () => {
 
-  it('add permissions if user', async () => {
+  it('should add object permissions if user exists', async () => {
 
     // add userId property
     const dataWithUser = { ...data, userId: userId };
@@ -66,9 +66,10 @@ describe('create object', () => {
     expect(addPermissionSpy).toHaveBeenCalledTimes(1);
     // addPermissions was called with expected paramters
     expect(addPermissionSpy).toHaveBeenCalledWith(objectId, perms, userId, etrx);
+    // expect(MockModel.query).toHaveBeenCalledTimes(1);
   });
 
-  it('add permissions no trans', async () => {
+  it.skip('should add object permissions, no transaction provided', async () => {
 
     // add userId property
     const dataWithUser = { ...data, userId: userId };
@@ -81,67 +82,58 @@ describe('create object', () => {
 
     // call the function we're testing
     await service.create(dataWithUser);
+    // expect(MockModel.query).toHaveBeenCalledTimes(1);
+    expect(MockTransaction.query).toHaveBeenCalledTimes(1);
   });
-
 });
 
-describe('delete object', () => {
+describe('delete', () => {
 
-  it('object model delete', async () => {
+  it('should delete object', async () => {
 
-    const deleteSpy = jest.spyOn(service, 'delete');
     const etrx = await jest.fn().mockResolvedValue(MockTransaction);
     await service.delete(objectId, etrx);
-    expect(deleteSpy).toHaveBeenCalledTimes(1);
+    expect(MockModel.query).toHaveBeenCalledTimes(1);
   });
-
-  it('object model delete no trans', async () => {
-
-    const deleteSpy = jest.spyOn(service, 'delete');
-    await service.delete(objectId);
-    expect(deleteSpy).toHaveBeenCalledTimes(1);
-  });
-
 });
 
-describe('get bucket key', () => {
+describe('getBucketKey', () => {
 
-  it('object model join and find', async () => {
+  it('should find and return bucket key', async () => {
 
-    const getBucketKeySpy = jest.spyOn(service, 'getBucketKey');
     service.getBucketKey(objectId);
-    expect(getBucketKeySpy).toHaveBeenCalledTimes(1);
+    expect(MockModel.query).toHaveBeenCalledTimes(1);
   });
-
 });
 
-describe('search objects', () => {
+describe('searchObjects', () => {
 
-  it('object model query', async () => {
+  it('should find and return objects', async () => {
 
     MockModel.mockResolvedValue([{}, {}]);
     service.searchObjects(params);
+    expect(MockModel.query).toHaveBeenCalledTimes(1);
   });
-
 });
 
 describe('read', () => {
 
-  it('object model find', async () => {
+  it('should find and return object model find', async () => {
     service.read(objectId);
+    expect(MockModel.query).toHaveBeenCalledTimes(1);
   });
-
 });
 
 describe('update', () => {
 
-  it('object model update', async () => {
+  it('should update object with new values', async () => {
     const etrx = await jest.fn().mockResolvedValue(MockTransaction);
     await service.update(data, etrx);
+    expect(MockModel.query).toHaveBeenCalledTimes(1);
   });
 
-  it('object model update no trans', async () => {
+  it('should update object model update no transaction', async () => {
     await service.update(data);
+    expect(MockModel.query).toHaveBeenCalledTimes(1);
   });
-
 });

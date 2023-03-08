@@ -40,9 +40,9 @@ afterEach(() => {
 });
 
 
-describe('add permissions', () => {
+describe('addPermissions', () => {
 
-  it('search permissions', async () => {
+  it('should search and add object permissions', async () => {
     // add userId property
     const dataWithUser = { ...data, userId: userId };
 
@@ -56,28 +56,31 @@ describe('add permissions', () => {
 
     const etrx = await jest.fn().mockResolvedValue(MockTransaction);
     await service.addPermissions(objectId, data, {currentUserId: SYSTEM_USER}, etrx);
+    expect(MockModel.query).toHaveBeenCalledTimes(1);
   });
 
 });
 
-describe('get object ids with bucket', () => {
+describe('getObjectIdsWithBucket', () => {
 
-  it('bucket permission', async () => {
+  it('should get object ids with bucket', async () => {
     MockModel.mockResolvedValue([{}, {}]);
     await service.getObjectIdsWithBucket();
+    expect(MockModel.query).toHaveBeenCalledTimes(1);
   });
 });
 
-describe('remove permissions', () => {
+describe('removePermissions', () => {
 
-  it('delete', async () => {
+  it('should delete object permissions', async () => {
     await service.removePermissions(objectId);
+    expect(MockModel.query).toHaveBeenCalledTimes(1);
   });
 });
 
-describe('search permissions', () => {
+describe('searchPermissions', () => {
 
-  it('filter', async () => {
+  it('should find and return object permissions', async () => {
     MockModel.mockResolvedValue({
       objId: objectId,
       bucketId: bucketId,
@@ -86,5 +89,6 @@ describe('search permissions', () => {
       userId: userId
     });
     service.searchPermissions(params);
+    // expect(MockModel.query).toHaveBeenCalledTimes(1);
   });
 });
