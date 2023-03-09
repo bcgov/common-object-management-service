@@ -1,5 +1,5 @@
 ---
-openapi: 3.0.3
+openapi: 3.0.2
 info:
   version: 1.0.0
   title: Common Object Management Service (COMS)
@@ -342,7 +342,7 @@ paths:
           $ref: '#/components/responses/Forbidden'
         default:
           $ref: '#/components/responses/Error'
-  /object/{objId}:
+  /object/{objectId}:
     get:
       summary: Returns the object
       description: >-
@@ -357,6 +357,7 @@ paths:
         - $ref: '#/components/parameters/Path-ObjectId'
         - $ref: '#/components/parameters/Query-Download'
         - $ref: '#/components/parameters/Query-ExpiresIn'
+        - $ref: '#/components/parameters/Query-VersionId'
         - $ref: '#/components/parameters/Query-S3VersionId'
       responses:
         '200':
@@ -404,6 +405,8 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
         default:
           $ref: '#/components/responses/Error'
     head:
@@ -414,6 +417,7 @@ paths:
         - Object
       parameters:
         - $ref: '#/components/parameters/Path-ObjectId'
+        - $ref: '#/components/parameters/Query-VersionId'
         - $ref: '#/components/parameters/Query-S3VersionId'
       responses:
         '204':
@@ -526,7 +530,8 @@ paths:
         - Object
       parameters:
         - $ref: '#/components/parameters/Path-ObjectId'
-        - $ref: '#/components/parameters/Query-S3VersionId-Delete'
+        - $ref: '#/components/parameters/Query-S3VersionId'
+        - $ref: '#/components/parameters/Query-VersionId'
       responses:
         '200':
           description: Object or version was deleted from object storage and COMS database
@@ -542,7 +547,7 @@ paths:
           $ref: '#/components/responses/Forbidden'
         default:
           $ref: '#/components/responses/Error'
-  /object/{objId}/version:
+  /object/{objectId}/version:
     get:
       summary: List versions for an object
       description: >-
@@ -568,7 +573,7 @@ paths:
           $ref: '#/components/responses/Forbidden'
         default:
           $ref: '#/components/responses/Error'
-  /object/{objId}/public:
+  /object/{objectId}/public:
     patch:
       summary: Sets the public flag of an object
       description: >-
@@ -593,7 +598,7 @@ paths:
           $ref: '#/components/responses/Forbidden'
         default:
           $ref: '#/components/responses/Error'
-  /object/{objId}/metadata:
+  /object/{objectId}/metadata:
     patch:
       summary: Adds metadata to an object
       description: >-
@@ -606,6 +611,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/Header-Metadata'
         - $ref: '#/components/parameters/Path-ObjectId'
+        - $ref: '#/components/parameters/Query-VersionId'
         - $ref: '#/components/parameters/Query-S3VersionId'
       responses:
         '204':
@@ -630,6 +636,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/Header-Metadata'
         - $ref: '#/components/parameters/Path-ObjectId'
+        - $ref: '#/components/parameters/Query-VersionId'
         - $ref: '#/components/parameters/Query-S3VersionId'
       responses:
         '204':
@@ -656,6 +663,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/Header-Metadata'
         - $ref: '#/components/parameters/Path-ObjectId'
+        - $ref: '#/components/parameters/Query-VersionId'
         - $ref: '#/components/parameters/Query-S3VersionId'
       responses:
         '204':
@@ -666,7 +674,7 @@ paths:
           $ref: '#/components/responses/Forbidden'
         default:
           $ref: '#/components/responses/Error'
-  /object/{objId}/tagging:
+  /object/{objectId}/tagging:
     patch:
       summary: Adds tags to an object
       description: >-
@@ -678,6 +686,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/Path-ObjectId'
         - $ref: '#/components/parameters/Query-TagSet'
+        - $ref: '#/components/parameters/Query-VersionId'
         - $ref: '#/components/parameters/Query-S3VersionId'
       responses:
         '204':
@@ -701,6 +710,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/Path-ObjectId'
         - $ref: '#/components/parameters/Query-TagSet'
+        - $ref: '#/components/parameters/Query-VersionId'
         - $ref: '#/components/parameters/Query-S3VersionId'
       responses:
         '204':
@@ -725,6 +735,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/Path-ObjectId'
         - $ref: '#/components/parameters/Query-TagSet'
+        - $ref: '#/components/parameters/Query-VersionId'
         - $ref: '#/components/parameters/Query-S3VersionId'
       responses:
         '204':
@@ -761,7 +772,7 @@ paths:
                     - objectId
                     - metadata
                   properties:
-                    versionId:
+                    objectId:
                       type: string
                       format: uuid
                       example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
@@ -798,7 +809,7 @@ paths:
                     - objectId
                     - tagset
                   properties:
-                    versionId:
+                    objectId:
                       type: string
                       format: uuid
                       example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
@@ -980,7 +991,7 @@ paths:
           $ref: '#/components/responses/Forbidden'
         default:
           $ref: '#/components/responses/Error'
-  /permission/object/{objId}:
+  /permission/object/{objectId}:
     get:
       summary: Returns the object permissions
       description: >-
@@ -1322,7 +1333,7 @@ components:
         example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
     Path-ObjectId:
       in: path
-      name: objId
+      name: objectId
       description: Uuid of an object
       required: true
       schema:
@@ -1434,7 +1445,7 @@ components:
         example: application/octet-stream
     Query-ObjectId:
       in: query
-      name: objId
+      name: objectId
       description: Uuid or array of uuids representing the object
       schema:
         oneOf:
@@ -1567,7 +1578,7 @@ components:
     Query-S3VersionId:
       in: query
       name: s3VersionId
-      description: Request a specified version
+      description: a specified version
       schema:
         type: string
         description: a version identifier created in S3
@@ -1575,20 +1586,12 @@ components:
     Query-VersionId:
       in: query
       name: versionId
-      description: Request a specified version
+      description: a specified version
       schema:
         type: string
         description: a version identifier in COMS database
         format: uuid
-        example: 00000000-0000-0000-0000-000000000000
-    Query-S3VersionId-Delete:
-      in: query
-      name: s3VersionId
-      description: delete a specified version
-      schema:
-        type: string
-        description: a version identifier created in S3
-        example: '1647462569641'
+        example: c05c7650-5f48-4e51-bf17-762e8fc121a1
   schemas:
     DB-Bucket:
       title: Bucket
