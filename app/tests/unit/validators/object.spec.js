@@ -39,11 +39,11 @@ describe('addMetadata', () => {
   describe('query', () => {
     const query = schema.addMetadata.query.describe();
 
-    describe('versionId', () => {
-      const versionId = query.keys.versionId;
+    describe('s3VersionId', () => {
+      const s3VersionId = query.keys.s3VersionId;
 
       it('is the expected schema', () => {
-        expect(versionId).toEqual(Joi.string().describe());
+        expect(s3VersionId).toEqual(Joi.string().describe());
       });
     });
   });
@@ -66,11 +66,11 @@ describe('addTags', () => {
   describe('query', () => {
     const query = schema.addTags.query.describe();
 
-    describe('versionId', () => {
-      const versionId = query.keys.versionId;
+    describe('s3VersionId', () => {
+      const s3VersionId = query.keys.s3VersionId;
 
       it('is the expected schema', () => {
-        expect(versionId).toEqual(Joi.string().describe());
+        expect(s3VersionId).toEqual(Joi.string().describe());
       });
     });
 
@@ -145,11 +145,11 @@ describe('deleteMetadata', () => {
   describe('query', () => {
     const query = schema.deleteMetadata.query.describe();
 
-    describe('versionId', () => {
-      const versionId = query.keys.versionId;
+    describe('s3VersionId', () => {
+      const s3VersionId = query.keys.s3VersionId;
 
       it('is the expected schema', () => {
-        expect(versionId).toEqual(Joi.string().describe());
+        expect(s3VersionId).toEqual(Joi.string().describe());
       });
     });
   });
@@ -172,11 +172,11 @@ describe('deleteObject', () => {
   describe('query', () => {
     const query = schema.deleteObject.query.describe();
 
-    describe('versionId', () => {
-      const versionId = query.keys.versionId;
+    describe('s3VersionId', () => {
+      const s3VersionId = query.keys.s3VersionId;
 
       it('is the expected schema', () => {
-        expect(versionId).toEqual(Joi.string().describe());
+        expect(s3VersionId).toEqual(Joi.string().describe());
       });
     });
   });
@@ -199,11 +199,11 @@ describe('deleteTags', () => {
   describe('query', () => {
     const query = schema.deleteTags.query.describe();
 
-    describe('versionId', () => {
-      const versionId = query.keys.versionId;
+    describe('s3VersionId', () => {
+      const s3VersionId = query.keys.s3VersionId;
 
       it('is the expected schema', () => {
-        expect(versionId).toEqual(Joi.string().describe());
+        expect(s3VersionId).toEqual(Joi.string().describe());
       });
     });
 
@@ -237,11 +237,11 @@ describe('headObject', () => {
   describe('query', () => {
     const query = schema.headObject.query.describe();
 
-    describe('versionId', () => {
-      const versionId = query.keys.versionId;
+    describe('s3VersionId', () => {
+      const s3VersionId = query.keys.s3VersionId;
 
       it('is the expected schema', () => {
-        expect(versionId).toEqual(Joi.string().describe());
+        expect(s3VersionId).toEqual(Joi.string().describe());
       });
     });
   });
@@ -279,11 +279,11 @@ describe('readObject', () => {
   describe('query', () => {
     const query = schema.readObject.query.describe();
 
-    describe('versionId', () => {
-      const versionId = query.keys.versionId;
+    describe('s3VersionId', () => {
+      const s3VersionId = query.keys.s3VersionId;
 
       it('is the expected schema', () => {
-        expect(versionId).toEqual(Joi.string().describe());
+        expect(s3VersionId).toEqual(Joi.string().describe());
       });
     });
 
@@ -333,11 +333,11 @@ describe('replaceMetadata', () => {
   describe('query', () => {
     const query = schema.replaceMetadata.query.describe();
 
-    describe('versionId', () => {
-      const versionId = query.keys.versionId;
+    describe('s3VersionId', () => {
+      const s3VersionId = query.keys.s3VersionId;
 
       it('is the expected schema', () => {
-        expect(versionId).toEqual(Joi.string().describe());
+        expect(s3VersionId).toEqual(Joi.string().describe());
       });
     });
   });
@@ -361,11 +361,11 @@ describe('replaceTags', () => {
   describe('query', () => {
     const query = schema.replaceTags.query.describe();
 
-    describe('versionId', () => {
-      const versionId = query.keys.versionId;
+    describe('s3VersionId', () => {
+      const s3VersionId = query.keys.s3VersionId;
 
       it('is the expected schema', () => {
-        expect(versionId).toEqual(Joi.string().describe());
+        expect(s3VersionId).toEqual(Joi.string().describe());
       });
     });
 

@@ -4,6 +4,12 @@ expect.extend(jestJoi.matchers);
 const { schema } = require('../../../src/validators/version');
 const { scheme, type } = require('../../../src/validators/common');
 
+jest.mock('config');
+
+beforeEach(() => {
+  jest.resetAllMocks();
+});
+
 describe('fetchMetadata', () => {
   describe('headers', () => {
     const headers = schema.fetchMetadata.headers.describe();
@@ -16,11 +22,11 @@ describe('fetchMetadata', () => {
   describe('query', () => {
     const query = schema.fetchMetadata.query.describe();
 
-    describe('versionId', () => {
-      const versionId = query.keys.versionId;
+    describe('s3VersionId', () => {
+      const s3VersionId = query.keys.s3VersionId;
 
       it('is the expected schema', () => {
-        expect(versionId).toEqual(scheme.guid.describe());
+        expect(s3VersionId).toEqual(scheme.string.describe());
       });
     });
   });
@@ -33,11 +39,11 @@ describe('fetchTags', () => {
 
     const query = schema.fetchTags.query.describe();
 
-    describe('versionId', () => {
-      const versionId = query.keys.versionId;
+    describe('s3VersionId', () => {
+      const s3VersionId = query.keys.s3VersionId;
 
       it('is the expected schema', () => {
-        expect(versionId).toEqual(scheme.guid.describe());
+        expect(s3VersionId).toEqual(scheme.string.describe());
       });
     });
 

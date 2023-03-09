@@ -21,10 +21,12 @@ const controller = {
   async fetchMetadata(req, res, next) {
     try {
       const versionIds = mixedQueryToArray(req.query.versionId);
+      const s3VersionIds = mixedQueryToArray(req.query.s3VersionId);
       const metadata = getMetadata(req.headers);
 
       const params = {
         versionIds: versionIds ? versionIds.map(id => addDashesToUuid(id)) : versionIds,
+        s3VersionIds: s3VersionIds ? s3VersionIds.map(id => id.toString()) : s3VersionIds,
         metadata: metadata && Object.keys(metadata).length ? metadata : undefined,
       };
       // if scoping to current user permissions on objects
@@ -49,10 +51,12 @@ const controller = {
   async fetchTags(req, res, next) {
     try {
       const versionIds = mixedQueryToArray(req.query.versionId);
+      const s3VersionIds = mixedQueryToArray(req.query.s3VersionId);
       const tagging = req.query.tagset;
 
       const params = {
         versionIds: versionIds ? versionIds.map(id => addDashesToUuid(id)) : versionIds,
+        s3VersionIds: s3VersionIds ? s3VersionIds.map(id => id.toString()) : s3VersionIds,
         tags: tagging && Object.keys(tagging).length ? tagging : undefined,
       };
       // if scoping to current user permissions on objects

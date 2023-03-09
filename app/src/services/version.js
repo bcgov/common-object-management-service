@@ -25,7 +25,7 @@ const service = {
       const sourceVersion = sourceVersionId ?
         await Version.query(trx)
           .where({
-            versionId: sourceVersionId,
+            s3VersionId: sourceVersionId,
             objectId: objectId
           })
           .first() :
@@ -42,7 +42,7 @@ const service = {
       const response = await Version.query(trx)
         .insert({
           id: uuidv4(),
-          versionId: newVersionId,
+          s3VersionId: newVersionId,
           objectId: objectId,
           mimeType: sourceVersion.mimeType,
           deleteMarker: sourceVersion.deleteMarker,
@@ -73,7 +73,7 @@ const service = {
       const response = await Version.query(trx)
         .insert({
           id: uuidv4(),
-          versionId: data.versionId,
+          s3VersionId: data.s3VersionId,
           mimeType: data.mimeType,
           objectId: data.id,
           createdBy: userId,
@@ -93,7 +93,7 @@ const service = {
    * @function delete
    * Delete a version record of an object
    * @param {string} objId The object uuid
-   * @param {string} versionId The version ID or null if deleting an object
+   * @param {string} s3VersionId The version ID or null if deleting an object
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<integer>} The number of remaining versions in db after the delete
    * @throws The error encountered upon db transaction failure
@@ -105,7 +105,7 @@ const service = {
       const response = await Version.query(trx)
         .delete()
         .where('objectId', objId)
-        .where('versionId', versionId)
+        .where('s3VersionId', versionId)
         // Returns array of deleted rows instead of count
         // https://vincit.github.io/objection.js/recipes/returning-tricks.html
         .returning('*')
@@ -121,24 +121,31 @@ const service = {
 
   /**
    * @function get
-   * Get a given version from the database
-   * @param {object[]} versionId S3 VersionId if null or undefined,
-   * get latest version (excluding delete-makers)
-   * @param {string} objectId id of the parent object
+   * Get a given version from the database.
+   * if s3VersionId and versionId are null or undefined, get latest version (excluding delete-makers)
+   * @param {object} options object containing s3VersionId, versionId, objectId
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<object>} the Version object from the database
    * @throws The error encountered upon db transaction failure
    */
-  get: async (versionId, objectId, etrx = undefined) => {
+  get: async ({ s3VersionId, versionId, objectId }, etrx = undefined) => {
     let trx;
     try {
       trx = etrx ? etrx : await Version.startTransaction();
 
       let response = undefined;
-      if (versionId) {
+      if (s3VersionId) {
         response = await Version.query(trx)
           .where({
-            versionId: versionId,
+            s3VersionId: s3VersionId,
+            objectId: objectId
+          })
+          .first();
+      }
+      else if (versionId) {
+        response = await Version.query(trx)
+          .where({
+            id: versionId,
             objectId: objectId
           })
           .first();
@@ -197,9 +204,9 @@ const service = {
     try {
       trx = etrx ? etrx : await Version.startTransaction();
       // update version record
-      const versionId = data.versionId ? data.versionId : null;
+      const s3VersionId = data.s3VersionId ? data.s3VersionId : null;
       const version = await Version.query(trx)
-        .where({ objectId: data.id, versionId: versionId })
+        .where({ objectId: data.id, s3VersionId: s3VersionId })
         .patch({
           objectId: data.id,
           updatedBy: userId,

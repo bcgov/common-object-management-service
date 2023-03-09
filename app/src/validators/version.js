@@ -1,21 +1,37 @@
 const { validate, Joi } = require('express-validation');
+const config = require('config');
+
 const { scheme, type } = require('./common');
 
 
 const schema = {
   fetchMetadata: {
     headers: type.metadata(),
-    query: Joi.object({
-      versionId: scheme.guid,
-    })
+    query: Joi.object((() => {
+      const query = {
+        s3VersionId: scheme.string
+      };
+      if (config.has('db.enabled')) {
+        query.versionId = scheme.guid;
+      }
+      return query;
+    })())
+      .nand('s3VersionId', 'versionId')
   },
 
   fetchTags: {
-    query: Joi.object({
-      versionId: scheme.guid,
-      tagset: type.tagset(),
-    })
-  },
+    query: Joi.object((() => {
+      const query = {
+        tagset: type.tagset(),
+        s3VersionId: scheme.string
+      };
+      if (config.has('db.enabled')) {
+        query.versionId = scheme.guid;
+      }
+      return query;
+    })())
+      .nand('s3VersionId', 'versionId')
+  }
 };
 
 const validator = {

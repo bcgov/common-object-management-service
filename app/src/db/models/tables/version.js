@@ -57,6 +57,9 @@ class Version extends Timestamps(Model) {
       filterId(query, value) {
         filterOneOrMany(query, value, 'version.id');
       },
+      filterS3VersionId(query, value) {
+        filterOneOrMany(query, value, 'version.s3VersionId');
+      },
       filterObjectId(query, value) {
         filterOneOrMany(query, value, 'objectId');
       },
@@ -72,7 +75,7 @@ class Version extends Timestamps(Model) {
       required: ['objectId'],
       properties: {
         id: { type: 'string', minLength: 1, maxLength: 255 },
-        versionId: { type: ['string', 'null'], maxLength: 1024 },
+        s3VersionId: { type: ['string', 'null'], maxLength: 1024 },
         objectId:{ type: 'string', minLength: 1, maxLength: 255 },
         mimeType: { type: 'string', maxLength: 255 },
         deleteMarker: { type: 'boolean' },

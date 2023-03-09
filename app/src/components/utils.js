@@ -81,7 +81,7 @@ const utils = {
         data.secretAccessKey = bucketData.secretAccessKey;
         if (bucketData.region) data.region = bucketData.region;
       } catch (err) {
-        log.warn(err.message, { function: 'getBucket'});
+        log.warn(err.message, { function: 'getBucket' });
         if (throwable) throw new Problem(404, { details: err.message });
       }
     }
@@ -192,6 +192,29 @@ const utils = {
     }
 
     return utils.joinPath(key, objId);
+  },
+
+  /**
+   * @function getS3VersionId
+   * Gets the s3VersionId from database using given internal COMS version id
+   * or returns given s3VersionId
+   * @param {string} s3VersionId S3 Version id
+   * @param {string} versionId A COMS version id
+   * @param {string} objectId The related COMS object id
+   * @returns {Promise<string | undefined>} s3 Version id as string type or undefined
+   */
+  async getS3VersionId(s3VersionId, versionId, objectId){
+    let result = undefined;
+    if (s3VersionId) {
+      result = s3VersionId.toString();
+    } else if (config.has('db.enabled') && versionId) {
+      const { versionService } = require('../services');
+      const version = await versionService.get({ versionId: versionId, s3VersionId: undefined, objectId: objectId });
+      if (version.s3VersionId) {
+        result = version.s3VersionId;
+      }
+    }
+    return result;
   },
 
   /**
@@ -320,6 +343,19 @@ const utils = {
       claims.push(...utils.parseCSV(config.get('keycloak.identityKey')));
     }
     return claims.concat('sub');
+  },
+
+  /**
+ * @function renameObjectProperty
+ * Rename a property in given object
+ * @param {object} obj The object with a property you are changing
+ * @param {string} oldKey The property to rename
+ * @param {string} newKey The new name for the property
+ * @returns {object} the given object with property renamed
+ */
+  renameObjectProperty(obj, oldKey, newKey) {
+    delete Object.assign(obj, { [newKey]: obj[oldKey] })[oldKey];
+    return obj;
   },
 
   /**

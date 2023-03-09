@@ -291,6 +291,13 @@ paths:
                           description: The object MIME Type
                           example: text/plain
                     - $ref: '#/components/schemas/DB-Object'
+                    - type: object
+                      properties:
+                        versionId:
+                          type: string
+                          description: The primary identifier for this version in the COMS database
+                          format: uuid
+                          example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
                     - $ref: '#/components/schemas/DB-Metadata'
                     - $ref: '#/components/schemas/DB-Tags'
                     - $ref: '#/components/schemas/S3-Object'
@@ -490,6 +497,13 @@ paths:
                           in the multi-part form-data post
                         example: file1
                   - $ref: '#/components/schemas/DB-Object'
+                  - type: object
+                    properties:
+                      versionId:
+                        type: string
+                        description: The primary identifier for this version in the COMS database
+                        format: uuid
+                        example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
                   - $ref: '#/components/schemas/DB-Metadata'
                   - $ref: '#/components/schemas/DB-Tags'
                   - $ref: '#/components/schemas/S3-Object'
@@ -512,7 +526,7 @@ paths:
         - Object
       parameters:
         - $ref: '#/components/parameters/Path-ObjectId'
-        - $ref: '#/components/parameters/Query-VersionId-Delete'
+        - $ref: '#/components/parameters/Query-S3VersionId-Delete'
       responses:
         '200':
           description: Object or version was deleted from object storage and COMS database
@@ -1552,7 +1566,7 @@ components:
         example: bobsmith
     Query-S3VersionId:
       in: query
-      name: versionId
+      name: s3VersionId
       description: Request a specified version
       schema:
         type: string
@@ -1567,9 +1581,9 @@ components:
         description: a version identifier in COMS database
         format: uuid
         example: 00000000-0000-0000-0000-000000000000
-    Query-VersionId-Delete:
+    Query-S3VersionId-Delete:
       in: query
-      name: versionId
+      name: s3VersionId
       description: delete a specified version
       schema:
         type: string
@@ -1867,7 +1881,7 @@ components:
         - type: object
           required:
             - id
-            - versionId
+            - s3VersionId
             - objectId
             - mimeType
             - deleteMarker
@@ -1877,7 +1891,7 @@ components:
               description: The primary identifier for this version
               format: uuid
               example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
-            versionId:
+            s3VersionId:
               type: string
               description: a version identifier created in S3
               example: '1647462569641'
@@ -2067,7 +2081,7 @@ components:
         DeleteMarker:
           type: boolean
           example: true
-        VersionId:
+        s3VersionId:
           type: integer
           format: int32
           description: a version identifier created in S3
@@ -2185,7 +2199,7 @@ components:
       properties:
         $metadata:
           $ref: '#/components/schemas/S3-Metadata'
-        VersionId:
+        s3VersionId:
           type: string
           description: a version identifier created in S3
           example: 1647462569641
@@ -2243,7 +2257,7 @@ components:
             specifies the server-side encryption algorithm used when storing
             this object in Amazon S3 (for example, AES256, aws:kms).
           example: AES256
-        VersionId:
+        s3VersionId:
           type: string
           description: a version identifier created in S3
           example: 1647462569641
@@ -2253,7 +2267,7 @@ components:
         - ETag
         - Size
         - StorageClass
-        - VersionId
+        - s3VersionId
         - IsLatest
         - LastModified
       properties:
@@ -2272,7 +2286,7 @@ components:
           example: STANDARD
         key:
           description: Key of the object
-        VersionId:
+        s3VersionId:
           type: string
           description: a version identifier created in S3
           example: 1647462569641
