@@ -96,8 +96,9 @@ exports.up = function (knex) {
 
 exports.down = function (knex) {
   return Promise.resolve()
-
-    // additional DB update: change user.identityId field back to data type `uuid`
+    // additional DB update: change user.identityId field back
+    // NOTE: Destructive change - removes all data in identityId column
+    .then(() => knex('user').update({ identityId: null }))
     .then(() => knex.schema.alterTable('user', table => {
       table.uuid('identityId').alter();
     }))
