@@ -24,8 +24,6 @@ const controller = {
       const s3VersionIds = mixedQueryToArray(req.query.s3VersionId);
       const metadata = getMetadata(req.headers);
 
-      // if s3VersionId's passed
-
       const params = {
         versionIds: versionIds ? versionIds.map(id => addDashesToUuid(id)) : versionIds,
         s3VersionIds: s3VersionIds ? s3VersionIds.map(id => id.toString()) : s3VersionIds,

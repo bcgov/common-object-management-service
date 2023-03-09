@@ -283,13 +283,8 @@ const service = {
           .modify('filterKeyValue', { tag: params.tags });
       })
       .modify((query) => {
-        if (params.s3VersionIds) {
-          query
-            .modify('filterS3VersionId', params.s3VersionIds);
-        } else {
-          query
-            .modify('filterId', params.versionIds);
-        }
+        if (params.s3VersionIds) query.modify('filterS3VersionId', params.s3VersionIds);
+        else query.modify('filterId', params.versionIds);
       })
       // filter by objects that user(s) has READ permission at object or bucket-level
       .modify((query) => {

@@ -201,20 +201,17 @@ const utils = {
    * @param {string} s3VersionId S3 Version id
    * @param {string} versionId A COMS version id
    * @param {string} objectId The related COMS object id
-   * @returns {Promise<string>} s3 Version id as string type or undefined
+   * @returns {Promise<string | undefined>} s3 Version id as string type or undefined
    */
   async getS3VersionId(s3VersionId, versionId, objectId){
     let result = undefined;
     if (s3VersionId) {
       result = s3VersionId.toString();
-    }
-    else if (config.has('db.enabled') && versionId) {
+    } else if (config.has('db.enabled') && versionId) {
       const { versionService } = require('../services');
       const version = await versionService.get({ versionId: versionId, s3VersionId: undefined, objectId: objectId });
       if (version.s3VersionId) {
         result = version.s3VersionId;
-      } else {
-        throw new Error('Version not found matching given versionId');
       }
     }
     return result;
@@ -352,19 +349,12 @@ const utils = {
  * @function renameObjectProperty
  * Rename a property in given object
  * @param {object} obj The object with a property you are changing
- * @param {string} oldName The property to rename
- * @param {string} newName The new name for the property
+ * @param {string} oldKey The property to rename
+ * @param {string} newKey The new name for the property
  * @returns {object} the given object with property renamed
  */
-  renameObjectProperty(obj, oldName, newName) {
-    // if oldName property exists
-    if (obj[oldName] &&
-        // and property newName is different
-        (oldName !== newName)) {
-      Object.defineProperty(obj, newName,
-        Object.getOwnPropertyDescriptor(obj, oldName));
-      delete obj[oldName];
-    }
+  renameObjectProperty(obj, oldKey, newKey) {
+    delete Object.assign(obj, { [newKey]: obj[oldKey] })[oldKey];
     return obj;
   },
 
