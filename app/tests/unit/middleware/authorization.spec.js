@@ -49,23 +49,23 @@ describe('_checkPermission', () => {
 
   it.each([
     [false, Permissions.READ, {}, [], []],
-    [false, Permissions.READ, { objId: SYSTEM_USER }, [], []],
-    [false, Permissions.READ, { objId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], []],
-    [true, Permissions.READ, { objId: SYSTEM_USER }, [{ permCode: Permissions.READ }], []],
-    [true, Permissions.READ, { objId: SYSTEM_USER }, [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }], []],
+    [false, Permissions.READ, { objectId: SYSTEM_USER }, [], []],
+    [false, Permissions.READ, { objectId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], []],
+    [true, Permissions.READ, { objectId: SYSTEM_USER }, [{ permCode: Permissions.READ }], []],
+    [true, Permissions.READ, { objectId: SYSTEM_USER }, [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }], []],
     [false, Permissions.READ, { bucketId: SYSTEM_USER }, [], []],
     [false, Permissions.READ, { bucketId: SYSTEM_USER }, [], [{ permCode: Permissions.UPDATE }]],
     [true, Permissions.READ, { bucketId: SYSTEM_USER }, [], [{ permCode: Permissions.READ }]],
     [true, Permissions.READ, { bucketId: SYSTEM_USER }, [], [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }]],
-    [false, Permissions.READ, { bucketId: SYSTEM_USER, objId: SYSTEM_USER }, [], []],
-    [false, Permissions.READ, { bucketId: SYSTEM_USER, objId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], []],
-    [true, Permissions.READ, { bucketId: SYSTEM_USER, objId: SYSTEM_USER }, [{ permCode: Permissions.READ }], []],
-    [true, Permissions.READ, { bucketId: SYSTEM_USER, objId: SYSTEM_USER }, [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }], []],
-    [false, Permissions.READ, { bucketId: SYSTEM_USER, objId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], [{ permCode: Permissions.UPDATE }]],
-    [true, Permissions.READ, { bucketId: SYSTEM_USER, objId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], [{ permCode: Permissions.READ }]],
-    [true, Permissions.READ, { bucketId: SYSTEM_USER, objId: SYSTEM_USER }, [{ permCode: Permissions.READ }], [{ permCode: Permissions.UPDATE }]],
-    [true, Permissions.READ, { bucketId: SYSTEM_USER, objId: SYSTEM_USER }, [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }], [{ permCode: Permissions.UPDATE }]],
-    [true, Permissions.READ, { bucketId: SYSTEM_USER, objId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }]],
+    [false, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [], []],
+    [false, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], []],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [{ permCode: Permissions.READ }], []],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }], []],
+    [false, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], [{ permCode: Permissions.UPDATE }]],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], [{ permCode: Permissions.READ }]],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [{ permCode: Permissions.READ }], [{ permCode: Permissions.UPDATE }]],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }], [{ permCode: Permissions.UPDATE }]],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }]],
   ])('should return %s given a bucketless object, permission %s, params %j, objPerms %j and bucketPerms %j', async (expected, permission, params, objPerms, bucketPerms) => {
     const req = {
       currentObject: {},
@@ -85,28 +85,28 @@ describe('_checkPermission', () => {
     expect(getCurrentUserIdSpy).toHaveBeenCalledTimes(1);
     expect(getCurrentUserIdSpy).toHaveBeenCalledWith(SYSTEM_USER);
     expect(bucketSearchPermissionsSpy).toHaveBeenCalledTimes(params.bucketId ? 1 : 0);
-    expect(objSearchPermissionsSpy).toHaveBeenCalledTimes(params.objId ? 1 : 0);
+    expect(objSearchPermissionsSpy).toHaveBeenCalledTimes(params.objectId ? 1 : 0);
   });
 
   it.each([
     [false, Permissions.READ, {}, [], []],
-    [false, Permissions.READ, { objId: SYSTEM_USER }, [], []],
-    [false, Permissions.READ, { objId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], []],
-    [true, Permissions.READ, { objId: SYSTEM_USER }, [{ permCode: Permissions.READ }], []],
-    [true, Permissions.READ, { objId: SYSTEM_USER }, [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }], []],
+    [false, Permissions.READ, { objectId: SYSTEM_USER }, [], []],
+    [false, Permissions.READ, { objectId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], []],
+    [true, Permissions.READ, { objectId: SYSTEM_USER }, [{ permCode: Permissions.READ }], []],
+    [true, Permissions.READ, { objectId: SYSTEM_USER }, [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }], []],
     [false, Permissions.READ, { bucketId: SYSTEM_USER }, [], []],
     [false, Permissions.READ, { bucketId: SYSTEM_USER }, [], [{ permCode: Permissions.UPDATE }]],
     [true, Permissions.READ, { bucketId: SYSTEM_USER }, [], [{ permCode: Permissions.READ }]],
     [true, Permissions.READ, { bucketId: SYSTEM_USER }, [], [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }]],
-    [false, Permissions.READ, { bucketId: SYSTEM_USER, objId: SYSTEM_USER }, [], []],
-    [false, Permissions.READ, { bucketId: SYSTEM_USER, objId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], []],
-    [true, Permissions.READ, { bucketId: SYSTEM_USER, objId: SYSTEM_USER }, [{ permCode: Permissions.READ }], []],
-    [true, Permissions.READ, { bucketId: SYSTEM_USER, objId: SYSTEM_USER }, [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }], []],
-    [false, Permissions.READ, { bucketId: SYSTEM_USER, objId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], [{ permCode: Permissions.UPDATE }]],
-    [true, Permissions.READ, { bucketId: SYSTEM_USER, objId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], [{ permCode: Permissions.READ }]],
-    [true, Permissions.READ, { bucketId: SYSTEM_USER, objId: SYSTEM_USER }, [{ permCode: Permissions.READ }], [{ permCode: Permissions.UPDATE }]],
-    [true, Permissions.READ, { bucketId: SYSTEM_USER, objId: SYSTEM_USER }, [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }], [{ permCode: Permissions.UPDATE }]],
-    [true, Permissions.READ, { bucketId: SYSTEM_USER, objId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }]],
+    [false, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [], []],
+    [false, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], []],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [{ permCode: Permissions.READ }], []],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }], []],
+    [false, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], [{ permCode: Permissions.UPDATE }]],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], [{ permCode: Permissions.READ }]],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [{ permCode: Permissions.READ }], [{ permCode: Permissions.UPDATE }]],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }], [{ permCode: Permissions.UPDATE }]],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }]],
   ])('should return %s given a bucketed object, permission %s, params %j, objPerms %j and bucketPerms %j', async (expected, permission, params, objPerms, bucketPerms) => {
     const req = {
       currentObject: { bucketId: SYSTEM_USER },
@@ -126,7 +126,7 @@ describe('_checkPermission', () => {
     expect(getCurrentUserIdSpy).toHaveBeenCalledTimes(1);
     expect(getCurrentUserIdSpy).toHaveBeenCalledWith(SYSTEM_USER);
     expect(bucketSearchPermissionsSpy).toHaveBeenCalledTimes(1);
-    expect(objSearchPermissionsSpy).toHaveBeenCalledTimes(params.objId ? 1 : 0);
+    expect(objSearchPermissionsSpy).toHaveBeenCalledTimes(params.objectId ? 1 : 0);
   });
 });
 
@@ -191,8 +191,8 @@ describe('currentObject', () => {
   it.each([
     [undefined],
     ['']
-  ])('does not inject any current object to request with objId %o', (objId) => {
-    req.params = { objId: objId };
+  ])('does not inject any current object to request with objectId %o', (objectId) => {
+    req.params = { objectId: objectId };
 
     mw.currentObject(req, res, next);
 
@@ -205,8 +205,8 @@ describe('currentObject', () => {
   });
 
   it('does not inject any current object if an exception happens', () => {
-    const objId = '1234';
-    req.params = { objId: objId };
+    const objectId = '1234';
+    req.params = { objectId: objectId };
     objectReadSpy.mockImplementation(() => { throw new Error('test'); });
     // storageListObjectVersionSpy.mockResolvedValue({});
 
@@ -214,7 +214,7 @@ describe('currentObject', () => {
 
     expect(req.currentObject).toBeUndefined();
     expect(objectReadSpy).toHaveBeenCalledTimes(1);
-    expect(objectReadSpy).toHaveBeenCalledWith(objId);
+    expect(objectReadSpy).toHaveBeenCalledWith(objectId);
     // expect(storageListObjectVersionSpy).toHaveBeenCalledTimes(0);
     expect(utils.getPath).toHaveBeenCalledTimes(0);
     expect(next).toHaveBeenCalledTimes(1);
@@ -222,13 +222,13 @@ describe('currentObject', () => {
   });
 
   it('injects the current object based on the service results', async () => {
-    const objId = '1234';
+    const objectId = '1234';
     const testRecord = { a: 1 };
     // const testStorage = { b: 2 };
-    req.params = { objId: objId };
+    req.params = { objectId: objectId };
     objectReadSpy.mockResolvedValue(testRecord);
     // storageListObjectVersionSpy.mockResolvedValue(testStorage);
-    // utils.getPath.mockReturnValue(`/path/${objId}`);
+    // utils.getPath.mockReturnValue(`/path/${objectId}`);
 
     await mw.currentObject(req, res, next);
 
@@ -236,13 +236,13 @@ describe('currentObject', () => {
     expect(req.currentObject).toEqual(expect.objectContaining(testRecord));
     // expect(req.currentObject).toEqual(expect.objectContaining(testStorage));
     expect(objectReadSpy).toHaveBeenCalledTimes(1);
-    expect(objectReadSpy).toHaveBeenCalledWith(objId);
+    expect(objectReadSpy).toHaveBeenCalledWith(objectId);
     // expect(storageListObjectVersionSpy).toHaveBeenCalledTimes(1);
     // expect(storageListObjectVersionSpy).toHaveBeenCalledWith({
-    //   filePath: expect.stringMatching(`/path/${objId}`)
+    //   filePath: expect.stringMatching(`/path/${objectId}`)
     // });
     // expect(utils.getPath).toHaveBeenCalledTimes(1);
-    // expect(utils.getPath).toHaveBeenCalledWith(objId);
+    // expect(utils.getPath).toHaveBeenCalledWith(objectId);
     expect(next).toHaveBeenCalledTimes(1);
     expect(next).toHaveBeenCalledWith();
   });
@@ -334,8 +334,8 @@ describe('hasPermission', () => {
     it.each([
       [{}],
       [{ bucketId: SYSTEM_USER }],
-      [{ objId: SYSTEM_USER }],
-      [{ bucketId: SYSTEM_USER, objId: SYSTEM_USER }]
+      [{ objectId: SYSTEM_USER }],
+      [{ bucketId: SYSTEM_USER, objectId: SYSTEM_USER }]
     ])('should call next 0 times with params %j', async (params) => {
       req.params = params;
       getAppAuthModeSpy.mockReturnValue(AuthMode.FULLAUTH);
@@ -357,7 +357,7 @@ describe('hasPermission', () => {
     beforeEach(() => {
       req.currentObject = {};
       req.currentUser = {};
-      req.params = { objId: SYSTEM_USER };
+      req.params = { objectId: SYSTEM_USER };
     });
 
     it.each([
@@ -439,7 +439,7 @@ describe('hasPermission', () => {
       config.has.mockReturnValueOnce(true); // db.enabled
       req.currentObject.public = false;
       req.currentUser.authType = type;
-      req.params.objId = SYSTEM_USER;
+      req.params.objectId = SYSTEM_USER;
 
       const result = mw.hasPermission(Permissions.READ);
       expect(result).toBeInstanceOf(Function);

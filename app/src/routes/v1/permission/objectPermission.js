@@ -15,17 +15,17 @@ router.get('/', objectPermissionValidator.searchPermissions, (req, res, next) =>
 });
 
 /** Returns the object permissions */
-router.get('/:objId', objectPermissionValidator.listPermissions, requireSomeAuth, currentObject, hasPermission(Permissions.MANAGE), (req, res, next) => {
+router.get('/:objectId', objectPermissionValidator.listPermissions, requireSomeAuth, currentObject, hasPermission(Permissions.MANAGE), (req, res, next) => {
   objectPermissionController.listPermissions(req, res, next);
 });
 
 /** Grants object permissions to users */
-router.put('/:objId', objectPermissionValidator.addPermissions, requireSomeAuth, currentObject, hasPermission(Permissions.MANAGE), (req, res, next) => {
+router.put('/:objectId', objectPermissionValidator.addPermissions, requireSomeAuth, currentObject, hasPermission(Permissions.MANAGE), (req, res, next) => {
   objectPermissionController.addPermissions(req, res, next);
 });
 
 /** Deletes object permissions for a user */
-router.delete('/:objId', objectPermissionValidator.removePermissions, requireSomeAuth, currentObject, hasPermission(Permissions.MANAGE), (req, res, next) => {
+router.delete('/:objectId', objectPermissionValidator.removePermissions, requireSomeAuth, currentObject, hasPermission(Permissions.MANAGE), (req, res, next) => {
   objectPermissionController.removePermissions(req, res, next);
 });
 

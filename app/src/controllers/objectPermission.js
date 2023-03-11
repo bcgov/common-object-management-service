@@ -21,7 +21,7 @@ const controller = {
   async searchPermissions(req, res, next) {
     try {
       const bucketIds = utils.mixedQueryToArray(req.query.bucketId);
-      const objIds = utils.mixedQueryToArray(req.query.objId);
+      const objIds = utils.mixedQueryToArray(req.query.objectId);
       const permCodes = utils.mixedQueryToArray(req.query.permCode);
       const userIds = utils.mixedQueryToArray(req.query.userId);
       const result = await objectPermissionService.searchPermissions({
@@ -62,7 +62,7 @@ const controller = {
     try {
       const userIds = utils.mixedQueryToArray(req.query.userId);
       const response = await objectPermissionService.searchPermissions({
-        objId: utils.addDashesToUuid(req.params.objId),
+        objId: utils.addDashesToUuid(req.params.objectId),
         userId: userIds ? userIds.map(id => utils.addDashesToUuid(id)) : userIds,
         permCode: utils.mixedQueryToArray(req.query.permCode)
       });
@@ -83,7 +83,7 @@ const controller = {
   async addPermissions(req, res, next) {
     try {
       const userId = await userService.getCurrentUserId(utils.getCurrentIdentity(req.currentUser, SYSTEM_USER));
-      const response = await objectPermissionService.addPermissions(utils.addDashesToUuid(req.params.objId), req.body, userId);
+      const response = await objectPermissionService.addPermissions(utils.addDashesToUuid(req.params.objectId), req.body, userId);
       res.status(201).json(response);
     } catch (e) {
       next(errorToProblem(SERVICE, e));
@@ -103,7 +103,7 @@ const controller = {
       const userArray = utils.mixedQueryToArray(req.query.userId);
       const userIds = userArray ? userArray.map(id => utils.addDashesToUuid(id)) : userArray;
       const permissions = utils.mixedQueryToArray(req.query.permCode);
-      const response = await objectPermissionService.removePermissions(req.params.objId, userIds, permissions);
+      const response = await objectPermissionService.removePermissions(req.params.objectId, userIds, permissions);
       res.status(200).json(response);
     } catch (e) {
       next(errorToProblem(SERVICE, e));

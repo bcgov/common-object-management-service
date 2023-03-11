@@ -27,11 +27,11 @@ describe('addMetadata', () => {
   describe('params', () => {
     const params = schema.addMetadata.params.describe();
 
-    describe('objId', () => {
-      const objId = params.keys.objId;
+    describe('objectId', () => {
+      const objectId = params.keys.objectId;
 
       it('is the expected schema', () => {
-        expect(objId).toEqual(type.uuidv4.describe());
+        expect(objectId).toEqual(type.uuidv4.describe());
       });
     });
   });
@@ -54,11 +54,11 @@ describe('addTags', () => {
   describe('params', () => {
     const params = schema.addTags.params.describe();
 
-    describe('objId', () => {
-      const objId = params.keys.objId;
+    describe('objectId', () => {
+      const objectId = params.keys.objectId;
 
       it('is the expected schema', () => {
-        expect(objId).toEqual(type.uuidv4.describe());
+        expect(objectId).toEqual(type.uuidv4.describe());
       });
     });
   });
@@ -133,11 +133,11 @@ describe('deleteMetadata', () => {
   describe('params', () => {
     const params = schema.deleteMetadata.params.describe();
 
-    describe('objId', () => {
-      const objId = params.keys.objId;
+    describe('objectId', () => {
+      const objectId = params.keys.objectId;
 
       it('is the expected schema', () => {
-        expect(objId).toEqual(type.uuidv4.describe());
+        expect(objectId).toEqual(type.uuidv4.describe());
       });
     });
   });
@@ -160,11 +160,11 @@ describe('deleteObject', () => {
   describe('params', () => {
     const params = schema.deleteObject.params.describe();
 
-    describe('objId', () => {
-      const objId = params.keys.objId;
+    describe('objectId', () => {
+      const objectId = params.keys.objectId;
 
       it('is the expected schema', () => {
-        expect(objId).toEqual(type.uuidv4.describe());
+        expect(objectId).toEqual(type.uuidv4.describe());
       });
     });
   });
@@ -187,11 +187,11 @@ describe('deleteTags', () => {
   describe('params', () => {
     const params = schema.deleteTags.params.describe();
 
-    describe('objId', () => {
-      const objId = params.keys.objId;
+    describe('objectId', () => {
+      const objectId = params.keys.objectId;
 
       it('is the expected schema', () => {
-        expect(objId).toEqual(type.uuidv4.describe());
+        expect(objectId).toEqual(type.uuidv4.describe());
       });
     });
   });
@@ -222,11 +222,11 @@ describe('headObject', () => {
   describe('params', () => {
     const params = schema.headObject.params.describe();
 
-    describe('objId', () => {
-      const objId = params.keys.objId;
+    describe('objectId', () => {
+      const objectId = params.keys.objectId;
 
       it('is the expected schema', () => {
-        expect(objId).toEqual({
+        expect(objectId).toEqual({
           flags: { presence: 'required' },
           ...type.uuidv4.describe()
         });
@@ -252,11 +252,11 @@ describe('listObjectVersion', () => {
   describe('params', () => {
     const params = schema.listObjectVersion.params.describe();
 
-    describe('objId', () => {
-      const objId = params.keys.objId;
+    describe('objectId', () => {
+      const objectId = params.keys.objectId;
 
       it('is the expected schema', () => {
-        expect(objId).toEqual(type.uuidv4.describe());
+        expect(objectId).toEqual(type.uuidv4.describe());
       });
     });
   });
@@ -267,11 +267,11 @@ describe('readObject', () => {
   describe('params', () => {
     const params = schema.readObject.params.describe();
 
-    describe('objId', () => {
-      const objId = params.keys.objId;
+    describe('objectId', () => {
+      const objectId = params.keys.objectId;
 
       it('is the expected schema', () => {
-        expect(objId).toEqual(type.uuidv4.describe());
+        expect(objectId).toEqual(type.uuidv4.describe());
       });
     });
   });
@@ -321,11 +321,11 @@ describe('replaceMetadata', () => {
   describe('params', () => {
     const params = schema.replaceMetadata.params.describe();
 
-    describe('objId', () => {
-      const objId = params.keys.objId;
+    describe('objectId', () => {
+      const objectId = params.keys.objectId;
 
       it('is the expected schema', () => {
-        expect(objId).toEqual(type.uuidv4.describe());
+        expect(objectId).toEqual(type.uuidv4.describe());
       });
     });
   });
@@ -349,11 +349,11 @@ describe('replaceTags', () => {
   describe('params', () => {
     const params = schema.replaceTags.params.describe();
 
-    describe('objId', () => {
-      const objId = params.keys.objId;
+    describe('objectId', () => {
+      const objectId = params.keys.objectId;
 
       it('is the expected schema', () => {
-        expect(objId).toEqual(type.uuidv4.describe());
+        expect(objectId).toEqual(type.uuidv4.describe());
       });
     });
   });
@@ -426,11 +426,11 @@ describe('searchObjects', () => {
   describe('query', () => {
     const query = schema.searchObjects.query.describe();
 
-    describe('objId', () => {
-      const objId = query.keys.objId;
+    describe('objectId', () => {
+      const objectId = query.keys.objectId;
 
       it('is the expected schema', () => {
-        expect(objId).toEqual(scheme.guid.describe());
+        expect(objectId).toEqual(scheme.guid.describe());
       });
     });
 
@@ -535,11 +535,11 @@ describe('togglePublic', () => {
   describe('params', () => {
     const params = schema.togglePublic.params.describe();
 
-    describe('objId', () => {
-      const objId = params.keys.objId;
+    describe('objectId', () => {
+      const objectId = params.keys.objectId;
 
       it('is the expected schema', () => {
-        expect(objId).toEqual(type.uuidv4.describe());
+        expect(objectId).toEqual(type.uuidv4.describe());
       });
     });
   });
@@ -571,11 +571,11 @@ describe('updateObject', () => {
   describe('params', () => {
     const params = schema.updateObject.params.describe();
 
-    describe('objId', () => {
-      const objId = params.keys.objId;
+    describe('objectId', () => {
+      const objectId = params.keys.objectId;
 
       it('is the expected schema', () => {
-        expect(objId).toEqual(type.uuidv4.describe());
+        expect(objectId).toEqual(type.uuidv4.describe());
       });
     });
   });

@@ -59,7 +59,7 @@ describe('addMetadata', () => {
     // request object
     const req = {
       headers: {},
-      params: { objId: 'xyz-789' },
+      params: { objectId: 'xyz-789' },
       query: {}
     };
 
@@ -74,7 +74,7 @@ describe('addMetadata', () => {
     // request object
     const req = {
       headers: { 'x-amz-meta-baz': 'quz' },
-      params: { objId: 'xyz-789' },
+      params: { objectId: 'xyz-789' },
       query: {}
     };
 
@@ -119,7 +119,7 @@ describe('addTags', () => {
 
     // request object
     const req = {
-      params: { objId: 'xyz-789' },
+      params: { objectId: 'xyz-789' },
       query: {}
     };
 
@@ -134,7 +134,7 @@ describe('addTags', () => {
 
     // request object
     const req = {
-      params: { objId: 'xyz-789' },
+      params: { objectId: 'xyz-789' },
       query: {
         tagset: { a: '1', b: '2', c: '3', d: '4', e: '5', f: '6', g: '7', h: '8', i: '9', j: '10', k: '11' }
       }
@@ -151,7 +151,7 @@ describe('addTags', () => {
 
     // request object
     const req = {
-      params: { objId: 'xyz-789' },
+      params: { objectId: 'xyz-789' },
       query: {
         tagset: { foo: 'bar', baz: 'bam' }
       }
@@ -181,7 +181,7 @@ describe('addTags', () => {
 
     // request object
     const req = {
-      params: { objId: 'xyz-789' },
+      params: { objectId: 'xyz-789' },
       query: {
         tagset: { foo: 'bar', baz: 'bam' }
       }
@@ -234,7 +234,7 @@ describe('deleteMetadata', () => {
     // request object
     const req = {
       headers: { 'x-amz-meta-foo': 'bar' },
-      params: { objId: 'xyz-789' },
+      params: { objectId: 'xyz-789' },
       query: {}
     };
 
@@ -261,7 +261,7 @@ describe('deleteMetadata', () => {
     // request object
     const req = {
       headers: {},
-      params: { objId: 'xyz-789' },
+      params: { objectId: 'xyz-789' },
       query: {}
     };
 
@@ -295,7 +295,7 @@ describe('deleteObject', () => {
 
   // request object
   const req = {
-    params: { objId: 'xyz-789' }
+    params: { objectId: 'xyz-789' }
   };
   const next = jest.fn();
 
@@ -398,7 +398,7 @@ describe('deleteTags', () => {
 
     // request object
     const req = {
-      params: { objId: 'xyz-789' },
+      params: { objectId: 'xyz-789' },
       query: { foo: 'bar', baz: 'bam' }
     };
 
@@ -427,7 +427,7 @@ describe('deleteTags', () => {
 
     // request object
     const req = {
-      params: { objId: 'xyz-789' },
+      params: { objectId: 'xyz-789' },
       query: {
         tagset: { foo: '', baz: '' }
       }
@@ -456,7 +456,7 @@ describe('listObjectVersions', () => {
   const next = jest.fn();
   // mock request parameters
   const req = {
-    params: { objId: 'abc' },
+    params: { objectId: 'abc' },
   };
 
   it('should call version Service list', async () => {
@@ -498,7 +498,7 @@ describe('replaceMetadata', () => {
     // request object
     const req = {
       headers: { 'x-amz-meta-baz': 'quz' },
-      params: { objId: 'xyz-789' },
+      params: { objectId: 'xyz-789' },
       query: {}
     };
 
@@ -525,7 +525,7 @@ describe('replaceMetadata', () => {
     // request object
     const req = {
       headers: { 'x-amz-meta-name': 'newName', 'x-amz-meta-baz': 'quz' },
-      params: { objId: 'xyz-789' },
+      params: { objectId: 'xyz-789' },
       query: {}
     };
 
@@ -562,7 +562,7 @@ describe('replaceTags', () => {
 
     // request object
     const req = {
-      params: { objId: 'xyz-789' },
+      params: { objectId: 'xyz-789' },
       query: {}
     };
 
@@ -577,7 +577,7 @@ describe('replaceTags', () => {
 
     // request object
     const req = {
-      params: { objId: 'xyz-789' },
+      params: { objectId: 'xyz-789' },
       query: { a: '1', b: '2', c: '3', d: '4', e: '5', f: '6', g: '7', h: '8', i: '9', j: '10', k: '11' }
     };
 
@@ -592,7 +592,7 @@ describe('replaceTags', () => {
 
     // request object
     const req = {
-      params: { objId: 'xyz-789' },
+      params: { objectId: 'xyz-789' },
       query: {
         tagset: { foo: 'bar', baz: 'bam' }
       }

@@ -95,7 +95,7 @@ const controller = {
    */
   async addMetadata(req, res, next) {
     try {
-      const objId = addDashesToUuid(req.params.objId);
+      const objId = addDashesToUuid(req.params.objectId);
       const objPath = await getPath(objId);
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
@@ -156,7 +156,7 @@ const controller = {
    */
   async addTags(req, res, next) {
     try {
-      const objId = addDashesToUuid(req.params.objId);
+      const objId = addDashesToUuid(req.params.objectId);
       const objPath = await getPath(objId);
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
       const newTags = req.query.tagset;
@@ -304,7 +304,7 @@ const controller = {
    */
   async deleteMetadata(req, res, next) {
     try {
-      const objId = addDashesToUuid(req.params.objId);
+      const objId = addDashesToUuid(req.params.objectId);
       const objPath = await getPath(objId);
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
@@ -365,7 +365,7 @@ const controller = {
    */
   async deleteObject(req, res, next) {
     try {
-      const objId = addDashesToUuid(req.params.objId);
+      const objId = addDashesToUuid(req.params.objectId);
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
       // target S3 version to delete
@@ -425,7 +425,7 @@ const controller = {
    */
   async deleteTags(req, res, next) {
     try {
-      const objId = addDashesToUuid(req.params.objId);
+      const objId = addDashesToUuid(req.params.objectId);
       const objPath = await getPath(objId);
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
@@ -482,7 +482,7 @@ const controller = {
    */
   async fetchMetadata(req, res, next) {
     try {
-      const objIds = mixedQueryToArray(req.query.objId);
+      const objIds = mixedQueryToArray(req.query.objectId);
       const metadata = getMetadata(req.headers);
       const params = {
         objId: objIds ? objIds.map(id => addDashesToUuid(id)) : objIds,
@@ -509,7 +509,7 @@ const controller = {
    */
   async fetchTags(req, res, next) {
     try {
-      const objIds = mixedQueryToArray(req.query.objId);
+      const objIds = mixedQueryToArray(req.query.objectId);
       const tagset = req.query.tagset;
       const params = {
         objectIds: objIds ? objIds.map(id => addDashesToUuid(id)) : objIds,
@@ -536,7 +536,7 @@ const controller = {
    */
   async headObject(req, res, next) {
     try {
-      const objId = addDashesToUuid(req.params.objId);
+      const objId = addDashesToUuid(req.params.objectId);
 
       // target S3 version
       const targetS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid( req.query.versionId), objId);
@@ -573,7 +573,7 @@ const controller = {
    */
   async listObjectVersion(req, res, next) {
     try {
-      const objId = addDashesToUuid(req.params.objId);
+      const objId = addDashesToUuid(req.params.objectId);
 
       const response = await versionService.list(objId);
       // TODO: sync with current versions in S3
@@ -596,7 +596,7 @@ const controller = {
    */
   async readObject(req, res, next) {
     try {
-      const objId = addDashesToUuid(req.params.objId);
+      const objId = addDashesToUuid(req.params.objectId);
 
       // target S3 version
       const targetS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid( req.query.versionId), objId);
@@ -655,7 +655,7 @@ const controller = {
    */
   async replaceMetadata(req, res, next) {
     try {
-      const objId = addDashesToUuid(req.params.objId);
+      const objId = addDashesToUuid(req.params.objectId);
       const objPath = await getPath(objId);
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
@@ -707,7 +707,7 @@ const controller = {
    */
   async replaceTags(req, res, next) {
     try {
-      const objId = addDashesToUuid(req.params.objId);
+      const objId = addDashesToUuid(req.params.objectId);
       const objPath = await getPath(objId);
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
       const newTags = req.query.tagset;
@@ -756,7 +756,7 @@ const controller = {
     // TODO: handle additional parameters. Eg: deleteMarker, latest
     try {
       const bucketIds = mixedQueryToArray(req.query.bucketId);
-      const objIds = mixedQueryToArray(req.query.objId);
+      const objIds = mixedQueryToArray(req.query.objectId);
       const metadata = getMetadata(req.headers);
       const tagging = req.query.tagset;
       const params = {
@@ -795,7 +795,7 @@ const controller = {
     try {
       const userId = await userService.getCurrentUserId(req.currentUser, SYSTEM_USER);
       const data = {
-        id: addDashesToUuid(req.params.objId),
+        id: addDashesToUuid(req.params.objectId),
         public: isTruthy(req.query.public),
         updatedBy: userId
       };
@@ -826,7 +826,7 @@ const controller = {
       const bucketKey = (await getBucket(req.query.bucketId, true)).key;
 
       bb.on('file', (name, stream, info) => {
-        const objId = addDashesToUuid(req.params.objId);
+        const objId = addDashesToUuid(req.params.objectId);
         const data = {
           id: objId,
           fieldName: name,
