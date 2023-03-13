@@ -17,7 +17,8 @@ const schema = {
             .messages({
               'string.guid': 'One userId required when `bucketPerms=true`',
             }),
-          otherwise: scheme.guid })
+          otherwise: scheme.guid
+        })
     })
   },
 
