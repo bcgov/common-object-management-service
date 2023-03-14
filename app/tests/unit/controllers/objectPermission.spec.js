@@ -23,7 +23,7 @@ describe('searchPermissions', () => {
   const groupByObjectSpy = jest.spyOn(utils, 'groupByObject');
 
   const req = {
-    query: { bucketId: 'abc', objId: 'xyz-789', userId: 'oid-1d', permCode: 'pc' }
+    query: { bucketId: 'abc', objectId: 'xyz-789', userId: 'oid-1d', permCode: 'pc' }
   };
   const next = jest.fn();
 
@@ -34,7 +34,7 @@ describe('searchPermissions', () => {
     const res = mockResponse();
     await controller.searchPermissions(req, res, next);
     expect(searchPermissionsSpy).toHaveBeenCalledTimes(1);
-    expect(searchPermissionsSpy).toHaveBeenCalledWith({ bucketId: [req.query.bucketId], objId: [req.query.objId], userId: [req.query.userId], permCode: [req.query.permCode] });
+    expect(searchPermissionsSpy).toHaveBeenCalledWith({ bucketId: [req.query.bucketId], objId: [req.query.objectId], userId: [req.query.userId], permCode: [req.query.permCode] });
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith([]);
     expect(next).toHaveBeenCalledTimes(0);
@@ -59,7 +59,7 @@ describe('listPermissions', () => {
   const searchPermissionsSpy = jest.spyOn(objectPermissionService, 'searchPermissions');
 
   const req = {
-    params: { objId: 'xyz-789' },
+    params: { objectId: 'xyz-789' },
     query: { userId: 'oid-1d', permCode: 'pc' }
   };
   const next = jest.fn();
@@ -70,7 +70,7 @@ describe('listPermissions', () => {
     const res = mockResponse();
     await controller.listPermissions(req, res, next);
     expect(searchPermissionsSpy).toHaveBeenCalledTimes(1);
-    expect(searchPermissionsSpy).toHaveBeenCalledWith({ objId: req.params.objId, userId: [req.query.userId], permCode: [req.query.permCode] });
+    expect(searchPermissionsSpy).toHaveBeenCalledWith({ objId: req.params.objectId, userId: [req.query.userId], permCode: [req.query.permCode] });
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({ res: 123 });
     expect(next).toHaveBeenCalledTimes(0);
@@ -97,7 +97,7 @@ describe('addPermissions', () => {
 
   const req = {
     body: ['READ'],
-    params: { objId: 'xyz-789' }
+    params: { objectId: 'xyz-789' }
   };
   const next = jest.fn();
 
@@ -108,7 +108,7 @@ describe('addPermissions', () => {
     const res = mockResponse();
     await controller.addPermissions(req, res, next);
     expect(addPermissionsSpy).toHaveBeenCalledTimes(1);
-    expect(addPermissionsSpy).toHaveBeenCalledWith(req.params.objId, req.body, 'user-123');
+    expect(addPermissionsSpy).toHaveBeenCalledWith(req.params.objectId, req.body, 'user-123');
     expect(res.status).toHaveBeenCalledWith(201);
     expect(res.json).toHaveBeenCalledWith({ res: 123 });
     expect(next).toHaveBeenCalledTimes(0);
@@ -132,7 +132,7 @@ describe('removePermissions', () => {
 
   const removePermissionsSpy = jest.spyOn(objectPermissionService, 'removePermissions');
   const req = {
-    params: { objId: 'xyz-789' },
+    params: { objectId: 'xyz-789' },
     query: { userId: 'oid-1d,oid-2d', permCode: 'pc' }
   };
   const next = jest.fn();
@@ -143,7 +143,7 @@ describe('removePermissions', () => {
     const res = mockResponse();
     await controller.removePermissions(req, res, next);
     expect(removePermissionsSpy).toHaveBeenCalledTimes(1);
-    expect(removePermissionsSpy).toHaveBeenCalledWith(req.params.objId, ['oid-1d', 'oid-2d'], [req.query.permCode]);
+    expect(removePermissionsSpy).toHaveBeenCalledWith(req.params.objectId, ['oid-1d', 'oid-2d'], [req.query.permCode]);
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({ res: 123 });
     expect(next).toHaveBeenCalledTimes(0);

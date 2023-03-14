@@ -23,6 +23,7 @@ config:
     # SERVER_LOGFILE: ~
     SERVER_LOGLEVEL: http
     SERVER_PORT: "3000"
+    SERVER_PRIVACY_MASK: "true"
 
 patroni:
   enabled: true

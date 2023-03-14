@@ -145,6 +145,7 @@ config:
     # SERVER_LOGFILE: ~
     SERVER_LOGLEVEL: "http"
     SERVER_PORT: "3000"
+    # SERVER_PRIVACY_MASK: "true"
 
 # Modify the following variables if you need to acquire secret values from a custom-named resource
 basicAuthSecretOverride: ~

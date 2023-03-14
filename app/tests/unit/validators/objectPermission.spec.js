@@ -28,11 +28,11 @@ describe('searchPermissions', () => {
       });
     });
 
-    describe('objId', () => {
-      const objId = query.keys.objId;
+    describe('objectId', () => {
+      const objectId = query.keys.objectId;
 
       it('is the expected schema', () => {
-        expect(objId).toEqual(scheme.guid.describe());
+        expect(objectId).toEqual(scheme.guid.describe());
       });
     });
 
@@ -76,11 +76,11 @@ describe('listPermissions', () => {
       });
     });
 
-    describe('objId', () => {
-      const objId = params.keys.objId;
+    describe('objectId', () => {
+      const objectId = params.keys.objectId;
 
       it('is the expected schema', () => {
-        expect(objId).toEqual(scheme.guid.describe());
+        expect(objectId).toEqual(scheme.guid.describe());
       });
     });
 
@@ -99,11 +99,11 @@ describe('addPermissions', () => {
   describe('params', () => {
     const params = schema.addPermissions.params.describe();
 
-    describe('objId', () => {
-      const objId = params.keys.objId;
+    describe('objectId', () => {
+      const objectId = params.keys.objectId;
 
       it('is the expected schema', () => {
-        expect(objId).toEqual(type.uuidv4.describe());
+        expect(objectId).toEqual(type.uuidv4.describe());
       });
     });
   });
@@ -164,11 +164,11 @@ describe('removePermissions', () => {
   describe('params', () => {
     const params = schema.removePermissions.params.describe();
 
-    describe('objId', () => {
-      const objId = params.keys.objId;
+    describe('objectId', () => {
+      const objectId = params.keys.objectId;
 
       it('is the expected schema', () => {
-        expect(objId).toEqual(type.uuidv4.describe());
+        expect(objectId).toEqual(type.uuidv4.describe());
       });
     });
   });

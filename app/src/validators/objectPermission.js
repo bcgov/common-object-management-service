@@ -7,7 +7,7 @@ const schema = {
     query: Joi.object({
       bucketId: scheme.guid,
       bucketPerms: type.truthy,
-      objId: scheme.guid,
+      objectId: scheme.guid,
       permCode: scheme.permCode,
       userId: Joi.alternatives()
         .conditional('bucketPerms', {
@@ -17,13 +17,14 @@ const schema = {
             .messages({
               'string.guid': 'One userId required when `bucketPerms=true`',
             }),
-          otherwise: scheme.guid })
+          otherwise: scheme.guid
+        })
     })
   },
 
   listPermissions: {
     params: Joi.object({
-      objId: scheme.guid
+      objectId: scheme.guid
     }),
     query: Joi.object({
       userId: scheme.guid,
@@ -33,7 +34,7 @@ const schema = {
 
   addPermissions: {
     params: Joi.object({
-      objId: type.uuidv4
+      objectId: type.uuidv4
     }),
     body: Joi.array().items(
       Joi.object().keys({
@@ -45,7 +46,7 @@ const schema = {
 
   removePermissions: {
     params: Joi.object({
-      objId: type.uuidv4
+      objectId: type.uuidv4
     }),
     query: Joi.object({
       userId: scheme.guid,

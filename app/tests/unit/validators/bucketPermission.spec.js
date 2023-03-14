@@ -157,10 +157,10 @@ describe('removePermissions', () => {
     const params = schema.removePermissions.params.describe();
 
     describe('bucketId', () => {
-      const objId = params.keys.bucketId;
+      const bucketId = params.keys.bucketId;
 
       it('is the expected schema', () => {
-        expect(objId).toEqual(type.uuidv4.describe());
+        expect(bucketId).toEqual(type.uuidv4.describe());
       });
     });
   });

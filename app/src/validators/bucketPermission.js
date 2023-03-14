@@ -1,3 +1,4 @@
+
 const { validate, Joi } = require('express-validation');
 const { scheme, type } = require('./common');
 const { Permissions } = require('../components/constants');
@@ -16,7 +17,8 @@ const schema = {
             .messages({
               'string.guid': 'One userId required when `objectPerms=true`',
             }),
-          otherwise: scheme.guid })
+          otherwise: scheme.guid
+        })
     })
   },
 

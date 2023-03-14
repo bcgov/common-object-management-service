@@ -27,9 +27,9 @@ const _checkPermission = async ({ currentObject, currentUser, params }, permissi
     const permissions = [];
     const searchParams = { permCode: permission, userId: userId };
 
-    if (params.objId) {
+    if (params.objectId) {
       permissions.push(...await objectPermissionService.searchPermissions({
-        objId: params.objId, ...searchParams
+        objId: params.objectId, ...searchParams
       }));
     }
     if (params.bucketId || currentObject.bucketId) {
@@ -86,11 +86,11 @@ const checkAppMode = (req, res, next) => {
  */
 const currentObject = async (req, _res, next) => {
   try {
-    if (req.params.objId) {
+    if (req.params.objectId) {
       req.currentObject = Object.freeze({
-        ...await objectService.read(req.params.objId)
+        ...await objectService.read(req.params.objectId)
         // TODO: Determine if this is required or can be pushed down to controller level because this inflates all object related service call times by ~300ms
-        //...await storageService.listObjectVersion({ filePath: await getPath(req.params.objId) })
+        //...await storageService.listObjectVersion({ filePath: await getPath(req.params.objectId) })
       });
     }
   } catch (err) {
@@ -122,14 +122,14 @@ const hasPermission = (permission) => {
     try {
       if (!config.has('db.enabled') || !canOidcMode(authMode)) {
         log.debug('Current application mode does not enforce permission checks', { function: 'hasPermission' });
-      } else if (!req.params.objId && !req.params.bucketId) {
+      } else if (!req.params.objectId && !req.params.bucketId) {
         throw new Error('Missing request parameter(s)');
-      } else if (req.params.objId && !req.currentObject) {
+      } else if (req.params.objectId && !req.currentObject) {
         // Force 403 on unauthorized or not found; do not allow 404 id brute force discovery
         throw new Error('Missing object record');
       } else if (authType === AuthType.BASIC && canBasicMode(authMode)) {
         log.debug('Basic authTypes are always permitted', { function: 'hasPermission' });
-      } else if (req.params.objId && req.currentObject.public && permission === Permissions.READ) {
+      } else if (req.params.objectId && req.currentObject.public && permission === Permissions.READ) {
         log.debug('Read requests on public objects are always permitted', { function: 'hasPermission' });
       } else if (!await _checkPermission(req, permission)) {
         throw new Error(`User lacks required permission ${permission}`);
