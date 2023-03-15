@@ -1524,7 +1524,7 @@ components:
     Query-PermCode:
       in: query
       name: permCode
-      description: the permission type
+      description: The permission type
       schema:
         oneOf:
           - $ref: "#/components/schemas/PermCode"
@@ -1583,13 +1583,13 @@ components:
     Query-S3VersionId:
       in: query
       name: s3VersionId
-      description: a specified version
+      description: A specified version
       schema:
         $ref: "#/components/schemas/S3VersionId"
     Query-VersionId:
       in: query
       name: versionId
-      description: a specified version
+      description: A specified version
       schema:
         $ref: "#/components/schemas/VersionId"
   schemas:
@@ -2470,7 +2470,7 @@ components:
       title: Version ID
       type: string
       description: >-
-        a version identifier created by COMS. This parameter is incompatible
+        A version identifier created by COMS. This parameter is incompatible
         with `s3VersionId`
       format: uuid
       example: c05c7650-5f48-4e51-bf17-762e8fc121a1
