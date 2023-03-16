@@ -617,9 +617,10 @@ describe('readSignedUrl', () => {
     presignUrlMock.mockRestore();
   });
 
-  it('should call presignUrl with a get object command for the latest object and default expiration', async () => {
+  it('should call presignUrl with a get object command for the latest object and default expiration and bucketId', async () => {
     const filePath = 'filePath';
-    const result = await service.readSignedUrl({ filePath });
+    const bucketId = 'abc';
+    const result = await service.readSignedUrl({ filePath, bucketId: bucketId });
 
     expect(result).toBeTruthy();
     expect(utils.getBucket).toHaveBeenCalledTimes(1);
@@ -629,13 +630,14 @@ describe('readSignedUrl', () => {
         Bucket: bucket,
         Key: filePath
       }
-    }), defaultTempExpiresIn);
+    }), defaultTempExpiresIn, bucketId);
   });
 
   it('should call presignUrl with a get object command for a specific version and default expiration', async () => {
     const filePath = 'filePath';
     const s3VersionId = '1234';
-    const result = await service.readSignedUrl({ filePath, s3VersionId });
+    const bucketId = 'abc';
+    const result = await service.readSignedUrl({ filePath, s3VersionId, bucketId });
 
     expect(result).toBeTruthy();
     expect(utils.getBucket).toHaveBeenCalledTimes(1);
@@ -646,14 +648,15 @@ describe('readSignedUrl', () => {
         Key: filePath,
         VersionId: s3VersionId
       }
-    }), defaultTempExpiresIn);
+    }), defaultTempExpiresIn, bucketId);
   });
 
   it('should call presignUrl with a get object command for a specific version and custom expiration', async () => {
     const filePath = 'filePath';
     const s3VersionId = '1234';
     const expires = '2345';
-    const result = await service.readSignedUrl({ filePath, s3VersionId, expiresIn: expires });
+    const bucketId = 'abc';
+    const result = await service.readSignedUrl({ filePath, s3VersionId, expiresIn: expires, bucketId });
 
     expect(result).toBeTruthy();
     expect(utils.getBucket).toHaveBeenCalledTimes(1);
@@ -664,7 +667,7 @@ describe('readSignedUrl', () => {
         Key: filePath,
         VersionId: s3VersionId
       }
-    }), expires);
+    }), expires, bucketId);
   });
 });
 

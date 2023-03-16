@@ -389,7 +389,7 @@ const objectStorageService = {
       VersionId: s3VersionId
     };
 
-    return this.presignUrl(new GetObjectCommand(params), expires);
+    return this.presignUrl(new GetObjectCommand(params), expires, bucketId);
   },
 
   /**

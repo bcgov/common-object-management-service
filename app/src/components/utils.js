@@ -90,6 +90,28 @@ const utils = {
   },
 
   /**
+   * @function getBucketId
+   * Gets the bucketId if object is in database
+   * @param {string} objId The object id
+   * @returns {Promise<string | undefined>} The bucketId
+   */
+  async getBucketId(objId) {
+    let bucketId = undefined;
+    if (config.has('db.enabled')) {
+      // Function scoped import to avoid circular dependencies
+      const { objectService } = require('../services');
+      try {
+        bucketId = (await objectService.read(objId)).bucketId;
+      } catch (err) {
+        log.verbose(`${err.message}. Using default bucketId instead.`, {
+          function: 'getBucketId', objId: objId
+        });
+      }
+    }
+    return bucketId;
+  },
+
+  /**
    * @function getCurrentIdentity
    * Attempts to acquire current identity value.
    * Always takes first non-default value available. Yields `defaultValue` otherwise.

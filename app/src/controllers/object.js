@@ -12,6 +12,7 @@ const {
 const errorToProblem = require('../components/errorToProblem');
 const {
   addDashesToUuid,
+  getBucketId,
   getCurrentIdentity,
   getKeyValue,
   getMetadata,
@@ -602,6 +603,7 @@ const controller = {
       const targetS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid( req.query.versionId), objId);
 
       const data = {
+        bucketId: await getBucketId(objId),
         filePath: await getPath(objId),
         s3VersionId: targetS3VersionId
       };
