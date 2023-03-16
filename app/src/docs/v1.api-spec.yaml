@@ -67,7 +67,11 @@ paths:
   /bucket:
     put:
       summary: Creates a bucket
-      description: Creates a bucket in the COMS database. Bucket should exist in S3.
+      description: >-
+        Creates a bucket record. Bucket should exist in S3. If the set of
+        `bucket`, `endpoint` and `key` match an existing record, the user will
+        be added to that existing bucket with full permissions instead of
+        generating a new bucket record.
       operationId: createBucket
       tags:
         - Bucket
@@ -100,8 +104,8 @@ paths:
     get:
       summary: Search for buckets
       description: >-
-        Returns a list of buckets matching all search criteria across all known
-        versions of buckets.
+        Returns a list of buckets matching all search criteria across all bucket
+        records
       operationId: searchBuckets
       tags:
         - Bucket
@@ -143,7 +147,7 @@ paths:
           $ref: "#/components/responses/Error"
     get:
       summary: Returns a bucket
-      description: Returns a bucket based on bucketId
+      description: Returns a bucket record based on bucketId
       operationId: readBucket
       tags:
         - Bucket
@@ -162,7 +166,7 @@ paths:
           $ref: "#/components/responses/Error"
     patch:
       summary: Updates a bucket
-      description: Returns updated bucket
+      description: Updates the bucket record
       operationId: updateBucket
       tags:
         - Bucket
@@ -188,7 +192,10 @@ paths:
           $ref: "#/components/responses/Error"
     delete:
       summary: Deletes a bucket
-      description: Deletes the bucket based on bucketId
+      description: >-
+        Deletes the bucket record based on bucketId. This request does not
+        dispatch an S3 operation to request the deletion of the associated
+        bucket.
       operationId: deleteBucket
       tags:
         - Bucket
@@ -332,8 +339,8 @@ paths:
         - $ref: "#/components/parameters/Path-ObjectId"
         - $ref: "#/components/parameters/Query-Download"
         - $ref: "#/components/parameters/Query-ExpiresIn"
-        - $ref: "#/components/parameters/Query-VersionId"
         - $ref: "#/components/parameters/Query-S3VersionId"
+        - $ref: "#/components/parameters/Query-VersionId"
       responses:
         "200":
           description: Returns the object
@@ -392,8 +399,8 @@ paths:
         - Object
       parameters:
         - $ref: "#/components/parameters/Path-ObjectId"
-        - $ref: "#/components/parameters/Query-VersionId"
         - $ref: "#/components/parameters/Query-S3VersionId"
+        - $ref: "#/components/parameters/Query-VersionId"
       responses:
         "204":
           description: Returns object headers
@@ -565,8 +572,8 @@ paths:
       parameters:
         - $ref: "#/components/parameters/Header-Metadata"
         - $ref: "#/components/parameters/Path-ObjectId"
-        - $ref: "#/components/parameters/Query-VersionId"
         - $ref: "#/components/parameters/Query-S3VersionId"
+        - $ref: "#/components/parameters/Query-VersionId"
       responses:
         "204":
           $ref: "#/components/responses/NoContent"
@@ -590,8 +597,8 @@ paths:
       parameters:
         - $ref: "#/components/parameters/Header-Metadata"
         - $ref: "#/components/parameters/Path-ObjectId"
-        - $ref: "#/components/parameters/Query-VersionId"
         - $ref: "#/components/parameters/Query-S3VersionId"
+        - $ref: "#/components/parameters/Query-VersionId"
       responses:
         "204":
           $ref: "#/components/responses/NoContent"
@@ -617,8 +624,8 @@ paths:
       parameters:
         - $ref: "#/components/parameters/Header-Metadata"
         - $ref: "#/components/parameters/Path-ObjectId"
-        - $ref: "#/components/parameters/Query-VersionId"
         - $ref: "#/components/parameters/Query-S3VersionId"
+        - $ref: "#/components/parameters/Query-VersionId"
       responses:
         "204":
           $ref: "#/components/responses/NoContent"
@@ -640,8 +647,8 @@ paths:
       parameters:
         - $ref: "#/components/parameters/Path-ObjectId"
         - $ref: "#/components/parameters/Query-TagSet"
-        - $ref: "#/components/parameters/Query-VersionId"
         - $ref: "#/components/parameters/Query-S3VersionId"
+        - $ref: "#/components/parameters/Query-VersionId"
       responses:
         "204":
           $ref: "#/components/responses/NoContent"
@@ -664,8 +671,8 @@ paths:
       parameters:
         - $ref: "#/components/parameters/Path-ObjectId"
         - $ref: "#/components/parameters/Query-TagSet"
-        - $ref: "#/components/parameters/Query-VersionId"
         - $ref: "#/components/parameters/Query-S3VersionId"
+        - $ref: "#/components/parameters/Query-VersionId"
       responses:
         "204":
           $ref: "#/components/responses/NoContent"
@@ -689,8 +696,8 @@ paths:
       parameters:
         - $ref: "#/components/parameters/Path-ObjectId"
         - $ref: "#/components/parameters/Query-TagSet"
-        - $ref: "#/components/parameters/Query-VersionId"
         - $ref: "#/components/parameters/Query-S3VersionId"
+        - $ref: "#/components/parameters/Query-VersionId"
       responses:
         "204":
           $ref: "#/components/responses/NoContent"
@@ -2051,7 +2058,7 @@ components:
             The unique identifier for the bucket. When `objectPerms=true`
             response will include buckets containing objects with matching
             permissions.
-          example: bf246e31-c807-496c-bc93-cd8bc2f1897hf
+          example: bf246e31-c807-496c-bc93-cd8bc2f1897f
         permissions:
           type: array
           items:
@@ -2135,10 +2142,9 @@ components:
           type: boolean
           example: true
         s3VersionId:
-          type: integer
-          format: int32
-          description: a version identifier created in S3
-          example: 1647462569641
+          type: string
+          description: A version identifier created in S3
+          example: "1647462569641"
     Response-ObjectDetails:
       title: Response Object Details
       type: object
@@ -2277,7 +2283,7 @@ components:
                   value:
                     type: object
                     description: Contents of the field that was in error.
-                    example: utf-8x
+                    example: {}
                   message:
                     type: string
                     description: The error message for the field.
@@ -2297,7 +2303,7 @@ components:
         s3VersionId:
           type: string
           description: a version identifier created in S3
-          example: 1647462569641
+          example: "1647462569641"
     S3-Metadata:
       title: S3 Metadata
       type: object
@@ -2357,8 +2363,8 @@ components:
           example: AES256
         s3VersionId:
           type: string
-          description: a version identifier created in S3
-          example: 1647462569641
+          description: A version identifier created in S3
+          example: "1647462569641"
     S3-Version:
       title: S3 Version
       type: object
@@ -2387,8 +2393,8 @@ components:
           description: Key of the object
         s3VersionId:
           type: string
-          description: a version identifier created in S3
-          example: 1647462569641
+          description: A version identifier created in S3
+          example: "1647462569641"
         IsLatest:
           description: >-
             Specifies whether the object is (true) or is not (false) the latest

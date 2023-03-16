@@ -10,6 +10,11 @@ assignees: ''
 #### Describe the bug
 <!-- A clear and concise description of what the bug is. -->
 
+#### Version Number
+<!-- The specific application version you are currently using. -->
+<!-- This can be found by visiting the root of the application. -->
+<!-- Please include the `app.gitRev` and the `app.version`. -->
+
 #### To Reproduce
 
 Steps to reproduce the behavior:
