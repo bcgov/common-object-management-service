@@ -67,7 +67,11 @@ paths:
   /bucket:
     put:
       summary: Creates a bucket
-      description: Creates a bucket in the COMS database. Bucket should exist in S3.
+      description: >-
+        Creates a bucket record. Bucket should exist in S3. If the set of
+        `bucket`, `endpoint` and `key` match an existing record, the user will
+        be added to that existing bucket with full permissions instead of
+        generating a new bucket record.
       operationId: createBucket
       tags:
         - Bucket
@@ -100,8 +104,8 @@ paths:
     get:
       summary: Search for buckets
       description: >-
-        Returns a list of buckets matching all search criteria across all known
-        versions of buckets.
+        Returns a list of buckets matching all search criteria across all bucket
+        records
       operationId: searchBuckets
       tags:
         - Bucket
@@ -143,7 +147,7 @@ paths:
           $ref: "#/components/responses/Error"
     get:
       summary: Returns a bucket
-      description: Returns a bucket based on bucketId
+      description: Returns a bucket record based on bucketId
       operationId: readBucket
       tags:
         - Bucket
@@ -162,7 +166,7 @@ paths:
           $ref: "#/components/responses/Error"
     patch:
       summary: Updates a bucket
-      description: Returns updated bucket
+      description: Updates the bucket record
       operationId: updateBucket
       tags:
         - Bucket
@@ -188,7 +192,10 @@ paths:
           $ref: "#/components/responses/Error"
     delete:
       summary: Deletes a bucket
-      description: Deletes the bucket based on bucketId
+      description: >-
+        Deletes the bucket record based on bucketId. This request does not
+        dispatch an S3 operation to request the deletion of the associated
+        bucket.
       operationId: deleteBucket
       tags:
         - Bucket
