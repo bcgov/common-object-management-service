@@ -10,6 +10,11 @@ assignees: ''
 #### Is your feature request related to a problem? Please describe.
 <!-- A clear and concise description of what the problem is. Ex. I'm always frustrated when [...] -->
 
+#### Version Number
+<!-- The specific application version you are currently using. -->
+<!-- This can be found by visiting the root of the application. -->
+<!-- Please include the `app.gitRev` and the `app.version`. -->
+
 #### Describe the solution you'd like
 <!-- A clear and concise description of what you want to happen. -->
 
