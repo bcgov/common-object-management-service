@@ -76,7 +76,6 @@ class Bucket extends mixin(Model, [
         'accessKeyId',
         'bucket',
         'endpoint',
-        'key',
         'secretAccessKey'
       ],
       properties: {
