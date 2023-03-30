@@ -9,7 +9,7 @@ const schema = {
       accessKeyId: Joi.string().max(255).required(),
       bucket: Joi.string().max(255).required(),
       endpoint: Joi.string().max(255).required(),
-      key: Joi.string().max(255).required(),
+      key: Joi.string().max(255),
       secretAccessKey: Joi.string().max(255).required(),
       region: Joi.string().max(255),
       active: type.truthy

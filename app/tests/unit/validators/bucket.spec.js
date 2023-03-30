@@ -13,7 +13,6 @@ describe('createBucket', () => {
       const value = {
         body: {
           secretAccessKey: 'xyz',
-          key: 'coms/dev',
           accessKeyId: 'bbb',
           bucket: 'ccc',
           endpoint: 'https://s3.ca',

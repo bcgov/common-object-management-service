@@ -84,7 +84,7 @@ const service = {
         accessKeyId: data.accessKeyId,
         bucket: data.bucket,
         endpoint: data.endpoint,
-        key: data.key,
+        key: data.key ? data.key : '', // TODO: to be refactored after the DB change
         secretAccessKey: data.secretAccessKey,
         region: data.region,
         active: data.active,

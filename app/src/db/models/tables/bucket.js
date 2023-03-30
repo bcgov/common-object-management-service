@@ -76,7 +76,6 @@ class Bucket extends mixin(Model, [
         'accessKeyId',
         'bucket',
         'endpoint',
-        'key',
         'secretAccessKey'
       ],
       properties: {
@@ -85,7 +84,7 @@ class Bucket extends mixin(Model, [
         accessKeyId: { type: 'string', minLength: 1, maxLength: 255 },
         bucket: { type: 'string', minLength: 1, maxLength: 255 },
         endpoint: { type: 'string', minLength: 1, maxLength: 255 },
-        key: { type: 'string', minLength: 1, maxLength: 255 },
+        key: { type: 'string', maxLength: 255 },
         secretAccessKey: { type: 'string', minLength: 1, maxLength: 255 },
         region: { type: 'string', maxLength: 255 },
         active: { type: 'boolean' },

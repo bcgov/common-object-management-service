@@ -86,7 +86,6 @@ paths:
                     - bucket
                     - bucketName
                     - endpoint
-                    - key
                     - secretAccessKey
       responses:
         "201":
