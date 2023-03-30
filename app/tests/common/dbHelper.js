@@ -6,6 +6,7 @@ const retFn = (value) => {
 
 /**
  * @class MockTransaction
+ * @deprecated Only use this as a shape reference
  * Mock Objection Transaction
  */
 class MockTransaction {}
@@ -28,6 +29,7 @@ MockTransaction.mockReset = () => {
 
 /**
  * @class MockModel
+ * @deprecated Only use this as a shape reference
  * Mock Objection Model
  */
 class MockModel {}
