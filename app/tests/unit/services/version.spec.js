@@ -1,27 +1,30 @@
-const { MockModel, MockTransaction } = require('../../common/dbHelper');
+const { resetReturnThis } = require('../../common/helper');
+const Version = require('../../../src/db/models/tables/version');
 
-jest.mock('../../../src/db/models/tables/version', () => MockModel);
+jest.mock('../../../src/db/models/tables/version', () => ({
+  commit: jest.fn().mockReturnThis(),
+  rollback: jest.fn().mockReturnThis(),
+  startTransaction: jest.fn().mockReturnThis(),
+
+  orderBy: jest.fn().mockReturnThis(),
+  query: jest.fn().mockReturnThis(),
+  where: jest.fn().mockReturnThis()
+}));
 
 const service = require('../../../src/services/version');
 
 beforeEach(() => {
-  MockModel.mockReset();
-  MockTransaction.mockReset();
-});
-
-afterEach(() => {
   jest.clearAllMocks();
+  resetReturnThis(Version);
 });
 
 describe('list', () => {
-
   it('Query versions by objectId', async () => {
-
     await service.list('abc');
 
-    expect(MockModel.startTransaction).toHaveBeenCalledTimes(1);
-    expect(MockModel.query).toHaveBeenCalledTimes(1);
-    expect(MockModel.where).toHaveBeenCalledWith({ objectId: 'abc' });
-    expect(MockModel.orderBy).toHaveBeenCalledWith('createdAt', 'DESC');
+    expect(Version.startTransaction).toHaveBeenCalledTimes(1);
+    expect(Version.query).toHaveBeenCalledTimes(1);
+    expect(Version.where).toHaveBeenCalledWith({ objectId: 'abc' });
+    expect(Version.orderBy).toHaveBeenCalledWith('createdAt', 'DESC');
   });
 });

@@ -43,6 +43,17 @@ const helper = {
     });
 
     return app;
+  },
+
+  /**
+   * @function resetReturnThis
+   * Updates all jest mocked attributes in `obj` to `mockReturnThis`
+   * @param {object} obj An object with some mocked attributes
+   */
+  resetReturnThis: (obj) => {
+    Object.keys(obj).forEach((f) => {
+      if (jest.isMockFunction(obj[f])) obj[f].mockReturnThis();
+    });
   }
 };
 
