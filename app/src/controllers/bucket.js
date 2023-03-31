@@ -15,7 +15,7 @@ const { redactSecrets } = require('../db/models/utils');
 
 const { bucketService, storageService, userService } = require('../services');
 
-const SERVICE = 'ObjectService';
+const SERVICE = 'BucketService';
 const secretFields = ['accessKeyId', 'secretAccessKey'];
 
 /**
@@ -67,7 +67,7 @@ const controller = {
 
   /**
    * @function _validateCredentials
-   * Gaurd against creating or update a bucket with invalid creds
+   * Guard against creating or update a bucket with invalid creds
    * @param {object} requestBody The body of the request
    */
   async _validateCredentials(requestBody, res) {
@@ -77,10 +77,10 @@ const controller = {
         bucket: requestBody.bucket,
         endpoint: requestBody.endpoint,
         key: requestBody.key,
-        region: DEFAULTREGION,
+        region: requestBody.region || DEFAULTREGION,
         secretAccessKey: requestBody.secretAccessKey,
       };
-      await storageService.headBucket(undefined, bucketSettings);
+      await storageService.headBucket(bucketSettings);
     } catch (e) {
       // If it's caught here it's unable to validate the supplied store/bucket and creds
       log.warn(`Failure to validate bucket credentials: ${e.message}`, {
@@ -106,7 +106,7 @@ const controller = {
     let response = undefined;
 
     // Check for credential accessibility/validity first
-    await this._validateCredentials(data, res);
+    await controller._validateCredentials(data, res);
 
     try {
       data.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
@@ -156,7 +156,7 @@ const controller = {
   async headBucket(req, res, next) {
     try {
       const bucketId = addDashesToUuid(req.params.bucketId);
-      await storageService.headBucket(bucketId);
+      await storageService.headBucket({ bucketId });
 
       res.status(204).end();
     } catch (e) {
@@ -217,7 +217,7 @@ const controller = {
    */
   async updateBucket(req, res, next) {
     // Check for credential accessibility/validity first
-    await this._validateCredentials(req.body, res);
+    await controller._validateCredentials(req.body, res);
 
     try {
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER), SYSTEM_USER);
