@@ -193,10 +193,14 @@ const objectStorageService = {
    * @function headBucket
    * Checks if a bucket exists and if the S3Client has correct access permissions
    * @param {string} [bucketId] Optional bucketId
+   * @param {Object} [bucketSettings] Optional bucketSettings for checking new additions/updates
    * @returns {Promise<object>} The response of the head bucket operation
    */
-  async headBucket(bucketId = undefined) {
-    const data = await utils.getBucket(bucketId, true);
+  async headBucket(bucketId = undefined, bucketSettings = null) {
+    // If already providing bucket settings don't go and get them from the DB or configuration
+    const data = bucketSettings
+      ? bucketSettings
+      : await utils.getBucket(bucketId, true);
     const params = {
       Bucket: data.bucket,
     };
