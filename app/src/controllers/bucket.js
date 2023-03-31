@@ -86,7 +86,7 @@ const controller = {
       log.warn(`Failure to validate bucket credentials: ${e.message}`, {
         function: '_validateCredentials',
       });
-      throw new Problem(406, {
+      throw new Problem(409, {
         details:
           'Unable to validate supplied key/password for the supplied object store or bucket',
       }).send(res);
