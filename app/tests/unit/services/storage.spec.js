@@ -270,13 +270,35 @@ describe('headBucket', () => {
   });
 
   it('should send a head bucket command', async () => {
-    const result = await service.headBucket();
+    const result = await service.headBucket({ bucketId: 'abc-123' });
 
     expect(result).toBeTruthy();
     expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(s3ClientMock).toHaveReceivedCommandTimes(HeadBucketCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(HeadBucketCommand, {
       Bucket: bucket
+    });
+  });
+
+  it('should not get the existing bucket if no id provided', async () => {
+    const result = await service.headBucket({ region: 'test', bucket: 'specify' });
+
+    expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(0);
+    expect(s3ClientMock).toHaveReceivedCommandTimes(HeadBucketCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(HeadBucketCommand, {
+      Bucket: 'specify'
+    });
+  });
+
+  it('should not get the existing bucket if default params', async () => {
+    const result = await service.headBucket();
+
+    expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(0);
+    expect(s3ClientMock).toHaveReceivedCommandTimes(HeadBucketCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(HeadBucketCommand, {
+      Bucket: undefined
     });
   });
 });

@@ -21,6 +21,9 @@ module.exports = Object.freeze({
     NONE: 'NONE'
   },
 
+  /** Need to specify valid AWS region or it'll explode ('us-east-1' is default, 'ca-central-1' for Canada) */
+  DEFAULTREGION: 'us-east-1',
+
   /** Download mode behavior overrides */
   DownloadMode: {
     /** Proxies payload data through COMS */

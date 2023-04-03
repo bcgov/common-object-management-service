@@ -98,6 +98,8 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Response-Conflict"
         default:
           $ref: "#/components/responses/Error"
     get:
@@ -187,6 +189,8 @@ paths:
                 $ref: "#/components/schemas/DB-Bucket"
         "403":
           $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Response-Conflict"
         default:
           $ref: "#/components/responses/Error"
     delete:
