@@ -105,10 +105,9 @@ const controller = {
     const data = { ...req.body };
     let response = undefined;
 
-    // Check for credential accessibility/validity first
-    await controller._validateCredentials(data, res);
-
     try {
+      // Check for credential accessibility/validity first
+      await controller._validateCredentials(data);
       data.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
       response = await bucketService.create(data);
