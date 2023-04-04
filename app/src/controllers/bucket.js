@@ -2,7 +2,9 @@ const Problem = require('api-problem');
 const { UniqueViolationError } = require('objection');
 const { NIL: SYSTEM_USER } = require('uuid');
 
+const { DEFAULTREGION } = require('../components/constants');
 const errorToProblem = require('../components/errorToProblem');
+const log = require('../components/log')(module.filename);
 const {
   addDashesToUuid,
   isTruthy,
@@ -13,7 +15,7 @@ const { redactSecrets } = require('../db/models/utils');
 
 const { bucketService, storageService, userService } = require('../services');
 
-const SERVICE = 'ObjectService';
+const SERVICE = 'BucketService';
 const secretFields = ['accessKeyId', 'secretAccessKey'];
 
 /**
@@ -64,6 +66,34 @@ const controller = {
   },
 
   /**
+   * @function _validateCredentials
+   * Guard against creating or update a bucket with invalid creds
+   * @param {object} requestBody The body of the request
+   */
+  async _validateCredentials(requestBody, res) {
+    try {
+      const bucketSettings = {
+        accessKeyId: requestBody.accessKeyId,
+        bucket: requestBody.bucket,
+        endpoint: requestBody.endpoint,
+        key: requestBody.key,
+        region: requestBody.region || DEFAULTREGION,
+        secretAccessKey: requestBody.secretAccessKey,
+      };
+      await storageService.headBucket(bucketSettings);
+    } catch (e) {
+      // If it's caught here it's unable to validate the supplied store/bucket and creds
+      log.warn(`Failure to validate bucket credentials: ${e.message}`, {
+        function: '_validateCredentials',
+      });
+      throw new Problem(409, {
+        details:
+          'Unable to validate supplied key/password for the supplied object store or bucket',
+      }).send(res);
+    }
+  },
+
+  /**
    * @function createBucket
    * Creates a bucket
    * @param {object} req Express request object
@@ -74,9 +104,13 @@ const controller = {
   async createBucket(req, res, next) {
     const data = { ...req.body };
     let response = undefined;
+
+    // Check for credential accessibility/validity first
+    await controller._validateCredentials(data, res);
+
     try {
-      // TODO: Check for credential accessibility/validity first via headBucket
       data.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
+
       response = await bucketService.create(data);
     } catch (e) {
       // If bucket exists, check if credentials precisely match
@@ -122,7 +156,7 @@ const controller = {
   async headBucket(req, res, next) {
     try {
       const bucketId = addDashesToUuid(req.params.bucketId);
-      await storageService.headBucket(bucketId);
+      await storageService.headBucket({ bucketId });
 
       res.status(204).end();
     } catch (e) {
@@ -182,6 +216,9 @@ const controller = {
    * @returns {function} Express middleware function
    */
   async updateBucket(req, res, next) {
+    // Check for credential accessibility/validity first
+    await controller._validateCredentials(req.body, res);
+
     try {
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER), SYSTEM_USER);
       const response = await bucketService.update({

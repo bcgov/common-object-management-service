@@ -192,11 +192,20 @@ const objectStorageService = {
   /**
    * @function headBucket
    * Checks if a bucket exists and if the S3Client has correct access permissions
-   * @param {string} [bucketId] Optional bucketId
-   * @returns {Promise<object>} The response of the head bucket operation
+   * You must supply either a `bucketId`, or the full S3 client credentials to test against
+   * @param {string} [options.bucketId] Optional bucketId
+   * @param {string} [options.accessKeyId] Optional S3 accessKeyId
+   * @param {string} [options.bucket] Optional S3 bucket
+   * @param {string} [options.endpoint] Optional S3 endpoint
+   * @param {string} [options.key] Optional S3 key/prefix
+   * @param {string} [options.region] Optional S3 region
+   * @param {string} [options.secretAccessKey] Optional S3 secretAccessKey
+   * @returns {Promise<HeadBucketCommandOutput>} The response of the head bucket operation
    */
-  async headBucket(bucketId = undefined) {
-    const data = await utils.getBucket(bucketId, true);
+  async headBucket(options = {}) {
+    const data = options.bucketId
+      ? await utils.getBucket(options.bucketId, true)
+      : options;
     const params = {
       Bucket: data.bucket,
     };
