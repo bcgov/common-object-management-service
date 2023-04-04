@@ -3,10 +3,9 @@ const config = require('config');
 const { existsSync, readFileSync } = require('fs');
 const { join } = require('path');
 
-const { AuthMode, AuthType } = require('./constants');
+const { AuthMode, AuthType, DEFAULTREGION } = require('./constants');
 const log = require('./log')(module.filename);
 
-const DEFAULTREGION = 'us-east-1'; // Need to specify valid AWS region or it'll explode ('us-east-1' is default, 'ca-central-1' for Canada)
 const DELIMITER = '/';
 
 const utils = {
