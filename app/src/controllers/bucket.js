@@ -215,13 +215,17 @@ const controller = {
    * @returns {function} Express middleware function
    */
   async updateBucket(req, res, next) {
-    // Check for credential accessibility/validity first
-    await controller._validateCredentials(req.body, res);
-
     try {
+      const bucketId = addDashesToUuid(req.params.bucketId);
+      const currentBucket = await bucketService.read(bucketId);
+
+      // Check for credential accessibility/validity first
+      // Need to cross reference with existing data when partial patch data is provided
+      await controller._validateCredentials({ ...currentBucket, ...req.body });
+
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER), SYSTEM_USER);
       const response = await bucketService.update({
-        bucketId: req.params.bucketId,
+        bucketId: bucketId,
         bucketName: req.body.bucketName,
         accessKeyId: req.body.accessKeyId,
         bucket: req.body.bucket,
