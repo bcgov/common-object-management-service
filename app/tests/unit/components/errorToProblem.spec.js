@@ -35,6 +35,55 @@ describe('errorToProblem', () => {
     expect(result.errors).toBeUndefined();
   });
 
+  it('should return a 409 problem given an error', () => {
+    const e = {
+      response: {
+        data: { detail: 'detail' },
+        status: 409
+      }
+    };
+    const result = errorToProblem(SERVICE, e);
+
+    expect(result).toBeTruthy();
+    expect(result instanceof Problem).toBeTruthy();
+    expect(result.title).toMatch('Conflict');
+    expect(result.status).toBe(409);
+    expect(result.detail).toEqual(expect.objectContaining(e.response.data));
+    expect(result.errors).toBeUndefined();
+  });
+
+  it('should return a problem given an error with statusCode', () => {
+    const e = {
+      statusCode: 404,
+      message: 'NotFoundError'
+    };
+    const result = errorToProblem(SERVICE, e);
+
+    expect(result).toBeTruthy();
+    expect(result instanceof Problem).toBeTruthy();
+    expect(result.title).toMatch('Not Found');
+    expect(result.status).toBe(404);
+    expect(result.detail).toMatch(e.message);
+    expect(result.errors).toBeUndefined();
+  });
+
+  it('should return a problem given an error with s3 metadata', () => {
+    const e = {
+      $metadata: {
+        httpStatusCode: 404,
+      },
+      message: 'NotFoundError'
+    };
+    const result = errorToProblem(SERVICE, e);
+
+    expect(result).toBeTruthy();
+    expect(result instanceof Problem).toBeTruthy();
+    expect(result.title).toMatch('Not Found');
+    expect(result.status).toBe(404);
+    expect(result.detail).toEqual(expect.objectContaining({ message: e.message }));
+    expect(result.errors).toBeUndefined();
+  });
+
   it('should return a 422 problem with a supplied string response', () => {
     const e = {
       response: {
