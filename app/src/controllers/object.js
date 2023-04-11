@@ -370,9 +370,10 @@ const controller = {
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
       // target S3 version to delete
-      const targetS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid( req.query.versionId), objId);
+      const targetS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid(req.query.versionId), objId);
 
       const data = {
+        bucketId: req.currentObject.bucketId,
         filePath: await getPath(objId),
         s3VersionId: targetS3VersionId
       };
