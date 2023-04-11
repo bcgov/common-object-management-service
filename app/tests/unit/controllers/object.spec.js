@@ -295,7 +295,7 @@ describe('deleteObject', () => {
 
   // request object
   const req = {
-    params: { objectId: 'xyz-789' }
+    params: { objectId: 'xyz-789' },
   };
   const next = jest.fn();
 
