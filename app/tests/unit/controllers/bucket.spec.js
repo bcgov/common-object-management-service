@@ -107,7 +107,7 @@ describe('createBucket', () => {
     );
   });
 
-  it('excepts if invalid bucket head', async () => {
+  it('responds with error when invalid bucket head', async () => {
     // request object
     const req = {
       body: { bucket: REQUEST_BUCKET, region: 'test' },
@@ -126,13 +126,15 @@ describe('createBucket', () => {
       throw new Error();
     });
 
-    await expect(controller.createBucket(req, res, next)).rejects.toThrow();
+    await controller.createBucket(req, res, next);
 
     expect(headBucketSpy).toHaveBeenCalledTimes(1);
     expect(headBucketSpy).toHaveBeenCalledWith(req.body);
     expect(getCurrentIdentitySpy).toHaveBeenCalledTimes(0);
     expect(getCurrentUserIdSpy).toHaveBeenCalledTimes(0);
     expect(createSpy).toHaveBeenCalledTimes(0);
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(next).toHaveBeenCalledWith(expect.any(Problem));
   });
 
   it('nexts an error if the bucket service fails to create', async () => {
@@ -167,7 +169,7 @@ describe('createBucket', () => {
     expect(getCurrentUserIdSpy).toHaveBeenCalledWith(USR_IDENTITY);
     expect(createSpy).toHaveBeenCalledTimes(1);
     expect(createSpy).toHaveBeenCalledWith({ ...req.body, userId: USR_ID });
-    
+
     expect(next).toHaveBeenCalledTimes(1);
     expect(next).toHaveBeenCalledWith(
       new Problem(502, 'Unknown BucketService Error')
@@ -213,7 +215,7 @@ describe('createBucket', () => {
     expect(createSpy).toHaveBeenCalledWith({ ...req.body, userId: USR_ID });
     expect(checkGrantPermissionsSpy).toHaveBeenCalledTimes(1);
     expect(checkGrantPermissionsSpy).toHaveBeenCalledWith({ ...req.body, userId: USR_ID });
-    
+
     expect(res.status).toHaveBeenCalledWith(201);
   });
 });

@@ -68,17 +68,18 @@ const controller = {
   /**
    * @function _validateCredentials
    * Guard against creating or update a bucket with invalid creds
-   * @param {object} requestBody The body of the request
+   * @param {object} credentials The body of the request
+   * @throws A conflict error problem if the bucket is not reachable
    */
-  async _validateCredentials(requestBody, res) {
+  async _validateCredentials(credentials) {
     try {
       const bucketSettings = {
-        accessKeyId: requestBody.accessKeyId,
-        bucket: requestBody.bucket,
-        endpoint: requestBody.endpoint,
-        key: requestBody.key,
-        region: requestBody.region || DEFAULTREGION,
-        secretAccessKey: requestBody.secretAccessKey,
+        accessKeyId: credentials.accessKeyId,
+        bucket: credentials.bucket,
+        endpoint: credentials.endpoint,
+        key: credentials.key,
+        region: credentials.region || DEFAULTREGION,
+        secretAccessKey: credentials.secretAccessKey,
       };
       await storageService.headBucket(bucketSettings);
     } catch (e) {
@@ -87,9 +88,8 @@ const controller = {
         function: '_validateCredentials',
       });
       throw new Problem(409, {
-        details:
-          'Unable to validate supplied key/password for the supplied object store or bucket',
-      }).send(res);
+        details: 'Unable to validate supplied credentials for the bucket',
+      });
     }
   },
 
@@ -105,10 +105,9 @@ const controller = {
     const data = { ...req.body };
     let response = undefined;
 
-    // Check for credential accessibility/validity first
-    await controller._validateCredentials(data, res);
-
     try {
+      // Check for credential accessibility/validity first
+      await controller._validateCredentials(data);
       data.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
       response = await bucketService.create(data);
@@ -216,13 +215,17 @@ const controller = {
    * @returns {function} Express middleware function
    */
   async updateBucket(req, res, next) {
-    // Check for credential accessibility/validity first
-    await controller._validateCredentials(req.body, res);
-
     try {
+      const bucketId = addDashesToUuid(req.params.bucketId);
+      const currentBucket = await bucketService.read(bucketId);
+
+      // Check for credential accessibility/validity first
+      // Need to cross reference with existing data when partial patch data is provided
+      await controller._validateCredentials({ ...currentBucket, ...req.body });
+
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER), SYSTEM_USER);
       const response = await bucketService.update({
-        bucketId: req.params.bucketId,
+        bucketId: bucketId,
         bucketName: req.body.bucketName,
         accessKeyId: req.body.accessKeyId,
         bucket: req.body.bucket,

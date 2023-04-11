@@ -2,6 +2,13 @@ const Problem = require('api-problem');
 
 const log = require('./log')(module.filename);
 
+/**
+ * @function errorToProblem
+ * Attempts to interpret and infer the type of Problem to respond with
+ * @param {string} service A string representing which service the error occured at
+ * @param {Error} e The raw error exception object
+ * @returns {Problem} A problem error type
+ */
 function errorToProblem(service, e) {
   // If already problem type, just return as is
   if (e instanceof Problem) {
@@ -24,7 +31,10 @@ function errorToProblem(service, e) {
       });
     }
     // Something else happened but there's a response
-    return new Problem(e.response.status, { detail: e.response.data.toString() });
+    return new Problem(e.response.status, { detail: e.response.data });
+  } else if (e.statusCode) {
+    // Handle errors with Status Codes
+    return new Problem(e.statusCode, { detail: e.message });
   } else if (e.$metadata && e.$metadata.httpStatusCode) {
     // Handle S3 promise rejections
     if (e.$response && e.$response.body) delete e.$response.body;
