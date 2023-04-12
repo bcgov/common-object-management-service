@@ -101,7 +101,7 @@ const controller = {
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
       // get source S3 VersionId
-      const sourceS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid( req.query.versionId), objId);
+      const sourceS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid(req.query.versionId), objId);
 
       // get version from S3
       const source = await storageService.headObject({ filePath: objPath, s3VersionId: sourceS3VersionId });
@@ -163,7 +163,7 @@ const controller = {
       const newTags = req.query.tagset;
 
       // get source S3 Version to add to
-      const sourceS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid( req.query.versionId), objId);
+      const sourceS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid(req.query.versionId), objId);
 
       // get current tags on latest or specified version
       const objectTagging = await storageService.getObjectTagging({ filePath: objPath, s3VersionId: sourceS3VersionId });
@@ -310,7 +310,7 @@ const controller = {
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
       // Source S3 Version to copy from
-      const sourceS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid( req.query.versionId), objId);
+      const sourceS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid(req.query.versionId), objId);
 
       const source = await storageService.headObject({ filePath: objPath, s3VersionId: sourceS3VersionId });
       if (source.ContentLength > MAXCOPYOBJECTLENGTH) {
@@ -373,7 +373,7 @@ const controller = {
       const targetS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid(req.query.versionId), objId);
 
       const data = {
-        bucketId: req.currentObject.bucketId,
+        bucketId: req.currentObject?.bucketId,
         filePath: await getPath(objId),
         s3VersionId: targetS3VersionId
       };
@@ -432,7 +432,7 @@ const controller = {
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
       // Target S3 version
-      const targetS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid( req.query.versionId), objId);
+      const targetS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid(req.query.versionId), objId);
 
       const objectTagging = await storageService.getObjectTagging({ filePath: objPath, s3VersionId: targetS3VersionId });
 
@@ -541,7 +541,7 @@ const controller = {
       const objId = addDashesToUuid(req.params.objectId);
 
       // target S3 version
-      const targetS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid( req.query.versionId), objId);
+      const targetS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid(req.query.versionId), objId);
 
       const data = {
         bucketId: req.currentObject.bucketId || undefined,
@@ -601,7 +601,7 @@ const controller = {
       const objId = addDashesToUuid(req.params.objectId);
 
       // target S3 version
-      const targetS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid( req.query.versionId), objId);
+      const targetS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid(req.query.versionId), objId);
 
       const data = {
         bucketId: await getBucketId(objId),
@@ -716,7 +716,7 @@ const controller = {
       const newTags = req.query.tagset;
 
       // source S3 version
-      const sourceS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid( req.query.versionId), objId);
+      const sourceS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid(req.query.versionId), objId);
 
       if (!newTags || !Object.keys(newTags).length || Object.keys(newTags).length > 10) {
         // TODO: Validation level logic. To be moved.

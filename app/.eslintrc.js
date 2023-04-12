@@ -2,7 +2,7 @@ module.exports = {
   root: true,
   env: {
     commonjs: true,
-    es6: true,
+    es2020: true,
     jest: true,
     node: true
   },
@@ -13,7 +13,7 @@ module.exports = {
     _: false
   },
   parserOptions: {
-    ecmaVersion: 9
+    ecmaVersion: 11
   },
   rules: {
     'eol-last': ['error', 'always'],
