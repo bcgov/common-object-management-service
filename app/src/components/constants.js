@@ -21,6 +21,14 @@ module.exports = Object.freeze({
     NONE: 'NONE'
   },
 
+  /** Default CORS settings used across the entire application */
+  DEFAULTCORS: {
+    /** Tells browsers to cache preflight requests for Access-Control-Max-Age seconds */
+    maxAge: 600,
+    /** Set true to dynamically set Access-Control-Allow-Origin based on Origin */
+    origin: true
+  },
+
   /** Need to specify valid AWS region or it'll explode ('us-east-1' is default, 'ca-central-1' for Canada) */
   DEFAULTREGION: 'us-east-1',
 

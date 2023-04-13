@@ -5,7 +5,7 @@ const express = require('express');
 const Problem = require('api-problem');
 const { ValidationError } = require('express-validation');
 
-const { AuthMode } = require('./src/components/constants');
+const { AuthMode, DEFAULTCORS } = require('./src/components/constants');
 const log = require('./src/components/log')(module.filename);
 const httpLogger = require('./src/components/log').httpLogger;
 const { getAppAuthMode, getGitRevision } = require('./src/components/utils');
@@ -26,9 +26,7 @@ let probeId;
 
 const app = express();
 app.use(compression());
-app.use(cors({
-  origin: true // Set true to dynamically set Access-Control-Allow-Origin based on Origin
-}));
+app.use(cors(DEFAULTCORS));
 app.use(express.json({ limit: config.get('server.bodyLimit') }));
 app.use(express.urlencoded({ extended: true }));
 
