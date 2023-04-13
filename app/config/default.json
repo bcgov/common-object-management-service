@@ -3,6 +3,8 @@
     "database": "coms",
     "host": "localhost",
     "port": "5432",
+    "poolMin": "2",
+    "poolMax": "10",
     "username": "app"
   },
   "objectStorage": {
