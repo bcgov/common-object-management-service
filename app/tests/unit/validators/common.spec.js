@@ -2,7 +2,7 @@ const crypto = require('crypto');
 const jestJoi = require('jest-joi');
 expect.extend(jestJoi.matchers);
 
-const { Permissions } = require('../../../src/components/constants');
+const { EMAILREGEX, Permissions } = require('../../../src/components/constants');
 const { scheme, type } = require('../../../src/validators/common');
 
 describe('type', () => {
@@ -50,7 +50,6 @@ describe('type', () => {
 
   describe('email', () => {
     const model = type.email.describe();
-
     it('is a string', () => {
       expect(model).toBeTruthy();
       expect(model.type).toEqual('string');
@@ -60,14 +59,18 @@ describe('type', () => {
       expect(Array.isArray(model.rules)).toBeTruthy();
       expect(model.rules).toHaveLength(2);
       expect(model.rules).toEqual(expect.arrayContaining([
-        expect.objectContaining(
-          {
-            'args': {
-              'limit': 255
-            },
-            'name': 'max'
+        expect.objectContaining({
+          'args': {
+            'regex': new RegExp(EMAILREGEX).toString()
           },
-          { 'name': 'email' })
+          'name': 'pattern'
+        }),
+        expect.objectContaining({
+          'args': {
+            'limit': 255
+          },
+          'name': 'max'
+        })
       ]));
     });
 

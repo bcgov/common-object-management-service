@@ -1,6 +1,6 @@
 const { Joi: baseJoi } = require('express-validation');
 
-const { Permissions } = require('../components/constants');
+const { EMAILREGEX, Permissions } = require('../components/constants');
 
 /**
  * @constant Joi
@@ -39,7 +39,7 @@ const type = {
   truthy: Joi.boolean()
     .truthy('true', 1, '1', 't', 'yes', 'y', 'false', 0, '0', 'f', 'no', 'n'),
 
-  email: Joi.string().max(255).email(),
+  email: Joi.string().pattern(new RegExp(EMAILREGEX)).max(255),
 
   uuidv4: Joi.string().guid({
     version: 'uuidv4'

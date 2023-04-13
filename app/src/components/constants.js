@@ -32,6 +32,12 @@ module.exports = Object.freeze({
     URL: 'url'
   },
 
+  /**
+   * Generic email regex modified to require domain of at least 2 characters
+   * @see {@link https://emailregex.com/}
+   */
+  EMAILREGEX: '^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\\.[a-zA-Z0-9-]{2,})+$',
+
   /** Maximum Content Length supported by S3 CopyObjectCommand */
   MAXCOPYOBJECTLENGTH: 5 * 1024 * 1024 * 1024,
 
