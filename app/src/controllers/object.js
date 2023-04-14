@@ -5,6 +5,7 @@ const cors = require('cors');
 const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 
 const {
+  DEFAULTCORS,
   DownloadMode,
   MAXCOPYOBJECTLENGTH,
   MetadataDirective
@@ -557,7 +558,7 @@ const controller = {
       // Set Headers via CORS library
       cors({
         exposedHeaders: controller._processS3Headers(response, res),
-        origin: true // Set true to dynamically set Access-Control-Allow-Origin based on Origin
+        ...DEFAULTCORS
       })(req, res, () => { });
       res.status(204).end();
     } catch (e) {
@@ -617,7 +618,7 @@ const controller = {
         // Set Headers via CORS library
         cors({
           exposedHeaders: controller._processS3Headers(response, res),
-          origin: true // Set true to dynamically set Access-Control-Allow-Origin based on Origin
+          ...DEFAULTCORS
         })(req, res, () => { });
 
         // TODO: Proper 304 caching logic (with If-Modified-Since header support)
