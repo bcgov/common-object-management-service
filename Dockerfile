@@ -17,7 +17,7 @@ WORKDIR /tmp/src/app
 RUN chown -R 1001:0 /tmp/src
 
 USER 1001
-RUN npm ci
+RUN npm ci --omit=dev
 
 #
 # Create the final container image
