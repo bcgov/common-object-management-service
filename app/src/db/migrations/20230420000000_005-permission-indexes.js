@@ -9,19 +9,11 @@ exports.up = function (knex) {
     .then(() => knex.schema.alterTable('object_permission', table => {
       table.uuid('objectId').index().notNullable().alter();
       table.uuid('userId').index().notNullable().alter();
-    }))
-    // Add index to object.bucketId
-    .then(() => knex.schema.alterTable('object', table => {
-      table.uuid('bucketId').index().alter();
     }));
 };
 
 exports.down = function (knex) {
   return Promise.resolve()
-    // Remove index on object.bucketId
-    .then(() => knex.schema.alterTable('object', table => {
-      table.dropIndex('bucketId');
-    }))
     // Remove index on object_permission.userId and object_permission.objectId
     .then(() => knex.schema.alterTable('object_permission', table => {
       table.dropIndex('userId');

@@ -13,11 +13,12 @@ export const options = {
 
 export default function () {
 
-  // search by random tags
+  const apiPath = 'http://localhost:3000/api/v1';
   const randomLetter = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+  const bucketId = '<bucket ID (uuid)>';
 
   // request url
-  const url = 'http://localhost:3000/api/v1/object?latest=true&deleteMarker=false&tagset[' + randomLetter + ']=' + randomLetter;
+  const url = `${apiPath}/object?bucketId=${bucketId}&latest=true&deleteMarker=false&tagset[${randomLetter}]=${randomLetter}`;
 
   // Add Authorization header
   const params = {
@@ -32,8 +33,7 @@ export default function () {
   // tests
   check(res, {
     'is status 200': (r) => r.status === 200,
-  })
-
+  });
   // optional delay (per VU) between iterations
   sleep(1);
 }

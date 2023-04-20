@@ -7,7 +7,7 @@ export const options = {
   scenarios: {
     readObject: {
       executor: 'constant-arrival-rate',
-      rate: 50,
+      rate: 20,
       duration: '20s',
       preAllocatedVUs: 50,
       timeUnit: '1s',
@@ -19,8 +19,10 @@ export const options = {
 // run k6
 export default function () {
 
+  const apiPath = 'http://localhost:3000/api/v1';
   // request url
-  const url = 'http://localhost:3000/api/v1/object/<object id here>';
+  const url = `${apiPath}/object/<object id here>`;
+
   const params = {
     headers: {
       'Authorization': 'Bearer <token here>',
@@ -33,8 +35,7 @@ export default function () {
   // tests
   check(res, {
     'is status 200': (r) => r.status === 200,
-  })
-
+  });
   // optional delay (per VU) between iterations
   sleep(1);
 }
