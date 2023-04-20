@@ -4,7 +4,6 @@ const { resetReturnThis } = require('../../common/helper');
 const Bucket = require('../../../src/db/models/tables/bucket');
 
 jest.mock('../../../src/db/models/tables/bucket', () => ({
-  // then: jest.fn(),
   commit: jest.fn().mockReturnThis(),
   startTransaction: jest.fn().mockReturnThis(),
 
@@ -17,6 +16,7 @@ jest.mock('../../../src/db/models/tables/bucket', () => ({
   patchAndFetchById: jest.fn().mockReturnThis(),
   query: jest.fn().mockReturnThis(),
   returning: jest.fn().mockReturnThis(),
+  // then: jest.fn().mockReturnThis(),
   throwIfNotFound: jest.fn().mockReturnThis(),
   where: jest.fn().mockReturnThis()
 }));
@@ -45,7 +45,6 @@ beforeEach(() => {
 });
 
 describe('checkGrantPermissions', () => {
-
   const readUniqueSpy = jest.spyOn(service, 'readUnique');
 
   beforeEach(() => {
@@ -57,7 +56,8 @@ describe('checkGrantPermissions', () => {
   });
 
   it('Grants a user full permissions to the bucket if the data precisely matches', async () => {
-    readUniqueSpy.mockReturnValue( { accessKeyId: data.accessKeyId, secretAccessKey: data.secretAccessKey } );
+    readUniqueSpy.mockResolvedValue({ accessKeyId: data.accessKeyId, secretAccessKey: data.secretAccessKey });
+
     await service.checkGrantPermissions(data);
 
     expect(Bucket.startTransaction).toHaveBeenCalledTimes(1);
@@ -77,7 +77,8 @@ describe('create', () => {
   });
 
   it('Create a bucket record and give the uploader (if authed) permissions', async () => {
-    addPermissionsSpy.mockReturnValue({...data});
+    addPermissionsSpy.mockResolvedValue({ ...data });
+
     await service.create(data);
 
     expect(Bucket.startTransaction).toHaveBeenCalledTimes(1);
@@ -91,7 +92,6 @@ describe('create', () => {
 });
 
 describe('delete', () => {
-
   it('Delete a bucket record, this will also delete all objects and permissions', async () => {
     await service.delete(bucketId);
 
@@ -108,11 +108,9 @@ describe('delete', () => {
 });
 
 // describe('searchBuckets', () => {
-
 //   it('search and filter for specific bucket records', () => {
+//     Bucket.then.mockImplementation();
 
-//     // Bucket.then.mockReturnValue({});
-//     Bucket.then.mockImplementation(() => () => {});
 //     service.searchBuckets([]);
 
 //     expect(Bucket.query).toHaveBeenCalledTimes(1);
@@ -123,7 +121,6 @@ describe('delete', () => {
 // });
 
 describe('read', () => {
-
   it('Get a bucket db record based on bucketId', () => {
     service.read(bucketId);
 
@@ -136,7 +133,6 @@ describe('read', () => {
 });
 
 describe('readUnique', () => {
-
   it('Get a bucket db record based on unique parameters', () => {
     service.readUnique(data);
 
@@ -153,7 +149,6 @@ describe('readUnique', () => {
 });
 
 describe('update', () => {
-
   it('Update a bucket DB record', async () => {
     await service.update(data);
 

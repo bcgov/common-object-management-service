@@ -67,37 +67,6 @@ const service = {
   },
 
   /**
-   * @function deleteOrphanedMetadata
-   * deletes Metadata records if they are no longer related to any versions
-   * @param {object} [etrx=undefined] An optional Objection Transaction object
-   * @returns {Promise<number>} The result of running the delete operation (number of rows deleted)
-   * @throws The error encountered upon db transaction failure
-   */
-  // TODO: check if deleteing a version will prune orphan metadata records (sister table)
-  pruneOrphanedMetadata: async (etrx = undefined) => {
-    let trx;
-    try {
-      trx = etrx ? etrx : await Metadata.startTransaction();
-
-      const deletedMetadataIds = await Metadata.query(trx)
-        .allowGraph('versionMetadata')
-        .withGraphJoined('versionMetadata')
-        .select('metadata.id')
-        .whereNull('versionMetadata.metadataId');
-
-      const response = await Metadata.query(trx)
-        .delete()
-        .whereIn('id', deletedMetadataIds.map(({ id }) => id));
-
-      if (!etrx) await trx.commit();
-      return Promise.resolve(response);
-    } catch (err) {
-      if (!etrx && trx) await trx.rollback();
-      throw err;
-    }
-  },
-
-  /**
    * @function createMetadata
    * Inserts any metadata records if they dont already exist in db
    * @param {object} metadata Incoming object with `<key>:<value>` metadata to add for this version
@@ -232,6 +201,36 @@ const service = {
       }));
   },
 
+  /**
+   * @function pruneOrphanedMetadata
+   * deletes Metadata records if they are no longer related to any versions
+   * @param {object} [etrx=undefined] An optional Objection Transaction object
+   * @returns {Promise<number>} The result of running the delete operation (number of rows deleted)
+   * @throws The error encountered upon db transaction failure
+   */
+  // TODO: check if deleting a version will prune orphan metadata records (sister table)
+  pruneOrphanedMetadata: async (etrx = undefined) => {
+    let trx;
+    try {
+      trx = etrx ? etrx : await Metadata.startTransaction();
+
+      const deletedMetadataIds = await Metadata.query(trx)
+        .allowGraph('versionMetadata')
+        .withGraphJoined('versionMetadata')
+        .select('metadata.id')
+        .whereNull('versionMetadata.metadataId');
+
+      const response = await Metadata.query(trx)
+        .delete()
+        .whereIn('id', deletedMetadataIds.map(({ id }) => id));
+
+      if (!etrx) await trx.commit();
+      return Promise.resolve(response);
+    } catch (err) {
+      if (!etrx && trx) await trx.rollback();
+      throw err;
+    }
+  },
 
   /**
    * @function searchMetadata

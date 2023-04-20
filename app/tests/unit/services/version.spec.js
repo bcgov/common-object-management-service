@@ -33,7 +33,6 @@ beforeEach(() => {
 });
 
 describe('copy', () => {
-
   it('Creates a new version db record from an existing record', async () => {
     await service.copy(version, s3VersionId, objectId, userId);
 
@@ -82,9 +81,8 @@ describe('copy', () => {
 });
 
 describe('create', () => {
-
   it('Saves a version of an object', async () => {
-    await service.create({s3VersionId: s3VersionId, mimeType: 'mimeType', id: objectId, deleteMarker: 'deleteMarker'}, userId);
+    await service.create({ s3VersionId: s3VersionId, mimeType: 'mimeType', id: objectId, deleteMarker: 'deleteMarker' }, userId);
 
     expect(Version.startTransaction).toHaveBeenCalledTimes(1);
     expect(Version.query).toHaveBeenCalledTimes(1);
@@ -106,7 +104,6 @@ describe('create', () => {
 });
 
 describe('delete', () => {
-
   it('Delete a version record of an object', async () => {
     await service.delete(objectId, versionId);
 
@@ -125,9 +122,8 @@ describe('delete', () => {
 });
 
 describe('get', () => {
-
   it('Get a given version from the database - s3versionId provided', async () => {
-    await service.get({s3VersionId: s3VersionId, objectId: objectId});
+    await service.get({ s3VersionId: s3VersionId, objectId: objectId });
 
     expect(Version.startTransaction).toHaveBeenCalledTimes(1);
     expect(Version.query).toHaveBeenCalledWith(expect.anything());
@@ -143,7 +139,7 @@ describe('get', () => {
   });
 
   it('Get a given version from the database - no s3versionId provided', async () => {
-    await service.get({versionId: versionId, objectId: objectId});
+    await service.get({ versionId: versionId, objectId: objectId });
 
     expect(Version.startTransaction).toHaveBeenCalledTimes(1);
     expect(Version.query).toHaveBeenCalledWith(expect.anything());
@@ -187,7 +183,6 @@ describe('list', () => {
 });
 
 describe('update', () => {
-
   it('Updates a version of an object', async () => {
     await service.update({ id: objectId, s3VersionId: s3VersionId, mimeType: 'mimeType' });
 

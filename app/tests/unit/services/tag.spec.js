@@ -65,8 +65,8 @@ jest.mock('../../../src/db/models/tables/versionTag', () => ({
 
 const service = require('../../../src/services/tag');
 
-const params = { tagset: [{key: 'C', value: '10'}], objectIds: [ OBJECT_ID ], userId: SYSTEM_USER };
-const tags = [{ key: 'A', value: '1'}, {key: 'B', value: '2'}];
+const params = { tagset: [{ key: 'C', value: '10' }], objectIds: [OBJECT_ID], userId: SYSTEM_USER };
+const tags = [{ key: 'A', value: '1' }, { key: 'B', value: '2' }];
 const versionId = VERSION_ID;
 
 beforeEach(() => {
@@ -92,8 +92,8 @@ describe('replaceTags', () => {
   });
 
   it('Makes the incoming list of tags the definitive set associated with versionId', async () => {
-    getObjectsByKeyValueSpy.mockReturnValue(...tags);
-    associateTagsSpy.mockReturnValue(...tags);
+    getObjectsByKeyValueSpy.mockResolvedValue(...tags);
+    associateTagsSpy.mockResolvedValue(...tags);
     await service.replaceTags(versionId, tags);
 
     expect(Tag.startTransaction).toHaveBeenCalledTimes(1);
@@ -119,7 +119,8 @@ describe('associateTags', () => {
   });
 
   it('CreateTags to create new Tag records associates new tags to the versionId', async () => {
-    createTagsSpy.mockReturnValue([{key: 'C', value: '10'}]);
+    createTagsSpy.mockResolvedValue([{ key: 'C', value: '10' }]);
+
     await service.associateTags(versionId, tags);
 
     expect(Tag.startTransaction).toHaveBeenCalledTimes(1);
@@ -133,7 +134,6 @@ describe('associateTags', () => {
 });
 
 describe('dissociateTags', () => {
-
   it('Dissociates all provided tags from a versionId', async () => {
     await service.dissociateTags(versionId, tags);
 
@@ -153,7 +153,6 @@ describe('dissociateTags', () => {
 });
 
 describe('pruneOrphanedTags', () => {
-
   it('Deletes tag records if they are no longer related to any versions', async () => {
     await service.pruneOrphanedTags();
 
@@ -177,7 +176,6 @@ describe('pruneOrphanedTags', () => {
 });
 
 describe('createTags', () => {
-
   it('Inserts any tag records if they dont already exist in db', async () => {
     await service.createTags(tags);
 
@@ -190,7 +188,6 @@ describe('createTags', () => {
 });
 
 describe('fetchTagsForObject', () => {
-
   it('Fetch matching tags on latest version of provided objects', async () => {
     service.fetchTagsForObject(params);
 
@@ -203,13 +200,12 @@ describe('fetchTagsForObject', () => {
     expect(ObjectModel.withGraphJoined).toBeCalledWith('version.tag');
     expect(ObjectModel.modifyGraph).toHaveBeenCalledTimes(2);
     expect(ObjectModel.modify).toHaveBeenCalledTimes(2);
-    expect(ObjectModel.modify).toBeCalledWith('filterIds', [ SYSTEM_USER ]);
+    expect(ObjectModel.modify).toBeCalledWith('filterIds', [SYSTEM_USER]);
     expect(ObjectModel.then).toHaveBeenCalledTimes(1);
   });
 });
 
 describe('fetchTagsForVersion', () => {
-
   it('Fetch tags for specific versions', async () => {
     service.fetchTagsForVersion(params);
 
@@ -229,7 +225,6 @@ describe('fetchTagsForVersion', () => {
 });
 
 describe('searchTags', () => {
-
   it('Search and filter for specific tag keys', async () => {
     service.searchTags([]);
 

@@ -18,8 +18,13 @@ jest.mock('../../../src/db/models/tables/objectPermission', () => ({
   commit: jest.fn().mockReturnThis(),
   startTransaction: jest.fn().mockReturnThis(),
 
-  // query: jest.fn().mockReturnThis(),
-  // then: jest.fn().mockReturnThis(), // TODO: kicks off a timeout error
+  distinct: jest.fn().mockReturnThis(),
+  joinRelated: jest.fn().mockReturnThis(),
+  modify: jest.fn().mockReturnThis(),
+  query: jest.fn().mockReturnThis(),
+  select: jest.fn().mockReturnThis(),
+  then: jest.fn().mockReturnThis(),
+  whereNotNull: jest.fn().mockReturnThis()
 }));
 
 const service = require('../../../src/services/bucketPermission');
@@ -42,7 +47,6 @@ beforeEach(() => {
 });
 
 describe('addPermissions', () => {
-
   const searchPermissionsSpy = jest.spyOn(service, 'searchPermissions');
 
   beforeEach(() => {
@@ -54,7 +58,8 @@ describe('addPermissions', () => {
   });
 
   it('Grants bucket permissions to users', async () => {
-    searchPermissionsSpy.mockReturnValue([{ userId: SYSTEM_USER, permCode: 'READ'}]);
+    searchPermissionsSpy.mockResolvedValue([{ userId: SYSTEM_USER, permCode: 'READ' }]);
+
     await service.addPermissions(BUCKET_ID, data);
 
     expect(BucketPermission.startTransaction).toHaveBeenCalledTimes(1);
@@ -65,15 +70,14 @@ describe('addPermissions', () => {
 });
 
 describe('removePermissions', () => {
-
   it('Deletes bucket permissions for a user', async () => {
-    await service.removePermissions(bucketId, [ SYSTEM_USER ]);
+    await service.removePermissions(bucketId, [SYSTEM_USER]);
 
     expect(BucketPermission.startTransaction).toHaveBeenCalledTimes(1);
     expect(BucketPermission.delete).toHaveBeenCalledTimes(1);
     expect(BucketPermission.delete).toBeCalledWith();
     expect(BucketPermission.modify).toHaveBeenCalledTimes(3);
-    expect(BucketPermission.modify).toBeCalledWith('filterUserId', [ SYSTEM_USER ]);
+    expect(BucketPermission.modify).toBeCalledWith('filterUserId', [SYSTEM_USER]);
     expect(BucketPermission.modify).toBeCalledWith('filterBucketId', bucketId);
     expect(BucketPermission.returning).toHaveBeenCalledTimes(1);
     expect(BucketPermission.returning).toBeCalledWith('*');
@@ -81,22 +85,23 @@ describe('removePermissions', () => {
   });
 });
 
-// describe('getBucketIdsWithObject', () => {
+describe('getBucketIdsWithObject', () => {
+  it('Searches for specific (bucket) object permissions', async () => {
+    ObjectPermission.then.mockImplementation();
 
-//   it('Searches for specific (bucket) object permissions', async () => {
-//     await service.getBucketIdsWithObject();
+    await service.getBucketIdsWithObject();
 
-//     // expect(ObjectPermission.query).toHaveBeenCalledTimes(1);
-//     // expect(ObjectPermission.select).toHaveBeenCalledTimes(3);
-//     // expect(ObjectPermission.distinct).toHaveBeenCalledTimes(1);
-//     // expect(ObjectPermission.joinRelated).toHaveBeenCalledTimes(1);
-//     // expect(ObjectPermission.modify).toHaveBeenCalledTimes(1);
-//     // expect(ObjectPermission.whereNotNull).toHaveBeenCalledTimes(1);
-//   });
-// });
+    expect(ObjectPermission.query).toHaveBeenCalledTimes(1);
+    expect(ObjectPermission.select).toHaveBeenCalledTimes(1);
+    expect(ObjectPermission.distinct).toHaveBeenCalledTimes(1);
+    expect(ObjectPermission.joinRelated).toHaveBeenCalledTimes(1);
+    expect(ObjectPermission.modify).toHaveBeenCalledTimes(1);
+    expect(ObjectPermission.whereNotNull).toHaveBeenCalledTimes(1);
+    expect(ObjectPermission.then).toHaveBeenCalledTimes(1);
+  });
+});
 
 describe('searchPermissions', () => {
-
   it('Search and filter for specific bucket permissions', () => {
     service.searchPermissions({ userId: SYSTEM_USER, bucketId: bucketId, permCode: 'READ' });
 

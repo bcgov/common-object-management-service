@@ -48,8 +48,8 @@ jest.mock('../../../src/db/models/tables/versionMetadata', () => ({
 const service = require('../../../src/services/metadata');
 const utils = require('../../../src/components/utils');
 
-const metadata = [{ key: 'a', value: '1'}, {key: 'B', value: '2'}];
-const params = {objId: 1, metadata: metadata, userId: SYSTEM_USER, privacyMask: 'privacyMask'};
+const metadata = [{ key: 'a', value: '1' }, { key: 'B', value: '2' }];
+const params = { objId: 1, metadata: metadata, userId: SYSTEM_USER, privacyMask: 'privacyMask' };
 const versionId = VERSION_ID;
 
 beforeEach(() => {
@@ -61,7 +61,6 @@ beforeEach(() => {
 });
 
 describe('associateMetadata', () => {
-
   const createMetadataSpy = jest.spyOn(service, 'createMetadata');
 
   beforeEach(() => {
@@ -73,7 +72,8 @@ describe('associateMetadata', () => {
   });
 
   it('Makes the incoming list of metadata the definitive set associated with versionId', async () => {
-    createMetadataSpy.mockReturnValue({...metadata});
+    createMetadataSpy.mockResolvedValue({ ...metadata });
+
     await service.associateMetadata(versionId, metadata);
 
     expect(Metadata.startTransaction).toHaveBeenCalledTimes(1);
@@ -86,12 +86,14 @@ describe('associateMetadata', () => {
 });
 
 describe('pruneOrphanedMetadata', () => {
-
   it('Deletes metadata records if they are no longer related to any versions', async () => {
-    await service.pruneOrphanedMetadata(versionId, metadata);
+    const etrx = await jest.fn().mockResolvedValue();
+
+    await service.pruneOrphanedMetadata(etrx);
 
     expect(Metadata.query).toHaveBeenCalledTimes(2);
-    expect(Metadata.query).toHaveBeenCalledWith(expect.anything());
+    expect(Metadata.query).toHaveBeenNthCalledWith(1, etrx);
+    expect(Metadata.query).toHaveBeenNthCalledWith(2, etrx);
     expect(Metadata.allowGraph).toHaveBeenCalledTimes(1);
     expect(Metadata.allowGraph).toHaveBeenCalledWith('versionMetadata');
     expect(Metadata.withGraphJoined).toHaveBeenCalledTimes(1);
@@ -117,7 +119,8 @@ describe('createMetadata', () => {
   });
 
   it('Inserts any metadata records if they dont already exist in db', async () => {
-    getObjectsByKeyValueSpy.mockReturnValue({ key: 'a', value: '1' });
+    getObjectsByKeyValueSpy.mockResolvedValue({ key: 'a', value: '1' });
+
     await service.createMetadata(metadata);
 
     expect(Metadata.startTransaction).toHaveBeenCalledTimes(1);
@@ -130,7 +133,6 @@ describe('createMetadata', () => {
 });
 
 describe('fetchMetadataForObject', () => {
-
   it('Fetch metadata for specific objects', () => {
     service.fetchMetadataForObject(params);
 
@@ -152,7 +154,6 @@ describe('fetchMetadataForObject', () => {
 });
 
 describe('fetchMetadataForVersion', () => {
-
   it('Fetch metadata for specific versions', () => {
     service.fetchMetadataForVersion(params);
 
@@ -174,7 +175,6 @@ describe('fetchMetadataForVersion', () => {
 });
 
 describe('searchMetadata', () => {
-
   it('Search and filter for specific metadata keys', () => {
     service.searchMetadata(params);
 

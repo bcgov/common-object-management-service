@@ -105,7 +105,8 @@ describe('createUser', () => {
   });
 
   it('Creates an idp if no matching idp exists in database', async () => {
-    readIdpSpy.mockReturnValue(false);
+    readIdpSpy.mockResolvedValue(false);
+
     await service.createUser(user);
 
     expect(readIdpSpy).toHaveBeenCalledTimes(1);

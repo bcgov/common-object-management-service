@@ -18,7 +18,7 @@ jest.mock('../../../src/db/models/tables/objectModel', () => ({
   query: jest.fn().mockReturnThis(),
   returning: jest.fn().mockReturnThis(),
   select: jest.fn().mockReturnThis(),
-  // then: jest.fn().mockReturnThis(), // TODO: kicks off a timeout error
+  // then: jest.fn().mockReturnThis(),
   throwIfNotFound: jest.fn().mockReturnThis()
 }));
 
@@ -44,7 +44,6 @@ beforeEach(() => {
 });
 
 describe('create', () => {
-
   const addPermissionsSpy = jest.spyOn(objectPermissionService, 'addPermissions');
 
   beforeEach(() => {
@@ -56,7 +55,8 @@ describe('create', () => {
   });
 
   it('Create an object db record and give the uploader (if authed) permissions', async () => {
-    addPermissionsSpy.mockReturnValue({});
+    addPermissionsSpy.mockResolvedValue({});
+
     await service.create({ ...data, userId: userId });
 
     expect(ObjectModel.startTransaction).toHaveBeenCalledTimes(1);
@@ -71,7 +71,6 @@ describe('create', () => {
 });
 
 describe('delete', () => {
-
   it('Delete an object record', async () => {
     await service.delete(objectId);
 
@@ -89,7 +88,6 @@ describe('delete', () => {
 });
 
 describe('getBucketKey', () => {
-
   it('Gets the associated key path for a specific object record', () => {
     service.getBucketKey(objectId);
 
@@ -108,17 +106,16 @@ describe('getBucketKey', () => {
 });
 
 // describe('searchObjects', () => {
+//   it('Search and filter for specific object records', () => {
+//     ObjectModel.then.mockImplementation(() => { });
 
-//   const params = {
-//     bucketId: bucketId,
-//     bucketName: 'bucketName',
-//     active: 'true',
-//     key: 'key',
-//     userId: userId
-//   };
-
-//   it('search and filter for specific object records', () => {
-//     service.searchObjects(params);
+//     service.searchObjects({
+//       bucketId: bucketId,
+//       bucketName: 'bucketName',
+//       active: 'true',
+//       key: 'key',
+//       userId: userId
+//     });
 
 //     expect(ObjectModel.query).toHaveBeenCalledTimes(1);
 //     expect(ObjectModel.allowGraph).toHaveBeenCalledTimes(1);
@@ -128,7 +125,6 @@ describe('getBucketKey', () => {
 // });
 
 describe('read', () => {
-
   it('Get an object db record', () => {
     service.read(objectId);
 
@@ -141,9 +137,8 @@ describe('read', () => {
 });
 
 describe('update', () => {
-
   it('Update an object DB record', async () => {
-    await service.update({...data});
+    await service.update({ ...data });
 
     expect(ObjectModel.startTransaction).toHaveBeenCalledTimes(1);
     expect(ObjectModel.query).toHaveBeenCalledTimes(1);

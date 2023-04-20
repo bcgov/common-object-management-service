@@ -9,7 +9,10 @@ jest.mock('../../../src/db/models/tables/bucketPermission', () => ({
   startTransaction: jest.fn().mockReturnThis(),
 
   distinct: jest.fn().mockReturnThis(),
-  query: jest.fn().mockReturnThis()
+  rightJoin: jest.fn().mockReturnThis(),
+  modify: jest.fn().mockReturnThis(),
+  query: jest.fn().mockReturnThis(),
+  then: jest.fn().mockReturnThis()
 }));
 jest.mock('../../../src/db/models/tables/objectPermission', () => ({
   commit: jest.fn().mockReturnThis(),
@@ -19,8 +22,7 @@ jest.mock('../../../src/db/models/tables/objectPermission', () => ({
   insertAndFetch: jest.fn().mockReturnThis(),
   modify: jest.fn().mockReturnThis(),
   query: jest.fn().mockReturnThis(),
-  returning: jest.fn().mockReturnThis(),
-  // then: jest.fn().mockReturnThis()
+  returning: jest.fn().mockReturnThis()
 }));
 
 const service = require('../../../src/services/objectPermission');
@@ -47,7 +49,8 @@ describe('addPermissions', () => {
   });
 
   it('Grants object permissions to users', async () => {
-    searchPermissionsSpy.mockReturnValue([{ userId: SYSTEM_USER, permCode: 'READ'}]);
+    searchPermissionsSpy.mockResolvedValue([{ userId: SYSTEM_USER, permCode: 'READ' }]);
+
     await service.addPermissions(objectId, [{
       id: objectId,
       bucketId: bucketId,
@@ -66,29 +69,29 @@ describe('addPermissions', () => {
   });
 });
 
-// describe('getObjectIdsWithBucket', () => {
+describe('getObjectIdsWithBucket', () => {
+  it('searches for specific (object) bucket permissions', async () => {
+    BucketPermission.then.mockImplementation();
 
-//   it('searches for specific (object) bucket permissions', async () => {
-//     await service.getObjectIdsWithBucket();
+    await service.getObjectIdsWithBucket();
 
-//     expect(ObjectPermission.distinct).toHaveBeenCalledTimes(1);
-//     expect(ObjectPermission.rightJoin).toHaveBeenCalledTimes(1);
-//     expect(ObjectPermission.modify).toHaveBeenCalledTimes(1);
-//     expect(ObjectPermission.then).toHaveBeenCalledTimes(1);
-//   });
-// });
+    expect(BucketPermission.distinct).toHaveBeenCalledTimes(1);
+    expect(BucketPermission.rightJoin).toHaveBeenCalledTimes(1);
+    expect(BucketPermission.modify).toHaveBeenCalledTimes(1);
+    expect(BucketPermission.then).toHaveBeenCalledTimes(1);
+  });
+});
 
 describe('removePermissions', () => {
-
   it('Deletes object permissions for a user', async () => {
-    await service.removePermissions(objectId, [ SYSTEM_USER ]);
+    await service.removePermissions(objectId, [SYSTEM_USER]);
 
     expect(ObjectPermission.startTransaction).toHaveBeenCalledTimes(1);
     expect(ObjectPermission.query).toHaveBeenCalledTimes(1);
     expect(ObjectPermission.delete).toHaveBeenCalledTimes(1);
     expect(ObjectPermission.delete).toBeCalledWith();
     expect(ObjectPermission.modify).toHaveBeenCalledTimes(3);
-    expect(ObjectPermission.modify).toBeCalledWith('filterUserId', [ SYSTEM_USER ]);
+    expect(ObjectPermission.modify).toBeCalledWith('filterUserId', [SYSTEM_USER]);
     expect(ObjectPermission.modify).toBeCalledWith('filterObjectId', objectId);
     expect(ObjectPermission.returning).toHaveBeenCalledTimes(1);
     expect(ObjectPermission.returning).toBeCalledWith('*');
@@ -97,9 +100,8 @@ describe('removePermissions', () => {
 });
 
 describe('SearchPermissions', () => {
-
   it('search and filter for specific object permissions', async () => {
-    await service.searchPermissions({bucketId: BUCKET_ID, userId: SYSTEM_USER, objId: OBJECT_ID, permCode: 'READ'});
+    await service.searchPermissions({ bucketId: BUCKET_ID, userId: SYSTEM_USER, objId: OBJECT_ID, permCode: 'READ' });
 
     expect(ObjectPermission.query).toHaveBeenCalledTimes(1);
     expect(ObjectPermission.modify).toBeCalledWith('filterBucketId', BUCKET_ID);
