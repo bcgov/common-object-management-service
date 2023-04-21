@@ -1,6 +1,15 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 
+// -------------------------------------------------------------------------------------------------
+// Init
+// -------------------------------------------------------------------------------------------------
+// https://k6.io/docs/using-k6/environment-variables
+
+const apiPath = `${__ENV.API_PATH}`
+const objectId = `${__ENV.OBJECT_ID}`
+const authToken = `${__ENV.AUTH_TOKEN}`
+
 // k6 options (https://k6.io/docs/using-k6/k6-options/)
 export const options = {
   vus: 50,
@@ -16,18 +25,19 @@ export const options = {
   },
 };
 
+// request url
+const url = `${apiPath}/object/${objectId}`;
+
+// Add Authorization header
+// note: you can hardcode an auth token here or pass it as a paramter
+const params = {
+  headers: {
+    'Authorization': `Basic ${authToken}`
+  }
+};
+
 // run k6
 export default function () {
-
-  const apiPath = 'http://localhost:3000/api/v1';
-  // request url
-  const url = `${apiPath}/object/<object id here>`;
-
-  const params = {
-    headers: {
-      'Authorization': 'Bearer <token here>',
-    }
-  };
 
   // make the http request
   const res = http.get(url, params);

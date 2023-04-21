@@ -1,6 +1,18 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 
+// -------------------------------------------------------------------------------------------------
+// Init
+// -------------------------------------------------------------------------------------------------
+// https://k6.io/docs/using-k6/environment-variables
+
+const apiPath = `${__ENV.API_PATH}`
+const bucketId = `${__ENV.BUCKET_ID}`
+const filePath = `${__ENV.FILE_PATH}`
+const authToken = `${__ENV.AUTH_TOKEN}`
+
+'./file-in-cur-dir.txt'
+
 // k6 options (https://k6.io/docs/using-k6/k6-options/)
 export const options = {
   scenarios: {
@@ -15,15 +27,16 @@ export const options = {
   },
 };
 
-const apiPath = 'http://localhost:3000/api/v1';
-const randomLetter = String.fromCharCode(65 + Math.floor(Math.random() * 26));
-const bucketId = '<bucket ID (uuid)>';
-const url = `${apiPath}/object?bucketId=${bucketId}&tagset[${randomLetter}]=${randomLetter}`;
+
+const randomLetter = () => String.fromCharCode(65 + Math.floor(Math.random() * 26));
+const url = `${apiPath}/object?bucketId=${bucketId}&tagset[${randomLetter()}]=${randomLetter()}`;
 
 // open() the file as binary (with the 'b' argument, must be declared in init scope)
 // ref: https://k6.io/docs/examples/data-uploads/#multipart-request-uploading-a-file
 // eslint-disable-next-line
-const binFile = open('./file-in-cur-dir.txt', 'b');
+const binFile = open(filePath, 'b');
+
+console.log(authToken );
 
 // run k6
 export default function () {
@@ -33,9 +46,10 @@ export default function () {
   };
   // make the http request
   const res = http.post(url, data, {
-    // add headers
+    // Add Authorization header
+    // note: you can hardcode an auth token here or pass it as a paramter
     headers: {
-      'Authorization': 'Bearer <user ID token>'
+      'Authorization': `Basic ${authToken}`
     }
   });
   // tests

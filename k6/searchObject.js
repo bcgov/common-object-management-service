@@ -1,6 +1,15 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 
+// -------------------------------------------------------------------------------------------------
+// Init
+// -------------------------------------------------------------------------------------------------
+// https://k6.io/docs/using-k6/environment-variables
+
+const apiPath = `${__ENV.API_PATH}`
+const bucketId = `${__ENV.BUCKET_ID}`
+const authToken = `${__ENV.AUTH_TOKEN}`
+
 // k6 options (https://k6.io/docs/using-k6/k6-options/)
 export const options = {
   // --- smoke testing (acceptable response times)
@@ -11,21 +20,18 @@ export const options = {
   },
 };
 
+const randomLetter = () => String.fromCharCode(65 + Math.floor(Math.random() * 26));
+const url = `${apiPath}/object?bucketId=${bucketId}&latest=true&deleteMarker=false&tagset[${randomLetter}]=${randomLetter}`;
+
+// Add Authorization header
+// note: you can hardcode an auth token here or pass it as a paramter
+const params = {
+  headers: {
+    'Authorization': `Basic ${authToken}`
+  }
+};
+
 export default function () {
-
-  const apiPath = 'http://localhost:3000/api/v1';
-  const randomLetter = String.fromCharCode(65 + Math.floor(Math.random() * 26));
-  const bucketId = '<bucket ID (uuid)>';
-
-  // request url
-  const url = `${apiPath}/object?bucketId=${bucketId}&latest=true&deleteMarker=false&tagset[${randomLetter}]=${randomLetter}`;
-
-  // Add Authorization header
-  const params = {
-    headers: {
-      'Authorization': 'Bearer <user ID token here>'
-    }
-  };
 
   // make the http request
   const res = http.get(url, params);
