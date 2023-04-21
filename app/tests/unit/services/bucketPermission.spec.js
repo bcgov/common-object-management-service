@@ -1,30 +1,32 @@
 const { NIL: BUCKET_ID, NIL: OBJECT_ID, NIL: SYSTEM_USER } = require('uuid');
 
-const { resetReturnThis } = require('../../common/helper');
+const { resetModel, trxBuilder } = require('../../common/helper');
 const BucketPermission = require('../../../src/db/models/tables/bucketPermission');
 const ObjectPermission = require('../../../src/db/models/tables/objectPermission');
 
+const bucketPermissionTrx = trxBuilder();
 jest.mock('../../../src/db/models/tables/bucketPermission', () => ({
-  commit: jest.fn().mockReturnThis(),
-  startTransaction: jest.fn().mockReturnThis(),
+  startTransaction: jest.fn(),
+  then: jest.fn(),
 
-  delete: jest.fn().mockReturnThis(),
-  insertAndFetch: jest.fn().mockReturnThis(),
-  modify: jest.fn().mockReturnThis(),
-  query: jest.fn().mockReturnThis(),
-  returning: jest.fn().mockReturnThis()
+  delete: jest.fn(),
+  insertAndFetch: jest.fn(),
+  modify: jest.fn(),
+  query: jest.fn(),
+  returning: jest.fn()
 }));
-jest.mock('../../../src/db/models/tables/objectPermission', () => ({
-  commit: jest.fn().mockReturnThis(),
-  startTransaction: jest.fn().mockReturnThis(),
 
-  distinct: jest.fn().mockReturnThis(),
-  joinRelated: jest.fn().mockReturnThis(),
-  modify: jest.fn().mockReturnThis(),
-  query: jest.fn().mockReturnThis(),
-  select: jest.fn().mockReturnThis(),
-  then: jest.fn().mockReturnThis(),
-  whereNotNull: jest.fn().mockReturnThis()
+const objectPermissionTrx = trxBuilder();
+jest.mock('../../../src/db/models/tables/objectPermission', () => ({
+  startTransaction: jest.fn(),
+  then: jest.fn(),
+
+  distinct: jest.fn(),
+  joinRelated: jest.fn(),
+  modify: jest.fn(),
+  query: jest.fn(),
+  select: jest.fn(),
+  whereNotNull: jest.fn()
 }));
 
 const service = require('../../../src/services/bucketPermission');
@@ -42,8 +44,8 @@ const data = [{
 
 beforeEach(() => {
   jest.clearAllMocks();
-  resetReturnThis(BucketPermission);
-  resetReturnThis(ObjectPermission);
+  resetModel(BucketPermission, bucketPermissionTrx);
+  resetModel(ObjectPermission, objectPermissionTrx);
 });
 
 describe('addPermissions', () => {
@@ -65,7 +67,7 @@ describe('addPermissions', () => {
     expect(BucketPermission.startTransaction).toHaveBeenCalledTimes(1);
     expect(BucketPermission.insertAndFetch).toHaveBeenCalledTimes(1);
     expect(BucketPermission.insertAndFetch).toBeCalledWith(expect.anything());
-    expect(BucketPermission.commit).toHaveBeenCalledTimes(1);
+    expect(bucketPermissionTrx.commit).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -81,7 +83,7 @@ describe('removePermissions', () => {
     expect(BucketPermission.modify).toBeCalledWith('filterBucketId', bucketId);
     expect(BucketPermission.returning).toHaveBeenCalledTimes(1);
     expect(BucketPermission.returning).toBeCalledWith('*');
-    expect(BucketPermission.commit).toHaveBeenCalledTimes(1);
+    expect(bucketPermissionTrx.commit).toHaveBeenCalledTimes(1);
   });
 });
 

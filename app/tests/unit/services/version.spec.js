@@ -1,22 +1,23 @@
 const { NIL: OBJECT_ID, NIL: SYSTEM_USER, NIL: S3_VERSION_ID, NIL: VERSION_ID } = require('uuid');
 
-const { resetReturnThis } = require('../../common/helper');
+const { resetModel, trxBuilder } = require('../../common/helper');
 const Version = require('../../../src/db/models/tables/version');
 
+const versionTrx = trxBuilder();
 jest.mock('../../../src/db/models/tables/version', () => ({
-  commit: jest.fn().mockReturnThis(),
-  startTransaction: jest.fn().mockReturnThis(),
+  startTransaction: jest.fn(),
+  then: jest.fn(),
 
-  andWhere: jest.fn().mockReturnThis(),
-  delete: jest.fn().mockReturnThis(),
-  first: jest.fn().mockReturnThis(),
-  insert: jest.fn().mockReturnThis(),
-  orderBy: jest.fn().mockReturnThis(),
-  patch: jest.fn().mockReturnThis(),
-  query: jest.fn().mockReturnThis(),
-  returning: jest.fn().mockReturnThis(),
-  throwIfNotFound: jest.fn().mockReturnThis(),
-  where: jest.fn().mockReturnThis()
+  andWhere: jest.fn(),
+  delete: jest.fn(),
+  first: jest.fn(),
+  insert: jest.fn(),
+  orderBy: jest.fn(),
+  patch: jest.fn(),
+  query: jest.fn(),
+  returning: jest.fn(),
+  throwIfNotFound: jest.fn(),
+  where: jest.fn()
 }));
 
 const service = require('../../../src/services/version');
@@ -29,7 +30,7 @@ const versionId = VERSION_ID;
 
 beforeEach(() => {
   jest.clearAllMocks();
-  resetReturnThis(Version);
+  resetModel(Version, versionTrx);
 });
 
 describe('copy', () => {
@@ -58,7 +59,7 @@ describe('copy', () => {
       })
     );
     expect(Version.insert).toHaveBeenCalledTimes(1);
-    expect(Version.commit).toHaveBeenCalledTimes(1);
+    expect(versionTrx.commit).toHaveBeenCalledTimes(1);
   });
 
   it('Creates a new version db record from an existing record - no sourceVersionId provided', async () => {
@@ -76,7 +77,7 @@ describe('copy', () => {
     expect(Version.orderBy).toHaveBeenCalledTimes(1);
     expect(Version.first).toHaveBeenCalledTimes(1);
     expect(Version.insert).toHaveBeenCalledTimes(1);
-    expect(Version.commit).toHaveBeenCalledTimes(1);
+    expect(versionTrx.commit).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -117,7 +118,7 @@ describe('delete', () => {
     expect(Version.returning).toHaveBeenCalledTimes(1);
     expect(Version.returning).toBeCalledWith('*');
     expect(Version.throwIfNotFound).toHaveBeenCalledTimes(1);
-    expect(Version.commit).toHaveBeenCalledTimes(1);
+    expect(versionTrx.commit).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -135,7 +136,7 @@ describe('get', () => {
       })
     );
     expect(Version.first).toHaveBeenCalledTimes(1);
-    expect(Version.commit).toHaveBeenCalledTimes(1);
+    expect(versionTrx.commit).toHaveBeenCalledTimes(1);
   });
 
   it('Get a given version from the database - no s3versionId provided', async () => {
@@ -151,7 +152,7 @@ describe('get', () => {
       })
     );
     expect(Version.first).toHaveBeenCalledTimes(1);
-    expect(Version.commit).toHaveBeenCalledTimes(1);
+    expect(versionTrx.commit).toHaveBeenCalledTimes(1);
   });
 
   it('Get a given version from the database - no s3versionId and no versionId provided', async () => {
@@ -166,7 +167,7 @@ describe('get', () => {
     expect(Version.orderBy).toHaveBeenCalledTimes(1);
     expect(Version.orderBy).toBeCalledWith('createdAt', 'desc');
     expect(Version.first).toHaveBeenCalledTimes(1);
-    expect(Version.commit).toHaveBeenCalledTimes(1);
+    expect(versionTrx.commit).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -205,6 +206,6 @@ describe('update', () => {
     );
     expect(Version.first).toHaveBeenCalledTimes(1);
     expect(Version.returning).toHaveBeenCalledTimes(1);
-    expect(Version.commit).toHaveBeenCalledTimes(1);
+    expect(versionTrx.commit).toHaveBeenCalledTimes(1);
   });
 });

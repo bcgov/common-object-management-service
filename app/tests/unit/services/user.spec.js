@@ -1,35 +1,36 @@
 const { NIL: SYSTEM_USER } = require('uuid');
 
-const { resetReturnThis } = require('../../common/helper');
+const { resetModel, trxBuilder } = require('../../common/helper');
 const IdentityProvider = require('../../../src/db/models/tables/identityProvider');
 const User = require('../../../src/db/models/tables/user');
 
+const identityProviderTrx = trxBuilder();
 jest.mock('../../../src/db/models/tables/identityProvider', () => ({
-  commit: jest.fn().mockReturnThis(),
-  rollback: jest.fn().mockReturnThis(),
-  startTransaction: jest.fn().mockReturnThis(),
+  startTransaction: jest.fn(),
+  then: jest.fn(),
 
-  findById: jest.fn().mockReturnThis(),
-  insertAndFetch: jest.fn().mockReturnThis(),
-  modify: jest.fn().mockReturnThis(),
-  query: jest.fn().mockReturnThis(),
-  where: jest.fn().mockReturnThis()
+  findById: jest.fn(),
+  insertAndFetch: jest.fn(),
+  modify: jest.fn(),
+  query: jest.fn(),
+  where: jest.fn()
 }));
-jest.mock('../../../src/db/models/tables/user', () => ({
-  commit: jest.fn().mockReturnThis(),
-  rollback: jest.fn().mockReturnThis(),
-  startTransaction: jest.fn().mockReturnThis(),
-  throwIfNotFound: jest.fn().mockReturnThis(),
 
-  first: jest.fn().mockReturnThis(),
-  findById: jest.fn().mockReturnThis(),
-  insertAndFetch: jest.fn().mockReturnThis(),
-  modify: jest.fn().mockReturnThis(),
-  patchAndFetchById: jest.fn().mockReturnThis(),
-  query: jest.fn().mockReturnThis(),
-  select: jest.fn().mockReturnThis(),
-  where: jest.fn().mockReturnThis(),
-  whereNotNull: jest.fn().mockReturnThis()
+const userTrx = trxBuilder();
+jest.mock('../../../src/db/models/tables/user', () => ({
+  startTransaction: jest.fn(),
+  then: jest.fn(),
+
+  first: jest.fn(),
+  findById: jest.fn(),
+  insertAndFetch: jest.fn(),
+  modify: jest.fn(),
+  patchAndFetchById: jest.fn(),
+  query: jest.fn(),
+  select: jest.fn(),
+  throwIfNotFound: jest.fn(),
+  where: jest.fn(),
+  whereNotNull: jest.fn()
 }));
 
 const service = require('../../../src/services/user');
@@ -58,8 +59,8 @@ const user = {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  resetReturnThis(IdentityProvider);
-  resetReturnThis(User);
+  resetModel(IdentityProvider, identityProviderTrx);
+  resetModel(User, userTrx);
 });
 
 describe('_tokenToUser', () => {
@@ -86,7 +87,7 @@ describe('createIdp', () => {
         createdBy: expect.any(String),
       })
     );
-    expect(IdentityProvider.commit).toHaveBeenCalledTimes(1);
+    expect(identityProviderTrx.commit).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -124,7 +125,7 @@ describe('createUser', () => {
         userId: expect.any(String)
       })
     );
-    expect(User.commit).toHaveBeenCalledTimes(1);
+    expect(userTrx.commit).toHaveBeenCalledTimes(1);
   });
 
   it('Skips creating an idp if matching idp already exists in database', async () => {
@@ -145,7 +146,7 @@ describe('createUser', () => {
         userId: expect.any(String)
       })
     );
-    expect(User.commit).toHaveBeenCalledTimes(1);
+    expect(userTrx.commit).toHaveBeenCalledTimes(1);
   });
 
   it('Does not create an idp if user has none (eg: \'System\' user)', async () => {
@@ -165,7 +166,7 @@ describe('createUser', () => {
         userId: expect.any(String)
       })
     );
-    expect(User.commit).toHaveBeenCalledTimes(1);
+    expect(userTrx.commit).toHaveBeenCalledTimes(1);
   });
 });
 

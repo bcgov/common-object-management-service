@@ -1,24 +1,24 @@
 const { NIL: BUCKET_ID, NIL: SYSTEM_USER } = require('uuid');
 
-const { resetReturnThis } = require('../../common/helper');
+const { resetModel, trxBuilder } = require('../../common/helper');
 const Bucket = require('../../../src/db/models/tables/bucket');
 
+const bucketTrx = trxBuilder();
 jest.mock('../../../src/db/models/tables/bucket', () => ({
-  commit: jest.fn().mockReturnThis(),
-  startTransaction: jest.fn().mockReturnThis(),
+  startTransaction: jest.fn(),
+  then: jest.fn(),
 
-  allowGraph: jest.fn().mockReturnThis(),
-  deleteById: jest.fn().mockReturnThis(),
-  findById: jest.fn().mockReturnThis(),
-  first: jest.fn().mockReturnThis(),
-  insert: jest.fn().mockReturnThis(),
-  modify: jest.fn().mockReturnThis(),
-  patchAndFetchById: jest.fn().mockReturnThis(),
-  query: jest.fn().mockReturnThis(),
-  returning: jest.fn().mockReturnThis(),
-  // then: jest.fn().mockReturnThis(),
-  throwIfNotFound: jest.fn().mockReturnThis(),
-  where: jest.fn().mockReturnThis()
+  allowGraph: jest.fn(),
+  deleteById: jest.fn(),
+  findById: jest.fn(),
+  first: jest.fn(),
+  insert: jest.fn(),
+  modify: jest.fn(),
+  patchAndFetchById: jest.fn(),
+  query: jest.fn(),
+  returning: jest.fn(),
+  throwIfNotFound: jest.fn(),
+  where: jest.fn()
 }));
 
 const service = require('../../../src/services/bucket');
@@ -41,7 +41,7 @@ const data = {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  resetReturnThis(Bucket);
+  resetModel(Bucket, bucketTrx);
 });
 
 describe('checkGrantPermissions', () => {
@@ -61,7 +61,7 @@ describe('checkGrantPermissions', () => {
     await service.checkGrantPermissions(data);
 
     expect(Bucket.startTransaction).toHaveBeenCalledTimes(1);
-    expect(Bucket.commit).toHaveBeenCalledTimes(1);
+    expect(bucketTrx.commit).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -87,7 +87,7 @@ describe('create', () => {
     expect(Bucket.insert).toBeCalledWith(expect.anything());
     expect(Bucket.returning).toHaveBeenCalledTimes(1);
     expect(Bucket.returning).toBeCalledWith('*');
-    expect(Bucket.commit).toHaveBeenCalledTimes(1);
+    expect(bucketTrx.commit).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -103,26 +103,26 @@ describe('delete', () => {
     expect(Bucket.throwIfNotFound).toBeCalledWith();
     expect(Bucket.returning).toHaveBeenCalledTimes(1);
     expect(Bucket.returning).toBeCalledWith('*');
-    expect(Bucket.commit).toHaveBeenCalledTimes(1);
+    expect(bucketTrx.commit).toHaveBeenCalledTimes(1);
   });
 });
 
-// describe('searchBuckets', () => {
-//   it('search and filter for specific bucket records', () => {
-//     Bucket.then.mockImplementation();
+describe('searchBuckets', () => {
+  it('search and filter for specific bucket records', async () => {
+    Bucket.then.mockImplementation(() => { });
 
-//     service.searchBuckets([]);
+    await service.searchBuckets([]);
 
-//     expect(Bucket.query).toHaveBeenCalledTimes(1);
-//     expect(Bucket.allowGraph).toHaveBeenCalledTimes(1);
-//     expect(Bucket.modify).toHaveBeenCalledTimes(5);
-//     expect(Bucket.then).toHaveBeenCalledTimes(1);
-//   });
-// });
+    expect(Bucket.query).toHaveBeenCalledTimes(1);
+    expect(Bucket.allowGraph).toHaveBeenCalledTimes(1);
+    expect(Bucket.modify).toHaveBeenCalledTimes(5);
+    expect(Bucket.then).toHaveBeenCalledTimes(1);
+  });
+});
 
 describe('read', () => {
-  it('Get a bucket db record based on bucketId', () => {
-    service.read(bucketId);
+  it('Get a bucket db record based on bucketId', async () => {
+    await service.read(bucketId);
 
     expect(Bucket.query).toHaveBeenCalledTimes(1);
     expect(Bucket.findById).toHaveBeenCalledTimes(1);
@@ -133,8 +133,8 @@ describe('read', () => {
 });
 
 describe('readUnique', () => {
-  it('Get a bucket db record based on unique parameters', () => {
-    service.readUnique(data);
+  it('Get a bucket db record based on unique parameters', async () => {
+    await service.readUnique(data);
 
     expect(Bucket.query).toHaveBeenCalledTimes(1);
     expect(Bucket.where).toHaveBeenCalledTimes(3);
@@ -166,6 +166,6 @@ describe('update', () => {
       active: data.active,
       updatedBy: data.userId
     });
-    expect(Bucket.commit).toHaveBeenCalledTimes(1);
+    expect(bucketTrx.commit).toHaveBeenCalledTimes(1);
   });
 });

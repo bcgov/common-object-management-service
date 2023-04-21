@@ -1,25 +1,25 @@
 const { NIL: BUCKET_ID, NIL: OBJECT_ID, NIL: SYSTEM_USER } = require('uuid');
 
-const { resetReturnThis } = require('../../common/helper');
+const { resetModel, trxBuilder } = require('../../common/helper');
 const ObjectModel = require('../../../src/db/models/tables/objectModel');
 
+const objectModelTrx = trxBuilder();
 jest.mock('../../../src/db/models/tables/objectModel', () => ({
-  commit: jest.fn().mockReturnThis(),
-  startTransaction: jest.fn().mockReturnThis(),
+  startTransaction: jest.fn(),
+  then: jest.fn(),
 
-  allowGraph: jest.fn().mockReturnThis(),
-  deleteById: jest.fn().mockReturnThis(),
-  findById: jest.fn().mockReturnThis(),
-  first: jest.fn().mockReturnThis(),
-  insert: jest.fn().mockReturnThis(),
-  joinRelated: jest.fn().mockReturnThis(),
-  modify: jest.fn().mockReturnThis(),
-  patchAndFetchById: jest.fn().mockReturnThis(),
-  query: jest.fn().mockReturnThis(),
-  returning: jest.fn().mockReturnThis(),
-  select: jest.fn().mockReturnThis(),
-  // then: jest.fn().mockReturnThis(),
-  throwIfNotFound: jest.fn().mockReturnThis()
+  allowGraph: jest.fn(),
+  deleteById: jest.fn(),
+  findById: jest.fn(),
+  first: jest.fn(),
+  insert: jest.fn(),
+  joinRelated: jest.fn(),
+  modify: jest.fn(),
+  patchAndFetchById: jest.fn(),
+  query: jest.fn(),
+  returning: jest.fn(),
+  select: jest.fn(),
+  throwIfNotFound: jest.fn()
 }));
 
 const service = require('../../../src/services/object');
@@ -40,7 +40,7 @@ const data = {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  resetReturnThis(ObjectModel);
+  resetModel(ObjectModel, objectModelTrx);
 });
 
 describe('create', () => {
@@ -66,7 +66,7 @@ describe('create', () => {
     expect(ObjectModel.insert).toBeCalledWith(expect.anything());
     expect(ObjectModel.returning).toHaveBeenCalledTimes(1);
     expect(ObjectModel.returning).toBeCalledWith('*');
-    expect(ObjectModel.commit).toHaveBeenCalledTimes(1);
+    expect(objectModelTrx.commit).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -83,7 +83,7 @@ describe('delete', () => {
     expect(ObjectModel.throwIfNotFound).toBeCalledWith();
     expect(ObjectModel.returning).toHaveBeenCalledTimes(1);
     expect(ObjectModel.returning).toBeCalledWith('*');
-    expect(ObjectModel.commit).toHaveBeenCalledTimes(1);
+    expect(objectModelTrx.commit).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -105,24 +105,24 @@ describe('getBucketKey', () => {
   });
 });
 
-// describe('searchObjects', () => {
-//   it('Search and filter for specific object records', () => {
-//     ObjectModel.then.mockImplementation(() => { });
+describe('searchObjects', () => {
+  it('Search and filter for specific object records', () => {
+    ObjectModel.then.mockImplementation(() => { });
 
-//     service.searchObjects({
-//       bucketId: bucketId,
-//       bucketName: 'bucketName',
-//       active: 'true',
-//       key: 'key',
-//       userId: userId
-//     });
+    service.searchObjects({
+      bucketId: bucketId,
+      bucketName: 'bucketName',
+      active: 'true',
+      key: 'key',
+      userId: userId
+    });
 
-//     expect(ObjectModel.query).toHaveBeenCalledTimes(1);
-//     expect(ObjectModel.allowGraph).toHaveBeenCalledTimes(1);
-//     expect(ObjectModel.modify).toHaveBeenCalledTimes(10);
-//     expect(ObjectModel.then).toHaveBeenCalledTimes(1);
-//   });
-// });
+    expect(ObjectModel.query).toHaveBeenCalledTimes(1);
+    expect(ObjectModel.allowGraph).toHaveBeenCalledTimes(1);
+    expect(ObjectModel.modify).toHaveBeenCalledTimes(10);
+    expect(ObjectModel.then).toHaveBeenCalledTimes(1);
+  });
+});
 
 describe('read', () => {
   it('Get an object db record', () => {
@@ -149,6 +149,6 @@ describe('update', () => {
       active: data.active,
       updatedBy: data.userId
     });
-    expect(ObjectModel.commit).toHaveBeenCalledTimes(1);
+    expect(objectModelTrx.commit).toHaveBeenCalledTimes(1);
   });
 });

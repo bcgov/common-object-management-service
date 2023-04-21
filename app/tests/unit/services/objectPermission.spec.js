@@ -1,28 +1,30 @@
 const { NIL: BUCKET_ID, NIL: OBJECT_ID, NIL: SYSTEM_USER } = require('uuid');
 
-const { resetReturnThis } = require('../../common/helper');
+const { resetModel, trxBuilder } = require('../../common/helper');
 const BucketPermission = require('../../../src/db/models/tables/bucketPermission');
 const ObjectPermission = require('../../../src/db/models/tables/objectPermission');
 
+const bucketPermissionTrx = trxBuilder();
 jest.mock('../../../src/db/models/tables/bucketPermission', () => ({
-  commit: jest.fn().mockReturnThis(),
-  startTransaction: jest.fn().mockReturnThis(),
+  startTransaction: jest.fn(),
+  then: jest.fn(),
 
-  distinct: jest.fn().mockReturnThis(),
-  rightJoin: jest.fn().mockReturnThis(),
-  modify: jest.fn().mockReturnThis(),
-  query: jest.fn().mockReturnThis(),
-  then: jest.fn().mockReturnThis()
+  distinct: jest.fn(),
+  rightJoin: jest.fn(),
+  modify: jest.fn(),
+  query: jest.fn(),
 }));
-jest.mock('../../../src/db/models/tables/objectPermission', () => ({
-  commit: jest.fn().mockReturnThis(),
-  startTransaction: jest.fn().mockReturnThis(),
 
-  delete: jest.fn().mockReturnThis(),
-  insertAndFetch: jest.fn().mockReturnThis(),
-  modify: jest.fn().mockReturnThis(),
-  query: jest.fn().mockReturnThis(),
-  returning: jest.fn().mockReturnThis()
+const objectPermissionTrx = trxBuilder();
+jest.mock('../../../src/db/models/tables/objectPermission', () => ({
+  startTransaction: jest.fn(),
+  then: jest.fn(),
+
+  delete: jest.fn(),
+  insertAndFetch: jest.fn(),
+  modify: jest.fn(),
+  query: jest.fn(),
+  returning: jest.fn()
 }));
 
 const service = require('../../../src/services/objectPermission');
@@ -33,8 +35,8 @@ const userId = SYSTEM_USER;
 
 beforeEach(() => {
   jest.clearAllMocks();
-  resetReturnThis(BucketPermission);
-  resetReturnThis(ObjectPermission);
+  resetModel(BucketPermission, bucketPermissionTrx);
+  resetModel(ObjectPermission, objectPermissionTrx);
 });
 
 describe('addPermissions', () => {
@@ -65,7 +67,7 @@ describe('addPermissions', () => {
     expect(ObjectPermission.query).toHaveBeenCalledTimes(1);
     expect(ObjectPermission.insertAndFetch).toHaveBeenCalledTimes(1);
     expect(ObjectPermission.insertAndFetch).toBeCalledWith(expect.any(Object));
-    expect(ObjectPermission.commit).toHaveBeenCalledTimes(1);
+    expect(objectPermissionTrx.commit).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -95,7 +97,7 @@ describe('removePermissions', () => {
     expect(ObjectPermission.modify).toBeCalledWith('filterObjectId', objectId);
     expect(ObjectPermission.returning).toHaveBeenCalledTimes(1);
     expect(ObjectPermission.returning).toBeCalledWith('*');
-    expect(ObjectPermission.commit).toHaveBeenCalledTimes(1);
+    expect(objectPermissionTrx.commit).toHaveBeenCalledTimes(1);
   });
 });
 
