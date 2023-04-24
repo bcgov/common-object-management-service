@@ -31,7 +31,6 @@ jest.mock('../../../src/db/models/tables/objectPermission', () => ({
 
 const service = require('../../../src/services/bucketPermission');
 
-const bucketId = BUCKET_ID;
 const data = [{
   id: OBJECT_ID,
   bucketId: BUCKET_ID,
@@ -73,14 +72,14 @@ describe('addPermissions', () => {
 
 describe('removePermissions', () => {
   it('Deletes bucket permissions for a user', async () => {
-    await service.removePermissions(bucketId, [SYSTEM_USER]);
+    await service.removePermissions(BUCKET_ID, [SYSTEM_USER]);
 
     expect(BucketPermission.startTransaction).toHaveBeenCalledTimes(1);
     expect(BucketPermission.delete).toHaveBeenCalledTimes(1);
     expect(BucketPermission.delete).toBeCalledWith();
     expect(BucketPermission.modify).toHaveBeenCalledTimes(3);
     expect(BucketPermission.modify).toBeCalledWith('filterUserId', [SYSTEM_USER]);
-    expect(BucketPermission.modify).toBeCalledWith('filterBucketId', bucketId);
+    expect(BucketPermission.modify).toBeCalledWith('filterBucketId', BUCKET_ID);
     expect(BucketPermission.returning).toHaveBeenCalledTimes(1);
     expect(BucketPermission.returning).toBeCalledWith('*');
     expect(bucketPermissionTrx.commit).toHaveBeenCalledTimes(1);
@@ -105,12 +104,12 @@ describe('getBucketIdsWithObject', () => {
 
 describe('searchPermissions', () => {
   it('Search and filter for specific bucket permissions', () => {
-    service.searchPermissions({ userId: SYSTEM_USER, bucketId: bucketId, permCode: 'READ' });
+    service.searchPermissions({ userId: SYSTEM_USER, bucketId: BUCKET_ID, permCode: 'READ' });
 
     expect(BucketPermission.query).toHaveBeenCalledTimes(1);
     expect(BucketPermission.modify).toHaveBeenCalledTimes(3);
     expect(BucketPermission.modify).toBeCalledWith('filterUserId', SYSTEM_USER);
-    expect(BucketPermission.modify).toBeCalledWith('filterBucketId', bucketId);
+    expect(BucketPermission.modify).toBeCalledWith('filterBucketId', BUCKET_ID);
     expect(BucketPermission.modify).toBeCalledWith('filterPermissionCode', 'READ');
     expect(BucketPermission.modify).toHaveBeenCalledTimes(3);
   });

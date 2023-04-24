@@ -24,7 +24,6 @@ jest.mock('../../../src/db/models/tables/bucket', () => ({
 const service = require('../../../src/services/bucket');
 const bucketPermissionService = require('../../../src/services/bucketPermission');
 
-const bucketId = BUCKET_ID;
 const data = {
   bucketId: BUCKET_ID,
   bucketName: 'bucketName',
@@ -93,12 +92,12 @@ describe('create', () => {
 
 describe('delete', () => {
   it('Delete a bucket record, this will also delete all objects and permissions', async () => {
-    await service.delete(bucketId);
+    await service.delete(BUCKET_ID);
 
     expect(Bucket.startTransaction).toHaveBeenCalledTimes(1);
     expect(Bucket.query).toHaveBeenCalledTimes(1);
     expect(Bucket.deleteById).toHaveBeenCalledTimes(1);
-    expect(Bucket.deleteById).toBeCalledWith(bucketId);
+    expect(Bucket.deleteById).toBeCalledWith(BUCKET_ID);
     expect(Bucket.throwIfNotFound).toHaveBeenCalledTimes(1);
     expect(Bucket.throwIfNotFound).toBeCalledWith();
     expect(Bucket.returning).toHaveBeenCalledTimes(1);
@@ -122,11 +121,11 @@ describe('searchBuckets', () => {
 
 describe('read', () => {
   it('Get a bucket db record based on bucketId', async () => {
-    await service.read(bucketId);
+    await service.read(BUCKET_ID);
 
     expect(Bucket.query).toHaveBeenCalledTimes(1);
     expect(Bucket.findById).toHaveBeenCalledTimes(1);
-    expect(Bucket.findById).toBeCalledWith(bucketId);
+    expect(Bucket.findById).toBeCalledWith(BUCKET_ID);
     expect(Bucket.throwIfNotFound).toHaveBeenCalledTimes(1);
     expect(Bucket.throwIfNotFound).toBeCalledWith();
   });

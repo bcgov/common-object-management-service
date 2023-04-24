@@ -73,7 +73,6 @@ const service = require('../../../src/services/tag');
 
 const params = { tagset: [{ key: 'C', value: '10' }], objectIds: [OBJECT_ID], userId: SYSTEM_USER };
 const tags = [{ key: 'A', value: '1' }, { key: 'B', value: '2' }];
-const versionId = VERSION_ID;
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -92,7 +91,7 @@ describe('dissociateTags', () => {
       }
     ]);
 
-    await service.dissociateTags(versionId, tags);
+    await service.dissociateTags(VERSION_ID, tags);
 
     // expect(Tag.startTransaction).toHaveBeenCalledTimes(1);
     expect(VersionTag.query).toHaveBeenCalledTimes(2);
@@ -103,7 +102,7 @@ describe('dissociateTags', () => {
     expect(VersionTag.withGraphJoined).toBeCalledWith('tag');
     expect(VersionTag.where).toHaveBeenCalledTimes(2);
     expect(VersionTag.modify).toHaveBeenCalledTimes(2);
-    expect(VersionTag.modify).toBeCalledWith('filterVersionId', versionId);
+    expect(VersionTag.modify).toBeCalledWith('filterVersionId', VERSION_ID);
     expect(VersionTag.delete).toHaveBeenCalledTimes(2);
     expect(tagTrx.commit).toHaveBeenCalledTimes(1);
   });
@@ -136,7 +135,7 @@ describe('replaceTags', () => {
         filter: jest.fn()
       }
     ]);
-    await service.replaceTags(versionId, tags);
+    await service.replaceTags(VERSION_ID, tags);
 
     expect(Tag.startTransaction).toHaveBeenCalledTimes(1);
     expect(Tag.query).toHaveBeenCalledTimes(1);
@@ -144,7 +143,7 @@ describe('replaceTags', () => {
     expect(Tag.joinRelated).toHaveBeenCalledTimes(1);
     expect(Tag.joinRelated).toBeCalledWith('versionTag');
     expect(Tag.where).toHaveBeenCalledTimes(1);
-    expect(Tag.where).toBeCalledWith('versionId', versionId);
+    expect(Tag.where).toBeCalledWith('versionId', VERSION_ID);
     expect(tagTrx.commit).toHaveBeenCalledTimes(1);
   });
 });
@@ -168,13 +167,13 @@ describe('associateTags', () => {
       }
     ]);
 
-    await service.associateTags(versionId, tags);
+    await service.associateTags(VERSION_ID, tags);
 
     expect(Tag.startTransaction).toHaveBeenCalledTimes(1);
     expect(VersionTag.query).toHaveBeenCalledTimes(1);
     expect(VersionTag.query).toHaveBeenCalledWith(expect.anything());
     expect(VersionTag.modify).toHaveBeenCalledTimes(1);
-    expect(VersionTag.modify).toHaveBeenCalledWith('filterVersionId', versionId);
+    expect(VersionTag.modify).toHaveBeenCalledWith('filterVersionId', VERSION_ID);
     expect(tagTrx.commit).toHaveBeenCalledTimes(1);
   });
 });

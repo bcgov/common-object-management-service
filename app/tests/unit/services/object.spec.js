@@ -25,17 +25,14 @@ jest.mock('../../../src/db/models/tables/objectModel', () => ({
 const service = require('../../../src/services/object');
 const objectPermissionService = require('../../../src/services/objectPermission');
 
-const bucketId = BUCKET_ID;
-const objectId = OBJECT_ID;
-const userId = SYSTEM_USER;
 const data = {
-  id: objectId,
-  bucketId: bucketId,
+  id: OBJECT_ID,
+  bucketId: BUCKET_ID,
   path: 'path',
   public: 'true',
   active: 'true',
-  createdBy: userId,
-  userId: userId
+  createdBy: SYSTEM_USER,
+  userId: SYSTEM_USER
 };
 
 beforeEach(() => {
@@ -57,7 +54,7 @@ describe('create', () => {
   it('Create an object db record and give the uploader (if authed) permissions', async () => {
     addPermissionsSpy.mockResolvedValue({});
 
-    await service.create({ ...data, userId: userId });
+    await service.create({ ...data, userId: SYSTEM_USER });
 
     expect(ObjectModel.startTransaction).toHaveBeenCalledTimes(1);
     expect(ObjectModel.query).toHaveBeenCalledTimes(1);
@@ -72,13 +69,13 @@ describe('create', () => {
 
 describe('delete', () => {
   it('Delete an object record', async () => {
-    await service.delete(objectId);
+    await service.delete(OBJECT_ID);
 
     expect(ObjectModel.startTransaction).toHaveBeenCalledTimes(1);
     expect(ObjectModel.query).toHaveBeenCalledTimes(1);
     expect(ObjectModel.query).toHaveBeenCalledWith(expect.anything());
     expect(ObjectModel.deleteById).toHaveBeenCalledTimes(1);
-    expect(ObjectModel.deleteById).toBeCalledWith(objectId);
+    expect(ObjectModel.deleteById).toBeCalledWith(OBJECT_ID);
     expect(ObjectModel.throwIfNotFound).toHaveBeenCalledTimes(1);
     expect(ObjectModel.throwIfNotFound).toBeCalledWith();
     expect(ObjectModel.returning).toHaveBeenCalledTimes(1);
@@ -89,11 +86,11 @@ describe('delete', () => {
 
 describe('getBucketKey', () => {
   it('Gets the associated key path for a specific object record', () => {
-    service.getBucketKey(objectId);
+    service.getBucketKey(OBJECT_ID);
 
     expect(ObjectModel.query).toHaveBeenCalledTimes(1);
     expect(ObjectModel.findById).toHaveBeenCalledTimes(1);
-    expect(ObjectModel.findById).toBeCalledWith(objectId);
+    expect(ObjectModel.findById).toBeCalledWith(OBJECT_ID);
     expect(ObjectModel.select).toHaveBeenCalledTimes(1);
     expect(ObjectModel.select).toBeCalledWith('bucket.key');
     expect(ObjectModel.joinRelated).toHaveBeenCalledTimes(1);
@@ -110,11 +107,11 @@ describe('searchObjects', () => {
     ObjectModel.then.mockImplementation(() => { });
 
     service.searchObjects({
-      bucketId: bucketId,
+      bucketId: BUCKET_ID,
       bucketName: 'bucketName',
       active: 'true',
       key: 'key',
-      userId: userId
+      userId: SYSTEM_USER
     });
 
     expect(ObjectModel.query).toHaveBeenCalledTimes(1);
@@ -126,11 +123,11 @@ describe('searchObjects', () => {
 
 describe('read', () => {
   it('Get an object db record', () => {
-    service.read(objectId);
+    service.read(SYSTEM_USER);
 
     expect(ObjectModel.query).toHaveBeenCalledTimes(1);
     expect(ObjectModel.findById).toHaveBeenCalledTimes(1);
-    expect(ObjectModel.findById).toBeCalledWith(objectId);
+    expect(ObjectModel.findById).toBeCalledWith(OBJECT_ID);
     expect(ObjectModel.throwIfNotFound).toHaveBeenCalledTimes(1);
     expect(ObjectModel.throwIfNotFound).toBeCalledWith();
   });

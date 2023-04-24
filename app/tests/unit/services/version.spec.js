@@ -23,11 +23,6 @@ jest.mock('../../../src/db/models/tables/version', () => ({
 const service = require('../../../src/services/version');
 const { version } = require('winston');
 
-const objectId = OBJECT_ID;
-const s3VersionId = S3_VERSION_ID;
-const userId = SYSTEM_USER;
-const versionId = VERSION_ID;
-
 beforeEach(() => {
   jest.clearAllMocks();
   resetModel(Version, versionTrx);
@@ -35,7 +30,7 @@ beforeEach(() => {
 
 describe('copy', () => {
   it('Creates a new version db record from an existing record', async () => {
-    await service.copy(version, s3VersionId, objectId, userId);
+    await service.copy(version, S3_VERSION_ID, OBJECT_ID, SYSTEM_USER);
 
     expect(Version.startTransaction).toHaveBeenCalledTimes(1);
     expect(Version.query).toHaveBeenCalledTimes(2);
@@ -51,11 +46,11 @@ describe('copy', () => {
     expect(Version.insert).toBeCalledWith(
       expect.objectContaining({
         id: expect.any(String),
-        s3VersionId: s3VersionId,
-        objectId: objectId,
+        s3VersionId: S3_VERSION_ID,
+        objectId: OBJECT_ID,
         mimeType: undefined,
         deleteMarker: undefined,
-        createdBy: userId
+        createdBy: SYSTEM_USER
       })
     );
     expect(Version.insert).toHaveBeenCalledTimes(1);
@@ -63,7 +58,7 @@ describe('copy', () => {
   });
 
   it('Creates a new version db record from an existing record - no sourceVersionId provided', async () => {
-    await service.copy(undefined, s3VersionId, objectId, userId);
+    await service.copy(undefined, S3_VERSION_ID, OBJECT_ID, SYSTEM_USER);
 
     expect(Version.startTransaction).toHaveBeenCalledTimes(1);
     expect(Version.query).toHaveBeenCalledTimes(2);
@@ -83,7 +78,7 @@ describe('copy', () => {
 
 describe('create', () => {
   it('Saves a version of an object', async () => {
-    await service.create({ s3VersionId: s3VersionId, mimeType: 'mimeType', id: objectId, deleteMarker: 'deleteMarker' }, userId);
+    await service.create({ s3VersionId: S3_VERSION_ID, mimeType: 'mimeType', id: OBJECT_ID, deleteMarker: 'deleteMarker' }, SYSTEM_USER);
 
     expect(Version.startTransaction).toHaveBeenCalledTimes(1);
     expect(Version.query).toHaveBeenCalledTimes(1);
@@ -92,11 +87,11 @@ describe('create', () => {
     expect(Version.insert).toBeCalledWith(
       expect.objectContaining({
         id: expect.any(String),
-        s3VersionId: s3VersionId,
-        objectId: objectId,
+        s3VersionId: S3_VERSION_ID,
+        objectId: OBJECT_ID,
         mimeType: 'mimeType',
         deleteMarker: 'deleteMarker',
-        createdBy: userId
+        createdBy: SYSTEM_USER
       })
     );
     expect(Version.returning).toHaveBeenCalledTimes(1);
@@ -106,15 +101,15 @@ describe('create', () => {
 
 describe('delete', () => {
   it('Delete a version record of an object', async () => {
-    await service.delete(objectId, versionId);
+    await service.delete(OBJECT_ID, VERSION_ID);
 
     expect(Version.startTransaction).toHaveBeenCalledTimes(1);
     expect(Version.query).toHaveBeenCalledTimes(1);
     expect(Version.query).toHaveBeenCalledWith(expect.anything());
     expect(Version.delete).toHaveBeenCalledTimes(1);
     expect(Version.where).toHaveBeenCalledTimes(2);
-    expect(Version.where).toBeCalledWith('objectId', objectId);
-    expect(Version.where).toBeCalledWith('s3VersionId', versionId);
+    expect(Version.where).toBeCalledWith('objectId', OBJECT_ID);
+    expect(Version.where).toBeCalledWith('s3VersionId', VERSION_ID);
     expect(Version.returning).toHaveBeenCalledTimes(1);
     expect(Version.returning).toBeCalledWith('*');
     expect(Version.throwIfNotFound).toHaveBeenCalledTimes(1);
@@ -124,15 +119,15 @@ describe('delete', () => {
 
 describe('get', () => {
   it('Get a given version from the database - s3versionId provided', async () => {
-    await service.get({ s3VersionId: s3VersionId, objectId: objectId });
+    await service.get({ s3VersionId: S3_VERSION_ID, objectId: OBJECT_ID });
 
     expect(Version.startTransaction).toHaveBeenCalledTimes(1);
     expect(Version.query).toHaveBeenCalledWith(expect.anything());
     expect(Version.where).toHaveBeenCalledTimes(1);
     expect(Version.where).toBeCalledWith(
       expect.objectContaining({
-        s3VersionId: s3VersionId,
-        objectId: objectId
+        s3VersionId: S3_VERSION_ID,
+        objectId: OBJECT_ID
       })
     );
     expect(Version.first).toHaveBeenCalledTimes(1);
@@ -140,15 +135,15 @@ describe('get', () => {
   });
 
   it('Get a given version from the database - no s3versionId provided', async () => {
-    await service.get({ versionId: versionId, objectId: objectId });
+    await service.get({ versionId: VERSION_ID, objectId: OBJECT_ID });
 
     expect(Version.startTransaction).toHaveBeenCalledTimes(1);
     expect(Version.query).toHaveBeenCalledWith(expect.anything());
     expect(Version.where).toHaveBeenCalledTimes(1);
     expect(Version.where).toBeCalledWith(
       expect.objectContaining({
-        id: versionId,
-        objectId: objectId
+        id: VERSION_ID,
+        objectId: OBJECT_ID
       })
     );
     expect(Version.first).toHaveBeenCalledTimes(1);
@@ -156,12 +151,12 @@ describe('get', () => {
   });
 
   it('Get a given version from the database - no s3versionId and no versionId provided', async () => {
-    await service.get({ objectId: objectId });
+    await service.get({ objectId: OBJECT_ID });
 
     expect(Version.startTransaction).toHaveBeenCalledTimes(1);
     expect(Version.query).toHaveBeenCalledWith(expect.anything());
     expect(Version.where).toHaveBeenCalledTimes(1);
-    expect(Version.where).toBeCalledWith('objectId', objectId);
+    expect(Version.where).toBeCalledWith('objectId', OBJECT_ID);
     expect(Version.andWhere).toHaveBeenCalledTimes(1);
     expect(Version.andWhere).toBeCalledWith('deleteMarker', false);
     expect(Version.orderBy).toHaveBeenCalledTimes(1);
@@ -185,22 +180,22 @@ describe('list', () => {
 
 describe('update', () => {
   it('Updates a version of an object', async () => {
-    await service.update({ id: objectId, s3VersionId: s3VersionId, mimeType: 'mimeType' });
+    await service.update({ id: OBJECT_ID, s3VersionId: S3_VERSION_ID, mimeType: 'mimeType' });
 
     expect(Version.startTransaction).toHaveBeenCalledTimes(1);
     expect(Version.query).toHaveBeenCalledTimes(1);
     expect(Version.where).toHaveBeenCalledTimes(1);
     expect(Version.where).toHaveBeenCalledWith(
       {
-        objectId: objectId,
-        s3VersionId: s3VersionId
+        objectId: OBJECT_ID,
+        s3VersionId: S3_VERSION_ID
       }
     );
     expect(Version.patch).toHaveBeenCalledTimes(1);
     expect(Version.patch).toHaveBeenCalledWith(
       {
-        objectId: objectId,
-        updatedBy: userId,
+        objectId: OBJECT_ID,
+        updatedBy: SYSTEM_USER,
         mimeType: 'mimeType'
       }
     );

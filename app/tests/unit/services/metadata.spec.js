@@ -66,7 +66,6 @@ const utils = require('../../../src/components/utils');
 
 const metadata = [{ key: 'a', value: '1' }, { key: 'B', value: '2' }];
 const params = { objId: 1, metadata: metadata, userId: SYSTEM_USER, privacyMask: 'privacyMask' };
-const versionId = VERSION_ID;
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -90,13 +89,13 @@ describe('associateMetadata', () => {
   it('Makes the incoming list of metadata the definitive set associated with versionId', async () => {
     createMetadataSpy.mockResolvedValue({ ...metadata });
 
-    await service.associateMetadata(versionId, metadata);
+    await service.associateMetadata(VERSION_ID, metadata);
 
     expect(Metadata.startTransaction).toHaveBeenCalledTimes(1);
     expect(VersionMetadata.query).toHaveBeenCalledTimes(1);
     expect(VersionMetadata.query).toHaveBeenCalledWith(expect.anything());
     expect(VersionMetadata.modify).toHaveBeenCalledTimes(1);
-    expect(VersionMetadata.modify).toHaveBeenCalledWith('filterVersionId', versionId);
+    expect(VersionMetadata.modify).toHaveBeenCalledWith('filterVersionId', VERSION_ID);
     expect(metadataTrx.commit).toHaveBeenCalledTimes(1);
   });
 });

@@ -29,10 +29,6 @@ jest.mock('../../../src/db/models/tables/objectPermission', () => ({
 
 const service = require('../../../src/services/objectPermission');
 
-const bucketId = BUCKET_ID;
-const objectId = OBJECT_ID;
-const userId = SYSTEM_USER;
-
 beforeEach(() => {
   jest.clearAllMocks();
   resetModel(BucketPermission, bucketPermissionTrx);
@@ -53,13 +49,13 @@ describe('addPermissions', () => {
   it('Grants object permissions to users', async () => {
     searchPermissionsSpy.mockResolvedValue([{ userId: SYSTEM_USER, permCode: 'READ' }]);
 
-    await service.addPermissions(objectId, [{
-      id: objectId,
-      bucketId: bucketId,
+    await service.addPermissions(OBJECT_ID, [{
+      id: OBJECT_ID,
+      bucketId: BUCKET_ID,
       path: 'path',
       public: 'true',
       active: 'true',
-      createdBy: userId,
+      createdBy: SYSTEM_USER,
       permCode: 'READ'
     }]);
 
@@ -86,7 +82,7 @@ describe('getObjectIdsWithBucket', () => {
 
 describe('removePermissions', () => {
   it('Deletes object permissions for a user', async () => {
-    await service.removePermissions(objectId, [SYSTEM_USER]);
+    await service.removePermissions(OBJECT_ID, [SYSTEM_USER]);
 
     expect(ObjectPermission.startTransaction).toHaveBeenCalledTimes(1);
     expect(ObjectPermission.query).toHaveBeenCalledTimes(1);
@@ -94,7 +90,7 @@ describe('removePermissions', () => {
     expect(ObjectPermission.delete).toBeCalledWith();
     expect(ObjectPermission.modify).toHaveBeenCalledTimes(3);
     expect(ObjectPermission.modify).toBeCalledWith('filterUserId', [SYSTEM_USER]);
-    expect(ObjectPermission.modify).toBeCalledWith('filterObjectId', objectId);
+    expect(ObjectPermission.modify).toBeCalledWith('filterObjectId', OBJECT_ID);
     expect(ObjectPermission.returning).toHaveBeenCalledTimes(1);
     expect(ObjectPermission.returning).toBeCalledWith('*');
     expect(objectPermissionTrx.commit).toHaveBeenCalledTimes(1);
