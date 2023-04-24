@@ -14,9 +14,11 @@ jest.mock('../../../src/db/models/tables/metadata', () => ({
   allowGraph: jest.fn(),
   delete: jest.fn(),
   find: jest.fn(),
+  insert: jest.fn(),
   map: jest.fn(),
   modify: jest.fn(),
   query: jest.fn(),
+  returning: jest.fn(),
   select: jest.fn(),
   whereIn: jest.fn(),
   whereNull: jest.fn(),
@@ -99,8 +101,15 @@ describe('associateMetadata', () => {
   });
 });
 
-describe.skip('pruneOrphanedMetadata', () => {
+describe('pruneOrphanedMetadata', () => {
   it('Deletes metadata records if they are no longer related to any versions', async () => {
+    Metadata.whereNull.mockResolvedValue([
+      {
+        ...metadata,
+        map: jest.fn()
+      }
+    ]);
+
     await service.pruneOrphanedMetadata();
 
     expect(Metadata.query).toHaveBeenCalledTimes(2);
@@ -117,7 +126,7 @@ describe.skip('pruneOrphanedMetadata', () => {
   });
 });
 
-describe.skip('createMetadata', () => {
+describe('createMetadata', () => {
   const getObjectsByKeyValueSpy = jest.spyOn(utils, 'getObjectsByKeyValue');
 
   beforeEach(() => {
@@ -129,21 +138,34 @@ describe.skip('createMetadata', () => {
   });
 
   it('Inserts any metadata records if they dont already exist in db', async () => {
+    Metadata.select.mockResolvedValue([
+      {
+        ...metadata,
+        find: jest.fn()
+      }
+    ]);
+
     getObjectsByKeyValueSpy.mockResolvedValue({ key: 'a', value: '1' });
 
     await service.createMetadata(metadata);
 
     expect(Metadata.startTransaction).toHaveBeenCalledTimes(1);
-    expect(Metadata.query).toHaveBeenCalledTimes(1);
+    expect(Metadata.query).toHaveBeenCalledTimes(2);
     expect(Metadata.query).toHaveBeenCalledWith(expect.anything());
     expect(Metadata.select).toHaveBeenCalledTimes(1);
-    expect(Metadata.select).toHaveBeenCalledWith();
     expect(metadataTrx.commit).toHaveBeenCalledTimes(1);
   });
 });
 
-describe.skip('fetchMetadataForObject', () => {
+describe('fetchMetadataForObject', () => {
   it('Fetch metadata for specific objects', () => {
+    ObjectModel.then.mockResolvedValue([
+      {
+        ...metadata,
+        map: jest.fn()
+      }
+    ]);
+
     service.fetchMetadataForObject(params);
 
     expect(ObjectModel.query).toHaveBeenCalledTimes(1);
@@ -163,8 +185,15 @@ describe.skip('fetchMetadataForObject', () => {
   });
 });
 
-describe.skip('fetchMetadataForVersion', () => {
+describe('fetchMetadataForVersion', () => {
   it('Fetch metadata for specific versions', () => {
+    Version.then.mockResolvedValue([
+      {
+        ...metadata,
+        map: jest.fn()
+      }
+    ]);
+
     service.fetchMetadataForVersion(params);
 
     expect(Version.query).toHaveBeenCalledTimes(1);

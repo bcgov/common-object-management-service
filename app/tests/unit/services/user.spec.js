@@ -350,7 +350,7 @@ describe('updateUser', () => {
     expect(User.patchAndFetchById).toHaveBeenCalledWith(userId, expect.any(Object));
   });
 
-  it.skip('Creates idp if idp does not exist in db', async () => {
+  it('Creates idp if idp does not exist in db', async () => {
     const oldUser = { ...user, email: 'jsmith@yahoo.com', idp: 'newIdp' };
     readUserSpy.mockResolvedValue(oldUser);
     readIdpSpy.mockResolvedValue(undefined);
