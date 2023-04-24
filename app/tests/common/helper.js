@@ -46,15 +46,29 @@ const helper = {
   },
 
   /**
-   * @function resetReturnThis
-   * Updates all jest mocked attributes in `obj` to `mockReturnThis`
-   * @param {object} obj An object with some mocked attributes
+   * @function resetModel
+   * Resets a mock objection model
+   * @param {object} obj A mock objection model
+   * @param {object} trx A mock transaction object
    */
-  resetReturnThis: (obj) => {
+  resetModel: (obj, trx) => {
+    // Set all jest functions to return itself
     Object.keys(obj).forEach((f) => {
       if (jest.isMockFunction(obj[f])) obj[f].mockReturnThis();
     });
-  }
+    obj.startTransaction.mockImplementation(() => trx);
+    obj.then.mockImplementation((resolve) => resolve(this));
+  },
+
+  /**
+   * @function trxBuilder
+   * Returns a mock transaction object
+   * @returns {object} A mock transaction object
+   */
+  trxBuilder: () => ({
+    commit: jest.fn(),
+    rollback: jest.fn()
+  })
 };
 
 module.exports = helper;
