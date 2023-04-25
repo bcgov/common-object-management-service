@@ -1,6 +1,6 @@
 # common-object-management-service
 
-![Version: 0.0.11](https://img.shields.io/badge/Version-0.0.11-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.4.0](https://img.shields.io/badge/AppVersion-0.4.0-informational?style=flat-square)
+![Version: 0.0.14](https://img.shields.io/badge/Version-0.0.14-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.4.1](https://img.shields.io/badge/AppVersion-0.4.1-informational?style=flat-square)
 
 A microservice for managing access control to S3 Objects
 
@@ -33,11 +33,13 @@ Kubernetes: `>= 1.13.0`
 | autoscaling.maxReplicas | int | `16` |  |
 | autoscaling.minReplicas | int | `2` |  |
 | autoscaling.targetCPUUtilizationPercentage | int | `80` |  |
-| basicAuthSecretOverride | string | `nil` |  |
+| basicAuthSecretOverride.password | string | `nil` |  |
+| basicAuthSecretOverride.username | string | `nil` |  |
 | config.configMap | object | `{"DB_PORT":"5432","KC_IDENTITYKEY":null,"KC_PUBLICKEY":null,"KC_REALM":null,"KC_SERVERURL":null,"OBJECTSTORAGE_BUCKET":null,"OBJECTSTORAGE_ENDPOINT":null,"OBJECTSTORAGE_KEY":null,"OBJECTSTORAGE_TEMP_EXPIRESIN":"300","SERVER_BODYLIMIT":"30mb","SERVER_LOGLEVEL":"http","SERVER_PORT":"3000"}` | These values will be wholesale added to the configmap as is; refer to the coms documentation for what each of these values mean and whether you need them defined. Ensure that all values are represented explicitly as strings, as non-string values will not translate over as expected into container environment variables. For configuration keys named `*_ENABLED`, either leave them commented/undefined, or set them to string value "true". |
 | config.enabled | bool | `false` |  |
 | config.releaseScoped | bool | `false` | This should be set to true if and only if you require configmaps and secrets to be release scoped. In the event you want all instances in the same namespace to share a similar configuration, this should be set to false |
-| dbSecretOverride | string | `nil` |  |
+| dbSecretOverride.password | string | `nil` |  |
+| dbSecretOverride.username | string | `nil` |  |
 | failurePolicy | string | `"Retry"` |  |
 | features.basicAuth | bool | `false` | Specifies whether basic auth is enabled |
 | features.oidcAuth | bool | `false` | Specifies whether oidc auth is enabled |
@@ -46,10 +48,12 @@ Kubernetes: `>= 1.13.0`
 | image.repository | string | `"docker.io/bcgovimages"` |  |
 | image.tag | string | `nil` |  |
 | imagePullSecrets | list | `[]` | Specify docker-registry secret names as an array |
-| keycloakSecretOverride | string | `nil` |  |
+| keycloakSecretOverride.password | string | `nil` |  |
+| keycloakSecretOverride.username | string | `nil` |  |
 | nameOverride | string | `nil` | String to partially override fullname |
 | networkPolicy.enabled | bool | `true` | Specifies whether a network policy should be created |
-| objectStorageSecretOverride | string | `nil` |  |
+| objectStorageSecretOverride.password | string | `nil` |  |
+| objectStorageSecretOverride.username | string | `nil` |  |
 | patroni.enabled | bool | `false` |  |
 | podAnnotations | object | `{}` | Annotations for coms pods |
 | podSecurityContext | object | `{}` |  |
