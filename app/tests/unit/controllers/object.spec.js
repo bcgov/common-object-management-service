@@ -39,7 +39,7 @@ describe('addMetadata', () => {
   // response from S3
   const GoodResponse = {
     ContentLength: 1234,
-    Metadata: { id: 1, foo: 'bar' },
+    Metadata: { 'coms-id': 1, foo: 'bar' },
     VersionId: '5678'
   };
   const BadResponse = {
@@ -93,7 +93,7 @@ describe('addMetadata', () => {
       metadata: {
         foo: 'bar',
         baz: 'quz',
-        id: 1
+        'coms-id': 1
       },
       metadataDirective: MetadataDirective.REPLACE,
       s3VersionId: undefined
@@ -215,7 +215,7 @@ describe('deleteMetadata', () => {
   // response from S3
   const GoodResponse = {
     ContentLength: 1234,
-    Metadata: { id: 1, name: 'test', foo: 'bar', baz: 'quz' }
+    Metadata: { 'coms-id': 1, 'coms-name': 'test', foo: 'bar', baz: 'quz' }
   };
   const BadResponse = {
     ContentLength: MAXCOPYOBJECTLENGTH + 1
@@ -249,8 +249,8 @@ describe('deleteMetadata', () => {
       filePath: 'xyz-789',
       metadata: {
         baz: 'quz',
-        id: 1,
-        name: 'test',
+        'coms-id': 1,
+        'coms-name': 'test',
       },
       metadataDirective: MetadataDirective.REPLACE,
       s3VersionId: undefined
@@ -275,8 +275,8 @@ describe('deleteMetadata', () => {
       copySource: 'xyz-789',
       filePath: 'xyz-789',
       metadata: {
-        id: 1,
-        name: 'test'
+        'coms-id': 1,
+        'coms-name': 'test'
       },
       metadataDirective: MetadataDirective.REPLACE,
       s3VersionId: undefined
@@ -479,7 +479,7 @@ describe('replaceMetadata', () => {
   // response from S3
   const GoodResponse = {
     ContentLength: 1234,
-    Metadata: { id: 1, name: 'test', foo: 'bar' }
+    Metadata: { 'coms-id': 1, 'coms-name': 'test', foo: 'bar' }
   };
   const BadResponse = {
     ContentLength: MAXCOPYOBJECTLENGTH + 1
@@ -512,8 +512,8 @@ describe('replaceMetadata', () => {
       copySource: 'xyz-789',
       filePath: 'xyz-789',
       metadata: {
-        id: 1,
-        name: 'test',
+        'coms-id': 1,
+        'coms-name': 'test',
         baz: 'quz'
       },
       metadataDirective: MetadataDirective.REPLACE,
@@ -524,7 +524,7 @@ describe('replaceMetadata', () => {
   it('should replace replace the name', async () => {
     // request object
     const req = {
-      headers: { 'x-amz-meta-name': 'newName', 'x-amz-meta-baz': 'quz' },
+      headers: { 'x-amz-meta-coms-name': 'newName', 'x-amz-meta-baz': 'quz' },
       params: { objectId: 'xyz-789' },
       query: {}
     };
@@ -539,8 +539,8 @@ describe('replaceMetadata', () => {
       copySource: 'xyz-789',
       filePath: 'xyz-789',
       metadata: {
-        id: 1,
-        name: 'newName',
+        'coms-id': 1,
+        'coms-name': 'newName',
         baz: 'quz'
       },
       metadataDirective: MetadataDirective.REPLACE,

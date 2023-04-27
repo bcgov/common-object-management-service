@@ -495,7 +495,7 @@ describe('putObject', () => {
   it('should send a put object command', async () => {
     const stream = new Readable();
     const mimeType = 'mimeType';
-    const metadata = { name: 'originalName', id: id };
+    const metadata = { 'coms-name': 'originalName', 'coms-id': id };
     const result = await service.putObject({ stream, id, mimeType, metadata });
 
     expect(result).toBeTruthy();
@@ -513,7 +513,7 @@ describe('putObject', () => {
   it('should send a put object command with custom metadata', async () => {
     const stream = new Readable();
     const mimeType = 'mimeType';
-    const metadata = { name: 'originalName', id: id, foo: 'foo', bar: 'bar' };
+    const metadata = { 'coms-name': 'originalName', 'coms-id': id, foo: 'foo', bar: 'bar' };
     const result = await service.putObject({ stream, id, mimeType, metadata });
 
     expect(result).toBeTruthy();
@@ -531,7 +531,7 @@ describe('putObject', () => {
   it('should send a put object command with custom tags', async () => {
     const stream = new Readable();
     const mimeType = 'mimeType';
-    const metadata = { name: 'originalName', id: id };
+    const metadata = { 'coms-name': 'originalName', 'coms-id': id };
     const tags = { foo: 'foo', bar: 'bar' };
     const result = await service.putObject({ stream, id, mimeType, metadata, tags });
 
@@ -715,7 +715,7 @@ describe('upload', () => {
       }
     });
     const mimeType = 'mimeType';
-    const metadata = { name: 'originalName', id: id };
+    const metadata = { 'coms-name': 'originalName', 'coms-id': id };
     const result = await service.upload({ stream, id, mimeType, metadata });
 
     expect(result).toBeTruthy();
@@ -737,7 +737,7 @@ describe('upload', () => {
       }
     });
     const mimeType = 'mimeType';
-    const metadata = { name: 'originalName', id: id };
+    const metadata = { 'coms-name': 'originalName', 'coms-id': id };
     const tags = { foo: 'bar' };
     const result = await service.upload({ stream, id, mimeType, metadata, tags });
 
