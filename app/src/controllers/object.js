@@ -71,7 +71,7 @@ const controller = {
         exposedHeaders.push(metadata);
       });
 
-      if (s3Resp.Metadata.name) res.attachment(s3Resp.Metadata.name);
+      if (s3Resp.Metadata['coms-name']) res.attachment(s3Resp.Metadata['coms-name']);
     }
     if (s3Resp.ServerSideEncryption) {
       const sse = 'x-amz-server-side-encryption';
@@ -123,7 +123,7 @@ const controller = {
           metadata: {
             ...source.Metadata,  // Take existing metadata first
             ...metadataToAppend, // Append new metadata
-            id: source.Metadata.id // Always enforce id key behavior
+            'coms-id': source.Metadata['coms-id'] // Always enforce coms-id key behavior
           },
           metadataDirective: MetadataDirective.REPLACE,
           s3VersionId: sourceS3VersionId
@@ -234,9 +234,9 @@ const controller = {
           fieldName: name,
           mimeType: info.mimeType,
           metadata: {
-            name: info.filename,  // provide a default of `name: <file name>`
+            'coms-name': info.filename,  // provide a default of `coms-name: <file name>`
             ...getMetadata(req.headers),
-            id: objId
+            'coms-id': objId
           },
           tags: req.query.tagset,
           bucketId: bucketId
@@ -333,8 +333,8 @@ const controller = {
         filePath: objPath,
         metadata: {
           ...metadata,
-          name: source.Metadata.name,  // Always enforce name and id key behavior
-          id: source.Metadata.id
+          'coms-name': source.Metadata['coms-name'],  // Always enforce name and id key behavior
+          'coms-id': source.Metadata['coms-id']
         },
         metadataDirective: MetadataDirective.REPLACE,
         s3VersionId: sourceS3VersionId
@@ -676,9 +676,9 @@ const controller = {
         copySource: objPath,
         filePath: objPath,
         metadata: {
-          name: source.Metadata.name,  // Always enforce name and id key behavior
+          'coms-name': source.Metadata['coms-name'],  // Always enforce coms-name and coms-id key behavior
           ...newMetadata, // Add new metadata
-          id: source.Metadata.id
+          'coms-id': source.Metadata['coms-id']
         },
         metadataDirective: MetadataDirective.REPLACE,
         s3VersionId: sourceS3VersionId
@@ -836,9 +836,9 @@ const controller = {
           fieldName: name,
           mimeType: info.mimeType,
           metadata: {
-            name: info.filename,
+            'coms-name': info.filename,
             ...getMetadata(req.headers),
-            id: objId
+            'coms-id': objId
           },
           tags: req.query.tagset
         };

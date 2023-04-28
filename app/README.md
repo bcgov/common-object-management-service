@@ -60,6 +60,8 @@ The following variables enable and configure the use of a backend database to su
 | `username` | `DB_USERNAME` | app | Database account username |
 | `password` | `DB_PASSWORD` | | Database account password |
 | `port` | `DB_PORT` | 5432 | Database connection port |
+| `poolMin` | `DB_POOL_MIN` | 2 | avalable connections |
+| `poolMax` | `DB_POOL_MAX` | 10 | available connections |
 
 ### Keycloak Variables
 
@@ -97,7 +99,9 @@ The following variables alter the general Express application behavior. For most
 | `bodyLimit` | `SERVER_BODYLIMIT` | 30mb | Maximum body size accepted for parsing to JSON body |
 | `logFile` | `SERVER_LOGFILE` | | Writes logs to the following file only if defined |
 | `logLevel` | `SERVER_LOGLEVEL` | http | The logging level of COMS |
+| `passphrase` | `SERVER_PASSPHRASE` | | A key to encrypt/decrypt bucket secretAccessKey's saved to the database |
 | `port` | `SERVER_PORT` | 3000 | The port that COMS application will bind to |
+| `privacyMask` | `SERVER_PRIVACY_MASK` | | Strict content privacy controls |
 
 ## Quick Start
 

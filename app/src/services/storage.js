@@ -322,7 +322,7 @@ const objectStorageService = {
       ContentType: mimeType,
       Metadata: {
         ...metadata,
-        id: id // enforce metadata `id: <object ID>`
+        'coms-id': id // enforce metadata `coms-id: <object ID>`
       },
       // TODO: Consider adding API param support for Server Side Encryption
       // ServerSideEncryption: 'AES256'
@@ -424,7 +424,7 @@ const objectStorageService = {
         ContentType: mimeType,
         Metadata: {
           ...metadata,
-          id: id // enforce metadata `id: <object ID>`
+          'coms-id': id // enforce metadata `coms-id: <object ID>`
         },
         // TODO: Consider adding API param support for Server Side Encryption
         // ServerSideEncryption: 'AES256'

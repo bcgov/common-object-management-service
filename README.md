@@ -20,6 +20,7 @@ To learn more about the **Common Services** available visit the [Common Services
 ```txt
 .github/                   - PR, Issue templates and CI/CD
 app/                       - Application Root
+├── config/                - configuration exposed as environment variables
 ├── src/                   - Node.js web application
 │   ├── components/        - Components Layer
 │   ├── controllers/       - Controller Layer
@@ -28,10 +29,13 @@ app/                       - Application Root
 │   ├── middleware/        - Middleware Layer
 │   ├── routes/            - API Route Layer
 │   └── services/          - Services Layer
+│   └── validators/        - data validation schemas
 └── tests/                 - Node.js web application tests
-chart/                     - General Helm Charts
+charts/                    - General Helm Charts
 └── coms/                  - COMS Helm Chart Repository
     └── templates/         - COMS Helm Chart Template manifests
+k6/                        - sample load testing scripts
+bcgovpubcode.yml           - BCGov public code asset tracking
 CODE-OF-CONDUCT.md         - Code of Conduct
 COMPLIANCE.yaml            - BCGov PIA/STRA compliance status
 CONTRIBUTING.md            - Contributing Guidelines
@@ -44,7 +48,6 @@ SECURITY.md                - Security Policy and Reporting
 
 * [Application Readme](app/README.md)
 * [API Specification](app/README.md#openapi-specification)
-* [Openshift Readme](openshift/README.md)
 * [Product Roadmap](https://github.com/bcgov/common-object-management-service/wiki/Product-Roadmap)
 * [Product Wiki](https://github.com/bcgov/common-object-management-service/wiki)
 * [Security Reporting](SECURITY.md)
