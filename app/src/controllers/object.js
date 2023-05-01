@@ -97,6 +97,7 @@ const controller = {
    */
   async addMetadata(req, res, next) {
     try {
+      const bucketId = req.currentObject?.bucketId;
       const objId = addDashesToUuid(req.params.objectId);
       const objPath = await getPath(objId);
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
@@ -105,7 +106,7 @@ const controller = {
       const sourceS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid(req.query.versionId), objId);
 
       // get version from S3
-      const source = await storageService.headObject({ filePath: objPath, s3VersionId: sourceS3VersionId });
+      const source = await storageService.headObject({ filePath: objPath, s3VersionId: sourceS3VersionId, bucketId });
       if (source.ContentLength > MAXCOPYOBJECTLENGTH) {
         throw new Error('Cannot copy an object larger than 5GB');
       }
@@ -118,6 +119,7 @@ const controller = {
       }
       else {
         const data = {
+          bucketId,
           copySource: objPath,
           filePath: objPath,
           metadata: {
@@ -158,6 +160,7 @@ const controller = {
    */
   async addTags(req, res, next) {
     try {
+      const bucketId = req.currentObject?.bucketId;
       const objId = addDashesToUuid(req.params.objectId);
       const objPath = await getPath(objId);
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
@@ -167,7 +170,7 @@ const controller = {
       const sourceS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid(req.query.versionId), objId);
 
       // get current tags on latest or specified version
-      const objectTagging = await storageService.getObjectTagging({ filePath: objPath, s3VersionId: sourceS3VersionId });
+      const objectTagging = await storageService.getObjectTagging({ filePath: objPath, s3VersionId: sourceS3VersionId, bucketId });
 
       // Join new and existing tags then filter duplicates
       let newSet = newTags ? Object.entries(newTags).map(([k, v]) => ({ Key: k, Value: v })) : [];
@@ -180,6 +183,7 @@ const controller = {
         res.status(422).end();
       } else {
         const data = {
+          bucketId,
           filePath: objPath,
           tags: newSet,
           s3VersionId: sourceS3VersionId ? sourceS3VersionId.toString() : undefined
@@ -251,8 +255,15 @@ const controller = {
             path: joinPath(bucketKey, objId)
           }, trx);
 
+          // create S3 upload promise
+          let s3Resolved = Promise.reject();
+          try {
+            s3Resolved = await s3Response;
+          } catch(e){
+            next(errorToProblem(SERVICE, e));
+          }
+
           // create new version in DB
-          const s3Resolved = await s3Response;
           const s3VersionId = s3Resolved.VersionId ? s3Resolved.VersionId : null;
           const version = await versionService.create({ ...data, s3VersionId: s3VersionId }, userId, trx);
           object['versionId'] = version.id;
@@ -306,6 +317,7 @@ const controller = {
    */
   async deleteMetadata(req, res, next) {
     try {
+      const bucketId = req.currentObject?.bucketId;
       const objId = addDashesToUuid(req.params.objectId);
       const objPath = await getPath(objId);
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
@@ -313,7 +325,7 @@ const controller = {
       // Source S3 Version to copy from
       const sourceS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid(req.query.versionId), objId);
 
-      const source = await storageService.headObject({ filePath: objPath, s3VersionId: sourceS3VersionId });
+      const source = await storageService.headObject({ filePath: objPath, s3VersionId: sourceS3VersionId, bucketId });
       if (source.ContentLength > MAXCOPYOBJECTLENGTH) {
         throw new Error('Cannot copy an object larger than 5GB');
       }
@@ -329,6 +341,7 @@ const controller = {
       }
 
       const data = {
+        bucketId,
         copySource: objPath,
         filePath: objPath,
         metadata: {
@@ -428,6 +441,7 @@ const controller = {
    */
   async deleteTags(req, res, next) {
     try {
+      const bucketId = req.currentObject?.bucketId;
       const objId = addDashesToUuid(req.params.objectId);
       const objPath = await getPath(objId);
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
@@ -435,7 +449,7 @@ const controller = {
       // Target S3 version
       const targetS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid(req.query.versionId), objId);
 
-      const objectTagging = await storageService.getObjectTagging({ filePath: objPath, s3VersionId: targetS3VersionId });
+      const objectTagging = await storageService.getObjectTagging({ filePath: objPath, s3VersionId: targetS3VersionId, bucketId });
 
       // Generate object subset by subtracting/omitting defined keys via filter/inclusion
       const keysToRemove = req.query.tagset ? Object.keys(req.query.tagset) : [];
@@ -445,6 +459,7 @@ const controller = {
       }
 
       const data = {
+        bucketId,
         filePath: objPath,
         tags: newTags,
         s3VersionId: targetS3VersionId
@@ -545,7 +560,7 @@ const controller = {
       const targetS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid(req.query.versionId), objId);
 
       const data = {
-        bucketId: req.currentObject.bucketId || undefined,
+        bucketId: req.currentObject?.bucketId,
         filePath: await getPath(objId),
         s3VersionId: targetS3VersionId
       };
@@ -659,6 +674,7 @@ const controller = {
    */
   async replaceMetadata(req, res, next) {
     try {
+      const bucketId = req.currentObject?.bucketId;
       const objId = addDashesToUuid(req.params.objectId);
       const objPath = await getPath(objId);
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
@@ -666,13 +682,15 @@ const controller = {
       // source S3 version
       const sourceS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid(req.query.versionId), objId);
 
-      const source = await storageService.headObject({ filePath: objPath, s3VersionId: sourceS3VersionId });
+      // get metadata for source version
+      const source = await storageService.headObject({ filePath: objPath, s3VersionId: sourceS3VersionId, bucketId});
       if (source.ContentLength > MAXCOPYOBJECTLENGTH) {
         throw new Error('Cannot copy an object larger than 5GB');
       }
 
       const newMetadata = getMetadata(req.headers);
       const data = {
+        bucketId,
         copySource: objPath,
         filePath: objPath,
         metadata: {
@@ -725,6 +743,7 @@ const controller = {
         res.status(422).end();
       } else {
         const data = {
+          bucketId : req.currentObject?.bucketId,
           filePath: objPath,
           tags: Object.entries(newTags).map(([k, v]) => ({ Key: k, Value: v })),
           s3VersionId: sourceS3VersionId
@@ -827,11 +846,13 @@ const controller = {
       let object = undefined;
 
       // Preflight check bucketId before proceeding with any object operations
-      const bucketKey = (await getBucket(req.query.bucketId, true)).key;
+      const bucketId = req.currentObject?.bucketId;
+      const bucketKey = (await getBucket(bucketId, true)).key;
 
       bb.on('file', (name, stream, info) => {
         const objId = addDashesToUuid(req.params.objectId);
         const data = {
+          bucketId,
           id: objId,
           fieldName: name,
           mimeType: info.mimeType,
