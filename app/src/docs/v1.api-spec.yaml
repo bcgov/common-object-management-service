@@ -1510,7 +1510,7 @@ components:
       in: query
       name: name
       description: >-
-        the `name` metadata for the object Typically a descriptive title or
+        the `coms-name` metadata for the object Typically a descriptive title or
         original filename
       schema:
         type: string
@@ -1722,9 +1722,9 @@ components:
           type: object
           description: User-defined metadata
           example:
-            name: report.xls
+            coms-name: report.xls
             department: finance
-            id: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
+            coms-id: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
     DB-MetadataKeyValue:
       title: DB Metadata Key Value
       type: object

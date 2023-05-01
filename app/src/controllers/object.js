@@ -256,12 +256,7 @@ const controller = {
           }, trx);
 
           // create S3 upload promise
-          let s3Resolved = Promise.reject();
-          try {
-            s3Resolved = await s3Response;
-          } catch(e){
-            next(errorToProblem(SERVICE, e));
-          }
+          const s3Resolved = await s3Response;
 
           // create new version in DB
           const s3VersionId = s3Resolved.VersionId ? s3Resolved.VersionId : null;
@@ -620,6 +615,7 @@ const controller = {
       const targetS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid(req.query.versionId), objId);
 
       const data = {
+        // TODO: use req.currentObject.bucketId
         bucketId: await getBucketId(objId),
         filePath: await getPath(objId),
         s3VersionId: targetS3VersionId
