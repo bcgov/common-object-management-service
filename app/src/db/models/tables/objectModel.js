@@ -124,7 +124,7 @@ class ObjectModel extends Timestamps(Model) {
           const q = Version.query()
             .select('version.id')
             .joinRelated('metadata')
-            .where('metadata.key', 'name')
+            .where('metadata.key', 'coms-name')
             .where('metadata.value', 'ilike', `%${value.name}%`);
           subqueries.push(q);
         }
