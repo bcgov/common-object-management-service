@@ -77,17 +77,21 @@ beforeEach(() => {
 
 describe('associateMetadata', () => {
   const createMetadataSpy = jest.spyOn(service, 'createMetadata');
+  const pruneOrphanedMetadataSpy = jest.spyOn(service, 'pruneOrphanedMetadata');
 
   beforeEach(() => {
     createMetadataSpy.mockReset();
+    pruneOrphanedMetadataSpy.mockReset();
   });
 
   afterAll(() => {
     createMetadataSpy.mockRestore();
+    pruneOrphanedMetadataSpy.mockRestore();
   });
 
   it('Makes the incoming list of metadata the definitive set associated with versionId', async () => {
     createMetadataSpy.mockResolvedValue({ ...metadata });
+    pruneOrphanedMetadataSpy.mockImplementation(() => { });
 
     await service.associateMetadata(VERSION_ID, metadata);
 
@@ -97,6 +101,10 @@ describe('associateMetadata', () => {
     expect(VersionMetadata.modify).toHaveBeenCalledTimes(1);
     expect(VersionMetadata.modify).toHaveBeenCalledWith('filterVersionId', VERSION_ID);
     expect(metadataTrx.commit).toHaveBeenCalledTimes(1);
+    expect(createMetadataSpy).toHaveBeenCalledTimes(1);
+    expect(createMetadataSpy).toHaveBeenCalledWith(metadata, expect.anything());
+    expect(pruneOrphanedMetadataSpy).toHaveBeenCalledTimes(1);
+    expect(pruneOrphanedMetadataSpy).toHaveBeenCalledWith(expect.anything());
   });
 });
 
