@@ -94,7 +94,7 @@ const service = {
       const response = await Bucket.query(trx).insert(obj).returning('*');
 
       // Add all permission codes for the uploader
-      if (data.userId) {
+      if (data.userId && data.userId !== SYSTEM_USER) {
         const perms = Object.values(Permissions).map((p) => ({
           userId: data.userId,
           permCode: p

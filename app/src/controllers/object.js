@@ -439,7 +439,6 @@ const controller = {
       const bucketId = req.currentObject?.bucketId;
       const objId = addDashesToUuid(req.params.objectId);
       const objPath = await getPath(objId);
-      const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
       // Target S3 version
       const targetS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid(req.query.versionId), objId);
@@ -476,7 +475,7 @@ const controller = {
         } else if (objectTagging.TagSet && objectTagging.TagSet.length) {
           dissociateTags = toLowerKeys(objectTagging.TagSet);
         }
-        if (dissociateTags.length) await tagService.dissociateTags(version.id, dissociateTags, userId, trx);
+        if (dissociateTags.length) await tagService.dissociateTags(version.id, dissociateTags, trx);
       });
 
       res.status(204).end();
@@ -812,11 +811,11 @@ const controller = {
    */
   async togglePublic(req, res, next) {
     try {
-      const userId = await userService.getCurrentUserId(req.currentUser, SYSTEM_USER);
+      const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER), SYSTEM_USER);
       const data = {
         id: addDashesToUuid(req.params.objectId),
-        updatedBy: userId
         public: isTruthy(req.query.public) ?? false,
+        userId: userId
       };
 
       const response = await objectService.update(data);

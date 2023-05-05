@@ -106,6 +106,7 @@ const service = {
    * @returns {string} The current userId if applicable, or `defaultValue`
    */
   getCurrentUserId: async (identityId, defaultValue = undefined) => {
+    // TODO: Consider conditionally skipping when identityId is undefined?
     const user = await User.query()
       .select('userId')
       .where('identityId', identityId)
