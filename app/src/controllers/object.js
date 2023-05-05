@@ -815,8 +815,8 @@ const controller = {
       const userId = await userService.getCurrentUserId(req.currentUser, SYSTEM_USER);
       const data = {
         id: addDashesToUuid(req.params.objectId),
-        public: isTruthy(req.query.public),
         updatedBy: userId
+        public: isTruthy(req.query.public) ?? false,
       };
 
       const response = await objectService.update(data);
