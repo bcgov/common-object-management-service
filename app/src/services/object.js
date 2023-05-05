@@ -1,3 +1,5 @@
+const { NIL: SYSTEM_USER } = require('uuid');
+
 const objectPermissionService = require('./objectPermission');
 const { Permissions } = require('../components/constants');
 const { ObjectModel } = require('../db/models');
@@ -31,12 +33,12 @@ const service = {
         public: data.public,
         active: data.active,
         bucketId: data.bucketId,
-        createdBy: data.userId
+        createdBy: data.userId ?? SYSTEM_USER
       };
       const response = await ObjectModel.query(trx).insert(obj).returning('*');
 
       // Add all permission codes for the uploader
-      if (data.userId) {
+      if (data.userId && data.userId !== SYSTEM_USER) {
         const perms = Object.values(Permissions).map((p) => ({
           userId: data.userId,
           permCode: p
@@ -176,7 +178,7 @@ const service = {
         path: data.path,
         public: data.public,
         active: data.active,
-        updatedBy: data.userId
+        updatedBy: data.userId ?? SYSTEM_USER
       });
 
       if (!etrx) await trx.commit();

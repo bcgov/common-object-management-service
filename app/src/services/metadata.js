@@ -39,9 +39,6 @@ const service = {
               .whereIn('metadataId', dissociateMetadata.map(vm => vm.metadataId))
               .modify('filterVersionId', versionId)
               .delete();
-
-            // delete all orphaned metadata records
-            await service.pruneOrphanedMetadata(trx);
           }
         }
 
@@ -56,6 +53,9 @@ const service = {
               createdBy: currentUserId
             })));
         }
+
+        // delete all orphaned metadata records
+        await service.pruneOrphanedMetadata(trx);
       }
 
       if (!etrx) await trx.commit();

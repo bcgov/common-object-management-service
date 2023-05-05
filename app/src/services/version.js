@@ -11,12 +11,12 @@ const service = {
    * @param {string} sourceVersionId S3 VersionId of source version
    * @param {string} newVersionId S3 VersionId of new version
    * @param {string} objectId uuid of the object
-   * @param {string} UserId uuid of the current user
+   * @param {string} userId uuid of the current user
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<object>} The Version created in database
    * @throws The error encountered upon db transaction failure
    */
-  copy: async (sourceVersionId, newVersionId, objectId, userId, etrx = undefined) => {
+  copy: async (sourceVersionId, newVersionId, objectId, userId = SYSTEM_USER, etrx = undefined) => {
     let trx;
     try {
       trx = etrx ? etrx : await Version.startTransaction();
@@ -66,7 +66,7 @@ const service = {
    * @returns {Promise<object>} the Version object inserted into the database
    * @throws The error encountered upon db transaction failure
    */
-  create: async (data = {}, userId, etrx = undefined) => {
+  create: async (data = {}, userId = SYSTEM_USER, etrx = undefined) => {
     let trx;
     try {
       trx = etrx ? etrx : await Version.startTransaction();
