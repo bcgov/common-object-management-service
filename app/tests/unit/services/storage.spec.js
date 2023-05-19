@@ -8,6 +8,7 @@ const {
   HeadBucketCommand,
   HeadObjectCommand,
   ListObjectsCommand,
+  ListObjectsV2Command,
   ListObjectVersionsCommand,
   PutObjectCommand,
   PutObjectTaggingCommand,
@@ -396,7 +397,7 @@ describe('listObjects', () => {
     s3ClientMock.on(ListObjectsCommand).resolves({});
   });
 
-  it('should send a list objects command with default 2^31-1 maxKeys', async () => {
+  it('should send a list objects command with default undefined maxKeys', async () => {
     const filePath = 'filePath';
     const result = await service.listObjects({ filePath });
 
@@ -406,19 +407,54 @@ describe('listObjects', () => {
     expect(s3ClientMock).toHaveReceivedCommandWith(ListObjectsCommand, {
       Bucket: bucket,
       Prefix: filePath,
-      MaxKeys: (2 ** 31) - 1
+      MaxKeys: undefined
     });
   });
 
-  it('should send a list objects command with 2000 maxKeys', async () => {
+  it('should send a list objects command with 200 maxKeys', async () => {
     const filePath = 'filePath';
-    const maxKeys = 2000;
+    const maxKeys = 200;
     const result = await service.listObjects({ filePath, maxKeys });
 
     expect(result).toBeTruthy();
     expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(s3ClientMock).toHaveReceivedCommandTimes(ListObjectsCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(ListObjectsCommand, {
+      Bucket: bucket,
+      Prefix: filePath,
+      MaxKeys: maxKeys
+    });
+  });
+});
+
+describe('listObjectsV2', () => {
+  beforeEach(() => {
+    s3ClientMock.on(ListObjectsV2Command).resolves({});
+  });
+
+  it('should send a list objects command with default undefined maxKeys', async () => {
+    const filePath = 'filePath';
+    const result = await service.listObjectsV2({ filePath });
+
+    expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
+    expect(s3ClientMock).toHaveReceivedCommandTimes(ListObjectsV2Command, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(ListObjectsV2Command, {
+      Bucket: bucket,
+      Prefix: filePath,
+      MaxKeys: undefined
+    });
+  });
+
+  it('should send a list objects command with 200 maxKeys', async () => {
+    const filePath = 'filePath';
+    const maxKeys = 200;
+    const result = await service.listObjectsV2({ filePath, maxKeys });
+
+    expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
+    expect(s3ClientMock).toHaveReceivedCommandTimes(ListObjectsV2Command, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(ListObjectsV2Command, {
       Bucket: bucket,
       Prefix: filePath,
       MaxKeys: maxKeys

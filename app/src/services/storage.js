@@ -10,6 +10,7 @@ const {
   HeadBucketCommand,
   HeadObjectCommand,
   ListObjectsCommand,
+  ListObjectsV2Command,
   ListObjectVersionsCommand,
   PutObjectCommand,
   PutBucketEncryptionCommand,
@@ -19,7 +20,7 @@ const {
 const { Upload } = require('@aws-sdk/lib-storage');
 const config = require('config');
 
-const { MAXKEYS, MetadataDirective, TaggingDirective } = require('../components/constants');
+const { MetadataDirective, TaggingDirective } = require('../components/constants');
 const log = require('../components/log')(module.filename);
 const utils = require('../components/utils');
 
@@ -232,14 +233,15 @@ const objectStorageService = {
   },
 
   /**
+   * @deprecated Use `listObjectsV2` instead
    * @function listObjects
    * Lists the objects in the bucket with the prefix of `filePath`
    * @param {string} options.filePath The filePath of the object
-   * @param {number} [options.maxKeys=2^31-1] The maximum number of keys to return
+   * @param {number} [options.maxKeys] Optional maximum number of keys to return
    * @param {string} [options.bucketId] Optional bucketId
    * @returns {Promise<object>} The response of the list objects operation
    */
-  async listObjects({ filePath, maxKeys = MAXKEYS, bucketId = undefined }) {
+  async listObjects({ filePath, maxKeys = undefined, bucketId = undefined }) {
     const data = await utils.getBucket(bucketId);
     const params = {
       Bucket: data.bucket,
@@ -248,6 +250,27 @@ const objectStorageService = {
     };
 
     return this._getS3Client(data).send(new ListObjectsCommand(params));
+  },
+
+  /**
+   * @function listObjectsV2
+   * Lists the objects in the bucket with the prefix of `filePath`
+   * @param {string} options.filePath The filePath of the object
+   * @param {string} [options.continuationToken] Optional continuationtoken for pagination
+   * @param {number} [options.maxKeys] Optional maximum number of keys to return
+   * @param {string} [options.bucketId] Optional bucketId
+   * @returns {Promise<object>} The response of the list objects operation
+   */
+  async listObjectsV2({ filePath, continuationToken = undefined, maxKeys = undefined, bucketId = undefined }) {
+    const data = await utils.getBucket(bucketId);
+    const params = {
+      Bucket: data.bucket,
+      ContinuationToken: continuationToken,
+      Prefix: filePath, // Must filter via "prefix" - https://stackoverflow.com/a/56569856
+      MaxKeys: maxKeys
+    };
+
+    return this._getS3Client(data).send(new ListObjectsV2Command(params));
   },
 
   /**
