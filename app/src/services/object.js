@@ -29,6 +29,7 @@ const service = {
       // Add object record to DB
       const obj = {
         id: data.id,
+        name: data.name,
         path: data.path,
         public: data.public,
         active: data.active,

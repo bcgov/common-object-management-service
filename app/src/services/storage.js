@@ -412,20 +412,17 @@ const objectStorageService = {
    * @param {string} [options.bucketId] Optional bucketId
    * @returns {Promise<object>} The response of the put object operation
    */
-  async upload({ stream, id, mimeType, metadata, tags, bucketId = undefined }) {
+  async upload({ stream, name, mimeType, metadata, tags, bucketId = undefined }) {
     const data = await utils.getBucket(bucketId);
 
     const upload = new Upload({
       client: this._getS3Client(data),
       params: {
         Bucket: data.bucket,
-        Key: utils.joinPath(data.key, id),
+        Key: utils.joinPath(data.key, name),
         Body: stream,
         ContentType: mimeType,
-        Metadata: {
-          ...metadata,
-          'coms-id': id // enforce metadata `coms-id: <object ID>`
-        },
+        Metadata:  metadata,
         // TODO: Consider adding API param support for Server Side Encryption
         // ServerSideEncryption: 'AES256'
       },

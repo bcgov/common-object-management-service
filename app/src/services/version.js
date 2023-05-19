@@ -77,7 +77,8 @@ const service = {
           mimeType: data.mimeType,
           objectId: data.id,
           createdBy: userId,
-          deleteMarker: data.deleteMarker
+          deleteMarker: data.deleteMarker,
+          etag: data.etag
         })
         .returning('id', 'objectId');
 
@@ -210,7 +211,8 @@ const service = {
         .patch({
           objectId: data.id,
           updatedBy: userId,
-          mimeType: data.mimeType
+          mimeType: data.mimeType,
+          etag: data.etag
         })
         .first()
         .returning('id');
