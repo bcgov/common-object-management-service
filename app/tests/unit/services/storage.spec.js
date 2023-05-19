@@ -780,23 +780,13 @@ describe('upload', () => {
     expect(result).toBeTruthy();
     expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(s3ClientMock).toHaveReceivedCommandTimes(PutObjectCommand, 1);
-    expect(s3ClientMock).toHaveReceivedCommandTimes(PutObjectTaggingCommand, 1);
     expect(s3ClientMock).toHaveReceivedNthCommandWith(1, PutObjectCommand, {
       Bucket: bucket,
       ContentType: mimeType,
       Key: expect.any(String), // TODO: Fix after getPath is refactored
       Body: expect.any(Buffer),
       Metadata: metadata,
-    });
-    expect(s3ClientMock).toHaveReceivedNthCommandWith(2, PutObjectTaggingCommand, {
-      Bucket: bucket,
-      ContentType: mimeType,
-      Key: expect.any(String), // TODO: Fix after getPath is refactored
-      Body: expect.any(Readable),
-      Metadata: metadata,
-      Tagging: {
-        TagSet: [{ Key: 'foo', Value: 'bar' }]
-      }
+      Tagging: 'foo=bar'
     });
   });
 });
