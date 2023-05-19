@@ -196,6 +196,7 @@ class ObjectModel extends Timestamps(Model) {
         public: { type: 'boolean' },
         active: { type: 'boolean' },
         bucketId: { type: 'string', maxLength: 255 },
+        name: { type: 'string', maxLength: 1024 },
         ...stamps
       },
       additionalProperties: false
