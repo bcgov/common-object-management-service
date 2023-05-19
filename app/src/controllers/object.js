@@ -71,7 +71,6 @@ const controller = {
         exposedHeaders.push(metadata);
       });
 
-      if (s3Resp.Metadata['coms-name']) res.attachment(s3Resp.Metadata['coms-name']);
     }
     if (s3Resp.ServerSideEncryption) {
       const sse = 'x-amz-server-side-encryption';
@@ -236,13 +235,14 @@ const controller = {
         const data = {
           id: objId,
           fieldName: name,
+          name: info.filename,
           mimeType: info.mimeType,
-          metadata: {
-            'coms-name': info.filename,  // provide a default of `coms-name: <file name>`
-            ...getMetadata(req.headers),
+          metadata: getMetadata(req.headers),
+          tags: {
+            ...req.query.tagset,
+            // enforce tag `coms-id: <object ID>`
             'coms-id': objId
           },
-          tags: req.query.tagset,
           bucketId: bucketId
         };
 
@@ -252,7 +252,7 @@ const controller = {
           const object = await objectService.create({
             ...data,
             userId: userId,
-            path: joinPath(bucketKey, objId)
+            path: joinPath(bucketKey, data.name)
           }, trx);
 
           // create S3 upload promise
@@ -260,7 +260,7 @@ const controller = {
 
           // create new version in DB
           const s3VersionId = s3Resolved.VersionId ? s3Resolved.VersionId : null;
-          const version = await versionService.create({ ...data, s3VersionId: s3VersionId }, userId, trx);
+          const version = await versionService.create({ ...data, s3VersionId: s3VersionId, etag: s3Resolved.ETag }, userId, trx);
           object['versionId'] = version.id;
 
           // add metadata to version in DB
@@ -678,7 +678,7 @@ const controller = {
       const sourceS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid(req.query.versionId), objId);
 
       // get metadata for source version
-      const source = await storageService.headObject({ filePath: objPath, s3VersionId: sourceS3VersionId, bucketId});
+      const source = await storageService.headObject({ filePath: objPath, s3VersionId: sourceS3VersionId, bucketId });
       if (source.ContentLength > MAXCOPYOBJECTLENGTH) {
         throw new Error('Cannot copy an object larger than 5GB');
       }
@@ -738,7 +738,7 @@ const controller = {
         res.status(422).end();
       } else {
         const data = {
-          bucketId : req.currentObject?.bucketId,
+          bucketId: req.currentObject?.bucketId,
           filePath: objPath,
           tags: Object.entries(newTags).map(([k, v]) => ({ Key: k, Value: v })),
           s3VersionId: sourceS3VersionId
@@ -850,13 +850,14 @@ const controller = {
           bucketId,
           id: objId,
           fieldName: name,
+          name: req.currentObject.name,
           mimeType: info.mimeType,
-          metadata: {
-            'coms-name': info.filename,
-            ...getMetadata(req.headers),
+          metadata: getMetadata(req.headers),
+          tags: {
+            ...req.query.tagset,
+            // enforce tag `coms-id: <object ID>`
             'coms-id': objId
           },
-          tags: req.query.tagset
         };
 
         const s3Response = storageService.upload({ ...data, stream });
@@ -865,7 +866,7 @@ const controller = {
           const object = await objectService.update({
             ...data,
             userId: userId,
-            path: joinPath(bucketKey, objId)
+            path: joinPath(bucketKey, data.name)
           }, trx);
 
           // wait for S3 response
@@ -874,13 +875,14 @@ const controller = {
           let version = undefined;
           if (s3Resolved.VersionId) {
             const s3VersionId = s3Resolved.VersionId;
-            version = await versionService.create({ ...data, s3VersionId: s3VersionId }, userId, trx);
+            version = await versionService.create({ ...data, s3VersionId: s3VersionId, etag: s3Resolved.ETag }, userId, trx);
           }
           // else update only version in DB
           else {
             version = await versionService.update({
               ...data,
-              s3VersionId: null
+              s3VersionId: null,
+              etag: s3Resolved.ETag
             }, userId, trx);
           }
           object['versionId'] = version.id;
