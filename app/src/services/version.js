@@ -16,7 +16,7 @@ const service = {
    * @returns {Promise<object>} The Version created in database
    * @throws The error encountered upon db transaction failure
    */
-  copy: async (sourceVersionId, newVersionId, objectId, userId = SYSTEM_USER, etrx = undefined) => {
+  copy: async (sourceVersionId, targetVersionId, objectId, targetEtag, userId = SYSTEM_USER, etrx = undefined) => {
     let trx;
     try {
       trx = etrx ? etrx : await Version.startTransaction();
@@ -42,7 +42,8 @@ const service = {
       const response = await Version.query(trx)
         .insert({
           id: uuidv4(),
-          s3VersionId: newVersionId,
+          s3VersionId: targetVersionId,
+          etag: targetEtag,
           objectId: objectId,
           mimeType: sourceVersion.mimeType,
           deleteMarker: sourceVersion.deleteMarker,

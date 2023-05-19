@@ -62,6 +62,11 @@ class ObjectModel extends Timestamps(Model) {
       filterBucketIds(query, value) {
         filterOneOrMany(query, value, 'object.bucketId');
       },
+      filterName(query, value) {
+        if (value !== undefined) {
+          query.where('object.name', 'ilike', `%${value}%`);
+        }
+      },
       filterPath(query, value) {
         filterILike(query, value, 'object.path');
       },
@@ -119,15 +124,6 @@ class ObjectModel extends Timestamps(Model) {
       },
       filterMetadataTag(query, value) {
         const subqueries = [];
-
-        if (value.name) {
-          const q = Version.query()
-            .select('version.id')
-            .joinRelated('metadata')
-            .where('metadata.key', 'coms-name')
-            .where('metadata.value', 'ilike', `%${value.name}%`);
-          subqueries.push(q);
-        }
 
         if (value.metadata && Object.keys(value.metadata).length) {
           Object.entries(value.metadata).forEach(([key, val]) => {

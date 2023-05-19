@@ -1,5 +1,5 @@
 const Problem = require('api-problem');
-const { MAXCOPYOBJECTLENGTH, MetadataDirective } = require('../../../src/components/constants');
+const { MAXCOPYOBJECTLENGTH, MetadataDirective, TaggingDirective } = require('../../../src/components/constants');
 
 const utils = require('../../../src/db/models/utils');
 
@@ -93,9 +93,10 @@ describe('addMetadata', () => {
       metadata: {
         foo: 'bar',
         baz: 'quz',
-        'coms-id': 1
+        // 'coms-id': 1
       },
       metadataDirective: MetadataDirective.REPLACE,
+      taggingDirective: TaggingDirective.COPY,
       s3VersionId: undefined
     });
 

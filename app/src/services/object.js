@@ -119,6 +119,7 @@ const service = {
       .allowGraph('version')
       .modify('filterIds', params.id)
       .modify('filterBucketIds', params.bucketId)
+      .modify('filterName', params.name)
       .modify('filterPath', params.path)
       .modify('filterPublic', params.public)
       .modify('filterActive', params.active)
@@ -126,7 +127,6 @@ const service = {
       .modify('filterDeleteMarker', params.deleteMarker)
       .modify('filterLatest', params.latest)
       .modify('filterMetadataTag', {
-        name: params.name,
         metadata: params.metadata,
         tag: params.tag
       })
