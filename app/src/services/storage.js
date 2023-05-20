@@ -422,21 +422,21 @@ const objectStorageService = {
    * @function upload
    * Uploads the object `stream` at the `id` path
    * @param {stream} options.stream The binary stream of the object
-   * @param {string} options.filename The filename of the object
+   * @param {string} options.name The file name of the object
    * @param {string} options.mimeType The mime type of the object
    * @param {object} [options.metadata] Optional object containing key/value pairs for metadata
    * @param {object} [options.tags] Optional object containing key/value pairs for tags
    * @param {string} [options.bucketId] Optional bucketId
    * @returns {Promise<CompleteMultipartUploadCommandOutput | AbortMultipartUploadCommandOutput>} The response of the put object operation
    */
-  async upload({ stream, filename, mimeType, metadata, tags, bucketId = undefined }) {
+  async upload({ stream, name, mimeType, metadata, tags, bucketId = undefined }) {
     const data = await utils.getBucket(bucketId);
 
     const upload = new Upload({
       client: this._getS3Client(data),
       params: {
         Bucket: data.bucket,
-        Key: utils.joinPath(data.key, filename),
+        Key: utils.joinPath(data.key, name),
         Body: stream,
         ContentType: mimeType,
         Metadata: metadata,
