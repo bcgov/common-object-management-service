@@ -303,6 +303,7 @@ const objectStorageService = {
   },
 
   /**
+   * @deprecated Use `upload` instead
    * @function putObject
    * Puts the object `stream` at the `id` path
    * @param {stream} options.stream The binary stream of the object

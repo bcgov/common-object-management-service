@@ -191,6 +191,7 @@ const utils = {
   },
 
   /**
+   * @deprecated To be removed in v0.6.0
    * @function getPath
    * Gets the relative path of `objId`
    * @param {string} objId The object id
