@@ -18,7 +18,6 @@ const {
   getCurrentIdentity,
   getKeyValue,
   getMetadata,
-  getPath,
   getS3VersionId,
   joinPath,
   isTruthy,
@@ -99,7 +98,7 @@ const controller = {
     try {
       const bucketId = req.currentObject?.bucketId;
       const objId = addDashesToUuid(req.params.objectId);
-      const objPath = req.currentObject.path;
+      const objPath = req.currentObject?.path;
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
       // get source S3 VersionId
@@ -174,7 +173,7 @@ const controller = {
     try {
       const bucketId = req.currentObject?.bucketId;
       const objId = addDashesToUuid(req.params.objectId);
-      const objPath = req.currentObject.path;
+      const objPath = req.currentObject?.path;
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
       const newTags = req.query.tagset;
 
@@ -190,7 +189,7 @@ const controller = {
       // add to existing tags on source object in S3
       if (sourceObject.TagSet) newSet = newSet.concat(sourceObject.TagSet);
       newSet = newSet.filter((element, idx, arr) => arr.findIndex(element2 => (element2.Key === element.Key)) === idx);
-      // add 'coms-id' tag is not there
+      // add 'coms-id' tag if not there
       if (!newSet.find(x => x.Key == 'coms-id')) newSet.push({ Key: 'coms-id', Value: objId });
 
       if (!newTags || !Object.keys(newTags).length || newSet.length > 10) {
@@ -256,8 +255,8 @@ const controller = {
         const path = joinPath(bucketKey, info.filename);
 
         const data = {
-          bucketId: bucketId,
           id: objId,
+          bucketId: bucketId,
           fieldName: name,
           name: info.filename,
           mimeType: info.mimeType,
@@ -361,7 +360,7 @@ const controller = {
     try {
       const bucketId = req.currentObject?.bucketId;
       const objId = addDashesToUuid(req.params.objectId);
-      const objPath = req.currentObject.path;
+      const objPath = req.currentObject?.path;
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
       // Source S3 Version to copy from
@@ -410,7 +409,7 @@ const controller = {
         // create or update version in DB(if a non-versioned object)
         const version = s3Response.VersionId ?
           await versionService.copy(sourceS3VersionId, s3Response.VersionId, objId, s3Response.CopyObjectResult.ETag, userId, trx) :
-          await versionService.update({ ...data, id: objId }, userId, trx);
+          await versionService.update({ ...data, id: objId, etag: s3Response.CopyObjectResult.ETag }, userId, trx);
         // add metadata to version in DB
         await metadataService.associateMetadata(version.id, getKeyValue(data.metadata), userId, trx);
 
@@ -442,7 +441,7 @@ const controller = {
 
       const data = {
         bucketId: req.currentObject?.bucketId,
-        filePath: await getPath(objId),
+        filePath: req.currentObject?.path,
         s3VersionId: targetS3VersionId
       };
 
@@ -497,7 +496,7 @@ const controller = {
     try {
       const bucketId = req.currentObject?.bucketId;
       const objId = addDashesToUuid(req.params.objectId);
-      const objPath = req.currentObject.path;
+      const objPath = req.currentObject?.path;
 
       // Target S3 version
       const targetS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid(req.query.versionId), objId);
@@ -531,7 +530,7 @@ const controller = {
           dissociateTags = getKeyValue(req.query.tagset);
         }
         else if (sourceObject.TagSet && sourceObject.TagSet.length) { // remove all existing except coms-id
-          dissociateTags = toLowerKeys(sourceObject.TagSet).filter(x => x.Key != 'coms-id');
+          dissociateTags = toLowerKeys(sourceObject.TagSet).filter(x => x.key != 'coms-id');
         }
 
         if (dissociateTags.length) await tagService.dissociateTags(version.id, dissociateTags, trx);
@@ -614,7 +613,7 @@ const controller = {
 
       const data = {
         bucketId: req.currentObject?.bucketId,
-        filePath: await getPath(objId),
+        filePath: req.currentObject?.path,
         s3VersionId: targetS3VersionId
       };
       const response = await storageService.headObject(data);
@@ -648,7 +647,6 @@ const controller = {
 
       const response = await versionService.list(objId);
       // TODO: sync with current versions in S3
-      // const data = { filePath: await getPath(objId) };
       // const s3Versions = await storageService.listObjectVersion(data);
 
       res.status(200).json(response);
@@ -675,7 +673,7 @@ const controller = {
       const data = {
         // TODO: use req.currentObject.bucketId
         bucketId: await getBucketId(objId),
-        filePath: await getPath(objId),
+        filePath: req.currentObject?.path,
         s3VersionId: targetS3VersionId
       };
 
@@ -730,7 +728,7 @@ const controller = {
     try {
       const bucketId = req.currentObject?.bucketId;
       const objId = addDashesToUuid(req.params.objectId);
-      const objPath = req.currentObject.path;
+      const objPath = req.currentObject?.path;
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
       // source S3 version
@@ -772,7 +770,7 @@ const controller = {
         const version = s3Response.VersionId ?
           await versionService.copy(sourceS3VersionId, s3Response.VersionId, objId, s3Response.CopyObjectResult.ETag, userId, trx) :
 
-          await versionService.update({ ...data, id: objId }, userId, trx);
+          await versionService.update({ ...data, id: objId, etag: s3Response.CopyObjectResult.ETag }, userId, trx);
 
         // add metadata
         await metadataService.associateMetadata(version.id, getKeyValue(data.metadata), userId, trx);
@@ -798,22 +796,25 @@ const controller = {
   async replaceTags(req, res, next) {
     try {
       const objId = addDashesToUuid(req.params.objectId);
-      const objPath = req.currentObject.path;
+      const objPath = req.currentObject?.path;
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
       const newTags = req.query.tagset;
 
       // source S3 version
       const sourceS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid(req.query.versionId), objId);
 
-      if (!newTags || !Object.keys(newTags).length || Object.keys(newTags).length > 10) {
+      if (!newTags || !Object.keys(newTags).length || Object.keys(newTags).length > 9) {
         // TODO: Validation level logic. To be moved.
         // 422 when no new tags or when tag limit will be exceeded
         res.status(422).end();
       } else {
+
+        const keyValueTags = newTags ? Object.entries(newTags).map(([k, v]) => ({ Key: k, Value: v })) : [];
+
         const data = {
           bucketId: req.currentObject?.bucketId,
           filePath: objPath,
-          tags: { ...Object.entries(newTags).map(([k, v]) => ({ Key: k, Value: v })), 'coms-id': objId },
+          tags: keyValueTags.concat([{ 'Key': 'coms-id', 'Value': objId }]),
           s3VersionId: sourceS3VersionId
         };
 
@@ -923,7 +924,7 @@ const controller = {
           bucketId: bucketId,
           id: objId,
           fieldName: name,
-          name: req.currentObject.path.match(/(?!.*\/)(.*)$/)[0],
+          name: req.currentObject?.path.match(/(?!.*\/)(.*)$/)[0],
           mimeType: info.mimeType,
           metadata: getMetadata(req.headers),
           tags: {

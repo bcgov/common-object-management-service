@@ -9,8 +9,9 @@ const service = {
    * @function copy
    * Creates a new Version DB record from an existing record
    * @param {string} sourceVersionId S3 VersionId of source version
-   * @param {string} newVersionId S3 VersionId of new version
+   * @param {string} targetVersionId S3 VersionId of new version
    * @param {string} objectId uuid of the object
+   * @param {string} targetEtag ETag of the new version
    * @param {string} userId uuid of the current user
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<object>} The Version created in database

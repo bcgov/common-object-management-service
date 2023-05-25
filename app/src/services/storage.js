@@ -71,7 +71,7 @@ const objectStorageService = {
    * @param {string} [options.taggingDirective=COPY] Optional tagging operation directive
    * @param {string} [options.s3VersionId] Optional s3VersionId to copy from
    * @param {string} [options.bucketId] Optional bucketId
-   * @returns {Promise<object>} The response of the delete object operation
+   * @returns {Promise<object>} The response of the copy object operation
    */
   async copyObject({
     copySource,
@@ -359,7 +359,7 @@ const objectStorageService = {
    * @function putObjectTagging
    * Puts the tags of the object at `filePath`
    * @param {string} options.filePath The filePath of the object
-   * @param {string} options.tags Array of key/value pairs
+   * @param {string} options.tags Array of key/value pairs (eg: `([{ Key: 'colour', Value: 'red' }]`)
    * @param {number} [options.s3VersionId] Optional specific s3VersionId for the object
    * @param {string} [options.bucketId] Optional bucketId
    * @returns {Promise<object>} The response of the put object tagging operation
