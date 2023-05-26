@@ -105,18 +105,33 @@ describe('getBucketKey', () => {
 describe('searchObjects', () => {
   it('Search and filter for specific object records', () => {
     ObjectModel.then.mockImplementation(() => { });
-
-    service.searchObjects({
+    const params = {
       bucketId: BUCKET_ID,
       bucketName: 'bucketName',
       active: 'true',
       key: 'key',
       userId: SYSTEM_USER
-    });
+    };
+
+    service.searchObjects(params);
 
     expect(ObjectModel.query).toHaveBeenCalledTimes(1);
     expect(ObjectModel.allowGraph).toHaveBeenCalledTimes(1);
-    expect(ObjectModel.modify).toHaveBeenCalledTimes(10);
+    expect(ObjectModel.modify).toHaveBeenCalledTimes(11);
+    expect(ObjectModel.modify).toHaveBeenNthCalledWith(1, 'filterIds', params.id);
+    expect(ObjectModel.modify).toHaveBeenNthCalledWith(2, 'filterBucketIds', params.bucketId);
+    expect(ObjectModel.modify).toHaveBeenNthCalledWith(3, 'filterName', params.name);
+    expect(ObjectModel.modify).toHaveBeenNthCalledWith(4, 'filterPath', params.path);
+    expect(ObjectModel.modify).toHaveBeenNthCalledWith(5, 'filterPublic', params.public);
+    expect(ObjectModel.modify).toHaveBeenNthCalledWith(6, 'filterActive', params.active);
+    expect(ObjectModel.modify).toHaveBeenNthCalledWith(7, 'filterMimeType', params.mimeType);
+    expect(ObjectModel.modify).toHaveBeenNthCalledWith(8, 'filterDeleteMarker', params.deleteMarker);
+    expect(ObjectModel.modify).toHaveBeenNthCalledWith(9, 'filterLatest', params.latest);
+    expect(ObjectModel.modify).toHaveBeenNthCalledWith(10, 'filterMetadataTag', {
+      metadata: params.metadata,
+      tag: params.tag
+    });
+    expect(ObjectModel.modify).toHaveBeenNthCalledWith(11, 'hasPermission', params.userId, 'READ');
     expect(ObjectModel.then).toHaveBeenCalledTimes(1);
   });
 });

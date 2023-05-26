@@ -107,29 +107,30 @@ const controller = {
       // get version from S3
       const source = await storageService.headObject({
         filePath: objPath,
-        s3VersionId: sourceS3VersionId, bucketId
+        s3VersionId: sourceS3VersionId,
+        bucketId: bucketId
       });
       if (source.ContentLength > MAXCOPYOBJECTLENGTH) {
         throw new Error('Cannot copy an object larger than 5GB');
       }
       // get existing tags on source object, eg: { 'animal': 'bear', colour': 'black' }
-      const sourceObject = await storageService.getObjectTagging({ filePath: objPath, s3VersionId: sourceS3VersionId, bucketId });
+      const sourceObject = await storageService.getObjectTagging({ filePath: objPath, s3VersionId: sourceS3VersionId, bucketId: bucketId });
 
       const sourceTags = Object.assign({}, ...(sourceObject.TagSet.map(item => ({ [item.Key]: item.Value }))));
 
       const metadataToAppend = getMetadata(req.headers);
-      if (!Object.keys(metadataToAppend).length) {
+      if (!Object.keys({ ...metadataToAppend}).length) {
         // TODO: Validation level logic. To be moved.
         // 422 when no keys present
         res.status(422).end();
       }
       else {
         const data = {
-          bucketId,
+          bucketId: bucketId,
           copySource: objPath,
           filePath: objPath,
           metadata: {
-            ...source.Metadata,  // Take existing metadata first
+            ...source.Metadata, // Take existing metadata first
             ...metadataToAppend, // Append new metadata
           },
           metadataDirective: MetadataDirective.REPLACE,
@@ -144,8 +145,8 @@ const controller = {
         await utils.trxWrapper(async (trx) => {
           // create or update version in DB (if a non-versioned object)
           const version = s3Response.VersionId ?
-            await versionService.copy(sourceS3VersionId, s3Response.VersionId, objId, s3Response.CopyObjectResult.ETag, userId, trx) :
-            await versionService.update({ ...data, id: objId, etag: s3Response.CopyObjectResult.ETag }, userId, trx);
+            await versionService.copy(sourceS3VersionId, s3Response.VersionId, objId, s3Response.CopyObjectResult?.ETag, userId, trx) :
+            await versionService.update({ ...data, id: objId, etag: s3Response.CopyObjectResult?.ETag }, userId, trx);
 
           // add metadata for version in DB
           await metadataService.associateMetadata(version.id, getKeyValue(data.metadata), userId, trx);
@@ -372,7 +373,7 @@ const controller = {
       }
 
       // Generate object subset by subtracting/omitting defined keys via filter/inclusion
-      const keysToRemove = Object.keys(getMetadata(req.headers));
+      const keysToRemove = Object.keys({ ...getMetadata(req.headers) });
       let metadata = undefined;
       if (keysToRemove.length) {
         metadata = Object.fromEntries(
@@ -384,12 +385,13 @@ const controller = {
       // get existing tags on source object
       const sourceObject = await storageService.getObjectTagging({
         filePath: objPath,
-        s3VersionId: sourceS3VersionId, bucketId
+        s3VersionId: sourceS3VersionId,
+        bucketId: bucketId
       });
       const sourceTags = Object.assign({}, ...(sourceObject.TagSet.map(item => ({ [item.Key]: item.Value }))));
 
       const data = {
-        bucketId,
+        bucketId: bucketId,
         copySource: objPath,
         filePath: objPath,
         metadata: metadata,
@@ -408,8 +410,8 @@ const controller = {
       await utils.trxWrapper(async (trx) => {
         // create or update version in DB(if a non-versioned object)
         const version = s3Response.VersionId ?
-          await versionService.copy(sourceS3VersionId, s3Response.VersionId, objId, s3Response.CopyObjectResult.ETag, userId, trx) :
-          await versionService.update({ ...data, id: objId, etag: s3Response.CopyObjectResult.ETag }, userId, trx);
+          await versionService.copy(sourceS3VersionId, s3Response.VersionId, objId, s3Response.CopyObjectResult?.ETag, userId, trx) :
+          await versionService.update({ ...data, id: objId, etag: s3Response.CopyObjectResult?.ETag }, userId, trx);
         // add metadata to version in DB
         await metadataService.associateMetadata(version.id, getKeyValue(data.metadata), userId, trx);
 
@@ -768,9 +770,9 @@ const controller = {
       await utils.trxWrapper(async (trx) => {
         // create or update version (if a non-versioned object)
         const version = s3Response.VersionId ?
-          await versionService.copy(sourceS3VersionId, s3Response.VersionId, objId, s3Response.CopyObjectResult.ETag, userId, trx) :
+          await versionService.copy(sourceS3VersionId, s3Response.VersionId, objId, s3Response.CopyObjectResult?.ETag, userId, trx) :
 
-          await versionService.update({ ...data, id: objId, etag: s3Response.CopyObjectResult.ETag }, userId, trx);
+          await versionService.update({ ...data, id: objId, etag: s3Response.CopyObjectResult?.ETag }, userId, trx);
 
         // add metadata
         await metadataService.associateMetadata(version.id, getKeyValue(data.metadata), userId, trx);
