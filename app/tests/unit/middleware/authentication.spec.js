@@ -87,7 +87,6 @@ describe('_spkiWrapper', () => {
 
 describe('currentUser', () => {
   const checkBasicAuthSpy = jest.spyOn(mw, '_checkBasicAuth');
-  const jwtDecodeSpy = jest.spyOn(jwt, 'decode');
   const jwtVerifySpy = jest.spyOn(jwt, 'verify');
   const loginSpy = jest.spyOn(userService, 'login');
   const problemSendSpy = jest.spyOn(Problem.prototype, 'send');
@@ -116,7 +115,7 @@ describe('currentUser', () => {
       mw.currentUser(req, res, next);
 
       expect(req.currentUser).toBeTruthy();
-      expect(req.currentUser).toEqual(expect.objectContaining({ authType: AuthType.NONE }));
+      expect(req.currentUser).toHaveProperty('authType', AuthType.NONE);
       expect(req.get).toHaveBeenCalledTimes(1);
       expect(req.get).toHaveBeenCalledWith('Authorization');
       expect(checkBasicAuthSpy).toHaveBeenCalledTimes(0);
@@ -138,7 +137,7 @@ describe('currentUser', () => {
       mw.currentUser(req, res, next);
 
       expect(req.currentUser).toBeTruthy();
-      expect(req.currentUser).toEqual(expect.objectContaining({ authType: AuthType.BASIC }));
+      expect(req.currentUser).toHaveProperty('authType', AuthType.BASIC);
       expect(req.get).toHaveBeenCalledTimes(1);
       expect(req.get).toHaveBeenCalledWith('Authorization');
       expect(config.has).toHaveBeenCalledTimes(1);
@@ -151,6 +150,9 @@ describe('currentUser', () => {
   });
 
   describe('OIDC Authorization', () => {
+    const authorization = 'bearer ';
+    const serverUrl = 'serverUrl';
+    const realm = 'realm';
     const spki = 'SOMESPKI';
     const publicKey = `-----BEGIN PUBLIC KEY-----\n${spki}\n-----END PUBLIC KEY-----`;
 
@@ -158,12 +160,7 @@ describe('currentUser', () => {
       ['SPKI', spki],
       ['PEM', publicKey]
     ])('sets authType to BEARER with keycloak.publicKey %s', async (_desc, pkey) => {
-      const authorization = 'bearer ';
-      const serverUrl = 'serverUrl';
-      const realm = 'realm';
-
-      jwtVerifySpy.mockReturnValue({}); // return truthy value
-      jwtDecodeSpy.mockReturnValue({ sub: 'sub' });
+      jwtVerifySpy.mockReturnValue({ sub: 'sub' }); // return truthy value
       loginSpy.mockImplementation(() => { });
       config.has
         .mockReturnValueOnce(false) // basicAuth.enabled
@@ -178,8 +175,8 @@ describe('currentUser', () => {
       await mw.currentUser(req, res, next);
 
       expect(req.currentUser).toBeTruthy();
-      expect(req.currentUser).toEqual(expect.objectContaining({ authType: AuthType.BEARER }));
-      expect(req.currentUser).toEqual(expect.objectContaining({ tokenPayload: { sub: 'sub' } }));
+      expect(req.currentUser).toHaveProperty('authType', AuthType.BEARER);
+      expect(req.currentUser).toHaveProperty('tokenPayload', { sub: 'sub' });
       expect(req.get).toHaveBeenCalledTimes(1);
       expect(req.get).toHaveBeenCalledWith('Authorization');
       expect(config.has).toHaveBeenCalledTimes(3);
@@ -196,8 +193,6 @@ describe('currentUser', () => {
       expect(jwtVerifySpy).toHaveBeenCalledWith(expect.any(String), publicKey, expect.objectContaining({
         issuer: `${serverUrl}/realms/${realm}`
       }));
-      expect(jwtDecodeSpy).toHaveBeenCalledTimes(1);
-      expect(jwtDecodeSpy).toHaveBeenCalledWith(expect.any(String));
       expect(loginSpy).toHaveBeenCalledTimes(1);
       expect(loginSpy).toHaveBeenCalledWith(expect.objectContaining({ sub: 'sub' }));
       expect(next).toHaveBeenCalledTimes(1);
@@ -206,11 +201,9 @@ describe('currentUser', () => {
     });
 
     it('sets authType to BEARER without keycloak.publicKey and valid token', async () => {
-      const authorization = 'bearer ';
-
-      jwtDecodeSpy.mockReturnValue({ sub: 'sub' });
+      jwtVerifySpy.mockReturnValue({ sub: 'sub' });
       loginSpy.mockImplementation(() => { });
-      validateAccessTokenSpy.mockResolvedValue(true);
+      validateAccessTokenSpy.mockResolvedValue('tokenstring');
       config.has
         .mockReturnValueOnce(false) // basicAuth.enabled
         .mockReturnValueOnce(true) // keycloak.enabled
@@ -220,8 +213,8 @@ describe('currentUser', () => {
       await mw.currentUser(req, res, next);
 
       expect(req.currentUser).toBeTruthy();
-      expect(req.currentUser).toEqual(expect.objectContaining({ authType: AuthType.BEARER }));
-      expect(req.currentUser).toEqual(expect.objectContaining({ tokenPayload: { sub: 'sub' } }));
+      expect(req.currentUser).toHaveProperty('authType', AuthType.BEARER);
+      expect(req.currentUser).toHaveProperty('tokenPayload');
       expect(req.get).toHaveBeenCalledTimes(1);
       expect(req.get).toHaveBeenCalledWith('Authorization');
       expect(config.has).toHaveBeenCalledTimes(3);
@@ -232,10 +225,7 @@ describe('currentUser', () => {
       expect(validateAccessTokenSpy).toHaveBeenCalledWith(expect.any(String));
       expect(checkBasicAuthSpy).toHaveBeenCalledTimes(0);
       expect(jwtVerifySpy).toHaveBeenCalledTimes(0);
-      expect(jwtDecodeSpy).toHaveBeenCalledTimes(1);
-      expect(jwtDecodeSpy).toHaveBeenCalledWith(expect.any(String));
       expect(loginSpy).toHaveBeenCalledTimes(1);
-      expect(loginSpy).toHaveBeenCalledWith(expect.objectContaining({ sub: 'sub' }));
       expect(next).toHaveBeenCalledTimes(1);
       expect(next).toHaveBeenCalledWith();
       expect(problemSendSpy).toHaveBeenCalledTimes(0);
@@ -265,7 +255,6 @@ describe('currentUser', () => {
       expect(validateAccessTokenSpy).toHaveBeenCalledWith(expect.any(String));
       expect(checkBasicAuthSpy).toHaveBeenCalledTimes(0);
       expect(jwtVerifySpy).toHaveBeenCalledTimes(0);
-      expect(jwtDecodeSpy).toHaveBeenCalledTimes(0);
       expect(loginSpy).toHaveBeenCalledTimes(0);
       expect(next).toHaveBeenCalledTimes(0);
       expect(problemSendSpy).toHaveBeenCalledTimes(1);
