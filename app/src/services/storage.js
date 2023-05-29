@@ -275,7 +275,7 @@ const objectStorageService = {
   },
 
   /**
-   * @function ListObjectVerseion
+   * @function ListObjectVersion
    * Lists the versions for the object at `filePath`
    * @param {string} options.filePath The filePath of the object
    * @param {string} [options.bucketId] Optional bucketId

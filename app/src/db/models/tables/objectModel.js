@@ -63,9 +63,7 @@ class ObjectModel extends Timestamps(Model) {
         filterOneOrMany(query, value, 'object.bucketId');
       },
       filterName(query, value) {
-        if (value !== undefined) {
-          query.where('object.name', 'ilike', `%${value}%`);
-        }
+        filterILike(query, value, 'object.name');
       },
       filterPath(query, value) {
         filterILike(query, value, 'object.path');
