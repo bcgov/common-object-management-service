@@ -10,6 +10,7 @@ const {
   HeadBucketCommand,
   HeadObjectCommand,
   ListObjectsCommand,
+  ListObjectsV2Command,
   ListObjectVersionsCommand,
   PutObjectCommand,
   PutBucketEncryptionCommand,
@@ -19,7 +20,7 @@ const {
 const { Upload } = require('@aws-sdk/lib-storage');
 const config = require('config');
 
-const { MAXKEYS, MetadataDirective, TaggingDirective } = require('../components/constants');
+const { MetadataDirective, TaggingDirective } = require('../components/constants');
 const log = require('../components/log')(module.filename);
 const utils = require('../components/utils');
 
@@ -70,7 +71,7 @@ const objectStorageService = {
    * @param {string} [options.taggingDirective=COPY] Optional tagging operation directive
    * @param {string} [options.s3VersionId] Optional s3VersionId to copy from
    * @param {string} [options.bucketId] Optional bucketId
-   * @returns {Promise<object>} The response of the delete object operation
+   * @returns {Promise<object>} The response of the copy object operation
    */
   async copyObject({
     copySource,
@@ -219,7 +220,8 @@ const objectStorageService = {
    * @param {string} options.filePath The filePath of the object
    * @param {string} [options.s3VersionId] Optional version ID used to reference a speciific version of the object
    * @param {string} [options.bucketId] Optional bucketId
-   * @returns {Promise<object>} The response of the head object operation
+   * @returns {Promise<HeadObjectCommandOutput>} The response of the head object operation
+   * @throws If object is not found
    */
   async headObject({ filePath, s3VersionId = undefined, bucketId = undefined }) {
     const data = await utils.getBucket(bucketId);
@@ -232,14 +234,15 @@ const objectStorageService = {
   },
 
   /**
+   * @deprecated Use `listObjectsV2` instead
    * @function listObjects
    * Lists the objects in the bucket with the prefix of `filePath`
    * @param {string} options.filePath The filePath of the object
-   * @param {number} [options.maxKeys=2^31-1] The maximum number of keys to return
+   * @param {number} [options.maxKeys] Optional maximum number of keys to return
    * @param {string} [options.bucketId] Optional bucketId
    * @returns {Promise<object>} The response of the list objects operation
    */
-  async listObjects({ filePath, maxKeys = MAXKEYS, bucketId = undefined }) {
+  async listObjects({ filePath, maxKeys = undefined, bucketId = undefined }) {
     const data = await utils.getBucket(bucketId);
     const params = {
       Bucket: data.bucket,
@@ -251,7 +254,28 @@ const objectStorageService = {
   },
 
   /**
-   * @function ListObjectVerseion
+   * @function listObjectsV2
+   * Lists the objects in the bucket with the prefix of `filePath`
+   * @param {string} options.filePath The filePath of the object
+   * @param {string} [options.continuationToken] Optional continuationtoken for pagination
+   * @param {number} [options.maxKeys] Optional maximum number of keys to return
+   * @param {string} [options.bucketId] Optional bucketId
+   * @returns {Promise<object>} The response of the list objects operation
+   */
+  async listObjectsV2({ filePath, continuationToken = undefined, maxKeys = undefined, bucketId = undefined }) {
+    const data = await utils.getBucket(bucketId);
+    const params = {
+      Bucket: data.bucket,
+      ContinuationToken: continuationToken,
+      Prefix: filePath, // Must filter via "prefix" - https://stackoverflow.com/a/56569856
+      MaxKeys: maxKeys
+    };
+
+    return this._getS3Client(data).send(new ListObjectsV2Command(params));
+  },
+
+  /**
+   * @function ListObjectVersion
    * Lists the versions for the object at `filePath`
    * @param {string} options.filePath The filePath of the object
    * @param {string} [options.bucketId] Optional bucketId
@@ -303,6 +327,7 @@ const objectStorageService = {
   },
 
   /**
+   * @deprecated Use `upload` instead
    * @function putObject
    * Puts the object `stream` at the `id` path
    * @param {stream} options.stream The binary stream of the object
@@ -320,19 +345,11 @@ const objectStorageService = {
       Key: await utils.getPath(id),
       Body: stream,
       ContentType: mimeType,
-      Metadata: {
-        ...metadata,
-        'coms-id': id // enforce metadata `coms-id: <object ID>`
-      },
+      Metadata: metadata,
+      Tagging: Object.entries({ ...tags }).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&')
       // TODO: Consider adding API param support for Server Side Encryption
       // ServerSideEncryption: 'AES256'
     };
-
-    if (tags) {
-      params.Tagging = Object.entries(tags).map(([key, value]) => {
-        return `${key}=${encodeURIComponent(value)}`;
-      }).join('&');
-    }
 
     // TODO: Consider refactoring to use Upload instead from @aws-sdk/lib-storage
     return this._getS3Client(data).send(new PutObjectCommand(params));
@@ -340,9 +357,9 @@ const objectStorageService = {
 
   /**
    * @function putObjectTagging
-   * Gets the tags of the object at `filePath`
+   * Puts the tags of the object at `filePath`
    * @param {string} options.filePath The filePath of the object
-   * @param {string} options.tags Array of key/value pairs
+   * @param {string} options.tags Array of key/value pairs (eg: `([{ Key: 'colour', Value: 'red' }]`)
    * @param {number} [options.s3VersionId] Optional specific s3VersionId for the object
    * @param {string} [options.bucketId] Optional bucketId
    * @returns {Promise<object>} The response of the put object tagging operation
@@ -405,37 +422,29 @@ const objectStorageService = {
    * @function upload
    * Uploads the object `stream` at the `id` path
    * @param {stream} options.stream The binary stream of the object
-   * @param {string} options.id The filePath id of the object
+   * @param {string} options.name The file name of the object
    * @param {string} options.mimeType The mime type of the object
    * @param {object} [options.metadata] Optional object containing key/value pairs for metadata
    * @param {object} [options.tags] Optional object containing key/value pairs for tags
    * @param {string} [options.bucketId] Optional bucketId
-   * @returns {Promise<object>} The response of the put object operation
+   * @returns {Promise<CompleteMultipartUploadCommandOutput | AbortMultipartUploadCommandOutput>} The response of the put object operation
    */
-  async upload({ stream, id, mimeType, metadata, tags, bucketId = undefined }) {
+  async upload({ stream, name, mimeType, metadata, tags, bucketId = undefined }) {
     const data = await utils.getBucket(bucketId);
 
     const upload = new Upload({
       client: this._getS3Client(data),
       params: {
         Bucket: data.bucket,
-        Key: utils.joinPath(data.key, id),
+        Key: utils.joinPath(data.key, name),
         Body: stream,
         ContentType: mimeType,
-        Metadata: {
-          ...metadata,
-          'coms-id': id // enforce metadata `coms-id: <object ID>`
-        },
+        Metadata: metadata,
+        Tagging: Object.entries({ ...tags }).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&')
         // TODO: Consider adding API param support for Server Side Encryption
         // ServerSideEncryption: 'AES256'
       },
     });
-
-    if (tags) {
-      upload.tags = Object.entries(tags).map(([key, value]) => {
-        return { 'Key': key, 'Value': value };
-      });
-    }
 
     return upload.done();
   }

@@ -64,20 +64,18 @@ const service = {
       let response = [];
 
       if (tags && tags.length) {
-        // get id's of all input tags
-        const dbTags = await service.createTags(tags, trx);
 
+        // create any new tags, gets id's of all input tags
+        const dbTags = await service.createTags(tags, trx);
         // get all currently associated tags
         const associatedTags = await VersionTag.query(trx)
           .modify('filterVersionId', versionId);
-
-        // TODO: exclude tags (with matching key vand value) that are already joined
-        // lets us use associateTags in addTags controller
 
         // associate remaining tags
         const newJoins = dbTags.filter(({ id }) => {
           return !associatedTags.some(({ tagId }) => tagId === id);
         });
+
         if (newJoins.length) {
           await VersionTag.query(trx)
             .insert(newJoins.map(({ id }) => ({

@@ -182,7 +182,7 @@ describe('type', () => {
     it('enforces general tagset pattern', () => {
       expect(model.patterns).toEqual(expect.arrayContaining([
         expect.objectContaining({
-          regex: '/^.{1,255}$/',
+          regex: '/^(?!coms-id$).{1,255}$/',
           rule: expect.objectContaining({
             type: 'string',
             rules: expect.arrayContaining([

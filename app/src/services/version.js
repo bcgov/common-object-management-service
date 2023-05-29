@@ -9,14 +9,15 @@ const service = {
    * @function copy
    * Creates a new Version DB record from an existing record
    * @param {string} sourceVersionId S3 VersionId of source version
-   * @param {string} newVersionId S3 VersionId of new version
+   * @param {string} targetVersionId S3 VersionId of new version
    * @param {string} objectId uuid of the object
+   * @param {string} targetEtag ETag of the new version
    * @param {string} userId uuid of the current user
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<object>} The Version created in database
    * @throws The error encountered upon db transaction failure
    */
-  copy: async (sourceVersionId, newVersionId, objectId, userId = SYSTEM_USER, etrx = undefined) => {
+  copy: async (sourceVersionId, targetVersionId, objectId, targetEtag, userId = SYSTEM_USER, etrx = undefined) => {
     let trx;
     try {
       trx = etrx ? etrx : await Version.startTransaction();
@@ -42,7 +43,8 @@ const service = {
       const response = await Version.query(trx)
         .insert({
           id: uuidv4(),
-          s3VersionId: newVersionId,
+          s3VersionId: targetVersionId,
+          etag: targetEtag,
           objectId: objectId,
           mimeType: sourceVersion.mimeType,
           deleteMarker: sourceVersion.deleteMarker,
@@ -77,7 +79,8 @@ const service = {
           mimeType: data.mimeType,
           objectId: data.id,
           createdBy: userId,
-          deleteMarker: data.deleteMarker
+          deleteMarker: data.deleteMarker,
+          etag: data.etag
         })
         .returning('id', 'objectId');
 
@@ -210,7 +213,8 @@ const service = {
         .patch({
           objectId: data.id,
           updatedBy: userId,
-          mimeType: data.mimeType
+          mimeType: data.mimeType,
+          etag: data.etag
         })
         .first()
         .returning('id');

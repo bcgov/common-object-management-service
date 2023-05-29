@@ -1,10 +1,10 @@
 const Problem = require('api-problem');
-const { MAXCOPYOBJECTLENGTH, MetadataDirective } = require('../../../src/components/constants');
+const { MAXCOPYOBJECTLENGTH, MetadataDirective, TaggingDirective } = require('../../../src/components/constants');
 
 const utils = require('../../../src/db/models/utils');
 
 const controller = require('../../../src/controllers/object');
-const { storageService, objectService, metadataService, versionService, userService } = require('../../../src/services');
+const { storageService, objectService, metadataService, tagService, versionService, userService } = require('../../../src/services');
 
 const mockResponse = () => {
   const res = {};
@@ -27,10 +27,12 @@ afterEach(() => {
 
 describe('addMetadata', () => {
   // mock service calls
+  const storageGetObjectTaggingSpy = jest.spyOn(storageService, 'getObjectTagging');
   const storageHeadObjectSpy = jest.spyOn(storageService, 'headObject');
   const storageCopyObjectSpy = jest.spyOn(storageService, 'copyObject');
   const versionCopySpy = jest.spyOn(versionService, 'copy');
   const metadataAssociateMetadataSpy = jest.spyOn(metadataService, 'associateMetadata');
+  const tagAssociateTagsSpy = jest.spyOn(tagService, 'associateTags');
   const trxWrapperSpy = jest.spyOn(utils, 'trxWrapper');
   const setHeadersSpy = jest.spyOn(controller, '_processS3Headers');
 
@@ -39,7 +41,8 @@ describe('addMetadata', () => {
   // response from S3
   const GoodResponse = {
     ContentLength: 1234,
-    Metadata: { 'coms-id': 1, foo: 'bar' },
+    CopyObjectResultETag: { ETag: '"abcd"' },
+    Metadata: { foo: 'bar' },
     VersionId: '5678'
   };
   const BadResponse = {
@@ -58,12 +61,14 @@ describe('addMetadata', () => {
   it('responds 422 when no keys are present', async () => {
     // request object
     const req = {
+      currentObject: {},
       headers: {},
       params: { objectId: 'xyz-789' },
       query: {}
     };
 
-    storageHeadObjectSpy.mockReturnValue(GoodResponse);
+    storageHeadObjectSpy.mockResolvedValue(GoodResponse);
+    storageGetObjectTaggingSpy.mockResolvedValue({ TagSet: [] });
 
     await controller.addMetadata(req, res, next);
 
@@ -73,16 +78,20 @@ describe('addMetadata', () => {
   it('should add the metadata', async () => {
     // request object
     const req = {
+      currentObject: {
+        path: 'xyz-789'
+      },
       headers: { 'x-amz-meta-baz': 'quz' },
       params: { objectId: 'xyz-789' },
       query: {}
     };
 
-    storageHeadObjectSpy.mockReturnValue(GoodResponse);
+    storageHeadObjectSpy.mockResolvedValue(GoodResponse);
+    storageGetObjectTaggingSpy.mockResolvedValue({ TagSet: [] });
     storageCopyObjectSpy.mockResolvedValue(GoodResponse);
     trxWrapperSpy.mockImplementation(callback => callback({}));
-    versionCopySpy.mockReturnValue({ id: '5dad1ec9-d3c0-4b0f-8ead-cb4d9fa98987' });
-    metadataAssociateMetadataSpy.mockReturnValue({});
+    versionCopySpy.mockResolvedValue({ id: '5dad1ec9-d3c0-4b0f-8ead-cb4d9fa98987' });
+    metadataAssociateMetadataSpy.mockResolvedValue({});
     setHeadersSpy.mockImplementation(x => x);
 
     await controller.addMetadata(req, res, next);
@@ -92,16 +101,20 @@ describe('addMetadata', () => {
       filePath: 'xyz-789',
       metadata: {
         foo: 'bar',
-        baz: 'quz',
-        'coms-id': 1
+        baz: 'quz'
+      },
+      tags: {
+        'coms-id': 'xyz-789'
       },
       metadataDirective: MetadataDirective.REPLACE,
+      taggingDirective: TaggingDirective.REPLACE,
       s3VersionId: undefined
     });
 
     expect(trxWrapperSpy).toHaveBeenCalledTimes(1);
     expect(versionCopySpy).toHaveBeenCalledTimes(1);
     expect(metadataAssociateMetadataSpy).toHaveBeenCalledTimes(1);
+    expect(tagAssociateTagsSpy).toHaveBeenCalledTimes(1);
     expect(res.status).toHaveBeenCalledWith(204);
   });
 });
@@ -151,6 +164,7 @@ describe('addTags', () => {
 
     // request object
     const req = {
+      currentObject: { bucketId: 'bid-123', path: 'xyz-789' },
       params: { objectId: 'xyz-789' },
       query: {
         tagset: { foo: 'bar', baz: 'bam' }
@@ -164,10 +178,12 @@ describe('addTags', () => {
 
     expect(res.status).toHaveBeenCalledWith(204);
     expect(storagePutObjectTaggingSpy).toHaveBeenCalledWith({
+      bucketId: 'bid-123',
       filePath: 'xyz-789',
       tags: [
         { Key: 'foo', Value: 'bar' },
         { Key: 'baz', Value: 'bam' },
+        { Key: 'coms-id', Value: 'xyz-789' }
       ],
       s3VersionId: undefined
     });
@@ -181,6 +197,7 @@ describe('addTags', () => {
 
     // request object
     const req = {
+      currentObject: { bucketId: 'bid-123', path: 'xyz-789' },
       params: { objectId: 'xyz-789' },
       query: {
         tagset: { foo: 'bar', baz: 'bam' }
@@ -194,11 +211,13 @@ describe('addTags', () => {
 
     expect(res.status).toHaveBeenCalledWith(204);
     expect(storagePutObjectTaggingSpy).toHaveBeenCalledWith({
+      bucketId: 'bid-123',
       filePath: 'xyz-789',
       tags: [
         { Key: 'foo', Value: 'bar' },
         { Key: 'baz', Value: 'bam' },
         { Key: 'abc', Value: '123' },
+        { Key: 'coms-id', Value: 'xyz-789' }
       ],
       s3VersionId: undefined
     });
@@ -209,16 +228,20 @@ describe('deleteMetadata', () => {
   // mock service calls
   const storageHeadObjectSpy = jest.spyOn(storageService, 'headObject');
   const storageCopyObjectSpy = jest.spyOn(storageService, 'copyObject');
+  const storageGetObjectTaggingSpy = jest.spyOn(storageService, 'getObjectTagging');
 
   const next = jest.fn();
 
   // response from S3
   const GoodResponse = {
     ContentLength: 1234,
-    Metadata: { 'coms-id': 1, 'coms-name': 'test', foo: 'bar', baz: 'quz' }
+    Metadata: { foo: 'bar', baz: 'quz' }
   };
   const BadResponse = {
     ContentLength: MAXCOPYOBJECTLENGTH + 1
+  };
+  const getObjectTaggingResponse = {
+    TagSet: [{ Key: 'abc', Value: '123' }]
   };
 
   it('should error when Content-Length is greater than 5GB', async () => {
@@ -233,6 +256,7 @@ describe('deleteMetadata', () => {
   it('should delete the requested metadata', async () => {
     // request object
     const req = {
+      currentObject: { bucketId: 'bid-123', path: 'xyz-789' },
       headers: { 'x-amz-meta-foo': 'bar' },
       params: { objectId: 'xyz-789' },
       query: {}
@@ -240,19 +264,24 @@ describe('deleteMetadata', () => {
 
     storageHeadObjectSpy.mockReturnValue(GoodResponse);
     storageCopyObjectSpy.mockReturnValue({});
+    storageGetObjectTaggingSpy.mockResolvedValue(getObjectTaggingResponse);
 
     await controller.deleteMetadata(req, res, next);
 
     expect(res.status).toHaveBeenCalledWith(204);
     expect(storageCopyObjectSpy).toHaveBeenCalledWith({
+      bucketId: 'bid-123',
       copySource: 'xyz-789',
       filePath: 'xyz-789',
       metadata: {
-        baz: 'quz',
-        'coms-id': 1,
-        'coms-name': 'test',
+        baz: 'quz'
       },
       metadataDirective: MetadataDirective.REPLACE,
+      taggingDirective: TaggingDirective.REPLACE,
+      tags: {
+        abc: '123',
+        'coms-id': 'xyz-789'
+      },
       s3VersionId: undefined
     });
   });
@@ -260,6 +289,7 @@ describe('deleteMetadata', () => {
   it('should delete all the metadata when none provided', async () => {
     // request object
     const req = {
+      currentObject: { bucketId: 'bid-123', path: 'xyz-789' },
       headers: {},
       params: { objectId: 'xyz-789' },
       query: {}
@@ -267,18 +297,22 @@ describe('deleteMetadata', () => {
 
     storageHeadObjectSpy.mockReturnValue(GoodResponse);
     storageCopyObjectSpy.mockReturnValue({});
+    storageGetObjectTaggingSpy.mockResolvedValue(getObjectTaggingResponse);
 
     await controller.deleteMetadata(req, res, next);
 
     expect(res.status).toHaveBeenCalledWith(204);
     expect(storageCopyObjectSpy).toHaveBeenCalledWith({
+      bucketId: 'bid-123',
       copySource: 'xyz-789',
       filePath: 'xyz-789',
-      metadata: {
-        'coms-id': 1,
-        'coms-name': 'test'
-      },
+      metadata: undefined,
       metadataDirective: MetadataDirective.REPLACE,
+      taggingDirective: TaggingDirective.REPLACE,
+      tags: {
+        abc: '123',
+        'coms-id': 'xyz-789'
+      },
       s3VersionId: undefined
     });
   });
@@ -398,22 +432,25 @@ describe('deleteTags', () => {
 
     // request object
     const req = {
+      currentObject: { bucketId: 'bid-123', path: 'xyz-789' },
       params: { objectId: 'xyz-789' },
       query: { foo: 'bar', baz: 'bam' }
     };
 
     storageGetObjectTaggingSpy.mockReturnValue(getObjectTaggingResponse);
-    storageDeleteObjectTaggingSpy.mockReturnValue({});
+    storagePutObjectTaggingSpy.mockResolvedValue({});
 
     await controller.deleteTags(req, res, next);
 
     expect(res.status).toHaveBeenCalledWith(204);
-    expect(storageDeleteObjectTaggingSpy).toHaveBeenCalledWith({
+    expect(storageDeleteObjectTaggingSpy).toHaveBeenCalledTimes(0);
+    expect(storagePutObjectTaggingSpy).toHaveBeenCalledTimes(1);
+    expect(storagePutObjectTaggingSpy).toHaveBeenCalledWith({
+      bucketId: 'bid-123',
       filePath: 'xyz-789',
-      tags: undefined,
+      tags: [{ Key: 'coms-id', Value: 'xyz-789' }],
       s3VersionId: undefined
     });
-    expect(storagePutObjectTaggingSpy).toHaveBeenCalledTimes(0);
   });
 
   it('should delete the requested tags', async () => {
@@ -427,6 +464,7 @@ describe('deleteTags', () => {
 
     // request object
     const req = {
+      currentObject: { bucketId: 'bid-123', path: 'xyz-789' },
       params: { objectId: 'xyz-789' },
       query: {
         tagset: { foo: '', baz: '' }
@@ -434,15 +472,17 @@ describe('deleteTags', () => {
     };
 
     storageGetObjectTaggingSpy.mockReturnValue(getObjectTaggingResponse);
-    storagePutObjectTaggingSpy.mockReturnValue({});
+    storagePutObjectTaggingSpy.mockResolvedValue({});
 
     await controller.deleteTags(req, res, next);
 
     expect(res.status).toHaveBeenCalledWith(204);
     expect(storagePutObjectTaggingSpy).toHaveBeenCalledWith({
+      bucketId: 'bid-123',
       filePath: 'xyz-789',
       tags: [
-        { Key: 'abc', Value: '123' }
+        { Key: 'abc', Value: '123' },
+        { Key: 'coms-id', Value: 'xyz-789' }
       ],
       s3VersionId: undefined
     });
@@ -471,6 +511,7 @@ describe('listObjectVersions', () => {
 
 describe('replaceMetadata', () => {
   // mock service calls
+  const storageGetObjectTaggingSpy = jest.spyOn(storageService, 'getObjectTagging');
   const storageHeadObjectSpy = jest.spyOn(storageService, 'headObject');
   const storageCopyObjectSpy = jest.spyOn(storageService, 'copyObject');
 
@@ -497,26 +538,27 @@ describe('replaceMetadata', () => {
   it('should replace the metadata', async () => {
     // request object
     const req = {
+      currentObject: { bucketId: 'bid-123', path: 'xyz-789' },
       headers: { 'x-amz-meta-baz': 'quz' },
       params: { objectId: 'xyz-789' },
       query: {}
     };
 
     storageHeadObjectSpy.mockReturnValue(GoodResponse);
+    storageGetObjectTaggingSpy.mockResolvedValue({ TagSet: [] });
     storageCopyObjectSpy.mockReturnValue({});
 
     await controller.replaceMetadata(req, res, next);
 
     expect(res.status).toHaveBeenCalledWith(204);
     expect(storageCopyObjectSpy).toHaveBeenCalledWith({
+      bucketId: 'bid-123',
       copySource: 'xyz-789',
       filePath: 'xyz-789',
-      metadata: {
-        'coms-id': 1,
-        'coms-name': 'test',
-        baz: 'quz'
-      },
+      metadata: { baz: 'quz' },
       metadataDirective: MetadataDirective.REPLACE,
+      taggingDirective: TaggingDirective.REPLACE,
+      tags: { 'coms-id': 'xyz-789' },
       s3VersionId: undefined
     });
   });
@@ -524,26 +566,27 @@ describe('replaceMetadata', () => {
   it('should replace replace the name', async () => {
     // request object
     const req = {
+      currentObject: { bucketId: 'bid-123', path: 'xyz-789' },
       headers: { 'x-amz-meta-coms-name': 'newName', 'x-amz-meta-baz': 'quz' },
       params: { objectId: 'xyz-789' },
       query: {}
     };
 
     storageHeadObjectSpy.mockReturnValue(GoodResponse);
+    storageGetObjectTaggingSpy.mockResolvedValue({ TagSet: [] });
     storageCopyObjectSpy.mockReturnValue({});
 
     await controller.replaceMetadata(req, res, next);
 
     expect(res.status).toHaveBeenCalledWith(204);
     expect(storageCopyObjectSpy).toHaveBeenCalledWith({
+      bucketId: 'bid-123',
       copySource: 'xyz-789',
       filePath: 'xyz-789',
-      metadata: {
-        'coms-id': 1,
-        'coms-name': 'newName',
-        baz: 'quz'
-      },
+      metadata: { baz: 'quz', 'coms-name': 'newName' },
       metadataDirective: MetadataDirective.REPLACE,
+      taggingDirective: TaggingDirective.REPLACE,
+      tags: { 'coms-id': 'xyz-789' },
       s3VersionId: undefined
     });
   });
@@ -592,6 +635,7 @@ describe('replaceTags', () => {
 
     // request object
     const req = {
+      currentObject: { bucketId: 'bid-123', path: 'xyz-789' },
       params: { objectId: 'xyz-789' },
       query: {
         tagset: { foo: 'bar', baz: 'bam' }
@@ -605,10 +649,12 @@ describe('replaceTags', () => {
 
     expect(res.status).toHaveBeenCalledWith(204);
     expect(storagePutObjectTaggingSpy).toHaveBeenCalledWith({
+      bucketId: 'bid-123',
       filePath: 'xyz-789',
       tags: [
         { Key: 'foo', Value: 'bar' },
         { Key: 'baz', Value: 'bam' },
+        { Key: 'coms-id', Value: 'xyz-789' }
       ],
       s3VersionId: undefined
     });

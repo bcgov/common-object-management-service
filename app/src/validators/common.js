@@ -50,7 +50,11 @@ const type = {
     .unknown(),
 
   tagset: (minKeyCount = 1, minValueStringLength = 0) => Joi.object()
-    .pattern(/^.{1,255}$/, Joi.string().min(minValueStringLength).max(255), { matches: Joi.array().min(minKeyCount) })
+    .pattern(
+      /^(?!coms-id$).{1,255}$/, // don't allow key 'coms-id'
+      Joi.string().min(minValueStringLength).max(255),
+      { matches: Joi.array().min(minKeyCount) }
+    )
 };
 
 /**

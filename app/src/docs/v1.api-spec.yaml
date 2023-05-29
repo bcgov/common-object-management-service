@@ -99,7 +99,7 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
         "409":
-          $ref: "#/components/responses/Response-Conflict"
+          $ref: "#/components/responses/Conflict"
         default:
           $ref: "#/components/responses/Error"
     get:
@@ -190,7 +190,7 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
         "409":
-          $ref: "#/components/responses/Response-Conflict"
+          $ref: "#/components/responses/Conflict"
         default:
           $ref: "#/components/responses/Error"
     delete:
@@ -243,7 +243,10 @@ paths:
         Create object(s) in the bucket specified with bucketId parameter or
         default bucket configured. If COMS is running in either 'OIDC' or 'Full'
         mode, any objects created with OIDC user authentication will have all
-        object permissions assigned to them by default.
+        object permissions assigned to them by default. This endpoint will do a
+        best attempt effort to create as many objects as requested that do not
+        already exist in the destination bucket and path. Existing objects
+        should be managed with the updateObjects endpoint instead.
       operationId: createObjects
       tags:
         - Object
@@ -277,8 +280,16 @@ paths:
                     property corresponding to your custom defined keys.
                   format: binary
       responses:
+        "200":
+          description: Partial success. Returns an array of created object data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Response-ObjectDetails"
         "201":
-          description: Returns an array of created object data
+          description: Success. Returns an array of created object data
           content:
             application/json:
               schema:
@@ -289,6 +300,12 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
+        "409":
+          description: Conflict. Bucket already contains all object(s)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Response-Conflict"
         default:
           $ref: "#/components/responses/Error"
     get:
@@ -1509,9 +1526,7 @@ components:
     Query-Name:
       in: query
       name: name
-      description: >-
-        the `coms-name` metadata for the object Typically a descriptive title or
-        original filename
+      description: The filename of the object (typically the original filename)
       schema:
         type: string
         example: foobar.txt
@@ -1722,9 +1737,8 @@ components:
           type: object
           description: User-defined metadata
           example:
-            coms-name: report.xls
+            color: red
             department: finance
-            coms-id: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
     DB-MetadataKeyValue:
       title: DB Metadata Key Value
       type: object
@@ -1759,7 +1773,7 @@ components:
             path:
               type: string
               description: The canonical S3 path string of the object
-              example: coms/env/ac246e31-c807-496c-bc93-cd8bc2f1b2b4
+              example: coms/env/foobar.txt
             public:
               type: boolean
               description: Determines whether this object is publicly accessible
@@ -1775,6 +1789,10 @@ components:
               description: The primary identifier for the bucket
               format: uuid
               example: c05c7650-5f48-4e51-bf17-762e8fc121a1
+            name:
+              type: string
+              description: The filename of the original file uploaded
+              example: foobar.txt
         - $ref: "#/components/schemas/DB-TimestampUserData"
     DB-ObjectPermission:
       title: DB Object Permission
@@ -1830,7 +1848,8 @@ components:
               description: User-defined tags
               example:
                 classification: Top Secret
-                Priority: Urgent
+                coms-id: 989de109-1487-423b-bf82-bee38c26ee3c
+                priority: urgent
     DB-TimestampUserData:
       title: DB Timestamp User Data
       type: object
@@ -1942,6 +1961,12 @@ components:
               type: boolean
               description: Whether or not this version is a S3 delete-marker
               example: false
+            etag:
+              type: integer
+              description: >-
+                An entity tag (ETag) is an opaque identifier assigned by a web
+                server to a specific version of a resource found at a URL
+              example: '"9d1aaa54b84e1d6ccc6e0477c5717fe3"'
         - $ref: "#/components/schemas/DB-TimestampUserData"
     DownloadMode:
       title: Download Mode
