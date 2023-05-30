@@ -67,15 +67,15 @@ describe('addPermissions', () => {
   });
 });
 
-describe('getObjectIdsWithBucket', () => {
+describe('listInheritedObjectIds', () => {
   it('searches for specific (object) bucket permissions', async () => {
     BucketPermission.then.mockImplementation();
 
-    await service.getObjectIdsWithBucket();
+    await service.listInheritedObjectIds();
 
     expect(BucketPermission.distinct).toHaveBeenCalledTimes(1);
     expect(BucketPermission.rightJoin).toHaveBeenCalledTimes(1);
-    expect(BucketPermission.modify).toHaveBeenCalledTimes(1);
+    expect(BucketPermission.modify).toHaveBeenCalledTimes(2);
     expect(BucketPermission.then).toHaveBeenCalledTimes(1);
   });
 });

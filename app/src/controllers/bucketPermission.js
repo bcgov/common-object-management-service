@@ -34,12 +34,15 @@ const controller = {
       });
       const response = groupByObject('bucketId', 'permissions', bucketPermissions);
 
+      // if also returning buckets with implicit object permissions
       if (isTruthy(req.query.objectPerms)) {
-        // Iteration through bucket and object permissions. If object permission not found, set empty array.
-        const bucketIds = await bucketPermissionService.getBucketIdsWithObject(userIds);
+        const buckets = await bucketPermissionService.listInheritedBucketIds(userIds);
 
-        bucketIds.forEach(bucketId => {
-          if (!response.map(r => r.bucketId).includes(bucketId)) {
+        // merge list of bucket permissions
+        buckets.forEach(bucketId => {
+          if (!response.map(r => r.bucketId).includes(bucketId) &&
+            // limit to to bucketId(s) request query parameter if given
+            (!bucketIds.length || bucketIds.includes(bucketId))) {
             response.push({
               bucketId: bucketId,
               permissions: []
