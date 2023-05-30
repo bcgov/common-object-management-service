@@ -86,11 +86,11 @@ describe('removePermissions', () => {
   });
 });
 
-describe('getBucketIdsWithObject', () => {
+describe('listInheritedBucketIds', () => {
   it('Searches for specific (bucket) object permissions', async () => {
     ObjectPermission.then.mockImplementation();
 
-    await service.getBucketIdsWithObject();
+    await service.listInheritedBucketIds();
 
     expect(ObjectPermission.query).toHaveBeenCalledTimes(1);
     expect(ObjectPermission.select).toHaveBeenCalledTimes(1);

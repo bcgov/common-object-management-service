@@ -62,19 +62,22 @@ const service = {
   },
 
   /**
-   * @function getObjectIdsWithBucket
-   * Searches for specific (object) bucket permissions
+   * @function listInheritedObjectIds
+   * Get objects that are in bucket(s) with given permission(s) for given user(s)
+   * with given permission(s) for given user(s).
    * @param {string[]} [params.userIds] Optional array of user id(s)
    * @param {string[]} [params.bucketIds] Optional array of bucket id(s)
    * @param {string[]} [params.permCodes] Optional array of PermCode(s)
    * @returns {Promise<object>} The result of running the find operation
   */
-  getObjectIdsWithBucket: async (userIds = [], bucketIds = [], permCodes = []) => {
+  listInheritedObjectIds: async (userIds = [], bucketIds = [], permCodes = []) => {
     return BucketPermission.query()
       .distinct('object.id AS objectId')
       .rightJoin('object', 'bucket_permission.bucketId', '=', 'object.bucketId')
       .modify((query) => {
         if (userIds.length) query.modify('filterUserId', userIds);
+      })
+      .modify((query) => {
         if (bucketIds.length) query.whereIn('bucket_permission.bucketId', bucketIds);
         if (permCodes.length) query.whereIn('bucket_permission.permCode', permCodes);
       })

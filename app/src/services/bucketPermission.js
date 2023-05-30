@@ -109,17 +109,17 @@ const service = {
   },
 
   /**
-   * @function getBucketIdsWithObject
-   * Searches for specific (bucket) object permissions
-   * @param {string|string[]} [params.userId] Optional string or array of uuids representing the user
+   * @function listInheritedBucketIds
+   * Get buckets that contain objects with any permissions for given user(s)
+   * @param {string[]} [params.userId] Optional array of uuids representing the user
    * @returns {Promise<object>} The result of running the find operation
    */
-  getBucketIdsWithObject: async (userId) => {
+  listInheritedBucketIds: async (userIds = []) => {
     return ObjectPermission.query()
       .select('bucketId')
       .distinct('userId')
       .joinRelated('object')
-      .modify('filterUserId', userId)
+      .modify('filterUserId', userIds)
       .whereNotNull('bucketId')
       .then(response => response.map(entry => entry.bucketId));
   },

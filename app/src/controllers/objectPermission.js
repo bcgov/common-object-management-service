@@ -32,10 +32,15 @@ const controller = {
       });
       const response = utils.groupByObject('objectId', 'permissions', result);
 
+      // if also returning inheritied permissions
       if (utils.isTruthy(req.query.bucketPerms)) {
-        const objectIds = await objectPermissionService.getObjectIdsWithBucket(userIds, bucketIds, permCodes);
+        const objectIds = await objectPermissionService.listInheritedObjectIds(userIds, bucketIds, permCodes);
+
+        // merge list of object permissions
         objectIds.forEach(objectId => {
-          if (!response.map(r => r.objectId).includes(objectId)) {
+          if (!response.map(r => r.objectId).includes(objectId) &&
+            // limit to objectId request query parameter if given
+            (!objIds.length || objIds.includes(objectId))) {
             response.push({
               objectId: objectId,
               permissions: []
