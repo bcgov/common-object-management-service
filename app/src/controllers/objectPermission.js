@@ -40,7 +40,7 @@ const controller = {
         objectIds.forEach(objectId => {
           if (!response.map(r => r.objectId).includes(objectId) &&
             // limit to objectId request query parameter if given
-            (!objIds.length || objIds.includes(objectId))) {
+            (!objIds?.length || objIds?.includes(objectId))) {
             response.push({
               objectId: objectId,
               permissions: []
