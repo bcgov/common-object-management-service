@@ -42,7 +42,7 @@ const controller = {
         buckets.forEach(bucketId => {
           if (!response.map(r => r.bucketId).includes(bucketId) &&
             // limit to to bucketId(s) request query parameter if given
-            (!bucketIds.length || bucketIds.includes(bucketId))) {
+            (!bucketIds?.length || bucketIds?.includes(bucketId))) {
             response.push({
               bucketId: bucketId,
               permissions: []
