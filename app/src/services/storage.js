@@ -49,13 +49,13 @@ const objectStorageService = {
     }
 
     return new S3Client({
-      apiVersion: '2006-03-01',
       credentials: {
         accessKeyId: accessKeyId,
         secretAccessKey: secretAccessKey
       },
       endpoint: endpoint,
       forcePathStyle: true,
+      logger: ['silly', 'debug'].includes(config.get('server.logLevel')) ? log : undefined,
       region: region
     });
   },
