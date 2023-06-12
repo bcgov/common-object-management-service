@@ -58,10 +58,6 @@ const utils = {
     return data;
   },
 
-  tableNames(models) {
-    return Object.values(models).map(model => model.tableName);
-  },
-
   toArray(values) {
     if (values) {
       return Array.isArray(values) ? values.filter(p => p && p.trim().length > 0) : [values].filter(p => p && p.trim().length > 0);
