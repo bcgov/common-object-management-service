@@ -8,7 +8,7 @@ const schema = {
       bucketName: Joi.string().max(255).required(),
       accessKeyId: Joi.string().max(255).required(),
       bucket: Joi.string().max(255).required(),
-      endpoint: Joi.string().max(255).required(),
+      endpoint: Joi.string().uri({ scheme: /https?/ }).max(255).required(),
       key: Joi.string().trim().max(255),
       secretAccessKey: Joi.string().max(255).required(),
       region: Joi.string().max(255),
@@ -48,7 +48,7 @@ const schema = {
       bucketName: Joi.string().max(255),
       accessKeyId: Joi.string().max(255),
       bucket: Joi.string().max(255),
-      endpoint: Joi.string().max(255),
+      endpoint: Joi.string().uri({ scheme: /https?/ }).max(255),
       secretAccessKey: Joi.string().max(255),
       region: Joi.string().max(255),
       active: type.truthy
