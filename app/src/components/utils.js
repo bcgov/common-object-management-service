@@ -398,6 +398,17 @@ const utils = {
   },
 
   /**
+   * @function stripDelimit
+   * Yields a string `s` that will never have a trailing delimiter. Returns an empty string if falsy.
+   * @param {string} s The input string
+   * @returns {string} The string `s` without the trailing delimiter, or an empty string.
+   */
+  stripDelimit(s) {
+    if (s) return s.endsWith(DELIMITER) ? utils.stripDelimit(s.slice(0, -1)) : s;
+    else return '';
+  },
+
+  /**
    * @function toLowerKeys
    * Converts all key names for all objects in an array to lowercase
    * @param {object[]} arr Array of tag objects (eg: [{Key: k1, Value: V1}])
