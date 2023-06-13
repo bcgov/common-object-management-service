@@ -159,7 +159,6 @@ describe('update', () => {
       accessKeyId: data.accessKeyId,
       bucket: data.bucket,
       endpoint: data.endpoint,
-      key: data.key,
       secretAccessKey: data.secretAccessKey,
       region: data.region,
       active: data.active,

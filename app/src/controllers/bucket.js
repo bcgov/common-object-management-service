@@ -7,9 +7,10 @@ const errorToProblem = require('../components/errorToProblem');
 const log = require('../components/log')(module.filename);
 const {
   addDashesToUuid,
+  getCurrentIdentity,
   isTruthy,
   mixedQueryToArray,
-  getCurrentIdentity
+  stripDelimit
 } = require('../components/utils');
 const { redactSecrets } = require('../db/models/utils');
 
@@ -77,7 +78,7 @@ const controller = {
         accessKeyId: credentials.accessKeyId,
         bucket: credentials.bucket,
         endpoint: credentials.endpoint,
-        key: credentials.key,
+        key: credentials.key ? credentials.key : '/',
         region: credentials.region || DEFAULTREGION,
         secretAccessKey: credentials.secretAccessKey,
       };
@@ -102,7 +103,11 @@ const controller = {
    * @returns {function} Express middleware function
    */
   async createBucket(req, res, next) {
-    const data = { ...req.body };
+    const data = {
+      ...req.body,
+      endpoint: stripDelimit(req.body.endpoint),
+      key: req.body.key ? stripDelimit(req.body.key) : undefined
+    };
     let response = undefined;
 
     try {
@@ -221,7 +226,11 @@ const controller = {
 
       // Check for credential accessibility/validity first
       // Need to cross reference with existing data when partial patch data is provided
-      await controller._validateCredentials({ ...currentBucket, ...req.body });
+      await controller._validateCredentials({
+        ...currentBucket,
+        ...req.body,
+        endpoint: req.body.endpoint ? stripDelimit(req.body.endpoint) : currentBucket.endpoint
+      });
 
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER), SYSTEM_USER);
       const response = await bucketService.update({
@@ -229,8 +238,7 @@ const controller = {
         bucketName: req.body.bucketName,
         accessKeyId: req.body.accessKeyId,
         bucket: req.body.bucket,
-        endpoint: req.body.endpoint,
-        key: req.body.key,
+        endpoint: req.body.endpoint ? stripDelimit(req.body.endpoint) : undefined,
         secretAccessKey: req.body.secretAccessKey,
         region: req.body.region,
         active: isTruthy(req.body.active),

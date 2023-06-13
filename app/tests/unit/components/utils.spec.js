@@ -621,6 +621,26 @@ describe('streamToBuffer', () => {
   });
 });
 
+describe('stripDelimit', () => {
+  it.each([
+    // Should return empty string if falsy input
+    ['', undefined],
+    ['', null],
+    ['', ''],
+    // Strings without trailing delimiters should remain unchanged
+    ['1234', '1234'],
+    ['foo', 'foo'],
+    ['bar\\', 'bar\\'],
+    // Strings with trailing delimiters should have the delimiter removed
+    ['1234', '1234/'],
+    ['    ', '    /'],
+    ['', '/'],
+    ['', '//'],
+  ])('should return %o given %j', (expected, str) => {
+    expect(utils.stripDelimit(str)).toEqual(expected);
+  });
+});
+
 describe('toLowerKeys', () => {
   it.each([
     [undefined, undefined],

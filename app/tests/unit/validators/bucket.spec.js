@@ -9,6 +9,83 @@ describe('createBucket', () => {
   describe('body', () => {
     const body = schema.createBucket.body.describe();
 
+    describe('endpoint', () => {
+      const endpoint = body.keys.endpoint;
+
+      it('is a string', () => {
+        expect(endpoint).toBeTruthy();
+        expect(endpoint.type).toEqual('string');
+      });
+
+      it('is a valid uri', () => {
+        expect(Array.isArray(endpoint.rules)).toBeTruthy();
+        expect(endpoint.rules).toHaveLength(2);
+        expect(endpoint.rules).toEqual(expect.arrayContaining([
+          expect.objectContaining({
+            args: {
+              options: { scheme: /https?/ }
+            },
+            name: 'uri'
+          }),
+        ]));
+      });
+
+      it('has a max length of 255', () => {
+        expect(Array.isArray(endpoint.rules)).toBeTruthy();
+        expect(endpoint.rules).toHaveLength(2);
+        expect(endpoint.rules).toEqual(expect.arrayContaining([
+          expect.objectContaining({
+            args: {
+              limit: 255
+            },
+            name: 'max'
+          }),
+        ]));
+      });
+
+      it('is required', () => {
+        expect(endpoint.flags).toBeTruthy();
+        expect(endpoint.flags).toEqual(expect.objectContaining({
+          presence: 'required'
+        }));
+      });
+    });
+
+    describe('key', () => {
+      const key = body.keys.key;
+
+      it('is a string', () => {
+        expect(key).toBeTruthy();
+        expect(key.type).toEqual('string');
+      });
+
+      it('trims whitespace', () => {
+        expect(Array.isArray(key.rules)).toBeTruthy();
+        expect(key.rules).toHaveLength(2);
+        expect(key.rules).toEqual(expect.arrayContaining([
+          expect.objectContaining({
+            args: {
+              enabled: true
+            },
+            name: 'trim'
+          }),
+        ]));
+      });
+
+      it('has a max length of 255', () => {
+        expect(Array.isArray(key.rules)).toBeTruthy();
+        expect(key.rules).toHaveLength(2);
+        expect(key.rules).toEqual(expect.arrayContaining([
+          expect.objectContaining({
+            args: {
+              limit: 255
+            },
+            name: 'max'
+          }),
+        ]));
+      });
+    });
+
     it('should match the schema', () => {
       const value = {
         body: {
@@ -141,6 +218,41 @@ describe('updateBucket', () => {
 
   describe('body', () => {
     const body = schema.updateBucket.body.describe();
+
+    describe('endpoint', () => {
+      const endpoint = body.keys.endpoint;
+
+      it('is a string', () => {
+        expect(endpoint).toBeTruthy();
+        expect(endpoint.type).toEqual('string');
+      });
+
+      it('is a valid uri', () => {
+        expect(Array.isArray(endpoint.rules)).toBeTruthy();
+        expect(endpoint.rules).toHaveLength(2);
+        expect(endpoint.rules).toEqual(expect.arrayContaining([
+          expect.objectContaining({
+            args: {
+              options: { scheme: /https?/ }
+            },
+            name: 'uri'
+          }),
+        ]));
+      });
+
+      it('has a max length of 255', () => {
+        expect(Array.isArray(endpoint.rules)).toBeTruthy();
+        expect(endpoint.rules).toHaveLength(2);
+        expect(endpoint.rules).toEqual(expect.arrayContaining([
+          expect.objectContaining({
+            args: {
+              limit: 255
+            },
+            name: 'max'
+          }),
+        ]));
+      });
+    });
 
     it('to be an object ', () => {
       expect(body).toBeTruthy();

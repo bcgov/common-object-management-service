@@ -65,7 +65,7 @@ describe('createBucket', () => {
     await controller.createBucket(req, res, next);
 
     expect(headBucketSpy).toHaveBeenCalledTimes(1);
-    expect(headBucketSpy).toHaveBeenCalledWith(req.body);
+    expect(headBucketSpy).toHaveBeenCalledWith(expect.objectContaining(req.body));
     expect(getCurrentIdentitySpy).toHaveBeenCalledTimes(1);
     expect(getCurrentIdentitySpy).toHaveBeenCalledWith(
       CURRENT_USER,
@@ -129,7 +129,7 @@ describe('createBucket', () => {
     await controller.createBucket(req, res, next);
 
     expect(headBucketSpy).toHaveBeenCalledTimes(1);
-    expect(headBucketSpy).toHaveBeenCalledWith(req.body);
+    expect(headBucketSpy).toHaveBeenCalledWith(expect.objectContaining(req.body));
     expect(getCurrentIdentitySpy).toHaveBeenCalledTimes(0);
     expect(getCurrentUserIdSpy).toHaveBeenCalledTimes(0);
     expect(createSpy).toHaveBeenCalledTimes(0);
@@ -159,7 +159,7 @@ describe('createBucket', () => {
     await controller.createBucket(req, res, next);
 
     expect(headBucketSpy).toHaveBeenCalledTimes(1);
-    expect(headBucketSpy).toHaveBeenCalledWith(req.body);
+    expect(headBucketSpy).toHaveBeenCalledWith(expect.objectContaining(req.body));
     expect(getCurrentIdentitySpy).toHaveBeenCalledTimes(1);
     expect(getCurrentIdentitySpy).toHaveBeenCalledWith(
       CURRENT_USER,

@@ -30,7 +30,7 @@ const service = {
       const bucket = await service.readUnique({
         bucket: data.bucket,
         endpoint: data.endpoint,
-        key: data.key
+        key: data.key ? data.key : '/'
       });
 
       if (
@@ -84,7 +84,7 @@ const service = {
         accessKeyId: data.accessKeyId,
         bucket: data.bucket,
         endpoint: data.endpoint,
-        key: data.key ? data.key : '', // TODO: to be refactored after the DB change
+        key: data.key ? data.key : '/',
         secretAccessKey: data.secretAccessKey,
         region: data.region,
         active: data.active,
@@ -202,7 +202,6 @@ const service = {
    * @param {string} [data.accessKeyId] The optional S3 bucket access key id
    * @param {string} [data.bucket] The optional S3 bucket identifier
    * @param {string} [data.endpoint] The optional S3 bucket endpoint
-   * @param {string} [data.key] The optional relative S3 key/subpath managed by this bucket
    * @param {string} [data.secretAccessKey] The optional S3 bucket secret access key
    * @param {string} [data.region] The optional S3 bucket region
    * @param {boolean} [data.active] The optional active flag - defaults to true if undefined
@@ -221,7 +220,6 @@ const service = {
         accessKeyId: data.accessKeyId,
         bucket: data.bucket,
         endpoint: data.endpoint,
-        key: data.key,
         secretAccessKey: data.secretAccessKey,
         region: data.region,
         active: data.active,

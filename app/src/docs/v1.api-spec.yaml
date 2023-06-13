@@ -79,14 +79,7 @@ paths:
         content:
           application/json:
             schema:
-              allOf:
-                - $ref: "#/components/schemas/Request-Bucket"
-                - required:
-                    - accessKeyId
-                    - bucket
-                    - bucketName
-                    - endpoint
-                    - secretAccessKey
+              $ref: "#/components/schemas/Request-CreateBucket"
       responses:
         "201":
           description: Returns inserted DB bucket record
@@ -177,7 +170,7 @@ paths:
             schema:
               type: array
               items:
-                $ref: "#/components/schemas/Request-Bucket"
+                $ref: "#/components/schemas/Request-UpdateBucket"
       parameters:
         - $ref: "#/components/parameters/Path-BucketId"
       responses:
@@ -1660,12 +1653,14 @@ components:
               example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
             endpoint:
               type: string
-              description: the S3 service URI
+              description: A valid RFC 3986 formatted S3 Service URI endpoint
+              maxLength: 255
               example: https://my-objectstore.ca
             key:
               description: The prefix given to objects in the bucket
               type: string
               example: coms/env
+              maxLength: 255
             region:
               type: string
               description: >-
@@ -1987,8 +1982,28 @@ components:
         - DELETE
         - MANAGE
       example: UPDATE
-    Request-Bucket:
-      title: Response Bucket
+    Request-CreateBucket:
+      title: Request Create Bucket
+      type: object
+      required:
+        - accessKeyId
+        - bucket
+        - bucketName
+        - endpoint
+        - secretAccessKey
+      allOf:
+        - $ref: "#/components/schemas/Request-UpdateBucket"
+        - type: object
+          properties:
+            key:
+              description: >-
+                The prefix given to objects in the bucket. Defaults to "/" if
+                undefined.
+              type: string
+              default: /
+              example: coms/env
+    Request-UpdateBucket:
+      title: Request Update Bucket
       type: object
       properties:
         accessKeyId:
@@ -2012,12 +2027,9 @@ components:
           example: Geospatial Maps
         endpoint:
           type: string
-          description: the S3 service URI
+          description: A valid RFC 3986 formatted S3 Service URI endpoint
+          maxLength: 255
           example: https://my-objectstore.ca
-        key:
-          description: The prefix given to objects in the bucket
-          type: string
-          example: coms/env
         region:
           type: string
           description: >-
