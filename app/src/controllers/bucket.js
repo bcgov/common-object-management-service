@@ -77,7 +77,7 @@ const controller = {
         accessKeyId: credentials.accessKeyId,
         bucket: credentials.bucket,
         endpoint: credentials.endpoint,
-        key: credentials.key,
+        key: credentials.key ? credentials.key : '/',
         region: credentials.region || DEFAULTREGION,
         secretAccessKey: credentials.secretAccessKey,
       };

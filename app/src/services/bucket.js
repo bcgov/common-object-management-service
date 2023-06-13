@@ -30,7 +30,7 @@ const service = {
       const bucket = await service.readUnique({
         bucket: data.bucket,
         endpoint: data.endpoint,
-        key: data.key
+        key: data.key ? data.key : '/'
       });
 
       if (
@@ -84,7 +84,7 @@ const service = {
         accessKeyId: data.accessKeyId,
         bucket: data.bucket,
         endpoint: data.endpoint,
-        key: data.key ? data.key : '', // TODO: to be refactored after the DB change
+        key: data.key ? data.key : '/',
         secretAccessKey: data.secretAccessKey,
         region: data.region,
         active: data.active,
