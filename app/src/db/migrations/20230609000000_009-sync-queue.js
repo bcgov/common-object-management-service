@@ -30,11 +30,23 @@ exports.up = function (knex) {
     // Add isLatest column to version table
     .then(() => knex.schema.alterTable('version', table => {
       table.boolean('isLatest').notNullable().defaultTo(false);
+    }))
+
+    // Add notNullable to tag columns
+    .then(() => knex.schema.alterTable('tag', table => {
+      table.string('key', 128).notNullable().alter();
+      table.string('value', 256).notNullable().alter();
     }));
 };
 
 exports.down = function (knex) {
   return Promise.resolve()
+    // Drop notNullable from tag columns
+    .then(() => knex.schema.alterTable('tag', table => {
+      table.string('key', 128).alter();
+      table.string('value', 256).alter();
+    }))
+
     // Drop isLatest column in version table
     .then(() => knex.schema.alterTable('version', table => {
       table.dropColumn('isLatest');
