@@ -9,6 +9,7 @@ const {
   addDashesToUuid,
   getCurrentIdentity,
   isTruthy,
+  joinPath,
   mixedQueryToArray,
   stripDelimit
 } = require('../components/utils');
@@ -106,7 +107,7 @@ const controller = {
     const data = {
       ...req.body,
       endpoint: stripDelimit(req.body.endpoint),
-      key: req.body.key ? stripDelimit(req.body.key) : undefined
+      key: req.body.key ? joinPath(stripDelimit(req.body.key)) : undefined
     };
     let response = undefined;
 
