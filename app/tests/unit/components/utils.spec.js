@@ -32,25 +32,7 @@ describe('addDashesToUuid', () => {
   });
 });
 
-describe('getMetadata', () => {
-  const headers = {
-    'Content-Length': 1234,
-    'x-amz-meta-foo': 'bar',
-    'x-amz-meta-baz': 'quz',
-    'X-Amz-Meta-Bam': 'blam',
-    'x-AmZ-mEtA-rUn': 'ran',
-  };
-
-  it('should return new object containing metadata headers without x-amz-meta- prefix', () => {
-    expect(utils.getMetadata(headers)).toEqual({
-      foo: 'bar',
-      baz: 'quz',
-      bam: 'blam',
-      run: 'ran'
-    });
-  });
-});
-
+// TODO: Deprecated, to remove this
 describe('getPath', () => {
   const delimitSpy = jest.spyOn(utils, 'delimit');
   const joinPath = jest.spyOn(utils, 'joinPath');
@@ -449,18 +431,33 @@ describe('getCurrentTokenClaim', () => {
   });
 });
 
-describe('getKeyValue', () => {
-  const inputArr = { k1: 'v1', k2: 'v2' };
-  const outputArr = [{ key: 'k1', value: 'v1' }, { key: 'k2', value: 'v2' }];
+describe('getGitRevision', () => {
+  expect(typeof utils.getGitRevision()).toBe('string');
+});
 
-  it('should convert array as expected', () => {
-    expect(utils.getKeyValue(inputArr)).toEqual(outputArr);
-    expect(utils.getKeyValue({})).toEqual([]);
+describe('getKeyValue', () => {
+  it.each([
+    [[], null],
+    [[], undefined],
+    [[], []],
+    [[], {}],
+    [[{ key: 'foo', value: 'bar' }], { foo: 'bar' }],
+    [[{ key: 'k1', value: 'v1' }, { key: 'k2', value: 'v2' }], { k1: 'v1', k2: 'v2' }],
+  ])('should yield %j when given %j', (expected, input) => {
+    expect(utils.getKeyValue(input)).toEqual(expected);
   });
 });
 
-describe('getGitRevision', () => {
-  expect(typeof utils.getGitRevision()).toBe('string');
+describe('getMetadata', () => {
+  it.each([
+    [undefined, {}],
+    [undefined, { 'Content-Length': 1234 }],
+    [{ foo: 'bar' }, { 'Content-Length': 1234, 'x-amz-meta-foo': 'bar' }],
+    [{ foo: 'bar', baz: 'quz' }, { 'Content-Length': 1234, 'x-amz-meta-foo': 'bar', 'x-amz-meta-baz': 'quz' }],
+    [{ bam: 'blam', run: 'ran' }, { 'Content-Length': 1234, 'X-Amz-Meta-Bam': 'blam', 'x-AmZ-mEtA-rUn': 'ran' }],
+  ])('should yield %j when given %j', (expected, input) => {
+    expect(utils.getMetadata(input)).toEqual(expected);
+  });
 });
 
 describe('getObjectsByKeyValue', () => {
