@@ -178,6 +178,16 @@ const utils = {
   },
 
   /**
+   * @function getKeyValue
+   * Transforms arbitrary {<key>:<value>} objects to {key: <key>, value: <value>}
+   * @param {object} input Arbitrary object containing key value attributes
+   * @returns {object[]} Array of objects in the form of `{key: <key>, value: <value>}`
+   */
+  getKeyValue(input) {
+    return Object.entries({ ...input }).map(([k, v]) => ({ key: k, value: v }));
+  },
+
+  /**
    * @function getMetadata
    * Derives metadata from a request header object
    * @param {object} obj The request headers to get key/value pairs from
@@ -189,6 +199,18 @@ const utils = {
       .map((key) => ([key.toLowerCase().substring(11), obj[key]]))
     );
     return Object.keys(metadata).length ? metadata : undefined;
+  },
+
+  /**
+   * @function getObjectsByKeyValue
+   * Get tag/metadata objects in array that have given key and value
+   * @param {object[]} array an array of objects (eg: [{ key: 'a', value: '1'}, { key: 'b', value: '1'}]
+   * @param {string} key the string to match in the objects's `key` property
+   * @param {string} value the string to match in the objects's `value` property
+   * @returns {object} the matching object, or undefined
+   */
+  getObjectsByKeyValue(array, key, value) {
+    return array.find(obj => (obj.key === key && obj.value === value));
   },
 
   /**
@@ -226,7 +248,7 @@ const utils = {
    * @param {string} objectId The related COMS object id
    * @returns {Promise<string | undefined>} s3 Version id as string type or undefined
    */
-  async getS3VersionId(s3VersionId, versionId, objectId){
+  async getS3VersionId(s3VersionId, versionId, objectId) {
     let result = undefined;
     if (s3VersionId) {
       result = s3VersionId.toString();
@@ -299,29 +321,6 @@ const utils = {
       return parts.join(DELIMITER);
     }
     else return '';
-  },
-
-  /**
-   * @function getKeyValue
-   * Transforms array of {<key>:<value>} objects to {key: <key>, value: <value>}
-   * @param {any}
-   * @param {object[]} input Array of key value tuples like `<key>:<value>`
-   * @returns {object[]} Array of objects like `{key: <key>, value: <value>}`
-   */
-  getKeyValue(input) {
-    return Object.entries(input).map(([k, v]) => ({ key: k, value: v }));
-  },
-
-  /**
-   * @function getObjectsByKeyValue
-   * Get tag/metadata objects in array that have given key and value
-   * @param {object[]} array an array of objects (eg: [{ key: 'a', value: '1'}, { key: 'b', value: '1'}]
-   * @param {string} key the string to match in the objects's `key` property
-   * @param {string} value the string to match in the objects's `value` property
-   * @returns {object} the matching object, or undefined
-   */
-  getObjectsByKeyValue(array, key, value) {
-    return array.find(obj => (obj.key === key && obj.value === value));
   },
 
   /**
