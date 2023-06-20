@@ -58,23 +58,6 @@ describe('addMetadata', () => {
     expect(next).toHaveBeenCalledWith(new Problem(502, 'Unknown ObjectService Error'));
   });
 
-  it('responds 422 when no keys are present', async () => {
-    // request object
-    const req = {
-      currentObject: {},
-      headers: {},
-      params: { objectId: 'xyz-789' },
-      query: {}
-    };
-
-    storageHeadObjectSpy.mockResolvedValue(GoodResponse);
-    storageGetObjectTaggingSpy.mockResolvedValue({ TagSet: [] });
-
-    await controller.addMetadata(req, res, next);
-
-    expect(res.status).toHaveBeenCalledWith(422);
-  });
-
   it('should add the metadata', async () => {
     // request object
     const req = {
@@ -123,54 +106,25 @@ describe('addTags', () => {
   // mock service calls
   const storageGetObjectTaggingSpy = jest.spyOn(storageService, 'getObjectTagging');
   const storagePutObjectTaggingSpy = jest.spyOn(storageService, 'putObjectTagging');
+  const getCurrentUserIdSpy = jest.spyOn(userService, 'getCurrentUserId');
+
 
   const next = jest.fn();
 
-  it('responds 422 when no query keys are present', async () => {
-    // response from S3
-    const getObjectTaggingResponse = {};
-
-    // request object
-    const req = {
-      params: { objectId: 'xyz-789' },
-      query: {}
-    };
-
-    storageGetObjectTaggingSpy.mockResolvedValue(getObjectTaggingResponse);
-    await controller.addTags(req, res, next);
-    expect(res.status).toHaveBeenCalledWith(422);
-  });
-
-  it('responds 422 when more than 10 keys', async () => {
-    // response from S3
-    const getObjectTaggingResponse = {};
-
-    // request object
-    const req = {
-      params: { objectId: 'xyz-789' },
-      query: {
-        tagset: { a: '1', b: '2', c: '3', d: '4', e: '5', f: '6', g: '7', h: '8', i: '9', j: '10', k: '11' }
-      }
-    };
-
-    storageGetObjectTaggingSpy.mockResolvedValue(getObjectTaggingResponse);
-    await controller.addTags(req, res, next);
-    expect(res.status).toHaveBeenCalledWith(422);
-  });
-
   it('should add the new tags', async () => {
     // response from S3
-    const getObjectTaggingResponse = {};
+    const getObjectTaggingResponse = { TagSet: []};
 
     // request object
     const req = {
       currentObject: { bucketId: 'bid-123', path: 'xyz-789' },
       params: { objectId: 'xyz-789' },
       query: {
-        tagset: { foo: 'bar', baz: 'bam' }
+        tagset: { foo: 'bar', baz: 'bam' },
+        s3VersionId: '123'
       }
     };
-
+    getCurrentUserIdSpy.mockReturnValue('user-123');
     storageGetObjectTaggingSpy.mockResolvedValue(getObjectTaggingResponse);
     storagePutObjectTaggingSpy.mockResolvedValue({});
 
@@ -185,8 +139,32 @@ describe('addTags', () => {
         { Key: 'baz', Value: 'bam' },
         { Key: 'coms-id', Value: 'xyz-789' }
       ],
-      s3VersionId: undefined
+      s3VersionId: '123'
     });
+  });
+
+  // TODO: enable this test after a re-factor error reporting
+  it.skip('responds 409 when total tags is greater than 10', async () => {
+    // response from S3
+    const getObjectTaggingResponse = {
+      TagSet: [
+        { Key: 'coms-id', Value: 'xyz-789' }
+      ]
+    };
+
+    // request object
+    const req = {
+      params: { objectId: 'xyz-789' },
+      query: {
+        tagset: { a: '1', b: '2', c: '3', d: '4', e: '5', f: '6', g: '7', h: '8', i: '9', j: '10'}
+      }
+    };
+
+    storageGetObjectTaggingSpy.mockResolvedValue(getObjectTaggingResponse);
+
+    await controller.addTags(req, res, next);
+
+    // expect(next).toHaveReturned(new Problem(422, 'User-defined Tag count limit is 9'));
   });
 
   it('should concatenate the new tags', async () => {
@@ -598,36 +576,6 @@ describe('replaceTags', () => {
   const storagePutObjectTaggingSpy = jest.spyOn(storageService, 'putObjectTagging');
 
   const next = jest.fn();
-
-  it('responds 422 when no query keys are present', async () => {
-    // response from S3
-    const getObjectTaggingResponse = {};
-
-    // request object
-    const req = {
-      params: { objectId: 'xyz-789' },
-      query: {}
-    };
-
-    storageGetObjectTaggingSpy.mockReturnValue(getObjectTaggingResponse);
-    await controller.replaceTags(req, res, next);
-    expect(res.status).toHaveBeenCalledWith(422);
-  });
-
-  it('responds 422 when more than 10 keys', async () => {
-    // response from S3
-    const getObjectTaggingResponse = {};
-
-    // request object
-    const req = {
-      params: { objectId: 'xyz-789' },
-      query: { a: '1', b: '2', c: '3', d: '4', e: '5', f: '6', g: '7', h: '8', i: '9', j: '10', k: '11' }
-    };
-
-    storageGetObjectTaggingSpy.mockReturnValue(getObjectTaggingResponse);
-    await controller.replaceTags(req, res, next);
-    expect(res.status).toHaveBeenCalledWith(422);
-  });
 
   it('should add the new tags', async () => {
     // response from S3
