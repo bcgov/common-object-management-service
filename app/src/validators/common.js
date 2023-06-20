@@ -45,15 +45,27 @@ const type = {
     version: 'uuidv4'
   }),
 
-  metadata: (minKeyCount = 0, minValueStringLength = 0) => Joi.object()
+  /**
+   * custom metadata (object) type schema with parameters
+   * @param minKeyCount minimum number of tags allowed
+   * @param minValueStringLength minimum string length of tag value allowed
+   * @param maxKeyCount maximum number of tags allowed (default ot 9 because COMS also adds a `coms-id` tag by default)
+   */
+  metadata: ({ minKeyCount = 0, minValueStringLength = 1 } = {}) => Joi.object()
     .pattern(/^x-amz-meta-.{1,255}$/i, Joi.string().min(minValueStringLength).max(255), { matches: Joi.array().min(minKeyCount) })
     .unknown(),
 
-  tagset: (minKeyCount = 1, minValueStringLength = 0) => Joi.object()
+  /**
+   * custom tagset (object) type schema with parameters
+   * @param minKeyCount minimum number of tags allowed
+   * @param minValueStringLength minimum string length of tag value allowed
+   * @param maxKeyCount maximum number of tags allowed (default ot 9 because COMS also adds a `coms-id` tag by default)
+   */
+  tagset: ({ maxKeyCount = 9, minKeyCount = 0, minValueStringLength = 0 } = {}) => Joi.object()
     .pattern(
       /^(?!coms-id$).{1,255}$/, // don't allow key 'coms-id'
       Joi.string().min(minValueStringLength).max(255),
-      { matches: Joi.array().min(minKeyCount) }
+      { matches: Joi.array().min(minKeyCount).max(maxKeyCount) }
     )
 };
 

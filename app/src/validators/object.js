@@ -6,7 +6,7 @@ const { DownloadMode } = require('../components/constants');
 
 const schema = {
   addMetadata: {
-    headers: type.metadata(1, 1).required(),
+    headers: type.metadata(),
     params: Joi.object({
       objectId: type.uuidv4
     }),
@@ -28,7 +28,7 @@ const schema = {
     }),
     query: Joi.object((() => {
       const query = {
-        tagset: type.tagset(1, 1).required(),
+        tagset: type.tagset(),
         s3VersionId: Joi.string()
       };
       if (config.has('db.enabled')) {
