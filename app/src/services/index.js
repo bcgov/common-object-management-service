@@ -28,6 +28,7 @@ module.exports = {
   featureNoDb: featureNoDb,
   metadataService: featureNoDb(require('./metadata')),
   objectService: featureNoDb(require('./object')),
+  objectQueueService: featureNoDb(require('./objectQueue')),
   objectPermissionService: featureNoDb(require('./objectPermission')),
   storageService: require('./storage'),
   tagService: featureNoDb(require('./tag')),
