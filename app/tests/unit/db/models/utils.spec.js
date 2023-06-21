@@ -1,4 +1,4 @@
-const { toArray, inArrayClause, inArrayFilter, tableNames } = require('../../../../src/db/models/utils');
+const { toArray, inArrayClause, inArrayFilter } = require('../../../../src/db/models/utils');
 
 describe('Test Model Utils toArray function', () => {
 
@@ -50,22 +50,5 @@ describe('Test Model Utils inArrayFilter function', () => {
     const col = 'user';
     const vals = ['1', '2', '3'];
     expect(inArrayFilter(col, vals)).toEqual('(array_length("user", 1) > 0 and (\'1\' = ANY("user") or \'2\' = ANY("user") or \'3\' = ANY("user")))');
-  });
-});
-
-describe('Test Model Utils tableNames function', () => {
-  it('should return the desired clause for multiple values joined with OR', () => {
-    const models = {
-      objectTable: {
-        tableName: 'object'
-      },
-      permissionTable: {
-        tableName: 'permission'
-      },
-      userTable: {
-        tableName: 'user'
-      }
-    };
-    expect(tableNames(models)).toEqual(['object', 'permission', 'user']);
   });
 });

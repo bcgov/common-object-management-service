@@ -153,6 +153,9 @@ class ObjectModel extends Timestamps(Model) {
             });
         }
       },
+      findPath(query, value) {
+        if (value) query.where('object.path', value);
+      },
       hasPermission(query, userId, permCode) {
         if (userId && permCode) {
           query
