@@ -1,9 +1,9 @@
 const Knex = require('knex');
 const { Model } = require('objection');
 
+const { searchPath: schemas } = require('../../knexfile');
 const log = require('../components/log')(module.filename);
 const models = require('./models');
-const { tableNames } = require('./models/utils');
 
 class DataConnection {
   /**
@@ -99,11 +99,12 @@ class DataConnection {
    * @returns {boolean} True if schema is ok, otherwise false
    */
   checkSchema() {
-    const tables = tableNames(models);
     try {
+      const tables = Object.values(models).map(model => model.tableName);
       return Promise
-        .all(tables.map(table => this._knex.schema.hasTable(table)))
-        .then(exists => exists.every(x => x))
+        .all(tables.map(table => Promise
+          .all(schemas.map(schema => this._knex.schema.withSchema(schema).hasTable(table)))))
+        .then(exists => exists.every(table => table.some(exist => exist)))
         .then(result => {
           if (result) log.debug('Database schema ok', { function: 'checkSchema' });
           return result;
