@@ -169,15 +169,13 @@ const controller = {
       const objPath = req.currentObject?.path;
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
       // format new tags to array of objects
-      const newTags = req.query.tagset;
-      let newSet = newTags ? Object.entries(newTags).map(([k, v]) => ({ Key: k, Value: v })) : [];
-
+      const newTags = Object.entries({ ...req.query.tagset }).map(([k, v]) => ({ Key: k, Value: v }));
       // get source version that we are adding tags to
       const sourceS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid(req.query.versionId), objId);
       // get existing tags on source version
       const { TagSet: existingTags } = await storageService.getObjectTagging({ filePath: objPath, s3VersionId: sourceS3VersionId, bucketId });
 
-      newSet = newSet
+      const newSet = newTags
         // Join new tags and existing tags
         .concat(existingTags)
         // remove existing 'coms-id' tag if it exists
@@ -189,7 +187,7 @@ const controller = {
 
       if (newSet.length > 10) {
         // 409 when total tag limit exceeded
-        return new Problem(409, { detail: 'User-defined Tag count limit is 9' }).send(res);
+        return new Problem(409, { detail: 'Request exceeds maximum of 9 user-defined tag sets allowed' }).send(res);
       }
 
       const data = {
@@ -794,8 +792,7 @@ const controller = {
       const objPath = req.currentObject?.path;
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
       // format new tags to array of objects
-      const newTags = req.query.tagset;
-      const newSet = newTags ? Object.entries(newTags).map(([k, v]) => ({ Key: k, Value: v })) : [];
+      const newTags = Object.entries({ ...req.query.tagset }).map(([k, v]) => ({ Key: k, Value: v }));
 
       // source S3 version
       const sourceS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid(req.query.versionId), objId);
@@ -803,7 +800,7 @@ const controller = {
       const data = {
         bucketId: req.currentObject?.bucketId,
         filePath: objPath,
-        tags: newSet.concat([{ 'Key': 'coms-id', 'Value': objId }]),
+        tags: newTags.concat([{ 'Key': 'coms-id', 'Value': objId }]),
         s3VersionId: sourceS3VersionId
       };
 
