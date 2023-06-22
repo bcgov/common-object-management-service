@@ -171,7 +171,7 @@ describe('type', () => {
   });
 
   describe('tagset', () => {
-    const func = type.tagset(1, 1);
+    const func = type.tagset({ maxKeyCount: 1, minKeyCount: 1 });
     const model = func.describe();
 
     it('is an object', () => {
@@ -182,9 +182,7 @@ describe('type', () => {
     it('enforces general tagset pattern', () => {
       expect(model.patterns).toEqual(expect.arrayContaining([
         expect.objectContaining({
-          regex: '/^(?!coms-id$).{1,255}$/',
-          rule: expect.objectContaining({
-            type: 'string',
+          matches: expect.objectContaining({
             rules: expect.arrayContaining([
               expect.objectContaining({
                 name: 'min',
@@ -195,15 +193,35 @@ describe('type', () => {
               expect.objectContaining({
                 name: 'max',
                 args: expect.objectContaining({
+                  limit: 1
+                })
+              })
+            ]),
+            type: 'array'
+          }),
+          regex: '/^(?!coms-id$).{1,255}$/',
+          rule: expect.objectContaining({
+            type: 'string',
+            rules: expect.arrayContaining([
+              expect.objectContaining({
+                name: 'min',
+                args: expect.objectContaining({
+                  limit: 0
+                })
+              }),
+              expect.objectContaining({
+                name: 'max',
+                args: expect.objectContaining({
                   limit: 255
                 })
               })
-            ])
-          })
+            ]),
+          }),
         })
       ]));
     });
   });
+
 });
 
 describe('scheme', () => {

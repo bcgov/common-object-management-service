@@ -20,7 +20,7 @@ describe('addMetadata', () => {
     const headers = schema.addMetadata.headers.describe();
 
     it('is the expected schema', () => {
-      expect(headers).toEqual(type.metadata(1, 1).required().describe());
+      expect(headers).toEqual(type.metadata(1, 1).describe());
     });
   });
 
@@ -78,7 +78,7 @@ describe('addTags', () => {
       const tagset = query.keys.tagset;
 
       it('is the expected schema', () => {
-        expect(tagset).toEqual(type.tagset(1, 1).required().describe());
+        expect(tagset).toEqual(type.tagset(1, 1).describe());
       });
     });
   });
