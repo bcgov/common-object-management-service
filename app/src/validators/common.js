@@ -46,20 +46,24 @@ const type = {
   }),
 
   /**
+   * @function metadata
    * custom metadata (object) type schema with parameters
-   * @param minKeyCount minimum number of tags allowed
-   * @param minValueStringLength minimum string length of tag value allowed
-   * @param maxKeyCount maximum number of tags allowed (default ot 9 because COMS also adds a `coms-id` tag by default)
+   * @param {number} [options.minKeyCount=0] Optional minimum number of metadata k/v pairs allowed
+   * @param {number} [options.minValueStringLength=1] Optional minimum string length of metadata value allowed,
+   * @returns {object} Joi object
    */
   metadata: ({ minKeyCount = 0, minValueStringLength = 1 } = {}) => Joi.object()
     .pattern(/^x-amz-meta-.{1,255}$/i, Joi.string().min(minValueStringLength).max(255), { matches: Joi.array().min(minKeyCount) })
     .unknown(),
 
   /**
+   * @function tagset
    * custom tagset (object) type schema with parameters
-   * @param minKeyCount minimum number of tags allowed
-   * @param minValueStringLength minimum string length of tag value allowed
-   * @param maxKeyCount maximum number of tags allowed (default ot 9 because COMS also adds a `coms-id` tag by default)
+   * @param {number} [options.maxKeyCount=9] Optional minimum number of tag k/v pairs allowed
+   * @param {number} [options.minKeyCount=0] Optional minimum number of tag k/v pairs allowed
+   * @param {number} [options.minValueStringLength=0] Optional minimum string length of tag value allowed,
+   * (default of 9 because COMS also adds a `coms-id` tag by default)
+   * @returns {object} Joi object
    */
   tagset: ({ maxKeyCount = 9, minKeyCount = 0, minValueStringLength = 0 } = {}) => Joi.object()
     .pattern(

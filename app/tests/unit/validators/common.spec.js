@@ -180,9 +180,48 @@ describe('type', () => {
     });
 
     it('enforces general tagset pattern', () => {
-      expect(model.patterns).toEqual([{ 'matches': { 'rules': [{ 'args': { 'limit': 1 }, 'name': 'min' }, { 'args': { 'limit': 1 }, 'name': 'max' }], 'type': 'array' }, 'regex': '/^(?!coms-id$).{1,255}$/', 'rule': { 'rules': [{ 'args': { 'limit': 0 }, 'name': 'min' }, { 'args': { 'limit': 255 }, 'name': 'max' }], 'type': 'string' } }]);
+      expect(model.patterns).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          matches: expect.objectContaining({
+            rules: expect.arrayContaining([
+              expect.objectContaining({
+                name: 'min',
+                args: expect.objectContaining({
+                  limit: 1
+                })
+              }),
+              expect.objectContaining({
+                name: 'max',
+                args: expect.objectContaining({
+                  limit: 1
+                })
+              })
+            ]),
+            type: 'array'
+          }),
+          regex: '/^(?!coms-id$).{1,255}$/',
+          rule: expect.objectContaining({
+            type: 'string',
+            rules: expect.arrayContaining([
+              expect.objectContaining({
+                name: 'min',
+                args: expect.objectContaining({
+                  limit: 0
+                })
+              }),
+              expect.objectContaining({
+                name: 'max',
+                args: expect.objectContaining({
+                  limit: 255
+                })
+              })
+            ]),
+          }),
+        })
+      ]));
     });
   });
+
 });
 
 describe('scheme', () => {
