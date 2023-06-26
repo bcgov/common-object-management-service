@@ -31,6 +31,7 @@ module.exports = {
   objectQueueService: featureNoDb(require('./objectQueue')),
   objectPermissionService: featureNoDb(require('./objectPermission')),
   storageService: require('./storage'),
+  syncService: require('./sync'),
   tagService: featureNoDb(require('./tag')),
   userService: featureNoDb(require('./user')),
   versionService: featureNoDb(require('./version')),
