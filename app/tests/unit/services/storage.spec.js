@@ -2,6 +2,7 @@ const {
   CopyObjectCommand,
   DeleteObjectCommand,
   DeleteObjectTaggingCommand,
+  GetBucketEncryptionCommand,
   GetBucketVersioningCommand,
   GetObjectCommand,
   GetObjectTaggingCommand,
@@ -10,6 +11,7 @@ const {
   ListObjectsCommand,
   ListObjectsV2Command,
   ListObjectVersionsCommand,
+  PutBucketEncryptionCommand,
   PutObjectCommand,
   PutObjectTaggingCommand,
   S3Client
@@ -53,6 +55,7 @@ beforeEach(() => {
     region: DEFAULTREGION,
     secretAccessKey: config.get('secretAccessKey')
   }));
+  utils.isAtPath = jest.fn(() => true);
 });
 
 describe('_getS3Client', () => {
@@ -304,6 +307,23 @@ describe('headBucket', () => {
   });
 });
 
+describe('getBucketEncryption', () => {
+  beforeEach(() => {
+    s3ClientMock.on(GetBucketEncryptionCommand).resolves({});
+  });
+
+  it('should send a get bucket encryption command', async () => {
+    const result = await service.getBucketEncryption();
+
+    expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
+    expect(s3ClientMock).toHaveReceivedCommandTimes(GetBucketEncryptionCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(GetBucketEncryptionCommand, {
+      Bucket: bucket
+    });
+  });
+});
+
 describe('getBucketVersioning', () => {
   beforeEach(() => {
     s3ClientMock.on(GetBucketVersioningCommand).resolves({});
@@ -389,6 +409,131 @@ describe('headObject', () => {
       Key: filePath,
       VersionId: s3VersionId
     });
+  });
+});
+
+describe('listAllObjects', () => {
+  const listObjectsV2Mock = jest.spyOn(service, 'listObjectsV2');
+
+  beforeEach(() => {
+    listObjectsV2Mock.mockReset();
+  });
+
+  afterAll(() => {
+    listObjectsV2Mock.mockRestore();
+  });
+
+  it('should call listObjectsV2 at least once and return an empty array', async () => {
+    listObjectsV2Mock.mockResolvedValue({ IsTruncated: false });
+
+    const result = await service.listAllObjects();
+
+    expect(result).toBeTruthy();
+    expect(Array.isArray(result)).toBeTruthy();
+    expect(result).toHaveLength(0);
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
+    expect(utils.isAtPath).toHaveBeenCalledTimes(0);
+    expect(listObjectsV2Mock).toHaveBeenCalledTimes(1);
+    expect(listObjectsV2Mock).toHaveBeenCalledWith(expect.objectContaining({
+      filePath: key
+    }));
+  });
+
+  it('should call listObjectsV2 at least once and return an empty array of objects', async () => {
+    listObjectsV2Mock.mockResolvedValue({ Contents: [], IsTruncated: false });
+
+    const result = await service.listAllObjects();
+
+    expect(result).toBeTruthy();
+    expect(Array.isArray(result)).toBeTruthy();
+    expect(result).toHaveLength(0);
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
+    expect(utils.isAtPath).toHaveBeenCalledTimes(0);
+    expect(listObjectsV2Mock).toHaveBeenCalledTimes(1);
+    expect(listObjectsV2Mock).toHaveBeenCalledWith(expect.objectContaining({
+      filePath: key
+    }));
+  });
+
+  it('should call listObjectsV2 multiple times and return an array of precise path objects', async () => {
+    const continueToken = 'token';
+    listObjectsV2Mock.mockResolvedValueOnce({ Contents: [{ Key: 'filePath/foo' }], IsTruncated: true, NextContinuationToken: continueToken });
+    listObjectsV2Mock.mockResolvedValueOnce({ Contents: [{ Key: 'filePath/bar' }], IsTruncated: false });
+
+    const result = await service.listAllObjects();
+
+    expect(result).toBeTruthy();
+    expect(Array.isArray(result)).toBeTruthy();
+    expect(result).toHaveLength(2);
+    expect(result).toEqual(expect.arrayContaining([
+      { Key: 'filePath/foo' },
+      { Key: 'filePath/bar' }
+    ]));
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
+    expect(utils.isAtPath).toHaveBeenCalledTimes(2);
+    expect(listObjectsV2Mock).toHaveBeenCalledTimes(2);
+    expect(listObjectsV2Mock).toHaveBeenNthCalledWith(1, expect.objectContaining({
+      filePath: key
+    }));
+    expect(listObjectsV2Mock).toHaveBeenNthCalledWith(2, expect.objectContaining({
+      filePath: key,
+      continuationToken: continueToken
+    }));
+  });
+
+  it('should call listObjectsV2 multiple times and return an array of all path objects', async () => {
+    const continueToken = 'token';
+    listObjectsV2Mock.mockResolvedValueOnce({ Contents: [{ Key: 'filePath/test/foo' }], IsTruncated: true, NextContinuationToken: continueToken });
+    listObjectsV2Mock.mockResolvedValueOnce({ Contents: [{ Key: 'filePath/test/bar' }], IsTruncated: false });
+
+    const result = await service.listAllObjects({ precisePath: false });
+
+    expect(result).toBeTruthy();
+    expect(Array.isArray(result)).toBeTruthy();
+    expect(result).toHaveLength(2);
+    expect(result).toEqual(expect.arrayContaining([
+      { Key: 'filePath/test/foo' },
+      { Key: 'filePath/test/bar' }
+    ]));
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
+    expect(utils.isAtPath).toHaveBeenCalledTimes(0);
+    expect(listObjectsV2Mock).toHaveBeenCalledTimes(2);
+    expect(listObjectsV2Mock).toHaveBeenNthCalledWith(1, expect.objectContaining({
+      filePath: key
+    }));
+    expect(listObjectsV2Mock).toHaveBeenNthCalledWith(2, expect.objectContaining({
+      filePath: key,
+      continuationToken: continueToken
+    }));
+  });
+
+  it('should call listObjectsV2 multiple times with the right bucketId and filePath, returning an array of objects', async () => {
+    const continueToken = 'token';
+    const customPath = 'filePath/test';
+    listObjectsV2Mock.mockResolvedValueOnce({ Contents: [{ Key: 'filePath/test/foo' }], IsTruncated: true, NextContinuationToken: continueToken });
+    listObjectsV2Mock.mockResolvedValueOnce({ Contents: [{ Key: 'filePath/test/bar' }], IsTruncated: false });
+
+    const result = await service.listAllObjects({ filePath: customPath, bucketId: bucket });
+
+    expect(result).toBeTruthy();
+    expect(Array.isArray(result)).toBeTruthy();
+    expect(result).toHaveLength(2);
+    expect(result).toEqual(expect.arrayContaining([
+      { Key: 'filePath/test/foo' },
+      { Key: 'filePath/test/bar' }
+    ]));
+    expect(utils.getBucket).toHaveBeenCalledTimes(0);
+    expect(utils.isAtPath).toHaveBeenCalledTimes(2);
+    expect(listObjectsV2Mock).toHaveBeenCalledTimes(2);
+    expect(listObjectsV2Mock).toHaveBeenNthCalledWith(1, expect.objectContaining({
+      filePath: customPath,
+      bucketId: bucket
+    }));
+    expect(listObjectsV2Mock).toHaveBeenNthCalledWith(2, expect.objectContaining({
+      filePath: customPath,
+      continuationToken: continueToken,
+      bucketId: bucket
+    }));
   });
 });
 
@@ -511,6 +656,30 @@ describe('presignUrl', () => {
     expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(getSignedUrl).toHaveBeenCalledTimes(1);
     expect(getSignedUrl).toHaveBeenCalledWith(expect.any(Object), command, { expiresIn: expiresIn });
+  });
+});
+
+describe('putBucketEncryption', () => {
+  beforeEach(() => {
+    s3ClientMock.on(PutBucketEncryptionCommand).resolves({});
+  });
+
+  it('should send a get bucket encryption command', async () => {
+    const result = await service.putBucketEncryption();
+
+    expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
+    expect(s3ClientMock).toHaveReceivedCommandTimes(PutBucketEncryptionCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(PutBucketEncryptionCommand, {
+      Bucket: bucket,
+      ServerSideEncryptionConfiguration: {
+        Rules: [{
+          ApplyServerSideEncryptionByDefault: {
+            SSEAlgorithm: 'AES256'
+          }
+        }]
+      }
+    });
   });
 });
 
