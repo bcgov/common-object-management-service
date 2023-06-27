@@ -298,12 +298,28 @@ const utils = {
   },
 
   /**
+   * @function isAtPath
+   * Predicate function determining if the `path` is a member of the `prefix` path
+   * @param {string} prefix The base "folder"
+   * @param {string} path The "file" to check
+   * @returns {boolean} True if path is member of prefix. False in all other cases.
+   */
+  isAtPath(prefix, path) {
+    if (typeof prefix !== 'string' || typeof path !== 'string') return false;
+
+    const pathParts = path.split(DELIMITER).filter(part => part);
+    const prefixParts = prefix.split(DELIMITER).filter(part => part);
+    return prefixParts.every((part, i) => pathParts[i] === part)
+      && pathParts.filter(part => !prefixParts.includes(part)).length === 1;
+  },
+
+  /**
    * @function isTruthy
    * Returns true if the element name in the object contains a truthy value
    * @param {object} value The object to evaluate
    * @returns {boolean} True if truthy, false if not, and undefined if undefined
    */
-  isTruthy: (value) => {
+  isTruthy(value) {
     if (value === undefined) return value;
 
     const isStr = typeof value === 'string' || value instanceof String;

@@ -451,6 +451,30 @@ describe('groupByObject', () => {
   });
 });
 
+describe('isAtPath', () => {
+  it.each([
+    [false, undefined, undefined],
+    [false, null, null],
+    [false, '', ''],
+    [true, '/', 'file'],
+    [false, '/', 'file/bleep'],
+    [true, 'foo', 'foo/bar'],
+    [true, 'foo', '/foo/bar'],
+    [true, '/foo', 'foo/bar'],
+    [true, '/foo', '/foo/bar'],
+    [true, 'a/b', 'a/b/foo.jpg'],
+    [false, 'a/b', 'a/b/z/deep.jpg'],
+    [false, 'a/b', 'a/b/y/z/deep.jpg'],
+    [false, 'a/b/c', 'a/bar.png'],
+    [false, 'c/b/a', 'a/b/c/bar.png'],
+    [false, 'c/a/b', 'a/b/c/bar.png'],
+    [false, 'a/b/c', 'a/c/b/bar.png'],
+    [true, 'a/b/c', 'a/b/c/bar.png'],
+  ])('should return %j given prefix %j and path %j', (expected, prefix, path) => {
+    expect(utils.isAtPath(prefix, path)).toEqual(expected);
+  });
+});
+
 describe('isTruthy', () => {
   it('should return undefined given undefined', () => {
     expect(utils.isTruthy(undefined)).toBeUndefined();

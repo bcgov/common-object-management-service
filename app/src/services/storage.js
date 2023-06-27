@@ -234,6 +234,38 @@ const objectStorageService = {
   },
 
   /**
+   * @function listAllObjects
+   * Lists all objects in the bucket with the prefix of `filePath`.
+   * Performs pagination behind the scenes if required.
+   * @param {string} [options.filePath=undefined] Optional filePath of the objects
+   * @param {string} [options.bucketId=undefined] Optional bucketId
+   * @param {boolean} [options.precisePath=true] Optional boolean for filtering results based on the precise path
+   * @returns {Promise<object[]>} An array of objects matching the criteria
+   */
+  async listAllObjects({ filePath = undefined, bucketId = undefined, precisePath = true } = {}) {
+    const key = filePath ?? (await utils.getBucket(bucketId)).key;
+    const objects = [];
+
+    let incomplete = false;
+    let nextToken = undefined;
+    do {
+      const { Contents, IsTruncated, NextContinuationToken } = await this.listObjectsV2({
+        filePath: key,
+        continuationToken: nextToken,
+        bucketId: bucketId
+      });
+
+      if (Contents) objects.push(
+        ...Contents.filter(object => !precisePath || utils.isAtPath(key, object.Key))
+      );
+      incomplete = IsTruncated;
+      nextToken = NextContinuationToken;
+    } while (incomplete);
+
+    return Promise.resolve(objects);
+  },
+
+  /**
    * @deprecated Use `listObjectsV2` instead
    * @function listObjects
    * Lists the objects in the bucket with the prefix of `filePath`
@@ -256,19 +288,19 @@ const objectStorageService = {
   /**
    * @function listObjectsV2
    * Lists the objects in the bucket with the prefix of `filePath`
-   * @param {string} options.filePath The filePath of the object
-   * @param {string} [options.continuationToken] Optional continuationtoken for pagination
-   * @param {number} [options.maxKeys] Optional maximum number of keys to return
-   * @param {string} [options.bucketId] Optional bucketId
-   * @returns {Promise<object>} The response of the list objects operation
+   * @param {string} [options.filePath=undefined] Optional filePath of the objects
+   * @param {string} [options.continuationToken=undefined] Optional continuationtoken for pagination
+   * @param {number} [options.maxKeys=undefined] Optional maximum number of keys to return
+   * @param {string} [options.bucketId=undefined] Optional bucketId
+   * @returns {Promise<object>} The response of the list objects v2 operation
    */
-  async listObjectsV2({ filePath, continuationToken = undefined, maxKeys = undefined, bucketId = undefined }) {
+  async listObjectsV2({ filePath = undefined, continuationToken = undefined, maxKeys = undefined, bucketId = undefined } = {}) {
     const data = await utils.getBucket(bucketId);
     const params = {
       Bucket: data.bucket,
       ContinuationToken: continuationToken,
-      Prefix: filePath, // Must filter via "prefix" - https://stackoverflow.com/a/56569856
-      MaxKeys: maxKeys
+      MaxKeys: maxKeys,
+      Prefix: filePath ?? data.key // Must filter via "prefix" - https://stackoverflow.com/a/56569856
     };
 
     return this._getS3Client(data).send(new ListObjectsV2Command(params));
