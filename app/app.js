@@ -1,18 +1,20 @@
+const Problem = require('api-problem');
 const compression = require('compression');
 const config = require('config');
 const cors = require('cors');
 const express = require('express');
-const Problem = require('api-problem');
 const { ValidationError } = require('express-validation');
 
 const { AuthMode, DEFAULTCORS } = require('./src/components/constants');
 const log = require('./src/components/log')(module.filename);
 const httpLogger = require('./src/components/log').httpLogger;
+const QueueManager = require('./src/components/queueManager');
 const { getAppAuthMode, getGitRevision } = require('./src/components/utils');
+const DataConnection = require('./src/db/dataConnection');
 const v1Router = require('./src/routes/v1');
 
-const DataConnection = require('./src/db/dataConnection');
 const dataConnection = new DataConnection();
+const queueManager = new QueueManager();
 
 const apiRouter = express.Router();
 const state = {
@@ -22,7 +24,9 @@ const state = {
   ready: false,
   shutdown: false
 };
+
 let probeId;
+let queueId;
 
 const app = express();
 app.use(compression());
@@ -163,8 +167,11 @@ function cleanup() {
 
   log.info('Cleaning up...', { function: 'cleanup' });
   clearInterval(probeId);
+  clearInterval(queueId);
 
-  dataConnection.close(() => process.exit());
+  queueManager.close(() => {
+    dataConnection.close(() => process.exit());
+  });
 
   // Wait 10 seconds max before hard exiting
   setTimeout(() => process.exit(), 10000);
@@ -203,6 +210,7 @@ function initializeConnections() {
         log.info('Service ready to accept traffic', { function: 'initializeConnections' });
         // Start periodic 10 second connection probe check
         probeId = setInterval(checkConnections, 10000);
+        queueId = setInterval(() => queueManager.checkQueue(), 10000);
       }
     });
 }
