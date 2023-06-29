@@ -1,4 +1,4 @@
-const { v4: uuidv4, validate: uuidValidate } = require('uuid');
+const { NIL: SYSTEM_USER, v4: uuidv4, validate: uuidValidate } = require('uuid');
 
 const { ObjectModel, Version } = require('../db/models');
 const utils = require('../db/models/utils');
@@ -27,9 +27,15 @@ const service = {
         const syncObject = await service.syncObject({ path: path, bucketId: bucketId }, trx);
 
         // 2. sync versions
+        let syncVersionsResult = [];
         // if object wasn't deleted in objectSync or in 'fullMode'
         if (syncObject || fullMode ) {
-          await service.syncVersions({ path: path, bucketId: bucketId, syncObject: syncObject }, trx);
+          syncVersionsResult = await service.syncVersions({ path: path, bucketId: bucketId, syncObject: syncObject }, trx);
+        }
+
+        // 3. sync metadata & tags
+        if (syncVersionsResult.length || fullMode ) {
+          // sync metadata
         }
 
       });
@@ -46,15 +52,13 @@ const service = {
    * @param {string} [options.path] The path of object in sync job
    * @param {string} [options.bucketId] The uuid bucketId of object in sync job
    * @param {object} [etrx=undefined] An optional Objection Transaction object
-   * returns either
-   * <ObjectModel> (when object exists in both COMS and S3 after sync)
-   * or undefined (when object was pruned from COMS db after sync)
+   * @returns {object} synced objects that exist in COMS and S3 eg:
+   * <ObjectModel> (synced object)
+   * or `undefined` (when object was pruned from COMS db after sync)
    */
   syncObject: async ({ path, bucketId }, etrx = undefined) => {
-
     let trx, response;
     try {
-      // start transaction if trx object not passed (transaction already started higher up the stack)
       trx = etrx ? etrx : await ObjectModel.startTransaction();
 
       // await call to look for object in both the COMS db and S3
@@ -71,7 +75,7 @@ const service = {
       const comsObject = comsObjectPromise.value;
       const s3Object = s3ObjectPromise.value;
 
-      // ----- INSERT action
+      // 1. insert object
       // if not in COMS db and exists in S3
       if (!comsObject && s3Object) {
         // get coms-id tag from S3 if exists
@@ -97,7 +101,7 @@ const service = {
         if (!hadComsIdTag) await storageService.putObjectTagging({ filePath: path, bucketId: bucketId, tags: [{ Key: 'coms-id', Value: comsId }] });
       }
 
-      // ----- DELETE action
+      // 2. or delete object
       // object exists in COMS db but not on S3
       if (comsObject && !s3Object) {
         // delete from COMS db
@@ -115,90 +119,109 @@ const service = {
   /**
    * @function syncVersions
    * syncs version-level data
-   * @param {string} [options.path] The path of object in sync job
-   * @param {string} [options.bucketId] The uuid bucketId of object in sync job
-   * @param {object} [options.syncObject=undefined] the response from previous syncObject method
+   * @param {string} [options.path] The path of parent object in sync job
+   * @param {string} [options.bucketId] The uuid bucketId of parent object in sync job
+   * @param {object} [options.syncObject=undefined] the response from a previous syncObject method
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * returns array of synced versions
+   * @returns {object[]} array of synced versions that exist in COMS and S3 eg:
+   * [ <Version>, <Version> ]
    */
   syncVersions: async ({ path, bucketId, syncObject = undefined }, etrx = undefined) => {
-
-    let objectId, trx;
+    let trx;
     try {
-      // start transaction if trx object not passed (transaction already started higher up the stack)
       trx = etrx ? etrx : await ObjectModel.startTransaction();
-
       // --- get COMS versions
-      // use object id from syncObject response if provided
+      // use object id from syncObject response if provided (eg: in fullMode) else use path and bucketId
+      let objectId;
       if(syncObject) objectId = syncObject.id;
-      // else get object Id using path and bucketId
       else {
         const object = await ObjectModel.query(trx).first().where({ path: path, bucketId: bucketId });
         objectId = object.id;
       }
-      const comsVs = await Version.query(trx).modify('filterObjectId', objectId);
+      const comsVs = await Version.query(trx).modify('filterObjectId', objectId).orderBy('createdAt');
 
-      // --- get S3 versions
-      // get object. note: this will return (200) for any path
+      // --- get S3 versions (merge Versions and DeleteMarkers into one array)
       const s3Obj = await storageService.listObjectVersion({ filePath: path, bucketId: bucketId });
       const s3Versions = s3Obj.Versions ? s3Obj.Versions : [];
-      const s3DeleteMarkers = s3Obj.DeleteMarkers ? s3Obj.DeleteMarkers : [];
+      // add DeleteMarker property to identify
+      const s3DeleteMarkers = s3Obj.DeleteMarkers ? s3Obj.DeleteMarkers.map(dm => ({ DeleteMarker: true, ...dm})) : [];
       const s3Vs = s3Versions.concat(s3DeleteMarkers);
 
+      // ---- do differential logic between COMS versions (comsVs) and S3 versions (s3Vs)
+      // 1. delete versions not in S3
+      for (const comsV of comsVs) {
+        // if COMS version (except nulls) not in S3 versions
+        if (comsV.s3VersionId && !s3Vs.some((s3V) => (s3V.VersionId === comsV.s3VersionId))){
+          // delete from db
+          await versionService.delete(objectId, (comsV.s3VersionId ?? null), trx);
+        }
+        // optional TODO: remove this item from comsVs array
+      }
 
-      // for each version in s3
-      // ---- for versioned bucket (ie: if VersionId is not not 'null' (string)
-      // each s3 version and dm will have a VersionId
-      // foreach s3Vs, if not in comsVs (match on VersionId AND objectId).. insert.
-      // foreach comsVs if not in s3Vs, delete from db
-      // first, remove any from db where not in s3 VersionId's
+      // 2. insert and update versions
+      let syncedVersions = [];
+      for (const s3V of s3Vs) {
+        let mimeType;
+        // if a versioned object (ie: if VersionId is not not 'null')
+        if(s3V.VersionId !== 'null') {
+          // if version in COMS db
+          if (comsVs.some((comsV) => (comsV.s3VersionId === s3V.VersionId))){
+            // patch with isLatest
+            const updatedVersion = await Version.query(trx)
+              .update({ 'objectId': objectId, isLatest: s3V.IsLatest})
+              .where({ 'objectId': objectId, 's3VersionId': s3V.VersionId })
+              .returning('*');
+            // get mimetype of that COMS version for any new version inserts (best effort)
+            // TODO: with current async/await behaviour, this doesnt seem to be available in the next iteration
+            mimeType = updatedVersion.mimeType;
 
-
-      // ---- for non-versioned bucket
-      // if VersionId is 'null', it must be a non-versioned bucket
-      // there will only be 1 s3 version and no delete markers.
-      // if a coms version with matching etag,
-      // - patch: isLatest=true,
-      // else insert as new version and remove old version
-
-
-      // insert and update versions
-      s3Vs.forEach( async (s3V) => {
-        // if a versioned bucket
-        if(s3V.VersionId) {
-          // if not in COMS db
-          if (!comsVs.some((comsV) => (comsV.s3VersionId === s3V.VersionId))){
+            syncedVersions.push(updatedVersion);
+          }
+          // else not found in db
+          else {
             // insert into db
-            await Version.query(trx).insert({});
+            const newVersion = await versionService.create({
+              s3VersionId: s3V.VersionId,
+              mimeType: mimeType,
+              id: objectId,
+              deleteMarker: s3V.DeleteMarker,
+              etag: s3V.ETag,
+              isLatest: s3V.IsLatest
+            }, SYSTEM_USER, trx);
+
+            syncedVersions.push(newVersion);
           }
-          // else found in db, patch details(?)
-          await Version.query(trx).update({ isLatest: s3V.isLatest}).where({ objectId: objectId, s3VersionId: s3V.VersionId });
         }
-        // else S3 bucket is non-versioned
+        // else S3 object is non-versioned (there will only be one S3 version)
         else {
-          // if a coms version has matching ETag,
-          if (!comsVs.some((comsV) => (comsV.etag === s3V.ETag))){
-            // patch isLatest
-            await Version.query(trx).update({ isLatest: true}).where({ objectId: objectId });
-          }
+          // delete existing versions in coms db
+          await Version.query(trx).delete().where({ 'objectId': objectId });
+
+          // insert S3 version
+          const replacedVersion = await versionService.create({
+            s3VersionId: null,
+            // mimeType: mimeType,
+            // get mimetype of previous single version
+            mimeType: comsVs[0]?.mimeType,
+            id: objectId,
+            deleteMarker: s3V.DeleteMarker,
+            etag: s3V.ETag,
+            isLatest: s3V.IsLatest
+          }, SYSTEM_USER, trx);
+
+          syncedVersions.push(replacedVersion);
         }
-      });
-      // delete versions
-      comsVs.forEach(async comsV => {
-        // if not in S3 versions
-        if (!s3Vs.some((s3V) => (s3V.s3VersionId === comsV.VersionId))){
-          // delete db
-          await versionService.delete(comsV.id, comsV.s3VersionId);
-        }
-      });
+      }
 
       if (!etrx) await trx.commit();
-      return s3Obj;
+      return syncedVersions;
     } catch (err) {
       if (!etrx && trx) await trx.rollback();
       throw err;
     }
-  }
+
+  },
 
 };
 
