@@ -8,6 +8,7 @@ const service = {
   /**
    * @function copy
    * Creates a new Version DB record from an existing record
+   * NOTE: new version will be set to 'isLatest': true
    * @param {string} sourceVersionId S3 VersionId of source version
    * @param {string} targetVersionId S3 VersionId of new version
    * @param {string} objectId uuid of the object
@@ -34,6 +35,7 @@ const service = {
           .where({
             objectId: objectId
           })
+          // TODO: get latest using isLatest where possible
           .orderBy([
             { column: 'createdAt', order: 'desc' },
             { column: 'updatedAt', order: 'desc', nulls: 'last' }
@@ -48,6 +50,7 @@ const service = {
           objectId: objectId,
           mimeType: sourceVersion.mimeType,
           deleteMarker: sourceVersion.deleteMarker,
+          isLatest: true,
           createdBy: userId
         });
 
@@ -80,9 +83,10 @@ const service = {
           objectId: data.id,
           createdBy: userId,
           deleteMarker: data.deleteMarker,
-          etag: data.etag
+          etag: data.etag,
+          isLatest: data.isLatest
         })
-        .returning('id', 'objectId');
+        .returning('*');
 
       if (!etrx) await trx.commit();
       return Promise.resolve(response);
@@ -196,10 +200,10 @@ const service = {
    * Updates a version of an object.
    * Typically happens when updating the 'null-version' created for an object
    * on a non-versioned or version-suspnded bucket.
-   * @param {object[]} data array of object attributes
+   * @param {object[]} data array of version attributes
    * @param {string} userId uuid of the current user
    * @param {object} [etrx=undefined] An optional Objection Transaction object
-   * @returns {Promise<integer>} id of Version object updated in the database
+   * @returns {Promise<integer>} id of version updated in the database
    * @throws The error encountered upon db transaction failure
    */
   update: async (data = {}, userId = SYSTEM_USER, etrx = undefined) => {
@@ -214,10 +218,11 @@ const service = {
           objectId: data.id,
           updatedBy: userId,
           mimeType: data.mimeType,
-          etag: data.etag
+          etag: data.etag,
+          isLatest: data.isLatest
         })
         .first()
-        .returning('id');
+        .returning('*');
 
       // TODO: consider updating metadata here instead of the controller
 
