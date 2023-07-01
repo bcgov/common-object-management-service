@@ -9,7 +9,7 @@ const versionService = require('./version');
 
 /**
  * The Sync Service
- * bi-directional sync of object data between object storage and the COMS database
+ * sync data between object storage and the COMS database
  */
 const service = {
 
@@ -18,30 +18,29 @@ const service = {
    * @param {string} [options.path=undefined]
    * @param {string} [options.bucketId=undefined]
    * @param {boolean} [options.fullMode=true]
+   * @param {string} [options.userId=SYSTEM_USER]
    */
-  sync: async ({ path = undefined, bucketId = undefined, fullMode = true }) => {
+  sync: async ({ path = undefined, bucketId = undefined, fullMode = true, userId = SYSTEM_USER }) => {
     try {
       await utils.trxWrapper(async (trx) => {
 
         // 1. sync object
-        const syncObject = await service.syncObject({ path: path, bucketId: bucketId }, trx);
+        const object = await service.syncObject({ path: path, bucketId: bucketId, userId: userId }, trx);
 
         // 2. sync versions
-        let syncVersionsResult = [];
+        let versions = [];
         // if object wasn't deleted in objectSync or in 'fullMode'
-        if (syncObject || fullMode ) {
-          syncVersionsResult = await service.syncVersions({ path: path, bucketId: bucketId, syncObject: syncObject }, trx);
+        if (object || fullMode) {
+          versions = await service.syncVersions({ path: path, bucketId: bucketId, object: object, userId: userId }, trx);
         }
-
         // 3. sync metadata & tags
-        if (syncVersionsResult.length || fullMode ) {
+        if (versions.length || fullMode) {
           // sync metadata
         }
-
       });
     }
     catch (e) {
-      console.log(e);
+      // console.log(e);
     }
   },
 
@@ -51,16 +50,16 @@ const service = {
    * syncs object-level data
    * @param {string} [options.path] The path of object in sync job
    * @param {string} [options.bucketId] The uuid bucketId of object in sync job
+   * @param {string} [options.userId=SYSTEM_USER] The uuid of a user that created the sync job
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {object} synced objects that exist in COMS and S3 eg:
    * <ObjectModel> (synced object)
    * or `undefined` (when object was pruned from COMS db after sync)
    */
-  syncObject: async ({ path, bucketId }, etrx = undefined) => {
+  syncObject: async ({ path, bucketId, userId = SYSTEM_USER }, etrx = undefined) => {
     let trx, response;
     try {
       trx = etrx ? etrx : await ObjectModel.startTransaction();
-
       // await call to look for object in both the COMS db and S3
       const [comsObjectPromise, s3ObjectPromise] = await Promise.allSettled([
         // COMS object
@@ -95,6 +94,7 @@ const service = {
           name: path.match(/(?!.*\/)(.*)$/)[0], // get `name` column
           path: path,
           bucketId: bucketId,
+          userId: userId
         }, trx);
 
         // Add new coms-id tag to object in S3 if it ddn't have one before sync
@@ -121,20 +121,22 @@ const service = {
    * syncs version-level data
    * @param {string} [options.path] The path of parent object in sync job
    * @param {string} [options.bucketId] The uuid bucketId of parent object in sync job
-   * @param {object} [options.syncObject=undefined] the response from a previous syncObject method
+   * @param {object} [options.object=undefined] the response from a previous syncObject method
+   * @param {string} [options.userId=SYSTEM_USER] The uuid of a user that created the sync job
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * returns array of synced versions
    * @returns {object[]} array of synced versions that exist in COMS and S3 eg:
    * [ <Version>, <Version> ]
    */
-  syncVersions: async ({ path, bucketId, syncObject = undefined }, etrx = undefined) => {
+  syncVersions: async ({ path, bucketId, object = undefined, userId = SYSTEM_USER }, etrx = undefined) => {
     let trx;
     try {
       trx = etrx ? etrx : await ObjectModel.startTransaction();
+
       // --- get COMS versions
       // use object id from syncObject response if provided (eg: in fullMode) else use path and bucketId
       let objectId;
-      if(syncObject) objectId = syncObject.id;
+      if (object) objectId = object.id;
       else {
         const object = await ObjectModel.query(trx).first().where({ path: path, bucketId: bucketId });
         objectId = object.id;
@@ -145,72 +147,95 @@ const service = {
       const s3Obj = await storageService.listObjectVersion({ filePath: path, bucketId: bucketId });
       const s3Versions = s3Obj.Versions ? s3Obj.Versions : [];
       // add DeleteMarker property to identify
-      const s3DeleteMarkers = s3Obj.DeleteMarkers ? s3Obj.DeleteMarkers.map(dm => ({ DeleteMarker: true, ...dm})) : [];
+      const s3DeleteMarkers = s3Obj.DeleteMarkers ? s3Obj.DeleteMarkers.map(dm => ({ DeleteMarker: true, ...dm })) : [];
       const s3Vs = s3Versions.concat(s3DeleteMarkers);
 
       // ---- do differential logic between COMS versions (comsVs) and S3 versions (s3Vs)
       // 1. delete versions not in S3
       for (const comsV of comsVs) {
-        // if COMS version (except nulls) not in S3 versions
-        if (comsV.s3VersionId && !s3Vs.some((s3V) => (s3V.VersionId === comsV.s3VersionId))){
-          // delete from db
+        if (comsV.s3VersionId && !s3Vs.some((s3V) => (s3V.VersionId === comsV.s3VersionId))) {
           await versionService.delete(objectId, (comsV.s3VersionId ?? null), trx);
+          // TODO (optional): remove this item from comsVs array
         }
-        // optional TODO: remove this item from comsVs array
       }
 
       // 2. insert and update versions
       let syncedVersions = [];
       for (const s3V of s3Vs) {
-        let mimeType;
         // if a versioned object (ie: if VersionId is not not 'null')
-        if(s3V.VersionId !== 'null') {
+        if (s3V.VersionId !== 'null') {
           // if version in COMS db
-          if (comsVs.some((comsV) => (comsV.s3VersionId === s3V.VersionId))){
-            // patch with isLatest
-            const updatedVersion = await Version.query(trx)
-              .update({ 'objectId': objectId, isLatest: s3V.IsLatest})
-              .where({ 'objectId': objectId, 's3VersionId': s3V.VersionId })
-              .returning('*');
-            // get mimetype of that COMS version for any new version inserts (best effort)
-            // TODO: with current async/await behaviour, this doesnt seem to be available in the next iteration
-            mimeType = updatedVersion.mimeType;
-
-            syncedVersions.push(updatedVersion);
+          const comsV = comsVs.find((comsV) => (comsV.s3VersionId === s3V.VersionId));
+          if (comsV) {
+            // if isLatest in s3V, patch with isLatest (this will only run for one S3 version)
+            if (s3V.IsLatest) {
+              const updated = await versionService.updateIsLatest({ id: comsV.id, objectId: objectId, isLatest: s3V.IsLatest }, null, trx);
+              syncedVersions.concat(updated);
+            }
+            // push matching comsV to final array
+            else {
+              syncedVersions.push(comsV);
+            }
           }
           // else not found in db
           else {
+            // get mimeType for new version
+            const mimeType = await storageService.headObject({ filePath: path, s3VersionId: s3V.VersionId, bucketId: bucketId }).then((obj => {
+              return obj.ContentType;
+            }));
+
             // insert into db
             const newVersion = await versionService.create({
               s3VersionId: s3V.VersionId,
               mimeType: mimeType,
               id: objectId,
               deleteMarker: s3V.DeleteMarker,
-              etag: s3V.ETag,
-              isLatest: s3V.IsLatest
-            }, SYSTEM_USER, trx);
+              etag: s3V.ETag
+            }, userId, trx);
 
             syncedVersions.push(newVersion);
           }
         }
         // else S3 object is non-versioned (there will only be one S3 version)
         else {
-          // delete existing versions in coms db
-          await Version.query(trx).delete().where({ 'objectId': objectId });
+          // get mimeType of S3 version
+          const mimeType = await storageService.headObject({ filePath: path, bucketId: bucketId }).then((obj => {
+            return obj.ContentType;
+          }));
+          // get existing versions
+          const existing = await Version.query(trx)
+            .where({ 'objectId': objectId })
+            .orderBy([
+              { column: 'isLatest', nulls: 'last' },
+              { column: 'createdAt', order: 'desc', nulls: 'last' }
+            ]);
+          // if latest version has different etag or mimetype
+          const latest = existing[0];
 
-          // insert S3 version
-          const replacedVersion = await versionService.create({
-            s3VersionId: null,
-            // mimeType: mimeType,
-            // get mimetype of previous single version
-            mimeType: comsVs[0]?.mimeType,
-            id: objectId,
-            deleteMarker: s3V.DeleteMarker,
-            etag: s3V.ETag,
-            isLatest: s3V.IsLatest
-          }, SYSTEM_USER, trx);
-
-          syncedVersions.push(replacedVersion);
+          if (latest.mimeType !== mimeType || latest.etag !== s3V.Etag) {
+            // update latest version
+            const updated = await Version.query(trx)
+              .update({
+                'mimeType': mimeType,
+                'objectId': objectId,
+                'etag': s3V.ETag,
+                'isLatest': true,
+                's3VersionId': null,
+                'updatedBy': userId
+              })
+              .where('id', latest.id)
+              .returning('*');
+            syncedVersions.push(updated[0]);
+          } else {
+            syncedVersions.push(latest);
+          }
+          // if has other old versions, delete them
+          if (existing.length > 1) {
+            await Version.query(trx)
+              .delete()
+              .where({ 'objectId': objectId })
+              .whereNot({ 'id': latest.id });
+          }
         }
       }
 
