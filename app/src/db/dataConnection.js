@@ -38,12 +38,13 @@ class DataConnection {
 
   /**
    * @function knex
-   * Sets the current knex binding
+   * Sets the current knex binding and forwards to Objection model
    * @param {object} v - a Knex object.
    */
   set knex(v) {
     this._knex = v;
     this._connected = false;
+    Model.knex(this.knex);
   }
 
   /**
@@ -52,12 +53,14 @@ class DataConnection {
    * @returns {boolean} True if successful, otherwise false
    */
   async checkAll() {
-    const connectOk = await this.checkConnection();
-    const schemaOk = await this.checkSchema();
-    const modelsOk = this.checkModel();
-
-    log.debug(`Connect OK: ${connectOk}, Schema OK: ${schemaOk}, Models OK: ${modelsOk}`, { function: 'checkAll' });
+    const modelsOk = !!this.knex;
+    const [connectOk, schemaOk] = await Promise.all([
+      this.checkConnection(),
+      this.checkSchema()
+    ]);
     this._connected = connectOk && schemaOk && modelsOk;
+    log.verbose(`Connect OK: ${connectOk}, Schema OK: ${schemaOk}, Models OK: ${modelsOk}`, { function: 'checkAll' });
+
     if (!connectOk) {
       log.error('Could not connect to the database, check configuration and ensure database server is running', { function: 'checkAll' });
     }
@@ -67,6 +70,7 @@ class DataConnection {
     if (!modelsOk) {
       log.error('Connected to the database, schema is ok, could not initialize Knex Models.', { function: 'checkAll' });
     }
+
     return this._connected;
   }
 
@@ -79,16 +83,17 @@ class DataConnection {
   async checkConnection() {
     try {
       const data = await this.knex.raw('show transaction_read_only');
-      const result = data && data.rows && data.rows[0].transaction_read_only === 'off';
+      const result = data?.rows[0]?.transaction_read_only === 'off';
       if (result) {
         log.debug('Database connection ok', { function: 'checkConnection' });
-      }
-      else {
+      } else {
         log.warn('Database connection is read-only', { function: 'checkConnection' });
       }
+      this._connected = result;
       return result;
     } catch (err) {
       log.error(`Error with database connection: ${err.message}`, { function: 'checkConnection' });
+      this._connected = false;
       return false;
     }
   }
@@ -140,18 +145,12 @@ class DataConnection {
    */
   close(cb = undefined) {
     if (this.knex) {
-      try {
-        this.knex.destroy(() => {
-          this._connected = false;
-          log.info('Disconnected', { function: 'close' });
-          if (cb) cb();
-        });
-      } catch (e) {
-        log.error(e);
-      }
-    } else {
-      if (cb) cb();
-    }
+      this.knex.destroy(() => {
+        this.knex = undefined;
+        log.info('Disconnected', { function: 'close' });
+        if (cb) cb();
+      });
+    } else if (cb) cb();
   }
 
   /**
@@ -159,10 +158,12 @@ class DataConnection {
    * Invalidates and reconnects existing knex connection
    */
   resetConnection() {
-    log.warn('Attempting to reset database connection pool...', { function: 'resetConnection' });
-    this.knex.destroy(() => {
-      this.knex.initialize();
-    });
+    if (this.knex) {
+      log.warn('Attempting to reset database connection pool', { function: 'resetConnection' });
+      this.knex.destroy(() => {
+        this.knex.initialize();
+      });
+    }
   }
 }
 
