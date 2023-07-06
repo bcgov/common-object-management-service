@@ -33,6 +33,7 @@
   },
   "server": {
     "bodyLimit": "SERVER_BODYLIMIT",
+    "hardReset": "SERVER_HARDRESET",
     "logFile": "SERVER_LOGFILE",
     "logLevel": "SERVER_LOGLEVEL",
     "passphrase": "SERVER_PASSPHRASE",
