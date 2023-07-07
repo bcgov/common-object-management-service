@@ -34,32 +34,36 @@ const service = {
 
   /**
    * @function enqueue
-   * Adds a job to the object queue. If the same job already exists, the existing
+   * Adds a set of jobs to the object queue. If the same job already exists, the existing
    * job will take precedence and will not be reinserted.
-   * @param {string} path The canonical object path
-   * @param {string} [bucketId=undefined] Optional associated bucketId
-   * @param {boolean} [full=false] Optional boolean indicating whether to execute full recursive run
-   * @param {integer} [retries=0] Optional integer indicating how many previous retries this job has had
-   * @param {string} [createdBy=SYSTEM_USER] Optional uuid attributing which user added the job
+   * @param {object[]} options.jobs An array of job objects typically containing `path` and `bucketId` attributes
+   * @param {boolean} [options.full=false] Optional boolean indicating whether to execute full recursive run
+   * @param {integer} [options.retries=0] Optional integer indicating how many previous retries this job has had
+   * @param {string} [options.createdBy=SYSTEM_USER] Optional uuid attributing which user added the job
    * @param {object} [etrx=undefined] Optional Objection Transaction object
-   * @returns {Promise<boolean>} True if enqueued; false otherwise.
+   * @returns {Promise<integer>} Number of records added to the queue
    */
-  async enqueue(path, bucketId = undefined, full = false, retries = 0, createdBy = SYSTEM_USER, etrx = undefined) {
+  async enqueue({ jobs = [], full = false, retries = 0, createdBy = SYSTEM_USER } = {}, etrx = undefined) {
     let trx;
     try {
       trx = etrx ? etrx : await ObjectQueue.startTransaction();
 
-      // Only insert job in if it does not already exist in
-      const response = await ObjectQueue.query(trx).insert({
-        bucketId: bucketId,
-        path: path,
+      const jobsArray = jobs.map(job => ({
+        bucketId: job.bucketId,
+        path: job.path,
         full: full,
         retries: retries,
         createdBy: createdBy
-      }).onConflict().ignore();
+      }));
+
+      // Short circuit when nothing to add or there are missing paths
+      if (!jobsArray.length || !jobsArray.every(job => !!job.path)) return Promise.resolve(0);
+
+      // Only insert jobs in if it does not already exist
+      const response = await ObjectQueue.query(trx).insert(jobsArray).onConflict().ignore();
 
       if (!etrx) await trx.commit();
-      return Promise.resolve(!!response.id);
+      return Promise.resolve(response.reduce((acc, job) => job?.id ? acc + 1 : acc, 0));
     } catch (err) {
       if (!etrx && trx) await trx.rollback();
       throw err;
