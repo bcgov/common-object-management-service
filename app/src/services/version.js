@@ -34,6 +34,7 @@ const service = {
           .where({
             objectId: objectId
           })
+          // TODO: use isLatest where possible
           .orderBy([
             { column: 'createdAt', order: 'desc' },
             { column: 'updatedAt', order: 'desc', nulls: 'last' }
@@ -48,8 +49,17 @@ const service = {
           objectId: objectId,
           mimeType: sourceVersion.mimeType,
           deleteMarker: sourceVersion.deleteMarker,
+          isLatest: true,
           createdBy: userId
-        });
+        })
+        .returning('*');
+
+      // set all other versions to islatest: false
+      await Version.query(trx)
+        .update({ 'isLatest': false, 'objectId': objectId })
+        .whereNot({ 'id': response.id })
+        .andWhere('objectId', objectId)
+        .returning('*');
 
       if (!etrx) await trx.commit();
       return Promise.resolve(response);
@@ -80,9 +90,18 @@ const service = {
           objectId: data.id,
           createdBy: userId,
           deleteMarker: data.deleteMarker,
-          etag: data.etag
+          etag: data.etag,
+          isLatest: true
         })
-        .returning('id', 'objectId');
+        .returning('*');
+
+      // set all other versions to islatest: false
+      await Version.query(trx)
+        .update({ 'isLatest': false, 'objectId': data.id })
+        .whereNot({ 'id': response.id })
+        .andWhere('objectId', data.id)
+        .returning('*');
+
 
       if (!etrx) await trx.commit();
       return Promise.resolve(response);
@@ -113,6 +132,18 @@ const service = {
         // https://vincit.github.io/objection.js/recipes/returning-tricks.html
         .returning('*')
         .throwIfNotFound();
+
+      // set `isLatest: true` on most recent, if none exist with isLatest: true
+      const sq = await Version.query(trx)
+        .where({ 'objectId': objId })
+        .whereNot({ 'id': response[0].id })
+        .orderBy('createdAt', 'desc');
+      if (!sq.some(v => v.isLatest).length) {
+        await Version.query(trx)
+          .update({ 'isLatest': true, 'objectId': objId })
+          .where({ 'id': sq[0]?.id, 'objectId': objId });
+      }
+
 
       if (!etrx) await trx.commit();
       return Promise.resolve(response);
@@ -157,6 +188,7 @@ const service = {
         response = await Version.query(trx)
           .where('objectId', objectId)
           .andWhere('deleteMarker', false)
+          // TODO: use isLatest where possible
           .orderBy('createdAt', 'desc')
           .first();
       }
@@ -195,11 +227,11 @@ const service = {
    * @function update
    * Updates a version of an object.
    * Typically happens when updating the 'null-version' created for an object
-   * on a non-versioned or version-suspnded bucket.
-   * @param {object[]} data array of object attributes
+   * on a bucket without versioning.
+   * @param {object[]} data array of version attributes
    * @param {string} userId uuid of the current user
    * @param {object} [etrx=undefined] An optional Objection Transaction object
-   * @returns {Promise<integer>} id of Version object updated in the database
+   * @returns {Promise<integer>} id of version updated in the database
    * @throws The error encountered upon db transaction failure
    */
   update: async (data = {}, userId = SYSTEM_USER, etrx = undefined) => {
@@ -214,13 +246,13 @@ const service = {
           objectId: data.id,
           updatedBy: userId,
           mimeType: data.mimeType,
-          etag: data.etag
+          etag: data.etag,
+          isLatest: data.isLatest
         })
         .first()
-        .returning('id');
+        .returning('*');
 
       // TODO: consider updating metadata here instead of the controller
-
       if (!etrx) await trx.commit();
       return Promise.resolve(version);
     } catch (err) {
@@ -228,6 +260,62 @@ const service = {
       throw err;
     }
   },
+
+  /**
+   * @function updateIsLatest
+   * updates a given version with isLatest: true|false in COMS db
+   * and ensures only one version has isLatest: true
+   * @param {string} options.id COMS uuid of a version
+   * @param {string} options.objectId COMS uuid of an object
+   * @param {boolean} options.isLatest isLatest value to set in db
+   * @param {string} [userId=SYSTEM_USER] The uuid of a user
+   * @param {object} [etrx=undefined] An optional Objection Transaction object
+   * @returns {object} Version model of updated version in db
+   */
+  updateIsLatest: async ({ id, objectId, isLatest }, userId = undefined, etrx = undefined) => {
+    let trx;
+    try {
+      trx = etrx ? etrx : await Version.startTransaction();
+      // update this version
+      const updated = await Version.query(trx)
+        .update({ isLatest: isLatest, objectId: objectId, updatedBy: userId })
+        .where({ id: id })
+        .returning('*');
+
+      // if we set this version with isLatest: true
+      if (isLatest) {
+        // set all other versions to islatest: false
+        await Version.query(trx)
+          .update({ isLatest: false, objectId: objectId, updatedBy: userId })
+          .whereNot({ id: id })
+          .andWhere(objectId, objectId)
+          .returning('*');
+      }
+      // else we set this version with isLatest: false.
+      else {
+        // integrity process:
+        // if no other versions have isLatest: true
+        // set most recent to true
+        const sq = await Version.query(trx)
+          .where({ 'objectId': objectId })
+          .whereNot({ 'id': updated[0].id })
+          .orderBy('createdAt', 'desc');
+
+        if (!sq.some(v => v.isLatest).length) {
+          await Version.query(trx)
+            .update({ 'isLatest': true, 'objectId': objectId, updatedBy: userId })
+            .where({ 'id': sq[0]?.id, 'objectId': objectId });
+        }
+      }
+
+      if (!etrx) await trx.commit();
+
+      return Promise.resolve(updated);
+    } catch (err) {
+      if (!etrx && trx) await trx.rollback();
+      throw err;
+    }
+  }
 
 };
 

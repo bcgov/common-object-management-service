@@ -141,7 +141,7 @@ const controller = {
         // create or update version in DB (if a non-versioned object)
         const version = s3Response.VersionId ?
           await versionService.copy(sourceS3VersionId, s3Response.VersionId, objId, s3Response.CopyObjectResult?.ETag, userId, trx) :
-          await versionService.update({ ...data, id: objId, etag: s3Response.CopyObjectResult?.ETag }, userId, trx);
+          await versionService.update({ ...data, id: objId, etag: s3Response.CopyObjectResult?.ETag, isLatest: true }, userId, trx);
 
         // add metadata for version in DB
         await metadataService.associateMetadata(version.id, getKeyValue(data.metadata), userId, trx);
@@ -550,7 +550,7 @@ const controller = {
         // create or update version in DB(if a non-versioned object)
         const version = s3Response.VersionId ?
           await versionService.copy(sourceS3VersionId, s3Response.VersionId, objId, s3Response.CopyObjectResult?.ETag, userId, trx) :
-          await versionService.update({ ...data, id: objId, etag: s3Response.CopyObjectResult?.ETag }, userId, trx);
+          await versionService.update({ ...data, id: objId, etag: s3Response.CopyObjectResult?.ETag, isLatest: true }, userId, trx);
         // add metadata to version in DB
         await metadataService.associateMetadata(version.id, getKeyValue(data.metadata), userId, trx);
 
@@ -607,7 +607,8 @@ const controller = {
           const deleteMarker = {
             id: objId,
             deleteMarker: true,
-            s3VersionId: s3Response.VersionId
+            s3VersionId: s3Response.VersionId,
+            isLatest: true
           };
           await versionService.create(deleteMarker, userId);
         } else { // else object in bucket is not versioned
@@ -915,7 +916,7 @@ const controller = {
         const version = s3Response.VersionId ?
           await versionService.copy(sourceS3VersionId, s3Response.VersionId, objId, s3Response.CopyObjectResult?.ETag, userId, trx) :
 
-          await versionService.update({ ...data, id: objId, etag: s3Response.CopyObjectResult?.ETag }, userId, trx);
+          await versionService.update({ ...data, id: objId, etag: s3Response.CopyObjectResult?.ETag, isLatest: true }, userId, trx);
 
         // add metadata
         await metadataService.associateMetadata(version.id, getKeyValue(data.metadata), userId, trx);
