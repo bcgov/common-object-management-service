@@ -6,6 +6,7 @@ module.exports = {
   objectQueueService: require('./objectQueue'),
   objectPermissionService: require('./objectPermission'),
   storageService: require('./storage'),
+  syncService: require('./sync'),
   tagService: require('./tag'),
   userService: require('./user'),
   versionService: require('./version'),
