@@ -1,8 +1,7 @@
-
-const { Worker, isMainThread } = require('worker_threads');
+const config = require('config');
 
 const log = require('./log')(module.filename);
-const { dequeue, queueSize } = require('../services/objectQueue');
+const { objectQueueService, syncService } = require('../services');
 
 /**
  * @class QueueManager
@@ -14,27 +13,9 @@ class QueueManager {
    */
   constructor() {
     if (!QueueManager._instance) {
+      this._isBusy = false;
+      this._toClose = false;
       QueueManager._instance = this;
-      if (isMainThread) {
-        this._isBusy = false;
-        this._worker = new Worker('./src/components/queueWorker');
-        this._worker.on('message', message => {
-          this._isBusy = false;
-          log.verbose('QueueManager received message', { msg: message });
-          // If job is completed, check if there are more jobs
-          this.checkQueue();
-        });
-        this._worker.on('error', (err) => {
-          log.error(err);
-          // TODO: Intercept and re-enqueue with retries++
-        });
-        this._worker.on('online', () => {
-          log.info('QueueWorker online and ready for jobs', { threadId: this._worker.threadId });
-        });
-        this._worker.on('exit', (code) => {
-          log.info('QueueWorker exited', { exitCode: code });
-        });
-      }
     }
 
     return QueueManager._instance;
@@ -49,47 +30,92 @@ class QueueManager {
   }
 
   /**
-   * @function worker
-   * Gets the current worker
+   * @function toClose
+   * Gets the toClose state
    */
-  get worker() {
-    return this._worker;
+  get toClose() {
+    return this._toClose;
   }
 
   /**
    * @function checkQueue
-   * Checks Database connectivity
+   * Checks the queue for any unprocessed jobs
    */
   checkQueue() {
-    queueSize().then(size => {
-      if (!this._isBusy && size > 0) this.startNextJob();
-    }).catch(() => { });
+    if (!this.isBusy && !this.toClose) {
+      objectQueueService.queueSize().then(size => {
+        if (size > 0) this.processNextJob();
+      }).catch((err) => {
+        log.error(`Error encountered while checking queue: ${err.message}`, { function: 'checkQueue', error: err });
+      });
+    }
   }
 
   /**
    * @function close
-   * Will close the worker
+   * Spinlock until any remaining jobs are completed
    * @param {function} [cb] Optional callback
    */
   close(cb = undefined) {
-    this._worker.terminate().finally(() => {
+    this._toClose = true;
+    if (this.isBusy) setTimeout(this.close(cb), 250);
+    else {
+      log.info('No longer processing jobs', { function: 'close' });
       if (cb) cb();
-    });
+    }
   }
 
   /**
-   * @function startNextJob
-   * Dispatches a message to the worker
+   * @function processNextJob
+   * Attempts to process the next job if available
    * @param {object} message A message object
    */
-  startNextJob() {
-    dequeue().then((response) => {
+  async processNextJob() {
+    let job;
+
+    try {
+      const response = await objectQueueService.dequeue();
+
       if (response.length) {
-        const job = response[0];
+        job = response[0];
         this._isBusy = true;
-        this._worker.postMessage({ bucketId: job.bucketId, path: job.path });
+
+        log.verbose(`Started processing job id ${job.id}`, { function: 'processNextJob', job: job });
+
+        const result = await syncService.syncJob({
+          bucketId: job.bucketId,
+          path: job.path,
+          full: job.full,
+          userId: job.createdBy
+        });
+
+        this._isBusy = false;
+        log.verbose(`Finished processing job id ${job.id}`, { function: 'processNextJob', job: job, result: result });
+
+        // If job is completed, check if there are more jobs
+        if (!this.toClose) this.checkQueue();
       }
-    }).catch(() => { });
+    } catch (err) {
+      log.error(`Error encountered on job id ${job.id}: ${err.message}`, { function: 'processNextJob', job: job, error: err });
+
+      const maxRetries = parseInt(config.get('server.maxRetries'));
+      if (job.retries + 1 > maxRetries) {
+        log.warn(`Job has exceeded the ${maxRetries} maximum retries permitted`, { function: 'processNextJob', job: job, maxRetries: maxRetries });
+      } else {
+        objectQueueService.enqueue({
+          jobs: [{ bucketId: job.bucketId, path: job.path }],
+          full: job.full,
+          retries: job.retries + 1,
+          createdBy: job.createdBy
+        }).then(() => {
+          log.verbose('Job has been reenqueued', { function: 'processNextJob', job: job });
+        }).catch((e) => {
+          log.error(`Failed to reenqueue job id ${job.id}: ${e.message}`, { function: 'processNextJob', job: job });
+        });
+      }
+
+      this._isBusy = false;
+    }
   }
 }
 
