@@ -1,5 +1,6 @@
 const { NIL: SYSTEM_USER, v4: uuidv4, validate: uuidValidate } = require('uuid');
 
+const log = require('../components/log')(module.filename);
 const { ObjectModel, Version } = require('../db/models');
 const utils = require('../db/models/utils');
 
@@ -12,35 +13,40 @@ const versionService = require('./version');
  * sync data between object storage and the COMS database
  */
 const service = {
-
   /**
-   * co-ordinates the syncing steps
-   * @param {string} [options.path=undefined]
-   * @param {string} [options.bucketId=undefined]
-   * @param {boolean} [options.fullMode=true]
-   * @param {string} [options.userId=SYSTEM_USER]
+   * @function syncJob
+   * Orchestrates the synchronization of all aspects of a specified object
+   * @param {string} options.path String representing the canonical path for the specified object
+   * @param {string} [options.bucketId=undefined] Optional uuid for the specified object
+   * @param {boolean} [options.full=false] Optional boolean indicating whether to execute full recursive run
+   * @param {string} [options.userId=SYSTEM_USER] Optional uuid attributing which user added the job
+   * @returns
+   * @throws If the synchronization job encountered an error
    */
-  sync: async ({ path = undefined, bucketId = undefined, fullMode = true, userId = SYSTEM_USER }) => {
+  syncJob: async ({ path, bucketId = undefined, full = false, userId = SYSTEM_USER } = {}) => {
     try {
-      await utils.trxWrapper(async (trx) => {
+      if (!path) throw new Error('Path must be defined');
 
+      await utils.trxWrapper(async (trx) => {
         // 1. sync object
         const object = await service.syncObject({ path: path, bucketId: bucketId, userId: userId }, trx);
 
         // 2. sync versions
         let versions = [];
         // if object wasn't deleted in objectSync or in 'fullMode'
-        if (object || fullMode) {
+        if (object || full) {
           versions = await service.syncVersions({ path: path, bucketId: bucketId, object: object, userId: userId }, trx);
         }
+
         // 3. sync metadata & tags
-        if (versions.length || fullMode) {
+        if (versions.length || full) {
           // sync metadata
         }
       });
     }
-    catch (e) {
-      // console.log(e);
+    catch (err) {
+      log.error(err, { function: 'syncJob' });
+      throw err;
     }
   },
 

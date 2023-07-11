@@ -36,6 +36,7 @@
     "hardReset": "SERVER_HARDRESET",
     "logFile": "SERVER_LOGFILE",
     "logLevel": "SERVER_LOGLEVEL",
+    "maxRetries": "SERVER_MAXRETRIES",
     "passphrase": "SERVER_PASSPHRASE",
     "port": "SERVER_PORT",
     "privacyMask": "SERVER_PRIVACY_MASK"
