@@ -6,11 +6,11 @@ const { requireDb, requireSomeAuth } = require('../../middleware/featureToggle')
 const { checkAppMode } = require('../../middleware/authorization');
 
 router.use(checkAppMode);
-router.use(requireSomeAuth);
 router.use(requireDb);
+router.use(requireSomeAuth);
 
 /** Search for tags */
-router.get('/', tagValidator.searchTags, requireSomeAuth, requireDb, (req, res, next) => {
+router.get('/', tagValidator.searchTags, (req, res, next) => {
   tagController.searchTags(req, res, next);
 });
 

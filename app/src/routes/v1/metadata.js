@@ -6,11 +6,11 @@ const { requireDb, requireSomeAuth } = require('../../middleware/featureToggle')
 const { checkAppMode } = require('../../middleware/authorization');
 
 router.use(checkAppMode);
-router.use(requireSomeAuth);
 router.use(requireDb);
+router.use(requireSomeAuth);
 
 /** Search for metadata */
-router.get('/', metadataValidator.searchMetadata, requireDb, (req, res, next) => {
+router.get('/', metadataValidator.searchMetadata, (req, res, next) => {
   metadataController.searchMetadata(req, res, next);
 });
 
