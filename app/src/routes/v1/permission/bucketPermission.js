@@ -8,6 +8,7 @@ const { requireDb, requireSomeAuth } = require('../../../middleware/featureToggl
 
 router.use(checkAppMode);
 router.use(requireDb);
+router.use(requireSomeAuth);
 
 /** Search for bucket permissions */
 router.get('/', bucketPermissionValidator.searchPermissions, (req, res, next) => {
@@ -15,17 +16,17 @@ router.get('/', bucketPermissionValidator.searchPermissions, (req, res, next) =>
 });
 
 /** Returns the bucket permissions */
-router.get('/:bucketId', bucketPermissionValidator.listPermissions, requireSomeAuth, currentObject, hasPermission(Permissions.READ),  (req, res, next) => {
+router.get('/:bucketId', bucketPermissionValidator.listPermissions, currentObject, hasPermission(Permissions.READ),  (req, res, next) => {
   bucketPermissionController.listPermissions(req, res, next);
 });
 
 /** Grants bucket permissions to users */
-router.put('/:bucketId', bucketPermissionValidator.addPermissions, requireSomeAuth, currentObject, hasPermission(Permissions.MANAGE), (req, res, next) => {
+router.put('/:bucketId', bucketPermissionValidator.addPermissions, currentObject, hasPermission(Permissions.MANAGE), (req, res, next) => {
   bucketPermissionController.addPermissions(req, res, next);
 });
 
 /** Deletes bucket permissions for a user */
-router.delete('/:bucketId', bucketPermissionValidator.removePermissions, requireSomeAuth, currentObject, hasPermission(Permissions.MANAGE), (req, res, next) => {
+router.delete('/:bucketId', bucketPermissionValidator.removePermissions, currentObject, hasPermission(Permissions.MANAGE), (req, res, next) => {
   bucketPermissionController.removePermissions(req, res, next);
 });
 
