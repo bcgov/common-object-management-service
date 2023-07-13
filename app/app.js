@@ -174,6 +174,7 @@ function checkConnections() {
       state.connections.data = results;
       state.ready = Object.values(state.connections).every(x => x);
       if (!wasReady && state.ready) log.info('Application ready to accept traffic', { function: 'checkConnections' });
+      if (wasReady && !state.ready) log.warn('Application not ready to accept traffic', { function: 'checkConnections' });
       log.silly('App state', { function: 'checkConnections', state: state });
       if (!state.ready) notReadyHandler();
     });
@@ -211,9 +212,9 @@ function initializeConnections() {
     })
     .finally(() => {
       state.ready = Object.values(state.connections).every(x => x);
-      if (state.ready) log.info('Service ready to accept traffic', { function: 'initializeConnections' });
+      if (state.ready) log.info('Application ready to accept traffic', { function: 'initializeConnections' });
 
-      // Start periodic 10 second connection probe check
+      // Start periodic 10 second connection probes
       probeId = setInterval(checkConnections, 10000);
       queueId = setInterval(() => {
         if (state.ready) queueManager.checkQueue();
