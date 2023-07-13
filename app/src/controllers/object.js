@@ -223,9 +223,8 @@ const controller = {
    */
   async createObjects(req, res, next) {
     try {
-      const bb = busboy({ headers: req.headers });
-      const objects = [];
-      let fileEventCount = 0;
+      const bb = busboy({ headers: req.headers, limits: { files: 1 } });
+      let object = undefined;
 
       const bucketId = req.query.bucketId ? addDashesToUuid(req.query.bucketId) : undefined;
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
@@ -242,7 +241,6 @@ const controller = {
       const { key: bucketKey } = await getBucket(bucketId, true);
 
       bb.on('file', (name, stream, info) => {
-        fileEventCount++;
         const objId = uuidv4();
         const path = joinPath(bucketKey, info.filename);
 
@@ -262,7 +260,10 @@ const controller = {
         // Preflight S3 Object check
         storageService.headObject({ filePath: path, bucketId: bucketId })
           // Skipping file as the object already exists on bucket
-          .then(() => stream.resume())
+          .then(() => {
+            req.unpipe(bb);
+            new Problem(409, { detail: 'Bucket already contains object' }).send(res);
+          })
           // Object does not exist on bucket
           .catch((e) => {
             // Skip file in the unlikely event we get an unexpected error from headObject
@@ -271,59 +272,64 @@ const controller = {
               return;
             }
 
-            const s3Response = storageService.upload({ ...data, stream });
-            const dbResponse = utils.trxWrapper(async (trx) => {
-              // create object
-              const object = await objectService.create({
-                ...data,
-                userId: userId,
-                path: path
-              }, trx);
+            // pending s3 response
+            const s3Promise = storageService.upload({ ...data, stream });
 
-              // create S3 upload promise
-              const s3Resolved = await s3Response;
-
-              // create new version in DB
-              const s3VersionId = s3Resolved.VersionId ?? null;
-              const version = await versionService.create({ ...data, etag: s3Resolved.ETag, s3VersionId: s3VersionId }, userId, trx);
-              object.versionId = version.id;
-
-              // add metadata to version in DB
-              if (data.metadata && Object.keys(data.metadata).length) await metadataService.associateMetadata(version.id, getKeyValue(data.metadata), userId, trx);
-
-              // add tags to version in DB
-              if (data.tags && Object.keys(data.tags).length) await tagService.associateTags(version.id, getKeyValue(data.tags), userId, trx);
-
-              return object;
-            });
-
-            objects.push({
+            // add to the object (for handling in 'close' event)
+            object = {
               data: data,
-              dbResponse: dbResponse,
-              s3Response: s3Response
-            });
+              s3Promise: s3Promise
+            };
           });
       });
 
       bb.on('close', () => {
-        Promise.all(objects.map(async (object) => {
-          // wait for file to finish uploading to S3
-          object.s3Response = await object.s3Response;
-          // wait for object and permission db update
-          object.dbResponse = await object.dbResponse;
-        })).then(() => {
-          if (!objects.length) {
-            return new Problem(409, { detail: 'Bucket already contains these object(s)' }).send(res);
-          }
+
+        // await s3 response (resolved or rejected promise)
+        object.s3Promise
+
+          // then do db inserts
+          .then((s3Resolved) => {
+            const data = object.data;
+            object.s3Resolved = s3Resolved;
+
+            return utils.trxWrapper(async (trx) => {
+              // create object
+              const object = await objectService.create({
+                ...data,
+                userId: userId,
+                path: joinPath(bucketKey, data.name)
+              }, trx);
+
+              // create version
+              const s3VersionId = s3Resolved.VersionId ?? null;
+              const version = await versionService.create({ ...data, etag: s3Resolved.ETag, s3VersionId: s3VersionId }, userId, trx);
+              object.versionId = version.id;
+
+              // create metadata
+              if (data.metadata && Object.keys(data.metadata).length) await metadataService.associateMetadata(version.id, getKeyValue(data.metadata), userId, trx);
+
+              // create tags
+              if (data.tags && Object.keys(data.tags).length) await tagService.associateTags(version.id, getKeyValue(data.tags), userId, trx);
+
+              return object;
+            });
+          })
 
           // merge returned responses into a result
-          const result = objects.map((object) => ({
-            ...object.data,
-            ...object.dbResponse,
-            ...renameObjectProperty(object.s3Response, 'VersionId', 's3VersionId')
-          }));
-          res.status(objects.length === fileEventCount ? 201 : 200).json(result);
-        });
+          .then((dbResponse) => {
+            const result = {
+              ...object.data,
+              ...dbResponse,
+              ...renameObjectProperty(object.s3Resolved, 'VersionId', 's3VersionId')
+            };
+            res.status(200).json(result);
+          })
+
+          // s3 or DB error
+          .catch((e) => {
+            return new Problem(500, { detail: e }).send(res);
+          });
       });
 
       bb.on('error', () => {
@@ -958,7 +964,8 @@ const controller = {
           s3Response: s3Response
         };
       });
-
+      // i think having async here is an issue.. because it allows the close event to run asynchronously, typically before the file event (and the upload) has completed
+      // you could use then()
       bb.on('close', async () => {
         const [dbResponse, s3Response] = await Promise.all([
           object.dbResponse,
