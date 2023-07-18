@@ -516,8 +516,9 @@ describe('presignUrl', () => {
 
 describe('putObject', () => {
   const getPathSpy = jest.spyOn(utils, 'getPath');
-  const id = 'id';
-  const keyPath = utils.joinPath(key, id);
+  const name = 'foo.txt';
+  const keyPath = utils.joinPath(key, name);
+  const length = 123;
 
   beforeEach(() => {
     getPathSpy.mockResolvedValue(keyPath);
@@ -531,32 +532,32 @@ describe('putObject', () => {
   it('should send a put object command', async () => {
     const stream = new Readable();
     const mimeType = 'mimeType';
-    const metadata = { 'coms-name': 'originalName', 'coms-id': id };
-    const result = await service.putObject({ stream, id, mimeType, metadata });
+    const result = await service.putObject({ stream, name, length, mimeType });
 
     expect(result).toBeTruthy();
     expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(s3ClientMock).toHaveReceivedCommandTimes(PutObjectCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(PutObjectCommand, {
       Bucket: bucket,
+      ContentLength: length,
       ContentType: mimeType,
       Key: keyPath,
-      Body: stream,
-      Metadata: metadata,
+      Body: stream
     });
   });
 
   it('should send a put object command with custom metadata', async () => {
     const stream = new Readable();
     const mimeType = 'mimeType';
-    const metadata = { 'coms-name': 'originalName', 'coms-id': id, foo: 'foo', bar: 'bar' };
-    const result = await service.putObject({ stream, id, mimeType, metadata });
+    const metadata = { foo: 'foo', bar: 'bar' };
+    const result = await service.putObject({ stream, name, length, mimeType, metadata });
 
     expect(result).toBeTruthy();
     expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(s3ClientMock).toHaveReceivedCommandTimes(PutObjectCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(PutObjectCommand, {
       Bucket: bucket,
+      ContentLength: length,
       ContentType: mimeType,
       Key: keyPath,
       Body: stream,
@@ -567,19 +568,18 @@ describe('putObject', () => {
   it('should send a put object command with custom tags', async () => {
     const stream = new Readable();
     const mimeType = 'mimeType';
-    const metadata = { 'coms-name': 'originalName', 'coms-id': id };
     const tags = { foo: 'foo', bar: 'bar' };
-    const result = await service.putObject({ stream, id, mimeType, metadata, tags });
+    const result = await service.putObject({ stream, name, length, mimeType, tags });
 
     expect(result).toBeTruthy();
     expect(utils.getBucket).toHaveBeenCalledTimes(1);
     expect(s3ClientMock).toHaveReceivedCommandTimes(PutObjectCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(PutObjectCommand, {
       Bucket: bucket,
+      ContentLength: length,
       ContentType: mimeType,
       Key: keyPath,
       Body: stream,
-      Metadata: metadata,
       Tagging: 'foo=foo&bar=bar'
     });
   });
