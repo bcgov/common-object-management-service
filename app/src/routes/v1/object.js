@@ -9,8 +9,8 @@ const { checkAppMode, currentObject, hasPermission } = require('../../middleware
 router.use(checkAppMode);
 
 /** Creates new objects */
-router.post('/', objectValidator.createObjects, requireSomeAuth, (req, res, next) => {
-  objectController.createObjects(req, res, next);
+router.post('/', objectValidator.createObject, requireSomeAuth, (req, res, next) => {
+  objectController.createObject(req, res, next);
 });
 
 /** Search for objects */
