@@ -8,6 +8,7 @@ const {
   DEFAULTCORS,
   DownloadMode,
   MAXCOPYOBJECTLENGTH,
+  MAXFILEOBJECTLENGTH,
   MetadataDirective,
   TaggingDirective
 } = require('../components/constants');
@@ -214,22 +215,30 @@ const controller = {
   },
 
   /**
-   * @function createObjects
-   * Creates new objects
+   * @function createObject
+   * Creates a new object
    * @param {object} req Express request object
    * @param {object} res Express response object
    * @param {function} next The next callback function
    * @returns {function} Express middleware function
    */
-  async createObjects(req, res, next) {
-    try {
-      const bb = busboy({ headers: req.headers, limits: { files: 1 } });
-      let object = undefined;
+  async createObject(req, res, next) {
+    let data;
+    let s3Promise;
 
-      const bucketId = req.query.bucketId ? addDashesToUuid(req.query.bucketId) : undefined;
+    try {
+      const bb = busboy({
+        headers: req.headers,
+        limits: {
+          fields: 0,
+          fileSize: MAXFILEOBJECTLENGTH,
+          files: 1
+        }
+      });
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
       // Preflight CREATE permission check if bucket scoped and OIDC authenticated
+      const bucketId = req.query.bucketId ? addDashesToUuid(req.query.bucketId) : undefined;
       if (bucketId && userId) {
         const permission = await bucketPermissionService.searchPermissions({ userId: userId, bucketId: bucketId, permCode: 'CREATE' });
         if (!permission.length) {
@@ -240,104 +249,114 @@ const controller = {
       // Preflight existence check for bucketId
       const { key: bucketKey } = await getBucket(bucketId, true);
 
-      bb.on('file', (name, stream, info) => {
-        const objId = uuidv4();
-        const path = joinPath(bucketKey, info.filename);
-
-        const data = {
-          id: objId,
-          bucketId: bucketId,
-          fieldName: name,
-          name: info.filename,
-          mimeType: info.mimeType,
-          metadata: getMetadata(req.headers),
-          tags: {
-            ...req.query.tagset,
-            'coms-id': objId // Enforce `coms-id:<objectId>` tag
-          }
-        };
-
-        // Preflight S3 Object check
-        storageService.headObject({ filePath: path, bucketId: bucketId })
-          // Skipping file as the object already exists on bucket
-          .then(() => {
+      bb.on('file', async (name, stream, info) => {
+        try {
+          // Only process multipart file fields named 'file'.
+          if (name !== 'file') {
             req.unpipe(bb);
-            new Problem(409, { detail: 'Bucket already contains object' }).send(res);
-          })
-          // Object does not exist on bucket
-          .catch((e) => {
-            // Skip file in the unlikely event we get an unexpected error from headObject
-            if (e.$metadata.httpStatusCode !== 404) {
-              stream.resume();
-              return;
+            throw new Problem(400, { detail: 'Malformed body: form-data expects \'file\' field' });
+          }
+
+          const handleNewFile = () => {
+            const objId = uuidv4();
+            data = {
+              id: objId,
+              bucketId: bucketId,
+              name: info.filename,
+              mimeType: info.mimeType,
+              metadata: getMetadata(req.headers),
+              tags: {
+                ...req.query.tagset,
+                'coms-id': objId // Enforce `coms-id:<objectId>` tag
+              }
+            };
+
+            // TODO: Consider adding in PutObject analog for sub 5GB file operations
+            const contentLength = parseInt(req.get('Content-Length'));
+            if (contentLength < MAXFILEOBJECTLENGTH) {
+              s3Promise = storageService.upload({ ...data, stream: stream });
+            } else {
+              req.unpipe(bb);
+              throw new Problem(413, { detail: 'File exceeds maximum 50GB limit' });
+            }
+          };
+
+          try {
+            // Preflight S3 Object check
+            await storageService.headObject({
+              filePath: joinPath(bucketKey, info.filename),
+              bucketId: bucketId
+            });
+
+            // Hard short circuit skip file as the object already exists on bucket
+            req.unpipe(bb);
+            throw new Problem(409, { detail: 'Bucket already contains object' });
+          } catch (err) {
+            if (err instanceof Problem) throw err;
+
+            // Object does not exist on bucket
+            if (err.$metadata?.httpStatusCode !== 404) {
+              // Skip file in the unlikely event we get an unexpected error from headObject
+              req.unpipe(bb);
+              throw new Problem(502, { detail: 'Bucket communication error' });
             }
 
-            // pending s3 response
-            const s3Promise = storageService.upload({ ...data, stream });
+            handleNewFile();
+          }
+        } catch (e) {
+          next(errorToProblem(SERVICE, e));
+        }
+      });
 
-            // add to the object (for handling in 'close' event)
-            object = {
-              data: data,
-              s3Promise: s3Promise
-            };
+      bb.on('close', async () => {
+        try {
+          const s3Response = await s3Promise;
+          const dbResponse = await utils.trxWrapper(async (trx) => {
+            // Create Object
+            const object = await objectService.create({
+              ...data,
+              userId: userId,
+              path: joinPath(bucketKey, data.name)
+            }, trx);
+
+            // Create Version
+            const s3VersionId = s3Response.VersionId ?? null;
+            const version = await versionService.create({
+              ...data,
+              etag: s3Response.ETag,
+              s3VersionId: s3VersionId
+            }, userId, trx);
+            object.versionId = version.id;
+
+            // Create Metadata
+            if (data.metadata && Object.keys(data.metadata).length) {
+              await metadataService.associateMetadata(version.id, getKeyValue(data.metadata), userId, trx);
+            }
+
+            // Create Tags
+            if (data.tags && Object.keys(data.tags).length) {
+              await tagService.associateTags(version.id, getKeyValue(data.tags), userId, trx);
+            }
+
+            return object;
           });
-      });
 
-      bb.on('close', () => {
-
-        // await s3 response (resolved or rejected promise)
-        object.s3Promise
-
-          // then do db inserts
-          .then((s3Resolved) => {
-            const data = object.data;
-            object.s3Resolved = s3Resolved;
-
-            return utils.trxWrapper(async (trx) => {
-              // create object
-              const object = await objectService.create({
-                ...data,
-                userId: userId,
-                path: joinPath(bucketKey, data.name)
-              }, trx);
-
-              // create version
-              const s3VersionId = s3Resolved.VersionId ?? null;
-              const version = await versionService.create({ ...data, etag: s3Resolved.ETag, s3VersionId: s3VersionId }, userId, trx);
-              object.versionId = version.id;
-
-              // create metadata
-              if (data.metadata && Object.keys(data.metadata).length) await metadataService.associateMetadata(version.id, getKeyValue(data.metadata), userId, trx);
-
-              // create tags
-              if (data.tags && Object.keys(data.tags).length) await tagService.associateTags(version.id, getKeyValue(data.tags), userId, trx);
-
-              return object;
-            });
-          })
-
-          // merge returned responses into a result
-          .then((dbResponse) => {
-            const result = {
-              ...object.data,
-              ...dbResponse,
-              ...renameObjectProperty(object.s3Resolved, 'VersionId', 's3VersionId')
-            };
-            res.status(200).json(result);
-          })
-
-          // s3 or DB error
-          .catch((e) => {
-            return new Problem(500, { detail: e }).send(res);
+          res.status(200).json({
+            ...data,
+            ...dbResponse,
+            ...renameObjectProperty(s3Response, 'VersionId', 's3VersionId')
           });
+        } catch (e) {
+          next(errorToProblem(SERVICE, e));
+        }
       });
 
-      bb.on('error', () => {
-        throw new Error('Stream Error'); // TODO: Revisit on error stack refactor
+      bb.on('error', (e) => {
+        throw new Error(`Stream Error: ${e}`); // TODO: Revisit on error stack refactor
       });
 
-      req.connection.on('error', () => {
-        throw new Error('Connection Error'); // TODO: Revisit on error stack refactor
+      req.connection.on('error', (e) => {
+        throw new Error(`Connection Error: ${e}`); // TODO: Revisit on error stack refactor
       });
 
       req.pipe(bb);
@@ -900,85 +919,132 @@ const controller = {
    * @returns {function} Express middleware function
    */
   async updateObject(req, res, next) {
+    let data;
+    let s3Promise;
+
     try {
-      const bb = busboy({ headers: req.headers, limits: { files: 1 } });
+      const bb = busboy({
+        headers: req.headers,
+        limits: {
+          fields: 0,
+          fileSize: MAXFILEOBJECTLENGTH,
+          files: 1
+        }
+      });
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
-      let object = undefined;
 
       // Preflight existence check for bucketId
       const bucketId = req.currentObject?.bucketId;
       const { key: bucketKey } = await getBucket(bucketId, true);
 
-      bb.on('file', (name, stream, info) => {
-        const objId = addDashesToUuid(req.params.objectId);
-        const data = {
-          bucketId: bucketId,
-          id: objId,
-          fieldName: name,
-          name: req.currentObject?.path.match(/(?!.*\/)(.*)$/)[0],
-          mimeType: info.mimeType,
-          metadata: getMetadata(req.headers),
-          tags: {
-            ...req.query.tagset,
-            'coms-id': objId // Enforce `coms-id:<objectId>` tag
+      bb.on('file', async (name, stream, info) => {
+        try {
+          // Only process multipart file fields named 'file'.
+          if (name !== 'file') {
+            req.unpipe(bb);
+            throw new Problem(400, { detail: 'Malformed body: form-data expects \'file\' field' });
           }
-        };
 
-        const s3Response = storageService.upload({ ...data, stream });
-        const dbResponse = utils.trxWrapper(async (trx) => {
-          // update object in DB
-          const object = await objectService.update({
-            ...data,
-            userId: userId,
-            path: joinPath(bucketKey, data.name)
-          }, trx);
+          const filename = req.currentObject?.path.match(/(?!.*\/)(.*)$/)[0];
+          const handleUpdateFile = () => {
+            const objId = addDashesToUuid(req.params.objectId);
+            data = {
+              id: objId,
+              bucketId: bucketId,
+              name: req.currentObject?.path.match(/(?!.*\/)(.*)$/)[0],
+              mimeType: info.mimeType,
+              metadata: getMetadata(req.headers),
+              tags: {
+                ...req.query.tagset,
+                'coms-id': objId // Enforce `coms-id:<objectId>` tag
+              }
+            };
 
-          // wait for S3 response
-          const s3Resolved = await s3Response;
+            // TODO: Consider adding in PutObject analog for sub 5GB file operations
+            const contentLength = parseInt(req.get('Content-Length'));
+            if (contentLength < MAXFILEOBJECTLENGTH) {
+              s3Promise = storageService.upload({ ...data, stream: stream });
+            } else {
+              req.unpipe(bb);
+              throw new Problem(413, { detail: 'File exceeds maximum 50GB limit' });
+            }
+          };
 
-          let version = undefined;
-          if (s3Resolved.VersionId) { // if versioning enabled, create new version in DB
-            const s3VersionId = s3Resolved.VersionId;
-            version = await versionService.create({ ...data, etag: s3Resolved.ETag, s3VersionId: s3VersionId }, userId, trx);
-          } else { // else update only version in DB
-            version = await versionService.update({
-              ...data,
-              s3VersionId: null,
-              etag: s3Resolved.ETag
-            }, userId, trx);
+          try {
+            // Preflight S3 Object check
+            const headResponse = await storageService.headObject({
+              filePath: joinPath(bucketKey, filename),
+              bucketId: bucketId
+            });
+
+            if (headResponse.$metadata?.httpStatusCode === 200) handleUpdateFile();
+          } catch (err) {
+            req.unpipe(bb);
+            if (err instanceof Problem) throw err;
+            else if (err.$metadata?.httpStatusCode !== 404) {
+              // Object does not exist on bucket
+              throw new Problem(502, { detail: 'Bucket communication error' });
+            } else {
+              // Bucket is missing the existing object
+              throw new Problem(409, { detail: 'Bucket does not contain existing object' });
+              // TODO: Add in sync operation to flush object out of COMS DB?
+            }
           }
-          object.versionId = version.id;
-
-          // add metadata to version in DB
-          if (data.metadata && Object.keys(data.metadata).length) await metadataService.associateMetadata(version.id, getKeyValue(data.metadata), userId, trx);
-
-          // add tags to version in DB
-          if (data.tags && Object.keys(data.tags).length) await tagService.replaceTags(version.id, getKeyValue(data.tags), userId, trx);
-
-          return object;
-        });
-
-        object = {
-          data: data,
-          dbResponse: dbResponse,
-          s3Response: s3Response
-        };
+        } catch (e) {
+          next(errorToProblem(SERVICE, e));
+        }
       });
-      // i think having async here is an issue.. because it allows the close event to run asynchronously, typically before the file event (and the upload) has completed
-      // you could use then()
-      bb.on('close', async () => {
-        const [dbResponse, s3Response] = await Promise.all([
-          object.dbResponse,
-          object.s3Response
-        ]);
 
-        // merge returned responses into a result
-        const result = {
-          ...object.data,
-          ...dbResponse,
-          ...renameObjectProperty(s3Response, 'VersionId', 's3VersionId')
-        };
-        res.status(200).json(result);
+      bb.on('close', async () => {
+        try {
+          const s3Response = await s3Promise;
+          const dbResponse = await utils.trxWrapper(async (trx) => {
+            // Update Object
+            const object = await objectService.update({
+              ...data,
+              userId: userId,
+              path: joinPath(bucketKey, data.name)
+            }, trx);
+
+            // Update Version
+            let version = undefined;
+            if (s3Response.VersionId) { // Create new version if bucket versioning enabled
+              const s3VersionId = s3Response.VersionId;
+              version = await versionService.create({ ...data, etag: s3Response.ETag, s3VersionId: s3VersionId }, userId, trx);
+            } else { // Update existing version when bucket versioning not enabled
+              version = await versionService.update({
+                ...data,
+                s3VersionId: null,
+                etag: s3Response.ETag
+              }, userId, trx);
+            }
+            object.versionId = version.id;
+
+            // Update Metadata
+            if (data.metadata && Object.keys(data.metadata).length) await metadataService.associateMetadata(version.id, getKeyValue(data.metadata), userId, trx);
+
+            // Update Tags
+            if (data.tags && Object.keys(data.tags).length) await tagService.replaceTags(version.id, getKeyValue(data.tags), userId, trx);
+
+            return object;
+          });
+
+          res.status(200).json({
+            ...data,
+            ...dbResponse,
+            ...renameObjectProperty(s3Response, 'VersionId', 's3VersionId')
+          });
+        } catch (e) {
+          next(errorToProblem(SERVICE, e));
+        }
+      });
+
+      bb.on('error', (e) => {
+        throw new Error(`Stream Error: ${e}`); // TODO: Revisit on error stack refactor
+      });
+
+      req.connection.on('error', (e) => {
+        throw new Error(`Connection Error: ${e}`); // TODO: Revisit on error stack refactor
       });
 
       req.pipe(bb);
