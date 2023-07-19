@@ -87,7 +87,7 @@ describe('addTags', () => {
 describe('createObject', () => {
 
   describe('headers', () => {
-    const headers = schema.createObjects.headers.describe();
+    const headers = schema.createObject.headers.describe();
 
     it('is the expected schema', () => {
       expect(headers).toEqual(type.metadata().describe());
@@ -99,19 +99,19 @@ describe('createObject', () => {
 
       it.skip('is in schema when DB mode enabled', () => {
         config.has.mockReturnValueOnce(true);
-        const bucketId = schema.createObjects.query.describe().keys.bucketId;
+        const bucketId = schema.createObject.query.describe().keys.bucketId;
         expect(bucketId).toEqual(type.uuidv4.describe());
       });
 
       it.skip('is not in schema when DB mode not enabled', () => {
         config.has.mockReturnValueOnce(false);
-        const bucketId = schema.createObjects.query.describe().keys.bucketId;
+        const bucketId = schema.createObject.query.describe().keys.bucketId;
         expect(bucketId).toEqual(undefined);
       });
     });
 
     describe('tagset', () => {
-      const tagset = schema.createObjects.query.describe().keys.tagset;
+      const tagset = schema.createObject.query.describe().keys.tagset;
 
       it('is the expected schema', () => {
         expect(tagset).toEqual(type.tagset().describe());

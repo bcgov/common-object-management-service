@@ -1,4 +1,3 @@
-const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const {
   CopyObjectCommand,
   DeleteObjectCommand,
@@ -18,6 +17,7 @@ const {
   S3Client,
 } = require('@aws-sdk/client-s3');
 const { Upload } = require('@aws-sdk/lib-storage');
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const config = require('config');
 
 const { MetadataDirective, TaggingDirective } = require('../components/constants');
@@ -327,23 +327,24 @@ const objectStorageService = {
   },
 
   /**
-   * @deprecated Use `upload` instead
    * @function putObject
    * Puts the object `stream` at the `id` path
    * @param {stream} options.stream The binary stream of the object
-   * @param {string} options.id The filePath id of the object
+   * @param {string} options.name The file name of the object
+   * @param {number} options.length The content length of the object
    * @param {string} options.mimeType The mime type of the object
    * @param {object} [options.metadata] Optional object containing key/value pairs for metadata
    * @param {object} [options.tags] Optional object containing key/value pairs for tags
    * @param {string} [options.bucketId] Optional bucketId
    * @returns {Promise<object>} The response of the put object operation
    */
-  async putObject({ stream, id, mimeType, metadata, tags, bucketId = undefined }) {
+  async putObject({ stream, name, length, mimeType, metadata, tags, bucketId = undefined }) {
     const data = await utils.getBucket(bucketId);
     const params = {
       Bucket: data.bucket,
-      Key: await utils.getPath(id),
+      Key: utils.joinPath(data.key, name),
       Body: stream,
+      ContentLength: length,
       ContentType: mimeType,
       Metadata: metadata,
       Tagging: Object.entries({ ...tags }).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&')
@@ -351,7 +352,6 @@ const objectStorageService = {
       // ServerSideEncryption: 'AES256'
     };
 
-    // TODO: Consider refactoring to use Upload instead from @aws-sdk/lib-storage
     return this._getS3Client(data).send(new PutObjectCommand(params));
   },
 
@@ -444,6 +444,13 @@ const objectStorageService = {
         // TODO: Consider adding API param support for Server Side Encryption
         // ServerSideEncryption: 'AES256'
       },
+      // TODO: Add utility to determine optimal part size based on content length
+      // partSize: 512 * 1024 * 1024,
+      queueSize: 1
+    });
+
+    upload.on('httpUploadProgress', progress => {
+      log.debug(progress, { function: 'onhttpUploadProgress' });
     });
 
     return upload.done();

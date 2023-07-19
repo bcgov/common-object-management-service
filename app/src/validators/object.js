@@ -41,7 +41,7 @@ const schema = {
 
   // TODO: Make this schema definition unit-testable
   // bucketId property was undefined in unit test
-  createObjects: {
+  createObject: {
     headers: type.metadata(),
     query: Joi.object((() => {
       const query = { tagset: type.tagset() };
@@ -228,7 +228,7 @@ const schema = {
 const validator = {
   addMetadata: validate(schema.addMetadata, { statusCode: 422 }),
   addTags: validate(schema.addTags, { statusCode: 422 }),
-  createObjects: validate(schema.createObjects, { statusCode: 422 }),
+  createObject: validate(schema.createObject, { statusCode: 422 }),
   deleteMetadata: validate(schema.deleteMetadata, { statusCode: 422 }),
   deleteObject: validate(schema.deleteObject, { statusCode: 422 }),
   deleteTags: validate(schema.deleteTags, { statusCode: 422 }),

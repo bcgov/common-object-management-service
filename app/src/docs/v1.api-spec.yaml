@@ -231,16 +231,16 @@ paths:
           $ref: "#/components/responses/Error"
   /object:
     post:
-      summary: Creates new objects
+      summary: Creates an object
       description: >-
-        Create object(s) in the bucket specified with bucketId parameter or
+        Creates an object in the bucket specified with bucketId parameter or
         default bucket configured. If COMS is running in either 'OIDC' or 'Full'
         mode, any objects created with OIDC user authentication will have all
         object permissions assigned to them by default. This endpoint will do a
-        best attempt effort to create as many objects as requested that do not
-        already exist in the destination bucket and path. Existing objects
-        should be managed with the updateObjects endpoint instead.
-      operationId: createObjects
+        best attempt effort to create the object as requested as long as it does
+        not already exist in the destination bucket and path. Existing objects
+        should be managed with the updateObject endpoint instead.
+      operationId: createObject
       tags:
         - Object
       parameters:
@@ -260,45 +260,37 @@ paths:
           multipart/form-data:
             schema:
               type: object
-              description: foobar
               properties:
-                anyKey:
+                file:
                   type: string
                   description: >-
-                    This endpoint can accept an arbitrary number of form-data
-                    keys. There must be at least one key present, and every key
-                    must be unique. All keys shall contain a binary
-                    representation of the file to upload. In the response, each
-                    successfully uploaded file shall contain a 'fieldName'
-                    property corresponding to your custom defined keys.
+                    Contains the binary representation of the file to upload.
+                    Maximum filesize of 50GB.
                   format: binary
+                  maxLength: 53687091200
       responses:
         "200":
-          description: Partial success. Returns an array of created object data
+          description: Returns the created object data
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Response-ObjectDetails"
-        "201":
-          description: Success. Returns an array of created object data
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Response-ObjectDetails"
+                $ref: "#/components/schemas/Response-ObjectDetails"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
         "409":
-          description: Conflict. Bucket already contains all object(s)
+          description: Conflict. Bucket already contains the object
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Response-Conflict"
+        "413":
+          $ref: "#/components/responses/ContentTooLarge"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
         default:
           $ref: "#/components/responses/Error"
     get:
@@ -467,17 +459,14 @@ paths:
           multipart/form-data:
             schema:
               type: object
-              description: foobar
               properties:
-                anyKey:
+                file:
                   type: string
                   description: >-
-                    This endpoint will accept only one arbitrary form-data key.
-                    That key shall contain a binary representation of the file
-                    to upload. In the response, the successfully uploaded file
-                    shall contain a 'fieldName' property corresponding to your
-                    custom defined key.
+                    Contains the binary representation of the file to upload.
+                    Maximum filesize of 50GB.
                   format: binary
+                  maxLength: 53687091200
       responses:
         "200":
           description: Returns the updated object data
@@ -485,10 +474,22 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Response-ObjectDetails"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
+        "409":
+          description: Conflict. Bucket does not contain the existing object
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Response-Conflict"
+        "413":
+          $ref: "#/components/responses/ContentTooLarge"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
         default:
           $ref: "#/components/responses/Error"
     delete:
@@ -2120,6 +2121,19 @@ components:
               example: Conflict
             type:
               example: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/409
+    Response-ContentTooLarge:
+      title: Response Content Too Large
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/Response-Problem"
+        - type: object
+          properties:
+            status:
+              example: 413
+            title:
+              example: Content Too Large
+            type:
+              example: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/413
     Response-Error:
       title: Response Error
       type: object
@@ -2193,17 +2207,10 @@ components:
       allOf:
         - type: object
           required:
-            - fieldName
             - mimeType
             - Key
             - Location
           properties:
-            fieldName:
-              type: string
-              description: >-
-                A unique form field chosen for the key for each file in the
-                multi-part form-data post
-              example: file1
             mimeType:
               type: string
               description: The object MIME Type
@@ -2537,6 +2544,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Response-Conflict"
+    ContentTooLarge:
+      description: Content Too Large
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Response-ContentTooLarge"
     Error:
       description: Internal Server Error
       content:

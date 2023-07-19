@@ -13,7 +13,7 @@ const app = expressHelper(basePath, router);
 jest.mock('config');
 
 describe(`POST ${basePath}`, () => {
-  const spy = jest.spyOn(objectController, 'createObjects');
+  const spy = jest.spyOn(objectController, 'createObject');
 
   beforeEach(() => {
     spy.mockReset();
