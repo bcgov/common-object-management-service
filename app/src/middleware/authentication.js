@@ -79,7 +79,7 @@ const currentUser = async (req, res, next) => {
         }
 
         if (isValid) {
-          currentUser.tokenPayload = jwt.decode(bearerToken);
+          currentUser.tokenPayload = typeof isValid === 'object' ? isValid : jwt.decode(bearerToken);
           await userService.login(currentUser.tokenPayload);
         } else {
           throw new Error('Invalid authorization token');
