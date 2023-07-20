@@ -103,6 +103,7 @@ const schema = {
   fetchMetadata: {
     headers: type.metadata(),
     query: Joi.object({
+      bucketId: scheme.guid,
       objectId: scheme.guid
     })
   },
@@ -200,6 +201,7 @@ const schema = {
 
   fetchTags: {
     query: Joi.object({
+      bucketId: scheme.guid,
       objectId: scheme.guid,
       tagset: type.tagset(),
     })

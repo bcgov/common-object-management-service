@@ -570,9 +570,11 @@ const controller = {
    */
   async fetchMetadata(req, res, next) {
     try {
+      const bucketIds = mixedQueryToArray(req.query.bucketId);
       const objIds = mixedQueryToArray(req.query.objectId);
       const metadata = getMetadata(req.headers);
       const params = {
+        bucketIds: bucketIds ? bucketIds.map(id => addDashesToUuid(id)) : bucketIds,
         objId: objIds ? objIds.map(id => addDashesToUuid(id)) : objIds,
         metadata: metadata && Object.keys(metadata).length ? metadata : undefined
       };
@@ -597,9 +599,11 @@ const controller = {
    */
   async fetchTags(req, res, next) {
     try {
+      const bucketIds = mixedQueryToArray(req.query.bucketId);
       const objIds = mixedQueryToArray(req.query.objectId);
       const tagset = req.query.tagset;
       const params = {
+        bucketIds: bucketIds ? bucketIds.map(id => addDashesToUuid(id)) : bucketIds,
         objectIds: objIds ? objIds.map(id => addDashesToUuid(id)) : objIds,
         tagset: tagset && Object.keys(tagset).length ? tagset : undefined,
       };

@@ -119,6 +119,7 @@ const service = {
   /**
    * @function fetchMetadataForObject
    * Fetch metadata for specific objects, optionally scoped to a user's object/bucket READ permission
+  * @param {string[]} [params.bucketIds] An array of uuids representing buckets
    * @param {string[]} params.objId An array of uuids representing the object
    * @param {object} [params.metadata] Optional object of metadata key/value pairs
   * @param {string} [params.userId] Optional uuid representing a user
@@ -126,7 +127,7 @@ const service = {
    */
   fetchMetadataForObject: (params) => {
     return ObjectModel.query()
-      .select('object.id AS objectId')
+      .select('object.id AS objectId', 'object.bucketId as bucketId')
       .allowGraph('version.metadata')
       .withGraphJoined('version.metadata')
       // get latest version that isn't a delete marker by default
@@ -148,6 +149,8 @@ const service = {
       })
       // match on objId parameter
       .modify('filterIds', params.objId)
+      // match on bucketIds parameter
+      .modify('filterBucketIds', params.bucketIds)
       // scope to objects that user(s) has READ permission at object or bucket-level
       .modify('hasPermission', params.userId, 'READ')
       // re-structure result like: [{ objectId: abc, metadata: [{ key: a, value: b }] }]
