@@ -736,8 +736,8 @@ paths:
         - Metadata
       parameters:
         - $ref: "#/components/parameters/Header-Metadata"
-        - $ref: "#/components/parameters/Query-ObjectId"
         - $ref: "#/components/parameters/Query-BucketId"
+        - $ref: "#/components/parameters/Query-ObjectId"
       responses:
         "200":
           description: Returns an array objects with matching metadata key/value pairs.
@@ -774,9 +774,9 @@ paths:
       tags:
         - Tagging
       parameters:
-        - $ref: "#/components/parameters/Query-TagSet"
-        - $ref: "#/components/parameters/Query-ObjectId"
         - $ref: "#/components/parameters/Query-BucketId"
+        - $ref: "#/components/parameters/Query-ObjectId"
+        - $ref: "#/components/parameters/Query-TagSet"
       responses:
         "200":
           description: Returns an array objects with matching key/value tag pairs.
