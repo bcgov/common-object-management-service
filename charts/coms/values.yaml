@@ -127,7 +127,6 @@ config:
   configMap:
     # BASICAUTH_ENABLED: "true"
 
-    # DB_ENABLED: "true"
     # DB_HOST: ~
     DB_PORT: "5432"
     # DB_POOL_MIN: "2"

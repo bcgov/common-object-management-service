@@ -1,5 +1,4 @@
 const Problem = require('api-problem');
-const config = require('config');
 const { NIL: SYSTEM_USER } = require('uuid');
 
 const mw = require('../../../src/middleware/authorization');
@@ -267,18 +266,13 @@ describe('hasPermission', () => {
 
   describe('given no currentObject nor currentUser', () => {
     it.each([
-      [1, false, AuthMode.NOAUTH],
-      [1, false, AuthMode.BASICAUTH],
-      [1, false, AuthMode.OIDCAUTH],
-      [1, false, AuthMode.FULLAUTH],
-      [1, true, AuthMode.NOAUTH],
-      [1, true, AuthMode.BASICAUTH],
-      [0, true, AuthMode.OIDCAUTH],
-      [0, true, AuthMode.FULLAUTH]
-    ])('should call next %i times given hasDb %s and authMode %s', (nextCount, hasDb, mode) => {
+      [1, AuthMode.NOAUTH],
+      [1, AuthMode.BASICAUTH],
+      [0, AuthMode.OIDCAUTH],
+      [0, AuthMode.FULLAUTH]
+    ])('should call next %i times given authMode %s', (nextCount, mode) => {
       const sendCount = 1 - nextCount;
       getAppAuthModeSpy.mockReturnValue(mode);
-      config.has.mockReturnValueOnce(hasDb); // db.enabled
 
       const result = mw.hasPermission(Permissions.READ);
       expect(result).toBeInstanceOf(Function);
@@ -299,18 +293,13 @@ describe('hasPermission', () => {
     });
 
     it.each([
-      [1, false, AuthMode.NOAUTH],
-      [1, false, AuthMode.BASICAUTH],
-      [1, false, AuthMode.OIDCAUTH],
-      [1, false, AuthMode.FULLAUTH],
-      [1, true, AuthMode.NOAUTH],
-      [1, true, AuthMode.BASICAUTH],
-      [0, true, AuthMode.OIDCAUTH],
-      [0, true, AuthMode.FULLAUTH]
-    ])('should call next %i times given hasDb %s and authMode %s', async (nextCount, hasDb, mode) => {
+      [1, AuthMode.NOAUTH],
+      [1, AuthMode.BASICAUTH],
+      [0, AuthMode.OIDCAUTH],
+      [0, AuthMode.FULLAUTH]
+    ])('should call next %i times given authMode %s', async (nextCount, mode) => {
       const sendCount = 1 - nextCount;
       getAppAuthModeSpy.mockReturnValue(mode);
-      config.has.mockReturnValueOnce(hasDb); // db.enabled
       getCurrentUserIdSpy.mockResolvedValue(SYSTEM_USER);
       getCurrentIdentitySpy.mockReturnValue(SYSTEM_USER);
 
@@ -339,7 +328,6 @@ describe('hasPermission', () => {
     ])('should call next 0 times with params %j', async (params) => {
       req.params = params;
       getAppAuthModeSpy.mockReturnValue(AuthMode.FULLAUTH);
-      config.has.mockReturnValueOnce(true); // db.enabled
       getCurrentUserIdSpy.mockResolvedValue(SYSTEM_USER);
       getCurrentIdentitySpy.mockReturnValue(SYSTEM_USER);
 
@@ -369,7 +357,6 @@ describe('hasPermission', () => {
       const sendCount = 1 - nextCount;
       getAppAuthModeSpy.mockReturnValue(mode);
       checkPermissionSpy.mockResolvedValue(false);
-      config.has.mockReturnValueOnce(true); // db.enabled
       req.currentUser.authType = AuthType.BASIC;
 
       const result = mw.hasPermission(Permissions.READ);
@@ -398,7 +385,6 @@ describe('hasPermission', () => {
       const sendCount = 1 - nextCount;
       getAppAuthModeSpy.mockReturnValue(AuthMode.OIDCAUTH);
       getCurrentUserIdSpy.mockResolvedValue(SYSTEM_USER);
-      config.has.mockReturnValueOnce(true); // db.enabled
       req.currentUser.authType = AuthType.OIDC;
       req.currentObject.public = isPublic;
 
@@ -436,7 +422,6 @@ describe('hasPermission', () => {
       getAppAuthModeSpy.mockReturnValue(AuthMode.OIDCAUTH);
       getCurrentUserIdSpy.mockResolvedValue(userId);
       objSearchPermissionsSpy.mockResolvedValue(perms);
-      config.has.mockReturnValueOnce(true); // db.enabled
       req.currentObject.public = false;
       req.currentUser.authType = type;
       req.params.objectId = SYSTEM_USER;

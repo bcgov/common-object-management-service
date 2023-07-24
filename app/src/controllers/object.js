@@ -857,7 +857,6 @@ const controller = {
    * @returns {function} Express middleware function
    */
   async searchObjects(req, res, next) {
-    // TODO: Handle no database scenarios via S3 ListObjectsCommand?
     // TODO: Consider support for filtering by set of permissions?
     // TODO: handle additional parameters. Eg: deleteMarker, latest
     try {

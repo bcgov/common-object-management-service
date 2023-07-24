@@ -1,5 +1,4 @@
 const Problem = require('api-problem');
-const config = require('config');
 
 const log = require('../components/log')(module.filename);
 const { AuthMode, AuthType, Permissions } = require('../components/constants');
@@ -120,7 +119,7 @@ const hasPermission = (permission) => {
     const canOidcMode = (mode) => [AuthMode.OIDCAUTH, AuthMode.FULLAUTH].includes(mode);
 
     try {
-      if (!config.has('db.enabled') || !canOidcMode(authMode)) {
+      if (!canOidcMode(authMode)) {
         log.debug('Current application mode does not enforce permission checks', { function: 'hasPermission' });
       } else if (!req.params.objectId && !req.params.bucketId) {
         throw new Error('Missing request parameter(s)');

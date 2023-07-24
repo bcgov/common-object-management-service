@@ -37,14 +37,6 @@ if (process.env.NODE_ENV !== 'test') {
   app.use(httpLogger);
 }
 
-// Application database mode
-if (config.has('db.enabled')) {
-  state.connections.data = false;
-  log.info('Running COMS with a database');
-} else {
-  log.info('Running COMS without a database');
-}
-
 // Application authentication modes
 switch (state.authMode) {
   case AuthMode.NOAUTH:
@@ -61,13 +53,6 @@ switch (state.authMode) {
     break;
 }
 if (state.authMode === AuthMode.OIDCAUTH || state.authMode === AuthMode.FULLAUTH) {
-  // Enforce DB requirement
-  if (!config.has('db.enabled')) {
-    log.error('A database is required for authentication modes leveraging oidc');
-    process.exitCode = 1;
-    cleanup(); // Shutdown without delay
-  }
-
   // Use Keycloak OIDC Middleware
   const keycloak = require('./src/components/keycloak');
   app.use(keycloak.middleware());
@@ -100,7 +85,6 @@ apiRouter.get('/', (_req, res) => {
       app: {
         authMode: state.authMode,
         gitRev: state.gitRev,
-        hasDb: config.has('db.enabled'),
         name: process.env.npm_package_name,
         nodeVersion: process.version,
         privacyMask: config.has('server.privacyMask'),
@@ -201,7 +185,7 @@ function initializeConnections() {
     .then(results => {
       state.connections.data = results[0];
 
-      if (config.has('db.enabled') && state.connections.data) {
+      if (state.connections.data) {
         log.info('DataConnection Reachable', { function: 'initializeConnections' });
       }
     })

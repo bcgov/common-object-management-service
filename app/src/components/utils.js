@@ -67,7 +67,7 @@ const utils = {
       secretAccessKey: config.get('objectStorage.secretAccessKey')
     };
 
-    if (config.has('db.enabled') && bucketId) {
+    if (bucketId) {
       // Function scoped import to avoid circular dependencies
       const { bucketService } = require('../services');
 
@@ -96,16 +96,14 @@ const utils = {
    */
   async getBucketId(objId) {
     let bucketId = undefined;
-    if (config.has('db.enabled')) {
-      // Function scoped import to avoid circular dependencies
-      const { objectService } = require('../services');
-      try {
-        bucketId = (await objectService.read(objId)).bucketId;
-      } catch (err) {
-        log.verbose(`${err.message}. Using default bucketId instead.`, {
-          function: 'getBucketId', objId: objId
-        });
-      }
+    // Function scoped import to avoid circular dependencies
+    const { objectService } = require('../services');
+    try {
+      bucketId = (await objectService.read(objId)).bucketId;
+    } catch (err) {
+      log.verbose(`${err.message}. Using default bucketId instead.`, {
+        function: 'getBucketId', objId: objId
+      });
     }
     return bucketId;
   },
@@ -223,17 +221,15 @@ const utils = {
   async getPath(objId) {
     let key = utils.delimit(config.get('objectStorage.key'));
 
-    if (config.has('db.enabled')) {
-      // Function scoped import to avoid circular dependencies
-      const { objectService } = require('../services');
+    // Function scoped import to avoid circular dependencies
+    const { objectService } = require('../services');
 
-      try {
-        key = (await objectService.getBucketKey(objId)).key;
-      } catch (err) {
-        log.verbose(`${err.message}. Using default fallback path instead.`, {
-          function: 'getPath', objId: objId
-        });
-      }
+    try {
+      key = (await objectService.getBucketKey(objId)).key;
+    } catch (err) {
+      log.verbose(`${err.message}. Using default fallback path instead.`, {
+        function: 'getPath', objId: objId
+      });
     }
 
     return utils.joinPath(key, objId);
@@ -252,7 +248,7 @@ const utils = {
     let result = undefined;
     if (s3VersionId) {
       result = s3VersionId.toString();
-    } else if (config.has('db.enabled') && versionId) {
+    } else if (versionId) {
       const { versionService } = require('../services');
       const version = await versionService.get({ versionId: versionId, s3VersionId: undefined, objectId: objectId });
       if (version.s3VersionId) {
