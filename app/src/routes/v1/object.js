@@ -91,6 +91,11 @@ router.delete('/:objectId/metadata', objectValidator.deleteMetadata, requireSome
   objectController.deleteMetadata(req, res, next);
 });
 
+/** Synchronizes an object */
+router.get('/:objectId/sync', objectValidator.syncObject, requireSomeAuth, currentObject, hasPermission(Permissions.READ), (req, res, next) => {
+  objectController.syncObject(req, res, next);
+});
+
 /** Add tags to an object */
 router.patch('/:objectId/tagging', objectValidator.addTags, requireSomeAuth, currentObject, hasPermission(Permissions.UPDATE), (req, res, next) => {
   objectController.addTags(req, res, next);
