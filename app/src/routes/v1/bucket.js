@@ -44,4 +44,9 @@ router.delete('/:bucketId', bucketValidator.deleteBucket, hasPermission(Permissi
   bucketController.deleteBucket(req, res, next);
 });
 
+/** Synchronizes a bucket */
+router.get('/:bucketId/sync', bucketValidator.syncBucket, hasPermission(Permissions.READ), (req, res, next) => {
+  bucketController.syncBucket(req, res, next);
+});
+
 module.exports = router;
