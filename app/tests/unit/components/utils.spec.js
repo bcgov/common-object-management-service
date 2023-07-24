@@ -456,6 +456,8 @@ describe('isAtPath', () => {
     [false, undefined, undefined],
     [false, null, null],
     [false, '', ''],
+    [true, '', 'file'],
+    [false, '', 'file/bleep'],
     [true, '/', 'file'],
     [false, '/', 'file/bleep'],
     [true, 'foo', 'foo/bar'],
