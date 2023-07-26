@@ -50,11 +50,10 @@ The following variables enable and enforce the use of Basic Authentication for r
 
 ### Database Variables
 
-The following variables enable and configure the use of a backend database to support user-based access control, tagging and other advanced features
+The following variables configure the use of a backend database to support user-based access control, tagging and other advanced features
 
 | Config Var | Env Var | Default | Notes |
 | --- | --- | --- | --- |
-| `enabled` | `DB_ENABLED` | | Whether to use a database, rquired for OIDC Auth Mode as well as user-based access control, tagging and advanced features |
 | `database` | `DB_DATABASE` | coms | COMS database name |
 | `host` | `DB_HOST` | localhost | Database conection hostname |
 | `username` | `DB_USERNAME` | app | Database account username |
@@ -148,7 +147,7 @@ docker run -it --rm -p 3000:3000 \
 
 ---
 
-The following modes will require a database to operate. Before running the application, you must make sure that your database is up to date with the latest schema migration. Run the following first before starting up the COMS app as a maintenance task:
+Before running the application, you must make sure that your database is up to date with the latest schema migration. Run the following first before starting up the COMS app as a maintenance task:
 
 ``` sh
 docker run -it --rm --entrypoint '/bin/sh' -c 'npm run migrate' \
@@ -170,7 +169,6 @@ docker run -it --rm -p 3000:3000 \
   -e KC_PUBLICKEY=<publickey> \
   -e KC_REALM=<realm> \
   -e KC_SERVERURL=<url> \
-  -e DB_ENABLED=true \
   -e DB_PASSWORD=<password> \
   -e DB_PORT=<your postgres database port> \
   docker.io/bcgovimages/common-object-management-service:latest
@@ -194,7 +192,6 @@ docker run -it --rm -p 3000:3000 \
   -e KC_PUBLICKEY=<publickey> \
   -e KC_REALM=<realm> \
   -e KC_SERVERURL=<url> \
-  -e DB_ENABLED=true \
   -e DB_PASSWORD=<password> \
   -e DB_PORT=<your postgres database port> \
   docker.io/bcgovimages/common-object-management-service:latest
@@ -224,7 +221,6 @@ To run COMS in Full Auth mode you will want your `local.json` to have the follow
     "password": "<Your chosen Basic Auth Password>"
   },
   "db": {
-    "enabled": true,
     "username": "<COMS database username>",
     "password": "<COMS database user password>",
     "port": "<COMS database port. eg 5432>"
@@ -251,7 +247,7 @@ To run COMS in Full Auth mode you will want your `local.json` to have the follow
 
 #### Database Setup
 
-If you are running in either **OIDC Auth Mode** or **Full Auth Mode**, you must make sure that your database is up to date with the latest schema migration. Run the following first before starting up the COMS app as a maintenance task:
+Before starting up the COMS app, run the following command to ensure your database is up to date with the latest database schema migration:
 
 ``` sh
 npm run migrate

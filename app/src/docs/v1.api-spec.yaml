@@ -20,46 +20,41 @@ security:
 tags:
   - name: Bucket
     description: >-
-      Operations for managing S3 Bucket(s). Certain operations not available
-      without a database.
+      Operations for managing S3 Bucket(s).
     externalDocs:
       url: >-
         https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#bucket
   - name: Metadata
     description: >-
-      Operations for managing Metadata for S3 Objects. Certain operations not
-      available without a database.
+      Operations for managing Metadata for S3 Objects.
     externalDocs:
       url: >-
         https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#metadata
   - name: Object
     description: >-
-      Operations directly influencing an S3 Object. Certain operations not
-      available without a database.
+      Operations directly influencing an S3 Object.
     externalDocs:
       url: >-
         https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#object
   - name: Permission
-    description: Operations for managing S3 permissions. Not available without a database.
+    description: Operations for managing S3 permissions.
     externalDocs:
       url: >-
         https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#permission
   - name: Tagging
     description: >-
-      Operations for managing Tags for S3 Objects. Certain operations not
-      available without a database.
+      Operations for managing Tags for S3 Objects.
     externalDocs:
       url: >-
         https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#tag
   - name: User
     description: >-
-      Operations to list valid queryable users and identity providers. Not
-      available without a database.
+      Operations to list valid queryable users and identity providers.
     externalDocs:
       url: >-
         https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#user
   - name: Version
-    description: Operations to list object versions. Not available without a database.
+    description: Operations to list object versions.
     externalDocs:
       url: >-
         https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes
@@ -527,7 +522,7 @@ paths:
       summary: List versions for an object
       description: >-
         Returns an array of an object's versions, including delete-markers,
-        ordered by creation date. Not available without a database.
+        ordered by creation date.
       operationId: listObjectVersion
       tags:
         - Version

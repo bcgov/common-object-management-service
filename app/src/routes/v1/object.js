@@ -3,7 +3,7 @@ const router = require('express').Router();
 const { Permissions } = require('../../components/constants');
 const { objectController } = require('../../controllers');
 const { objectValidator } = require('../../validators');
-const { requireDb, requireSomeAuth } = require('../../middleware/featureToggle');
+const { requireSomeAuth } = require('../../middleware/featureToggle');
 const { checkAppMode, currentObject, hasPermission } = require('../../middleware/authorization');
 
 router.use(checkAppMode);
@@ -14,17 +14,17 @@ router.post('/', objectValidator.createObject, requireSomeAuth, (req, res, next)
 });
 
 /** Search for objects */
-router.get('/', objectValidator.searchObjects, requireSomeAuth, requireDb, (req, res, next) => {
+router.get('/', objectValidator.searchObjects, requireSomeAuth, (req, res, next) => {
   objectController.searchObjects(req, res, next);
 });
 
 /** Fetch metadata for specific objects */
-router.get('/metadata', objectValidator.fetchMetadata, requireSomeAuth, requireDb, (req, res, next) => {
+router.get('/metadata', objectValidator.fetchMetadata, requireSomeAuth, (req, res, next) => {
   objectController.fetchMetadata(req, res, next);
 });
 
 /** Fetch tags for specific objects */
-router.get('/tagging', objectValidator.fetchTags, requireSomeAuth, requireDb, (req, res, next) => {
+router.get('/tagging', objectValidator.fetchTags, requireSomeAuth, (req, res, next) => {
   objectController.fetchTags(req, res, next);
 });
 
@@ -50,12 +50,12 @@ router.delete('/:objectId', objectValidator.deleteObject, requireSomeAuth, curre
 });
 
 /** Returns the object version history */
-router.get('/:objectId/version', objectValidator.listObjectVersion, requireSomeAuth, requireDb, currentObject, hasPermission(Permissions.READ), (req, res, next) => {
+router.get('/:objectId/version', objectValidator.listObjectVersion, requireSomeAuth, currentObject, hasPermission(Permissions.READ), (req, res, next) => {
   objectController.listObjectVersion(req, res, next);
 });
 
 /** Sets the public flag of an object */
-router.patch('/:objectId/public', objectValidator.togglePublic, requireSomeAuth, requireDb, currentObject, hasPermission(Permissions.MANAGE), (req, res, next) => {
+router.patch('/:objectId/public', objectValidator.togglePublic, requireSomeAuth, currentObject, hasPermission(Permissions.MANAGE), (req, res, next) => {
   objectController.togglePublic(req, res, next);
 });
 

@@ -4,10 +4,9 @@ const { Permissions } = require('../../../components/constants');
 const { objectPermissionController } = require('../../../controllers');
 const { objectPermissionValidator } = require('../../../validators');
 const { checkAppMode, currentObject, hasPermission } = require('../../../middleware/authorization');
-const { requireDb, requireSomeAuth } = require('../../../middleware/featureToggle');
+const { requireSomeAuth } = require('../../../middleware/featureToggle');
 
 router.use(checkAppMode);
-router.use(requireDb);
 router.use(requireSomeAuth);
 
 /** Search for object permissions */

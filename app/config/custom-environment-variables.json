@@ -5,7 +5,6 @@
     "username": "BASICAUTH_USERNAME"
   },
   "db": {
-    "enabled": "DB_ENABLED",
     "database": "DB_DATABASE",
     "host": "DB_HOST",
     "password": "DB_PASSWORD",

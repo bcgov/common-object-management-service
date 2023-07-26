@@ -42,29 +42,11 @@ describe('getPath', () => {
   const osKey = 'key';
   const value = 'abc/obj';
 
-  it('should return a valid path without a database', async () => {
-    delimitSpy.mockReturnValue(key);
-    joinPath.mockReturnValue(value);
-    config.get.mockReturnValueOnce(osKey); // objectStorage.key
-    config.has.mockReturnValueOnce(false); // db.enabled
-
-    const result = await utils.getPath('obj');
-
-    expect(result).toEqual(value);
-
-    expect(delimitSpy).toHaveBeenCalledTimes(1);
-    expect(delimitSpy).toHaveBeenCalledWith(osKey);
-    expect(joinPath).toHaveBeenCalledTimes(1);
-    expect(joinPath).toHaveBeenCalledWith(key, 'obj');
-    expect(getBucketKey).toHaveBeenCalledTimes(0);
-  });
-
-  it('should return a valid path with a good database lookup', async () => {
+  it('should return a valid path', async () => {
     delimitSpy.mockReturnValue('wrong');
     joinPath.mockReturnValue(value);
     getBucketKey.mockResolvedValue({ key: key });
     config.get.mockReturnValueOnce(osKey); // objectStorage.key
-    config.has.mockReturnValueOnce(true); // db.enabled
 
     const result = await utils.getPath('obj');
 
@@ -78,12 +60,11 @@ describe('getPath', () => {
     expect(getBucketKey).toHaveBeenCalledWith('obj');
   });
 
-  it('should return a valid path with a bad database lookup', async () => {
+  it('should return a valid path', async () => {
     delimitSpy.mockReturnValue(key);
     joinPath.mockReturnValue(value);
     getBucketKey.mockImplementation(() => { throw new Error(); });
     config.get.mockReturnValueOnce(osKey); // objectStorage.key
-    config.has.mockReturnValueOnce(true); // db.enabled
 
     const result = await utils.getPath('obj');
 
@@ -167,8 +148,7 @@ describe('getBucket', () => {
       .mockReturnValueOnce(cdata.secretAccessKey); // objectStorage.secretAccessKey
   });
 
-  it('should return config data given no db, no bucketId and not throwable', async () => {
-    config.has.mockReturnValueOnce(false); // db.enabled
+  it('should return config data given no bucketId and not throwable', async () => {
 
     const result = await utils.getBucket();
 
@@ -183,24 +163,7 @@ describe('getBucket', () => {
     expect(readBucketSpy).toHaveBeenCalledTimes(0);
   });
 
-  it('should return config data given no db, a good bucketId and not throwable', async () => {
-    config.has.mockReturnValueOnce(false); // db.enabled
-
-    const result = await utils.getBucket('bucketId');
-
-    expect(result).toBeTruthy();
-    expect(result).toEqual(cdata);
-    expect(result).toHaveProperty('accessKeyId', cdata.accessKeyId);
-    expect(result).toHaveProperty('bucket', cdata.bucket);
-    expect(result).toHaveProperty('endpoint', cdata.endpoint);
-    expect(result).toHaveProperty('key', cdata.key);
-    expect(result).toHaveProperty('region', cdata.region);
-    expect(result).toHaveProperty('secretAccessKey', cdata.secretAccessKey);
-    expect(readBucketSpy).toHaveBeenCalledTimes(0);
-  });
-
-  it('should return config data given no db, no bucketId and is throwable', async () => {
-    config.has.mockReturnValueOnce(false); // db.enabled
+  it('should return config data given no bucketId and is throwable', async () => {
 
     const result = await utils.getBucket(undefined, true);
 
@@ -215,25 +178,8 @@ describe('getBucket', () => {
     expect(readBucketSpy).toHaveBeenCalledTimes(0);
   });
 
-  it('should return config data given a db, no bucketId and not throwable', async () => {
-    config.has.mockReturnValueOnce(true); // db.enabled
-
-    const result = await utils.getBucket();
-
-    expect(result).toBeTruthy();
-    expect(result).toEqual(cdata);
-    expect(result).toHaveProperty('accessKeyId', cdata.accessKeyId);
-    expect(result).toHaveProperty('bucket', cdata.bucket);
-    expect(result).toHaveProperty('endpoint', cdata.endpoint);
-    expect(result).toHaveProperty('key', cdata.key);
-    expect(result).toHaveProperty('region', cdata.region);
-    expect(result).toHaveProperty('secretAccessKey', cdata.secretAccessKey);
-    expect(readBucketSpy).toHaveBeenCalledTimes(0);
-  });
-
-  it('should return database data given a db, a good bucketId and not throwable', async () => {
+  it('should return database data given a good bucketId and not throwable', async () => {
     readBucketSpy.mockResolvedValue(ddata);
-    config.has.mockReturnValueOnce(true); // db.enabled
 
     const result = await utils.getBucket('bucketId');
 
@@ -248,9 +194,8 @@ describe('getBucket', () => {
     expect(readBucketSpy).toHaveBeenCalledWith('bucketId');
   });
 
-  it('should return config data given a db, a bad bucketId and not throwable', async () => {
+  it('should return config data given a bad bucketId and not throwable', async () => {
     readBucketSpy.mockImplementation(() => { throw new Problem(422); });
-    config.has.mockReturnValueOnce(true); // db.enabled
 
     const result = await (() => utils.getBucket('bucketId'))();
 
@@ -266,9 +211,8 @@ describe('getBucket', () => {
     expect(readBucketSpy).toHaveBeenCalledWith('bucketId');
   });
 
-  it('should throw given a db, a bucketId and is throwable', () => {
+  it('should throw given a bucketId and is throwable', () => {
     readBucketSpy.mockImplementation(() => { throw new Problem(422); });
-    config.has.mockReturnValueOnce(true); // db.enabled
 
     const result = (() => utils.getBucket('bucketId', true))();
 

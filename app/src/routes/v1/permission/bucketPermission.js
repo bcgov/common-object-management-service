@@ -4,10 +4,9 @@ const { Permissions } = require('../../../components/constants');
 const { bucketPermissionController } = require('../../../controllers');
 const { bucketPermissionValidator } = require('../../../validators');
 const { checkAppMode, currentObject, hasPermission } = require('../../../middleware/authorization');
-const { requireDb, requireSomeAuth } = require('../../../middleware/featureToggle');
+const { requireSomeAuth } = require('../../../middleware/featureToggle');
 
 router.use(checkAppMode);
-router.use(requireDb);
 router.use(requireSomeAuth);
 
 /** Search for bucket permissions */

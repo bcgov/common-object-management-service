@@ -304,6 +304,8 @@ describe('deleteObject', () => {
   const versionCreateSpy = jest.spyOn(versionService, 'create');
   const versionDeleteSpy = jest.spyOn(versionService, 'delete');
   const versionListSpy = jest.spyOn(versionService, 'list');
+  const pruneOrphanedMetadataSpy = jest.spyOn(metadataService, 'pruneOrphanedMetadata');
+  const pruneOrphanedTagsSpy = jest.spyOn(tagService, 'pruneOrphanedTags');
 
   // request object
   const req = {
@@ -373,9 +375,13 @@ describe('deleteObject', () => {
 
   it('should delete object if object has no other remaining versions', async () => {
     req.query = { s3VersionId: '123' };
+    getCurrentUserIdSpy.mockReturnValue('user-123');
     storageDeleteObjectSpy.mockReturnValue({
       VersionId: '123'
     });
+    versionDeleteSpy.mockReturnValue({});
+    pruneOrphanedMetadataSpy.mockReturnValue({});
+    pruneOrphanedTagsSpy.mockReturnValue({});
     // list all versions returns empty array
     versionListSpy.mockReturnValue([]);
 

@@ -15,7 +15,6 @@ jest.mock('../../../../src/middleware/authorization', () => ({
 }));
 
 jest.mock('../../../../src/middleware/featureToggle', () => ({
-  requireDb: jest.fn((_req, _res, next) => next()),
   requireSomeAuth: jest.fn((_req, _res, next) => next()),
 }));
 

@@ -3,10 +3,9 @@ const router = require('express').Router();
 const { versionValidator } = require('../../validators');
 const { versionController } = require('../../controllers');
 const { checkAppMode } = require('../../middleware/authorization');
-const { requireDb, requireSomeAuth } = require('../../middleware/featureToggle');
+const { requireSomeAuth } = require('../../middleware/featureToggle');
 
 router.use(checkAppMode);
-router.use(requireDb);
 router.use(requireSomeAuth);
 
 /** Fetch metadata for specific version */

@@ -3,11 +3,10 @@ const router = require('express').Router();
 const { Permissions } = require('../../components/constants');
 const { bucketController } = require('../../controllers');
 const { bucketValidator } = require('../../validators');
-const { requireDb, requireSomeAuth } = require('../../middleware/featureToggle');
+const { requireSomeAuth } = require('../../middleware/featureToggle');
 const { checkAppMode, hasPermission } = require('../../middleware/authorization');
 
 router.use(checkAppMode);
-router.use(requireDb);
 router.use(requireSomeAuth);
 
 /** Creates a bucket */
