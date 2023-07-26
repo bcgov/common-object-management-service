@@ -138,7 +138,7 @@ const service = {
         .where({ 'objectId': objId })
         .whereNot({ 'id': response[0].id })
         .orderBy('createdAt', 'desc');
-      if (!sq.some(v => v.isLatest).length) {
+      if (sq.length && !sq.some(v => v.isLatest).length) {
         await Version.query(trx)
           .update({ 'isLatest': true, 'objectId': objId })
           .where({ 'id': sq[0]?.id, 'objectId': objId });
@@ -301,7 +301,7 @@ const service = {
           .whereNot({ 'id': updated[0].id })
           .orderBy('createdAt', 'desc');
 
-        if (!sq.some(v => v.isLatest).length) {
+        if (sq.length && !sq.some(v => v.isLatest).length) {
           await Version.query(trx)
             .update({ 'isLatest': true, 'objectId': objectId, updatedBy: userId })
             .where({ 'id': sq[0]?.id, 'objectId': objectId });
