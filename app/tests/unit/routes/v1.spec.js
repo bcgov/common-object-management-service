@@ -17,13 +17,18 @@ describe(`GET ${basePath}`, () => {
     expect(response.statusCode).toBe(200);
     expect(response.body).toBeTruthy();
     expect(Array.isArray(response.body.endpoints)).toBeTruthy();
-    expect(response.body.endpoints).toHaveLength(7);
-    expect(response.body.endpoints).toContain('/bucket');
-    expect(response.body.endpoints).toContain('/docs');
-    expect(response.body.endpoints).toContain('/metadata');
-    expect(response.body.endpoints).toContain('/object');
-    expect(response.body.endpoints).toContain('/permission');
-    expect(response.body.endpoints).toContain('/user');
+    expect(response.body.endpoints).toHaveLength(9);
+    expect(response.body.endpoints).toEqual(expect.arrayContaining([
+      '/bucket',
+      '/docs',
+      '/metadata',
+      '/object',
+      '/permission',
+      '/sync',
+      '/tagging',
+      '/user',
+      '/version'
+    ]));
   });
 });
 
