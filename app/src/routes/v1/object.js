@@ -1,7 +1,7 @@
 const router = require('express').Router();
 
 const { Permissions } = require('../../components/constants');
-const { objectController } = require('../../controllers');
+const { objectController, syncController } = require('../../controllers');
 const { objectValidator } = require('../../validators');
 const { checkAppMode, currentObject, hasPermission } = require('../../middleware/authorization');
 const { requireSomeAuth } = require('../../middleware/featureToggle');
@@ -93,7 +93,7 @@ router.delete('/:objectId/metadata', objectValidator.deleteMetadata, requireSome
 
 /** Synchronizes an object */
 router.get('/:objectId/sync', objectValidator.syncObject, requireSomeAuth, currentObject, hasPermission(Permissions.READ), (req, res, next) => {
-  objectController.syncObject(req, res, next);
+  syncController.syncObject(req, res, next);
 });
 
 /** Add tags to an object */

@@ -15,7 +15,7 @@ const {
 } = require('../components/utils');
 const { redactSecrets } = require('../db/models/utils');
 
-const { bucketService, objectQueueService, objectService, storageService, userService } = require('../services');
+const { bucketService, storageService, userService } = require('../services');
 
 const SERVICE = 'BucketService';
 const secretFields = ['accessKeyId', 'secretAccessKey'];
@@ -209,38 +209,6 @@ const controller = {
       res.status(200).json(response.map(bucket => redactSecrets(bucket, secretFields)));
     } catch (error) {
       next(error);
-    }
-  },
-
-  /**
-   * @function syncBucket
-   * Synchronizes a bucket
-   * @param {object} req Express request object
-   * @param {object} res Express response object
-   * @param {function} next The next callback function
-   * @returns {function} Express middleware function
-   */
-  async syncBucket(req, res, next) {
-    try {
-      const bucketId = addDashesToUuid(req.params.bucketId);
-      const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER), SYSTEM_USER);
-
-      const [dbResponse, s3Response] = await Promise.all([
-        objectService.searchObjects({ bucketId: bucketId }),
-        storageService.listAllObjectVersions({ bucketId: bucketId, filterLatest: true })
-      ]);
-
-      // Aggregate and dedupe all file paths to consider
-      const jobs = [...new Set([
-        ...dbResponse.map(object => object.path),
-        ...s3Response.DeleteMarkers.map(object => object.Key),
-        ...s3Response.Versions.map(object => object.Key)
-      ])].map(path => ({ path: path, bucketId: bucketId }));
-
-      const response = await objectQueueService.enqueue({ jobs: jobs, full: isTruthy(req.query.full), createdBy: userId });
-      res.status(202).json(response);
-    } catch (e) {
-      next(errorToProblem(SERVICE, e));
     }
   },
 

@@ -34,8 +34,6 @@ const {
   bucketPermissionService,
   metadataService,
   objectService,
-  objectQueueService,
-  syncService,
   storageService,
   tagService,
   userService,
@@ -1011,31 +1009,6 @@ const controller = {
       res.status(200).json(response);
     } catch (error) {
       next(error);
-    }
-  },
-
-  /**
-   * @function syncObject
-   * Synchronizes an object
-   * @param {object} req Express request object
-   * @param {object} res Express response object
-   * @param {function} next The next callback function
-   * @returns {function} Express middleware function
-   */
-  async syncObject(req, res, next) {
-    try {
-      const bucketId = req.currentObject?.bucketId;
-      const path = req.currentObject?.path;
-      const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER), SYSTEM_USER);
-
-      const response = await objectQueueService.enqueue({
-        jobs: [{ path: path, bucketId: bucketId }],
-        full: isTruthy(req.query.full),
-        createdBy: userId
-      });
-      res.status(202).json(response);
-    } catch (e) {
-      next(errorToProblem(SERVICE, e));
     }
   },
 
