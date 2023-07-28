@@ -94,7 +94,7 @@ describe('createBucket', () => {
           bucket: 'ccc',
           endpoint: 'https://s3.ca',
           bucketName: 'My Bucket',
-          active : true
+          active: true
         }
       };
       expect(value).toMatchSchema(schema.createBucket);
@@ -212,6 +212,34 @@ describe('searchBuckets', () => {
       });
     });
   });
+});
+
+describe('syncBucket', () => {
+
+  describe('params', () => {
+    const params = schema.syncBucket.params.describe();
+
+    describe('bucketId', () => {
+      const bucketId = params.keys.bucketId;
+
+      it('is the expected schema', () => {
+        expect(bucketId).toEqual(type.uuidv4.required().describe());
+      });
+    });
+  });
+
+  describe('query', () => {
+    const query = schema.syncBucket.query.describe();
+
+    describe('full', () => {
+      const full = query.keys.full;
+
+      it('is the expected schema', () => {
+        expect(full).toEqual(type.truthy.describe());
+      });
+    });
+  });
+
 });
 
 describe('updateBucket', () => {

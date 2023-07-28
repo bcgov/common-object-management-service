@@ -39,7 +39,7 @@ class ObjectModel extends Timestamps(Model) {
       required: ['path', 'full', 'retries'],
       properties: {
         id: { type: 'integer' },
-        bucketId: { type: 'string', maxLength: 255 },
+        bucketId: { type: 'string', maxLength: 255, nullable: true },
         path: { type: 'string', minLength: 1, maxLength: 1024 },
         full: { type: 'boolean' },
         retries: { type: 'integer' },

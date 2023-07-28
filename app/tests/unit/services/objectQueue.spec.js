@@ -44,21 +44,32 @@ describe('dequeue', () => {
 
 describe('enqueue', () => {
   it('Inserts a job into the object queue only if it is not already present', async () => {
+    ObjectQueue.ignore.mockReturnValue([]);
     const data = {
-      bucketId: BUCKET_ID,
-      path: 'path',
+      jobs: [{
+        path: 'path',
+        bucketId: BUCKET_ID
+      }],
       full: true,
       retries: 0,
       createdBy: SYSTEM_USER
     };
 
-    await service.enqueue(data.path, data.bucketId, data.full, data.retries, data.createdBy);
+    await service.enqueue(data);
 
     expect(ObjectQueue.startTransaction).toHaveBeenCalledTimes(1);
     expect(ObjectQueue.query).toHaveBeenCalledTimes(1);
     expect(ObjectQueue.query).toBeCalledWith(expect.anything());
     expect(ObjectQueue.insert).toHaveBeenCalledTimes(1);
-    expect(ObjectQueue.insert).toBeCalledWith(expect.objectContaining(data));
+    expect(ObjectQueue.insert).toBeCalledWith(expect.arrayContaining([
+      expect.objectContaining({
+        bucketId: data.jobs[0].bucketId,
+        createdBy: data.createdBy,
+        full: data.full,
+        path: data.jobs[0].path,
+        retries: data.retries
+      })
+    ]));
     expect(ObjectQueue.onConflict).toHaveBeenCalledTimes(1);
     expect(ObjectQueue.ignore).toHaveBeenCalledTimes(1);
     expect(objectQueueTrx.commit).toHaveBeenCalledTimes(1);

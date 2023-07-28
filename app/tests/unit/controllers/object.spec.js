@@ -331,6 +331,7 @@ describe('deleteObject', () => {
     expect(versionCreateSpy).toHaveBeenCalledTimes(1);
     expect(versionCreateSpy).toHaveBeenCalledWith({
       id: 'xyz-789',
+      isLatest: true,
       deleteMarker: true,
       s3VersionId: '1234',
     }, 'user-123');
