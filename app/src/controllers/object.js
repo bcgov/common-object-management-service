@@ -324,7 +324,8 @@ const controller = {
             const version = await versionService.create({
               ...data,
               etag: s3Response.ETag,
-              s3VersionId: s3VersionId
+              s3VersionId: s3VersionId,
+              isLatest: true
             }, userId, trx);
             object.versionId = version.id;
 
@@ -1013,7 +1014,7 @@ const controller = {
             let version = undefined;
             if (s3Response.VersionId) { // Create new version if bucket versioning enabled
               const s3VersionId = s3Response.VersionId;
-              version = await versionService.create({ ...data, etag: s3Response.ETag, s3VersionId: s3VersionId }, userId, trx);
+              version = await versionService.create({ ...data, etag: s3Response.ETag, s3VersionId: s3VersionId, isLatest: true }, userId, trx);
             } else { // Update existing version when bucket versioning not enabled
               version = await versionService.update({
                 ...data,
