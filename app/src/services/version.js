@@ -91,17 +91,18 @@ const service = {
           createdBy: userId,
           deleteMarker: data.deleteMarker,
           etag: data.etag,
-          isLatest: true
+          isLatest: data.isLatest
         })
         .returning('*');
 
-      // set all other versions to islatest: false
-      await Version.query(trx)
-        .update({ 'isLatest': false, 'objectId': data.id })
-        .whereNot({ 'id': response.id })
-        .andWhere('objectId', data.id)
-        .returning('*');
-
+      // if new version is latest, set all other versions to islatest: false
+      if(data.isLatest){
+        await Version.query(trx)
+          .update({ 'isLatest': false, 'objectId': data.id })
+          .whereNot({ 'id': response.id })
+          .andWhere('objectId', data.id)
+          .returning('*');
+      }
 
       if (!etrx) await trx.commit();
       return Promise.resolve(response);
@@ -268,27 +269,31 @@ const service = {
    * @param {string} options.id COMS uuid of a version
    * @param {string} options.objectId COMS uuid of an object
    * @param {boolean} options.isLatest isLatest value to set in db
-   * @param {string} [userId=SYSTEM_USER] The uuid of a user
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {object} Version model of updated version in db
    */
-  updateIsLatest: async ({ id, objectId, isLatest }, userId = undefined, etrx = undefined) => {
+  updateIsLatest: async ({ id, objectId, isLatest }, etrx = undefined) => {
     let trx;
     try {
       trx = etrx ? etrx : await Version.startTransaction();
       // update this version
       const updated = await Version.query(trx)
-        .update({ isLatest: isLatest, objectId: objectId, updatedBy: userId })
+        .update({
+          isLatest: isLatest,
+          objectId: objectId
+        })
         .where({ id: id })
         .returning('*');
-
       // if we set this version with isLatest: true
       if (isLatest) {
         // set all other versions to islatest: false
         await Version.query(trx)
-          .update({ isLatest: false, objectId: objectId, updatedBy: userId })
-          .whereNot({ id: id })
-          .andWhere(objectId, objectId)
+          .update({
+            isLatest: false,
+            objectId: objectId
+          })
+          .whereNot({ 'id': id })
+          .andWhere('objectId', objectId)
           .returning('*');
       }
       // else we set this version with isLatest: false.
@@ -303,8 +308,14 @@ const service = {
 
         if (sq.length && !sq.some(v => v.isLatest).length) {
           await Version.query(trx)
-            .update({ 'isLatest': true, 'objectId': objectId, updatedBy: userId })
-            .where({ 'id': sq[0]?.id, 'objectId': objectId });
+            .update({
+              'isLatest': true,
+              'objectId': objectId,
+            })
+            .where({
+              'id': sq[0]?.id,
+              'objectId': objectId
+            });
         }
       }
 
