@@ -268,6 +268,7 @@ const service = {
   /**
   * @function fetchTagsForVersion
   * Fetch tags for specific versions, optionally scoped to a user's object/bucket READ permission
+  * @param {string[]} [params.s3VersionIds] An array of S3 version identifiers
   * @param {string[]} [params.versionIds] An array of uuids representing versions
   * @param {object} [params.tags] Optional object of tags key/value pairs
   * @param {string} [params.userId] Optional uuid representing a user

@@ -175,7 +175,7 @@ const controller = {
       // get source version that we are adding tags to
       const sourceS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid(req.query.versionId), objId);
       // get existing tags on source version
-      const { TagSet: existingTags } = await storageService.getObjectTagging({ filePath: objPath, s3VersionId: sourceS3VersionId, bucketId });
+      const { TagSet: existingTags } = await storageService.getObjectTagging({ filePath: objPath, s3VersionId: sourceS3VersionId, bucketId: bucketId });
 
       const newSet = newTags
         // Join new tags and existing tags
@@ -643,7 +643,7 @@ const controller = {
       // Target S3 version
       const targetS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid(req.query.versionId), objId);
 
-      const sourceObject = await storageService.getObjectTagging({ filePath: objPath, s3VersionId: targetS3VersionId, bucketId });
+      const sourceObject = await storageService.getObjectTagging({ filePath: objPath, s3VersionId: targetS3VersionId, bucketId: bucketId });
 
       // Generate object subset by subtracting/omitting defined keys via filter/inclusion
       const keysToRemove = req.query.tagset ? Object.keys(req.query.tagset) : [];
@@ -889,7 +889,8 @@ const controller = {
       // get existing tags on source object
       const sourceObject = await storageService.getObjectTagging({
         filePath: objPath,
-        s3VersionId: sourceS3VersionId, bucketId
+        s3VersionId: sourceS3VersionId,
+        bucketId: bucketId
       });
       const sourceTags = Object.assign({}, ...(sourceObject.TagSet.map(item => ({ [item.Key]: item.Value }))));
 
