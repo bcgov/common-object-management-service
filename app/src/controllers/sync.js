@@ -38,6 +38,7 @@ const controller = {
         ...s3Response.DeleteMarkers.map(object => object.Key),
         ...s3Response.Versions.map(object => object.Key)
       ])].map(path => ({ path: path, bucketId: bucketId }));
+      console.log('jobs', jobs);
 
       const response = await objectQueueService.enqueue({ jobs: jobs, full: isTruthy(req.query.full), createdBy: userId });
       res.status(202).json(response);
