@@ -22,7 +22,7 @@ const service = {
    * Orchestrates the synchronization of all aspects of a specified object
    * Wraps all child processes in one db transaction
    * @param {string} options.path String representing the canonical path for the specified object
-   * @param {string} [options.bucketId=undefined] Optional uuid of bucket
+   * @param {string} [options.bucketId] uuid of bucket or `null` if syncing object in default bucket
    * @param {boolean} [options.full=false] Optional boolean indicating whether to execute full recursive run
    * @param {string} [options.userId=SYSTEM_USER] Optional uuid attributing which user added the job
    * @returns
@@ -81,7 +81,7 @@ const service = {
             response[0].versions.find(v => v.id === version.id).metadata = metadata;
           }
         }
-        // console.log('sync response:', response[0].versions[0].tagset);
+        log.verbose(`Finished syncing  ${path} in bucket ${bucketId}`, { function: 'syncJob', result: response });
         return response;
       });
     }
@@ -134,15 +134,16 @@ const service = {
         let objId = uuidv4();
 
         // IF not a delete-marker,
-        if(typeof comsObject === 'object'){
-          // use 'coms-id' tag on object in S3 (if managed by another COMS instance), otherwise add it
+        if(typeof s3Object === 'object'){
+          // get a COMS uuid using the 'coms-id' tag on object in S3 (if managed by another COMS instance), otherwise add it
+          // we can do this here in case not syncing tags later in full mode
+          // note, putObjectTagging does a replace in S3 so we concat with existing tags
           const s3Obj = await storageService.getObjectTagging({ filePath: path, bucketId: bucketId });
-          console.log('s3Obj', s3Obj);
           const s3ObjectComsId = s3Obj.TagSet.find(obj => (obj.Key === 'coms-id'))?.Value;
           if (s3ObjectComsId && uuidValidate(s3ObjectComsId)) {
             objId = s3ObjectComsId;
           } else {
-            await storageService.putObjectTagging({ filePath: path, bucketId: bucketId, tags: [{ Key: 'coms-id', Value: objId }] });
+            await storageService.putObjectTagging({ filePath: path, bucketId: bucketId, tags: s3Obj.TagSet.concat([{ Key: 'coms-id', Value: objId }]) });
           }
         }
 
@@ -163,7 +164,9 @@ const service = {
       if (comsObject && !s3Object) {
         // delete object and all child records from COMS db
         await objectService.delete(comsObject.id, trx);
-        // TODO: consider pruning metadata and tag records, currently a slow process
+        // pruning metadata and tag records, currently a slow process!!
+        await metadataService.pruneOrphanedMetadata(trx);
+        await tagService.pruneOrphanedTags(trx);
       }
 
       if (!etrx) await trx.commit();
@@ -227,7 +230,6 @@ const service = {
           // if version in COMS db
           const comsV = comsVs.find((comsV) => (comsV.s3VersionId === s3V.VersionId));
           if (comsV) {
-            // console.log('comsV.id:', comsV.id);
             // if isLatest in s3V, patch with isLatest in COMS
             if (s3V.IsLatest) {
               const updated = await versionService.updateIsLatest({ id: comsV.id, objectId: object.id, isLatest: s3V.IsLatest }, trx);
@@ -252,7 +254,6 @@ const service = {
               etag: s3V.ETag,
               isLatest: s3V.IsLatest
             }, userId, trx);
-            // console.log('newVersion:', newVersion);
             // add to response with `newVersion` attribute, required for sync tags/meta logic
             response.push({ ...newVersion, newVersion: true });
           }
@@ -276,7 +277,6 @@ const service = {
               etag: s3V.ETag,
               isLatest: true
             }, userId, trx);
-            // console.log('newVersion:', newVersion);
             response.push({ ...newVersion, newVersion: true });
           }
 
@@ -289,7 +289,6 @@ const service = {
               etag: s3V.ETag,
               isLatest: true
             }, userId, trx);
-            // console.log('updatedVersion:', updatedVersion);
             response.push({ ...updatedVersion, newVersion: true });
           }
           // version record not modified
@@ -344,7 +343,7 @@ const service = {
         S3Tags = toLowerKeys(S3TagsForVersion?.TagSet);
         // ensure `coms-id` tag exists on this version in S3
         if (!S3Tags.find((s3T) => (s3T.key === 'coms-id'))) {
-          await storageService.putObjectTagging({ filePath: path, bucketId: bucketId, tags: [{ Key: 'coms-id', Value: objectId }] });
+          await storageService.putObjectTagging({ filePath: path, bucketId: bucketId, tags: S3TagsForVersion?.TagSet.concat([{ Key: 'coms-id', Value: objectId }]) });
           // add to our arrays for comaprison
           S3Tags.push({ key: 'coms-id', value: objectId });
         }
