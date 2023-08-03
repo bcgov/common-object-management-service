@@ -56,6 +56,9 @@ const service = {
 
         // delete all orphaned metadata records
         await service.pruneOrphanedMetadata(trx);
+        // TODO: call a dissociateMetadata() function for this version
+        // and prune old metadata from there.
+
       }
 
       if (!etrx) await trx.commit();
@@ -107,6 +110,51 @@ const service = {
       else {
         response = existingMetadata;
       }
+
+      if (!etrx) await trx.commit();
+      return Promise.resolve(response);
+    } catch (err) {
+      if (!etrx && trx) await trx.rollback();
+      throw err;
+    }
+  },
+
+
+  /**
+ * @function dissociateMetadata
+ * dissociates all provided metadata from a versionId
+ * @param {string} versionId The uuid id column from version table
+ * @param {object[]} [metadata=undefined] array of metadata (eg: [{ key: 'a', value: '1'}, {key: 'B', value: ''}])
+ * @param {object} [etrx=undefined] An optional Objection Transaction object
+ * @returns {Promise<number>} The result of running the delete operation (number of rows deleted)
+ * @throws The error encountered upon db transaction failure
+ */
+  dissociateMetadata: async (versionId, metadata = undefined, etrx = undefined) => {
+    let trx;
+    try {
+      trx = etrx ? etrx : await Metadata.startTransaction();
+      let response = 0;
+
+      await metadata.forEach(async meta => {
+
+        // match on key
+        const params = { 'metadata.key': meta.key };
+        // if metadata has a value match key and value
+        if (meta.value && meta.value !== '') params['metadata.value'] = meta.value;
+
+        let count = 0;
+        count = await VersionMetadata.query(trx)
+          .allowGraph('metadata')
+          .withGraphJoined('metadata')
+          .where(params)
+          .modify('filterVersionId', versionId)
+          .delete();
+
+        if (count) response += count;
+      });
+
+      // delete all orphaned metadata
+      await service.pruneOrphanedMetadata(trx);
 
       if (!etrx) await trx.commit();
       return Promise.resolve(response);
