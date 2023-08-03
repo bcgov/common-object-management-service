@@ -121,14 +121,14 @@ const service = {
    * @returns {Promise<integer>} The number of remaining versions in db after the delete
    * @throws The error encountered upon db transaction failure
    */
-  delete: async (objId, versionId, etrx = undefined) => {
+  delete: async (objId, s3VersionId, etrx = undefined) => {
     let trx;
     try {
       trx = etrx ? etrx : await Version.startTransaction();
       const response = await Version.query(trx)
         .delete()
         .where('objectId', objId)
-        .where('s3VersionId', versionId)
+        .where('s3VersionId', s3VersionId)
         // Returns array of deleted rows instead of count
         // https://vincit.github.io/objection.js/recipes/returning-tricks.html
         .returning('*')
