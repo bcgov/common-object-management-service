@@ -593,7 +593,7 @@ const controller = {
       // if request is to delete a version
       if (data.s3VersionId) {
         // delete version in DB
-        await versionService.delete(objId, data.VersionId);
+        await versionService.delete(objId, s3Response.VersionId);
         // prune tags amd metadata
         await metadataService.pruneOrphanedMetadata();
         await tagService.pruneOrphanedTags();
@@ -1271,6 +1271,7 @@ const controller = {
 
             // Update Metadata
             if (data.metadata && Object.keys(data.metadata).length) await metadataService.associateMetadata(version.id, getKeyValue(data.metadata), userId, trx);
+            // TODO: if in unversioned bucket, dissociate old metadata. This is currently done in associateMetadata() with the global-style pruneOrphanedMetadata() method.
 
             // Update Tags
             if (data.tags && Object.keys(data.tags).length) await tagService.replaceTags(version.id, getKeyValue(data.tags), userId, trx);
