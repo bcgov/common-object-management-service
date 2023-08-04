@@ -13,6 +13,7 @@ const {
   TaggingDirective
 } = require('../components/constants');
 const errorToProblem = require('../components/errorToProblem');
+const log = require('../components/log')(module.filename);
 const {
   addDashesToUuid,
   getBucketId,
@@ -223,6 +224,127 @@ const controller = {
    * @returns {function} Express middleware function
    */
   async createObject(req, res, next) {
+    try {
+      const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
+
+      // Preflight CREATE permission check if bucket scoped and OIDC authenticated
+      const bucketId = req.query.bucketId ? addDashesToUuid(req.query.bucketId) : undefined;
+      if (bucketId && userId) {
+        const permission = await bucketPermissionService.searchPermissions({ userId: userId, bucketId: bucketId, permCode: 'CREATE' });
+        if (!permission.length) {
+          throw new Problem(403, { detail: 'User lacks permission to complete this action' });
+        }
+      }
+
+      // Preflight existence check for bucketId
+      const { key: bucketKey } = await getBucket(bucketId, true);
+
+      const objId = uuidv4();
+      const data = {
+        id: objId,
+        bucketId: bucketId,
+        length: req.currentUpload.contentLength,
+        name: req.currentUpload.filename,
+        mimeType: req.currentUpload.mimeType,
+        metadata: getMetadata(req.headers),
+        tags: {
+          ...req.query.tagset,
+          'coms-id': objId // Enforce `coms-id:<objectId>` tag
+        }
+      };
+
+      let s3Response;
+      try {
+        // Preflight S3 Object check
+        await storageService.headObject({
+          filePath: joinPath(bucketKey, req.currentUpload.filename),
+          bucketId: bucketId
+        });
+
+        // Hard short circuit skip file as the object already exists on bucket
+        throw new Problem(409, { detail: 'Bucket already contains object' });
+      } catch (err) {
+        if (err instanceof Problem) throw err; // Rethrow Problem type errors
+
+        // Object is soft deleted from the bucket
+        if (err.$response?.headers['x-amz-delete-marker']) {
+          throw new Problem(409, { detail: 'Bucket already contains object' });
+        }
+
+        // Skip upload in the unlikely event we get an unexpected error from headObject
+        if (err.$metadata?.httpStatusCode !== 404) {
+          throw new Problem(502, { detail: 'Bucket communication error' });
+        }
+
+        // Object does not exist on bucket
+        if (req.currentUpload.contentLength < MAXCOPYOBJECTLENGTH) {
+          log.debug('Uploading with putObject', {
+            contentLength: req.currentUpload.contentLength,
+            function: 'createObject',
+            uploadMethod: 'putObject'
+          });
+          s3Response = await storageService.putObject({ ...data, stream: req });
+        } else if (req.currentUpload.contentLength < MAXFILEOBJECTLENGTH) {
+          log.debug('Uploading with lib-storage', {
+            contentLength: req.currentUpload.contentLength,
+            function: 'createObject',
+            uploadMethod: 'lib-storage'
+          });
+          s3Response = await storageService.upload({ ...data, stream: req });
+        } else {
+          throw new Problem(413, { detail: 'File exceeds maximum 50GB limit' });
+        }
+      }
+
+      const dbResponse = await utils.trxWrapper(async (trx) => {
+        // Create Object
+        const object = await objectService.create({
+          ...data,
+          userId: userId,
+          path: joinPath(bucketKey, data.name)
+        }, trx);
+
+        // Create Version
+        const s3VersionId = s3Response.VersionId ?? null;
+        const version = await versionService.create({
+          ...data,
+          etag: s3Response.ETag,
+          s3VersionId: s3VersionId
+        }, userId, trx);
+        object.versionId = version.id;
+
+        // Create Metadata
+        if (data.metadata && Object.keys(data.metadata).length) {
+          await metadataService.associateMetadata(version.id, getKeyValue(data.metadata), userId, trx);
+        }
+
+        // Create Tags
+        if (data.tags && Object.keys(data.tags).length) {
+          await tagService.associateTags(version.id, getKeyValue(data.tags), userId, trx);
+        }
+
+        return object;
+      });
+
+      res.status(200).json({
+        ...data,
+        ...dbResponse,
+        ...renameObjectProperty(s3Response, 'VersionId', 's3VersionId')
+      });
+    } catch (e) {
+      next(errorToProblem(SERVICE, e));
+    }
+  },
+
+  /**
+   * @function createObjectPost
+   * Creates a new object
+   * @param {object} req Express request object
+   * @param {object} res Express response object
+   * @param {function} next The next callback function
+   * @returns {function} Express middleware function
+   */
+  async createObjectPost(req, res, next) {
     let data;
     let s3Promise;
 
@@ -922,6 +1044,126 @@ const controller = {
    * @returns {function} Express middleware function
    */
   async updateObject(req, res, next) {
+    try {
+      const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
+
+      // Preflight existence check for bucketId
+      const bucketId = req.currentObject?.bucketId;
+      const { key: bucketKey } = await getBucket(bucketId, true);
+
+      const filename = req.currentObject?.path.match(/(?!.*\/)(.*)$/)[0];
+      const objId = addDashesToUuid(req.params.objectId);
+      const data = {
+        id: objId,
+        bucketId: bucketId,
+        length: req.currentUpload.contentLength,
+        name: filename,
+        mimeType: req.currentUpload.mimeType,
+        metadata: getMetadata(req.headers),
+        tags: {
+          ...req.query.tagset,
+          'coms-id': objId // Enforce `coms-id:<objectId>` tag
+        }
+      };
+
+      let s3Response;
+      try {
+        // Preflight S3 Object check
+        const headResponse = await storageService.headObject({
+          filePath: joinPath(bucketKey, filename),
+          bucketId: bucketId
+        });
+
+        // Skip upload in the unlikely event we get an unexpected response from headObject
+        if (headResponse.$metadata?.httpStatusCode !== 200) {
+          throw new Problem(502, { detail: 'Bucket communication error' });
+        }
+
+        // Object exists on bucket
+        if (req.currentUpload.contentLength < MAXCOPYOBJECTLENGTH) {
+          log.debug('Uploading with putObject', {
+            contentLength: req.currentUpload.contentLength,
+            function: 'createObject',
+            uploadMethod: 'putObject'
+          });
+          s3Response = await storageService.putObject({ ...data, stream: req });
+        } else if (req.currentUpload.contentLength < MAXFILEOBJECTLENGTH) {
+          log.debug('Uploading with lib-storage', {
+            contentLength: req.currentUpload.contentLength,
+            function: 'createObject',
+            uploadMethod: 'lib-storage'
+          });
+          s3Response = await storageService.upload({ ...data, stream: req });
+        } else {
+          throw new Problem(413, { detail: 'File exceeds maximum 50GB limit' });
+        }
+      } catch (err) {
+        if (err instanceof Problem) throw err; // Rethrow Problem type errors
+        else if (err.$metadata?.httpStatusCode !== 404) {
+          // An unexpected response from headObject
+          throw new Problem(502, { detail: 'Bucket communication error' });
+        } else {
+          if (err.$response?.headers['x-amz-delete-marker']) {
+            // Object is soft deleted from the bucket
+            throw new Problem(409, { detail: 'Unable to update soft deleted object' });
+          } else {
+            // Bucket is missing the existing object
+            throw new Problem(409, { detail: 'Bucket does not contain existing object' });
+          }
+          // TODO: Add in sync operation to update object record in COMS DB?
+        }
+      }
+
+      const dbResponse = await utils.trxWrapper(async (trx) => {
+        // Update Object
+        const object = await objectService.update({
+          ...data,
+          userId: userId,
+          path: joinPath(bucketKey, filename)
+        }, trx);
+
+        // Update Version
+        let version = undefined;
+        if (s3Response.VersionId) { // Create new version if bucket versioning enabled
+          const s3VersionId = s3Response.VersionId;
+          version = await versionService.create({ ...data, etag: s3Response.ETag, s3VersionId: s3VersionId }, userId, trx);
+        } else { // Update existing version when bucket versioning not enabled
+          version = await versionService.update({
+            ...data,
+            s3VersionId: null,
+            etag: s3Response.ETag
+          }, userId, trx);
+        }
+        object.versionId = version.id;
+
+        // Update Metadata
+        if (data.metadata && Object.keys(data.metadata).length) await metadataService.associateMetadata(version.id, getKeyValue(data.metadata), userId, trx);
+
+        // Update Tags
+        if (data.tags && Object.keys(data.tags).length) await tagService.replaceTags(version.id, getKeyValue(data.tags), userId, trx);
+
+        return object;
+      });
+
+      res.status(200).json({
+        ...data,
+        ...dbResponse,
+        ...renameObjectProperty(s3Response, 'VersionId', 's3VersionId')
+      });
+    } catch (e) {
+      next(errorToProblem(SERVICE, e));
+    }
+  },
+
+  /**
+   * @function updateObjectPost
+   * Creates an updated version of the object via streaming
+   * @param {object} req Express request object
+   * @param {object} res Express response object
+   * @param {function} next The next callback function
+   * @returns {function} Express middleware function
+   */
+  async updateObjectPost(req, res, next) {
     let data;
     let s3Promise;
 

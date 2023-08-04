@@ -12,8 +12,9 @@ const app = expressHelper(basePath, router);
 // Mock config library - @see {@link https://stackoverflow.com/a/64819698}
 jest.mock('config');
 
+// TODO: Repoint to PUT endpoint
 describe(`POST ${basePath}`, () => {
-  const spy = jest.spyOn(objectController, 'createObject');
+  const spy = jest.spyOn(objectController, 'createObjectPost');
 
   beforeEach(() => {
     spy.mockReset();
