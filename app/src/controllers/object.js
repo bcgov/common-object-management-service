@@ -338,6 +338,7 @@ const controller = {
 
   /**
    * @function createObjectPost
+   * @deprecated
    * Creates a new object
    * @param {object} req Express request object
    * @param {object} res Express response object
@@ -1157,6 +1158,7 @@ const controller = {
 
   /**
    * @function updateObjectPost
+   * @deprecated
    * Creates an updated version of the object via streaming
    * @param {object} req Express request object
    * @param {object} res Express response object
