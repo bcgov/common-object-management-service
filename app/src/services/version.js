@@ -96,12 +96,11 @@ const service = {
         .returning('*');
 
       // if new version is latest, set all other versions to islatest: false
-      if(data.isLatest){
+      if (data.isLatest) {
         await Version.query(trx)
           .update({ 'isLatest': false, 'objectId': data.id })
           .whereNot({ 'id': response.id })
-          .andWhere('objectId', data.id)
-          .returning('*');
+          .andWhere('objectId', data.id);
       }
 
       if (!etrx) await trx.commit();
@@ -171,18 +170,12 @@ const service = {
       let response = undefined;
       if (s3VersionId) {
         response = await Version.query(trx)
-          .where({
-            s3VersionId: s3VersionId,
-            objectId: objectId
-          })
+          .where({ s3VersionId: s3VersionId, objectId: objectId })
           .first();
       }
       else if (versionId) {
         response = await Version.query(trx)
-          .where({
-            id: versionId,
-            objectId: objectId
-          })
+          .where({ id: versionId, objectId: objectId })
           .first();
       }
       else {
@@ -278,20 +271,14 @@ const service = {
       trx = etrx ? etrx : await Version.startTransaction();
       // update this version
       const updated = await Version.query(trx)
-        .update({
-          isLatest: isLatest,
-          objectId: objectId
-        })
+        .update({ isLatest: isLatest, objectId: objectId })
         .where({ id: id })
         .returning('*');
       // if we set this version with isLatest: true
       if (isLatest) {
         // set all other versions to islatest: false
         await Version.query(trx)
-          .update({
-            isLatest: false,
-            objectId: objectId
-          })
+          .update({ isLatest: false, objectId: objectId })
           .whereNot({ 'id': id })
           .andWhere('objectId', objectId)
           .returning('*');
@@ -308,14 +295,8 @@ const service = {
 
         if (sq.length && !sq.some(v => v.isLatest).length) {
           await Version.query(trx)
-            .update({
-              'isLatest': true,
-              'objectId': objectId,
-            })
-            .where({
-              'id': sq[0]?.id,
-              'objectId': objectId
-            });
+            .update({ 'isLatest': true, 'objectId': objectId })
+            .where({ 'id': sq[0]?.id, 'objectId': objectId });
         }
       }
 

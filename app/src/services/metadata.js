@@ -122,7 +122,7 @@ const service = {
 
   /**
  * @function dissociateMetadata
- * dissociates all provided metadata from a versionId
+ * Dissociates all provided metadata from a version
  * @param {string} versionId The uuid id column from version table
  * @param {object[]} [metadata=undefined] array of metadata (eg: [{ key: 'a', value: '1'}, {key: 'B', value: ''}])
  * @param {object} [etrx=undefined] An optional Objection Transaction object
@@ -135,8 +135,7 @@ const service = {
       trx = etrx ? etrx : await Metadata.startTransaction();
       let response = 0;
 
-      await metadata.forEach(async meta => {
-
+      metadata.forEach(async meta => {
         // match on key
         const params = { 'metadata.key': meta.key };
         // if metadata has a value match key and value
