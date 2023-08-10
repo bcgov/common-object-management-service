@@ -3,7 +3,7 @@ const config = require('config');
 const { existsSync, readFileSync } = require('fs');
 const { join } = require('path');
 
-const { AuthMode, AuthType, DEFAULTREGION } = require('./constants');
+const { AuthMode, AuthType, DEFAULTREGION, MAXPARTCOUNT, MINPARTSIZE } = require('./constants');
 const log = require('./log')(module.filename);
 
 const DELIMITER = '/';
@@ -20,6 +20,17 @@ const utils = {
       return `${str.slice(0, 8)}-${str.slice(8, 12)}-${str.slice(12, 16)}-${str.slice(16, 20)}-${str.slice(20)}`.toLowerCase();
     }
     else return str;
+  },
+
+  /**
+   * @function calculatePartSize
+   * Calculates the smallest feasible part size rounded to the nearest 5MB boundary
+   * @param {number} length The incoming file length
+   * @returns {number | undefined} The part size to use for this file length
+   */
+  calculatePartSize(length) {
+    if (!length || typeof length !== 'number') return undefined;
+    return Math.ceil(length / (MAXPARTCOUNT * MINPARTSIZE)) * MINPARTSIZE;
   },
 
   /**

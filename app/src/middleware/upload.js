@@ -22,18 +22,19 @@ const currentUpload = (strict = false) => {
     if (disposition) {
       try {
         const { type, parameters } = contentDisposition.parse(disposition);
-        if (strict && !type || type !== 'attachment') return new Error('Disposition type is not \'attachment\'');
-        if (strict && !parameters?.filename) return new Error('Disposition missing \'filename\' parameter');
+        if (strict && !type || type !== 'attachment') throw new Error('Disposition type is not \'attachment\'');
+        if (strict && !parameters?.filename) throw new Error('Disposition missing \'filename\' parameter');
         filename = parameters?.filename;
       } catch (e) {
-        return new Problem(400, { detail: `Content-Disposition header error: ${e.message}` }).send(res);
+        // Ignore improperly formatted Content-Disposition when not in strict mode
+        if (strict) return new Problem(400, { detail: `Content-Disposition header error: ${e.message}` }).send(res);
       }
     } else {
       if (strict) return new Problem(415, { detail: 'Content-Disposition header missing' }).send(res);
     }
 
     // Check Content-Type Header
-    const mimeType = req.get('Content-Type');
+    const mimeType = req.get('Content-Type') ?? 'application/octet-stream';
 
     req.currentUpload = Object.freeze({
       contentLength: contentLength,

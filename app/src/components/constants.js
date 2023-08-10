@@ -46,13 +46,14 @@ module.exports = Object.freeze({
    */
   EMAILREGEX: '^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\\.[a-zA-Z0-9-]{2,})+$',
 
-  /** Maximum Content Length supported by S3 CopyObjectCommand */
-  MAXCOPYOBJECTLENGTH: 5 * 1024 * 1024 * 1024,
+  /** Maximum number of parts supported by lib-storage upload */
+  MAXPARTCOUNT: 10000,
 
   /** Maximum Content Length supported by S3 CopyObjectCommand */
-  // TODO: Increase from current 50GB to S3 5TB once dynamic part calculation is implemented
-  // MAXFILEOBJECTLENGTH: 5 * 1024 * 1024 * 1024 * 1024,
-  MAXFILEOBJECTLENGTH: 50 * 1024 * 1024 * 1024,
+  MAXCOPYOBJECTLENGTH: 5 * 1024 * 1024 * 1024, // 5 GB
+
+  /** Maximum Content Length supported by S3 CopyObjectCommand */
+  MAXFILEOBJECTLENGTH: 5 * 1024 * 1024 * 1024 * 1024, // 5 TB
 
   /** Allowable values for the Metadata Directive parameter */
   MetadataDirective: {
@@ -61,6 +62,9 @@ module.exports = Object.freeze({
     /** All original metadata is replaced by the metadata you specify. */
     REPLACE: 'REPLACE'
   },
+
+  /** Minimum part size supported by lib-storage upload */
+  MINPARTSIZE: 5 * 1024 * 1024, // 5 MB
 
   /** Allowable values for the Tagging Directive parameter */
   TaggingDirective: {

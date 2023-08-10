@@ -423,13 +423,14 @@ const objectStorageService = {
    * Uploads the object `stream` at the `id` path
    * @param {stream} options.stream The binary stream of the object
    * @param {string} options.name The file name of the object
+   * @param {number} options.length The content length of the object
    * @param {string} options.mimeType The mime type of the object
    * @param {object} [options.metadata] Optional object containing key/value pairs for metadata
    * @param {object} [options.tags] Optional object containing key/value pairs for tags
    * @param {string} [options.bucketId] Optional bucketId
    * @returns {Promise<CompleteMultipartUploadCommandOutput | AbortMultipartUploadCommandOutput>} The response of the put object operation
    */
-  async upload({ stream, name, mimeType, metadata, tags, bucketId = undefined }) {
+  async upload({ stream, name, length, mimeType, metadata, tags, bucketId = undefined }) {
     const data = await utils.getBucket(bucketId);
 
     const upload = new Upload({
@@ -444,8 +445,7 @@ const objectStorageService = {
         // TODO: Consider adding API param support for Server Side Encryption
         // ServerSideEncryption: 'AES256'
       },
-      // TODO: Add utility to determine optimal part size based on content length
-      // partSize: 512 * 1024 * 1024,
+      partSize: utils.calculatePartSize(length),
       queueSize: 1
     });
 
