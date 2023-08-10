@@ -255,9 +255,9 @@ paths:
               type: string
               description: >-
                 Contains the binary representation of the file to upload.
-                Maximum filesize of 50GB.
+                Maximum filesize of 5TB.
               format: binary
-              maxLength: 53687091200
+              maxLength: 5497558138880
       responses:
         "200":
           description: Returns the created object data
@@ -323,9 +323,9 @@ paths:
                   type: string
                   description: >-
                     Contains the binary representation of the file to upload.
-                    Maximum filesize of 50GB.
+                    Maximum filesize of 5TB.
                   format: binary
-                  maxLength: 53687091200
+                  maxLength: 5497558138880
       responses:
         "200":
           description: Returns the created object data
@@ -521,9 +521,9 @@ paths:
               type: string
               description: >-
                 Contains the binary representation of the file to upload.
-                Maximum filesize of 50GB.
+                Maximum filesize of 5TB.
               format: binary
-              maxLength: 53687091200
+              maxLength: 5497558138880
       responses:
         "200":
           description: Returns the updated object data
@@ -577,9 +577,9 @@ paths:
                   type: string
                   description: >-
                     Contains the binary representation of the file to upload.
-                    Maximum filesize of 50GB.
+                    Maximum filesize of 5TB.
                   format: binary
-                  maxLength: 53687091200
+                  maxLength: 5497558138880
       responses:
         "200":
           description: Returns the updated object data
@@ -1393,12 +1393,13 @@ components:
       schema:
         type: string
       example: >-
-        attachment; filename="bittercherrytree.txt"
-        filename*="UTF-8''skwc%E2%80%99%D3%99nj%C3%AD%C5%82c.txt"
+        attachment; filename=bittercherrytree.txt;
+        filename*=UTF-8''skwc%E2%80%99%D3%99nj%C3%AD%C5%82c.txt
     Content-Length:
-      description: Size of the body in bytes
+      description: Size of the file body in bytes
       schema:
         type: integer
+        maximum: 5497558138880
       example: 529
     Content-Type:
       description: A standard MIME type describing the format of the object data
@@ -1462,8 +1463,8 @@ components:
           represented as a url-encoded string
           `skwc%E2%80%99%D3%99nj%C3%AD%C5%82c.txt`.
         example: >-
-          attachment; filename="bittercherrytree.txt"
-          filename*="UTF-8''skwc%E2%80%99%D3%99nj%C3%AD%C5%82c.txt"
+          attachment; filename=bittercherrytree.txt;
+          filename*=UTF-8''skwc%E2%80%99%D3%99nj%C3%AD%C5%82c.txt
     Header-ContentLength:
       in: header
       name: Content-Length
@@ -1471,6 +1472,7 @@ components:
       schema:
         type: integer
         description: A valid RFC 2616 header. Must be present for PUT requests.
+        maximum: 5497558138880
         example: 3495
     Header-ContentType:
       in: header
@@ -1615,7 +1617,9 @@ components:
       description: The object MIME Type
       schema:
         type: string
-        example: application/octet-stream
+        description: The object MIME Type
+        default: application/octet-stream
+        example: text/plain
     Query-ObjectId:
       in: query
       name: objectId
@@ -2102,7 +2106,8 @@ components:
             mimeType:
               type: string
               description: The MIME Type of the version
-              example: application/octet-stream
+              default: application/octet-stream
+              example: text/plain
             deleteMarker:
               type: boolean
               description: Whether or not this version is a S3 delete-marker
@@ -2366,22 +2371,29 @@ components:
       title: Response Object Details
       type: object
       allOf:
+        - $ref: "#/components/schemas/DB-Object"
         - type: object
           required:
+            - length
             - mimeType
             - Key
             - Location
           properties:
+            length:
+              type: integer
+              description: Size of the file body in bytes
+              maximum: 5497558138880
+              example: 529
             mimeType:
               type: string
               description: The object MIME Type
+              default: application/octet-stream
               example: text/plain
             versionId:
               type: string
               description: The primary identifier for this version in the COMS database
               format: uuid
               example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
-        - $ref: "#/components/schemas/DB-Object"
         - $ref: "#/components/schemas/DB-Metadata"
         - $ref: "#/components/schemas/DB-Tags"
         - $ref: "#/components/schemas/S3-Object"
