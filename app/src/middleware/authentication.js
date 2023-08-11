@@ -74,8 +74,7 @@ const currentUser = async (req, res, next) => {
             issuer: `${config.get('keycloak.serverUrl')}/realms/${config.get('keycloak.realm')}`
           });
         } else {
-          const keycloak = require('../components/keycloak');
-          isValid = await keycloak.grantManager.validateAccessToken(bearerToken);
+          throw new Error('OIDC environment variable KC_PUBLICKEY or keycloak.publicKey must be defined');
         }
 
         if (isValid) {
