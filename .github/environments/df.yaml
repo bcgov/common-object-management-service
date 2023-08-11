@@ -12,4 +12,4 @@ patroni:
   enabled: true
   replicaCount: 2
   persistentVolume:
-    size:128Mi
+    size: 128Mi
