@@ -17,7 +17,7 @@ config:
     KC_SERVERURL: "https://dev.loginproxy.gov.bc.ca/auth"
     OBJECTSTORAGE_BUCKET: bucket
     OBJECTSTORAGE_TEMP_EXPIRESIN: "300"
-    OBJECTSTORAGE_ENDPOINT: "minio.df9936-dev.svc.cluster.local"
+    OBJECTSTORAGE_ENDPOINT: "minio.df9936-dev.svc.cluster.local:9000"
     SERVER_BODYLIMIT: 30mb
     SERVER_LOGLEVEL: http
     SERVER_PORT: "3000"
