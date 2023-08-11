@@ -68,30 +68,49 @@ const service = {
    * @throws The error encountered upon db transaction failure
    */
   createUser: async (data, etrx = undefined) => {
-    let trx;
+    let trx, response;
     try {
-      trx = etrx ? etrx : await User.startTransaction();
+      trx = etrx ? etrx : await User.startTransaction();      
+      console.log('createUser');
 
-      if (data.idp) {
-        const identityProvider = await service.readIdp(data.idp);
-        if (!identityProvider) await service.createIdp(data.idp, trx);
+      // if user exists
+      const exists = await User.query(trx)
+        .where({ 'identityId': data.identityId, idp: data.idp })
+        .first();
+
+      console.log('x', exists);
+      
+      if (exists) {
+        response = exists;
+      }
+      // else add new user
+      else {
+
+        console.log('new');
+
+        // add idp if not in db
+        if (data.idp) {
+          const identityProvider = await service.readIdp(data.idp);
+          if (!identityProvider) await service.createIdp(data.idp);
+        }
+
+        const obj = {
+          userId: uuidv4(),
+          identityId: data.identityId,
+          username: data.username,
+          fullName: data.fullName,
+          email: data.email,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          idp: data.idp,
+          createdBy: data.userId
+        };
+
+        response = await User.query(trx)
+          .insert(obj)
+          .returning('*');
       }
 
-      const obj = {
-        userId: uuidv4(),
-        identityId: data.identityId,
-        username: data.username,
-        fullName: data.fullName,
-        email: data.email,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        idp: data.idp,
-        createdBy: data.userId
-      };
-
-      //       const response = await ObjectQueue.query(trx).insert(jobsArray).onConflict().ignore();
-
-      const response = await User.query(trx).insertAndFetch(obj).onConflict().ignore();
       if (!etrx) await trx.commit();
       return response;
     } catch (err) {
@@ -139,19 +158,21 @@ const service = {
   login: async (token) => {
     let response;
     const newUser = service._tokenToUser(token);
-    // start db transaction
+    // const newUser = { ...service._tokenToUser(token), identityId: 'xyz' };
+
+    // wrap with db transaction
     await utils.trxWrapper(async (trx) => {
       // check if user exists in db
       const oldUser = await User.query(trx)
-        .where('identityId', newUser.identityId)
+        .where({ 'identityId': newUser.identityId, idp: newUser.idp })
         .first();
-      // if not found
+
       if (!oldUser) {
         // Add user to system
-        response = service.createUser(newUser, trx);
+        response = await service.createUser(newUser, trx);
       } else {
         // Update user data if necessary
-        response = service.updateUser(oldUser.userId, newUser, trx);
+        response = await service.updateUser(oldUser.userId, newUser, trx);
       }
     });
     return response;

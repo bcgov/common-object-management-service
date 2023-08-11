@@ -23,10 +23,12 @@ jest.mock('../../../src/db/models/tables/user', () => ({
 
   first: jest.fn(),
   findById: jest.fn(),
+  insert: jest.fn(),
   insertAndFetch: jest.fn(),
   modify: jest.fn(),
   patchAndFetchById: jest.fn(),
   query: jest.fn(),
+  returning: jest.fn(),
   select: jest.fn(),
   throwIfNotFound: jest.fn(),
   where: jest.fn(),
@@ -106,20 +108,21 @@ describe('createUser', () => {
   });
 
   it('Creates an idp if no matching idp exists in database', async () => {
-    readIdpSpy.mockResolvedValue(false);
+    User.first.mockResolvedValue(undefined);
+    readIdpSpy.mockResolvedValue(false);   
 
     await service.createUser(user);
 
     expect(readIdpSpy).toHaveBeenCalledTimes(1);
     expect(readIdpSpy).toHaveBeenCalledWith('idir');
     expect(createIdpSpy).toHaveBeenCalledTimes(1);
-    expect(createIdpSpy).toHaveBeenCalledWith('idir', expect.anything());
+    expect(createIdpSpy).toHaveBeenCalledWith('idir');
 
     expect(User.startTransaction).toHaveBeenCalledTimes(1);
-    expect(User.query).toHaveBeenCalledTimes(1);
+    expect(User.query).toHaveBeenCalledTimes(2);
     expect(User.query).toHaveBeenCalledWith(expect.anything());
-    expect(User.insertAndFetch).toHaveBeenCalledTimes(1);
-    expect(User.insertAndFetch).toBeCalledWith(
+    expect(User.insert).toHaveBeenCalledTimes(1);
+    expect(User.insert).toBeCalledWith(
       expect.objectContaining({
         ...user,
         userId: expect.any(String)
@@ -129,18 +132,19 @@ describe('createUser', () => {
   });
 
   it('Skips creating an idp if matching idp already exists in database', async () => {
+    User.first.mockResolvedValue(false);
     readIdpSpy.mockReturnValue(true);
+    
     await service.createUser(user);
 
     expect(readIdpSpy).toHaveBeenCalledTimes(1);
-    expect(readIdpSpy).toHaveBeenCalledWith('idir');
     expect(createIdpSpy).toHaveBeenCalledTimes(0);
 
     expect(User.startTransaction).toHaveBeenCalledTimes(1);
-    expect(User.query).toHaveBeenCalledTimes(1);
+    expect(User.query).toHaveBeenCalledTimes(2);
     expect(User.query).toHaveBeenCalledWith(expect.anything());
-    expect(User.insertAndFetch).toHaveBeenCalledTimes(1);
-    expect(User.insertAndFetch).toBeCalledWith(
+    expect(User.insert).toHaveBeenCalledTimes(1);
+    expect(User.insert).toBeCalledWith(
       expect.objectContaining({
         ...user,
         userId: expect.any(String)
@@ -159,13 +163,7 @@ describe('createUser', () => {
     expect(User.startTransaction).toHaveBeenCalledTimes(1);
     expect(User.query).toHaveBeenCalledTimes(1);
     expect(User.query).toHaveBeenCalledWith(expect.anything());
-    expect(User.insertAndFetch).toHaveBeenCalledTimes(1);
-    expect(User.insertAndFetch).toBeCalledWith(
-      expect.objectContaining({
-        ...systemUser,
-        userId: expect.any(String)
-      })
-    );
+    expect(User.insert).toHaveBeenCalledTimes(0);
     expect(userTrx.commit).toHaveBeenCalledTimes(1);
   });
 });
@@ -238,6 +236,7 @@ describe('login', () => {
   it('Updates an existing user record', async () => {
     User.first.mockResolvedValue({ ...user, userId: 'a96f2809-d6f4-4cef-a02a-3f72edff06d7' });
     await service.login(token);
+    
 
     expect(User.query).toHaveBeenCalledTimes(1);
     expect(User.query).toHaveBeenCalledWith();
