@@ -1,6 +1,6 @@
 image:
-  tag: latest
-  repository: image-registry.openshift-image-registry.svc:5000/df9936-tools
+  tag: sha-f20ddb7
+  repository: ghcr.io/bcgov
 
 config:
   enabled: true
