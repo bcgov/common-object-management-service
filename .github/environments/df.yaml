@@ -4,7 +4,7 @@ image:
 
 config:
   enabled: true
-  releaseScoped: false
+  releaseScoped: true
   configMap:
     OBJECTSTORAGE_KEY: Hai7Xt5Pb7CAk975VNdhUZJSctX6W7LTKQr1h0BT
 
