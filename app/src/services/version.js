@@ -91,17 +91,17 @@ const service = {
           createdBy: userId,
           deleteMarker: data.deleteMarker,
           etag: data.etag,
-          isLatest: true
+          isLatest: data.isLatest
         })
         .returning('*');
 
-      // set all other versions to islatest: false
-      await Version.query(trx)
-        .update({ 'isLatest': false, 'objectId': data.id })
-        .whereNot({ 'id': response.id })
-        .andWhere('objectId', data.id)
-        .returning('*');
-
+      // if new version is latest, set all other versions to islatest: false
+      if (data.isLatest) {
+        await Version.query(trx)
+          .update({ 'isLatest': false, 'objectId': data.id })
+          .whereNot({ 'id': response.id })
+          .andWhere('objectId', data.id);
+      }
 
       if (!etrx) await trx.commit();
       return Promise.resolve(response);
@@ -120,14 +120,14 @@ const service = {
    * @returns {Promise<integer>} The number of remaining versions in db after the delete
    * @throws The error encountered upon db transaction failure
    */
-  delete: async (objId, versionId, etrx = undefined) => {
+  delete: async (objId, s3VersionId, etrx = undefined) => {
     let trx;
     try {
       trx = etrx ? etrx : await Version.startTransaction();
       const response = await Version.query(trx)
         .delete()
         .where('objectId', objId)
-        .where('s3VersionId', versionId)
+        .where('s3VersionId', s3VersionId)
         // Returns array of deleted rows instead of count
         // https://vincit.github.io/objection.js/recipes/returning-tricks.html
         .returning('*')
@@ -138,7 +138,7 @@ const service = {
         .where({ 'objectId': objId })
         .whereNot({ 'id': response[0].id })
         .orderBy('createdAt', 'desc');
-      if (!sq.some(v => v.isLatest).length) {
+      if (sq.length && !sq.some(v => v.isLatest).length) {
         await Version.query(trx)
           .update({ 'isLatest': true, 'objectId': objId })
           .where({ 'id': sq[0]?.id, 'objectId': objId });
@@ -170,18 +170,12 @@ const service = {
       let response = undefined;
       if (s3VersionId) {
         response = await Version.query(trx)
-          .where({
-            s3VersionId: s3VersionId,
-            objectId: objectId
-          })
+          .where({ s3VersionId: s3VersionId, objectId: objectId })
           .first();
       }
       else if (versionId) {
         response = await Version.query(trx)
-          .where({
-            id: versionId,
-            objectId: objectId
-          })
+          .where({ id: versionId, objectId: objectId })
           .first();
       }
       else {
@@ -268,27 +262,26 @@ const service = {
    * @param {string} options.id COMS uuid of a version
    * @param {string} options.objectId COMS uuid of an object
    * @param {boolean} options.isLatest isLatest value to set in db
-   * @param {string} [userId=SYSTEM_USER] The uuid of a user
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {object} Version model of updated version in db
    */
-  updateIsLatest: async ({ id, objectId, isLatest }, userId = undefined, etrx = undefined) => {
+  updateIsLatest: async ({ id, objectId, isLatest }, etrx = undefined) => {
+    // TODO: consider having accepting a `userId` argument for version.updatedBy when a version becomes 'latest' 
     let trx;
     try {
       trx = etrx ? etrx : await Version.startTransaction();
       // update this version
       const updated = await Version.query(trx)
-        .update({ isLatest: isLatest, objectId: objectId, updatedBy: userId })
+        .update({ isLatest: isLatest, objectId: objectId })
         .where({ id: id })
         .returning('*');
-
       // if we set this version with isLatest: true
       if (isLatest) {
         // set all other versions to islatest: false
         await Version.query(trx)
-          .update({ isLatest: false, objectId: objectId, updatedBy: userId })
-          .whereNot({ id: id })
-          .andWhere(objectId, objectId)
+          .update({ isLatest: false, objectId: objectId })
+          .whereNot({ 'id': id })
+          .andWhere('objectId', objectId)
           .returning('*');
       }
       // else we set this version with isLatest: false.
@@ -301,9 +294,9 @@ const service = {
           .whereNot({ 'id': updated[0].id })
           .orderBy('createdAt', 'desc');
 
-        if (!sq.some(v => v.isLatest).length) {
+        if (sq.length && !sq.some(v => v.isLatest).length) {
           await Version.query(trx)
-            .update({ 'isLatest': true, 'objectId': objectId, updatedBy: userId })
+            .update({ 'isLatest': true, 'objectId': objectId })
             .where({ 'id': sq[0]?.id, 'objectId': objectId });
         }
       }

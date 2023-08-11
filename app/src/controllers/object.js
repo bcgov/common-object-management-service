@@ -175,7 +175,7 @@ const controller = {
       // get source version that we are adding tags to
       const sourceS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid(req.query.versionId), objId);
       // get existing tags on source version
-      const { TagSet: existingTags } = await storageService.getObjectTagging({ filePath: objPath, s3VersionId: sourceS3VersionId, bucketId });
+      const { TagSet: existingTags } = await storageService.getObjectTagging({ filePath: objPath, s3VersionId: sourceS3VersionId, bucketId: bucketId });
 
       const newSet = newTags
         // Join new tags and existing tags
@@ -447,7 +447,8 @@ const controller = {
             const version = await versionService.create({
               ...data,
               etag: s3Response.ETag,
-              s3VersionId: s3VersionId
+              s3VersionId: s3VersionId,
+              isLatest: true
             }, userId, trx);
             object.versionId = version.id;
 
@@ -591,9 +592,8 @@ const controller = {
 
       // if request is to delete a version
       if (data.s3VersionId) {
-        const objectVersionId = s3Response.VersionId;
         // delete version in DB
-        await versionService.delete(objId, objectVersionId);
+        await versionService.delete(objId, s3Response.VersionId);
         // prune tags amd metadata
         await metadataService.pruneOrphanedMetadata();
         await tagService.pruneOrphanedTags();
@@ -643,7 +643,7 @@ const controller = {
       // Target S3 version
       const targetS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid(req.query.versionId), objId);
 
-      const sourceObject = await storageService.getObjectTagging({ filePath: objPath, s3VersionId: targetS3VersionId, bucketId });
+      const sourceObject = await storageService.getObjectTagging({ filePath: objPath, s3VersionId: targetS3VersionId, bucketId: bucketId });
 
       // Generate object subset by subtracting/omitting defined keys via filter/inclusion
       const keysToRemove = req.query.tagset ? Object.keys(req.query.tagset) : [];
@@ -889,7 +889,8 @@ const controller = {
       // get existing tags on source object
       const sourceObject = await storageService.getObjectTagging({
         filePath: objPath,
-        s3VersionId: sourceS3VersionId, bucketId
+        s3VersionId: sourceS3VersionId,
+        bucketId: bucketId
       });
       const sourceTags = Object.assign({}, ...(sourceObject.TagSet.map(item => ({ [item.Key]: item.Value }))));
 
@@ -1258,7 +1259,7 @@ const controller = {
             let version = undefined;
             if (s3Response.VersionId) { // Create new version if bucket versioning enabled
               const s3VersionId = s3Response.VersionId;
-              version = await versionService.create({ ...data, etag: s3Response.ETag, s3VersionId: s3VersionId }, userId, trx);
+              version = await versionService.create({ ...data, etag: s3Response.ETag, s3VersionId: s3VersionId, isLatest: true }, userId, trx);
             } else { // Update existing version when bucket versioning not enabled
               version = await versionService.update({
                 ...data,
@@ -1270,6 +1271,7 @@ const controller = {
 
             // Update Metadata
             if (data.metadata && Object.keys(data.metadata).length) await metadataService.associateMetadata(version.id, getKeyValue(data.metadata), userId, trx);
+            // TODO: if in unversioned bucket, dissociate old metadata. This is currently done in associateMetadata() with the global-style pruneOrphanedMetadata() method.
 
             // Update Tags
             if (data.tags && Object.keys(data.tags).length) await tagService.replaceTags(version.id, getKeyValue(data.tags), userId, trx);
