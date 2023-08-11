@@ -4,7 +4,6 @@ const jwt = require('jsonwebtoken');
 
 const mw = require('../../../src/middleware/authentication');
 const { AuthType } = require('../../../src/components/constants');
-const keycloak = require('../../../src/components/keycloak');
 const { userService } = require('../../../src/services');
 
 // Mock config library - @see {@link https://stackoverflow.com/a/64819698}
@@ -17,8 +16,6 @@ jest.mock('express-basic-auth', () => {
   buildMiddleware.safeCompare = jest.requireActual('express-basic-auth').safeCompare;
   return buildMiddleware;
 });
-// Mock out keycloak library and use a spy to observe behavior
-jest.mock('../../../src/components/keycloak');
 
 beforeEach(() => {
   jest.resetAllMocks();
@@ -90,7 +87,6 @@ describe('currentUser', () => {
   const jwtVerifySpy = jest.spyOn(jwt, 'verify');
   const loginSpy = jest.spyOn(userService, 'login');
   const problemSendSpy = jest.spyOn(Problem.prototype, 'send');
-  const validateAccessTokenSpy = jest.spyOn(keycloak.grantManager, 'validateAccessToken');
 
   let req, res, next;
 
@@ -159,7 +155,7 @@ describe('currentUser', () => {
     it.each([
       ['SPKI', spki],
       ['PEM', publicKey]
-    ])('sets authType to BEARER with keycloak.publicKey %s', async (_desc, pkey) => {
+    ])('sets authType to BEARER with keycloak.publicKey %s and valid auth token', async (_desc, pkey) => {
       jwtVerifySpy.mockReturnValue({ sub: 'sub' }); // return truthy value
       loginSpy.mockImplementation(() => { });
       config.has
@@ -187,7 +183,6 @@ describe('currentUser', () => {
       expect(config.get).toHaveBeenNthCalledWith(1, 'keycloak.publicKey');
       expect(config.get).toHaveBeenNthCalledWith(2, 'keycloak.serverUrl');
       expect(config.get).toHaveBeenNthCalledWith(3, 'keycloak.realm');
-      expect(validateAccessTokenSpy).toHaveBeenCalledTimes(0);
       expect(checkBasicAuthSpy).toHaveBeenCalledTimes(0);
       expect(jwtVerifySpy).toHaveBeenCalledTimes(1);
       expect(jwtVerifySpy).toHaveBeenCalledWith(expect.any(String), publicKey, expect.objectContaining({
@@ -200,42 +195,43 @@ describe('currentUser', () => {
       expect(problemSendSpy).toHaveBeenCalledTimes(0);
     });
 
-    it('sets authType to BEARER without keycloak.publicKey and valid token', async () => {
-      jwtVerifySpy.mockReturnValue({ sub: 'sub' });
-      loginSpy.mockImplementation(() => { });
-      validateAccessTokenSpy.mockResolvedValue('tokenstring');
+    it('short circuits with invalid auth token', async () => {
+      const authorization = 'bearer ';
+
+      problemSendSpy.mockImplementation(() => { });
       config.has
         .mockReturnValueOnce(false) // basicAuth.enabled
         .mockReturnValueOnce(true) // keycloak.enabled
-        .mockReturnValueOnce(false); // keycloak.publicKey
+        .mockReturnValueOnce(true); // keycloak.publicKey
+      config.get
+        .mockReturnValueOnce(spki) // keycloak.publicKey
+        .mockReturnValueOnce(serverUrl) // keycloak.serverUrl
+        .mockReturnValueOnce(realm); // keycloak.realm
       req.get.mockReturnValueOnce(authorization);
 
       await mw.currentUser(req, res, next);
 
-      expect(req.currentUser).toBeTruthy();
-      expect(req.currentUser).toHaveProperty('authType', AuthType.BEARER);
-      expect(req.currentUser).toHaveProperty('tokenPayload');
+      expect(req.currentUser).toBeFalsy();
       expect(req.get).toHaveBeenCalledTimes(1);
       expect(req.get).toHaveBeenCalledWith('Authorization');
       expect(config.has).toHaveBeenCalledTimes(3);
       expect(config.has).toHaveBeenNthCalledWith(1, 'basicAuth.enabled');
       expect(config.has).toHaveBeenNthCalledWith(2, 'keycloak.enabled');
       expect(config.has).toHaveBeenNthCalledWith(3, 'keycloak.publicKey');
-      expect(validateAccessTokenSpy).toHaveBeenCalledTimes(1);
-      expect(validateAccessTokenSpy).toHaveBeenCalledWith(expect.any(String));
       expect(checkBasicAuthSpy).toHaveBeenCalledTimes(0);
-      expect(jwtVerifySpy).toHaveBeenCalledTimes(0);
-      expect(loginSpy).toHaveBeenCalledTimes(1);
-      expect(next).toHaveBeenCalledTimes(1);
-      expect(next).toHaveBeenCalledWith();
-      expect(problemSendSpy).toHaveBeenCalledTimes(0);
+      expect(jwtVerifySpy).toHaveBeenCalledTimes(1);
+      expect(jwtVerifySpy).toHaveBeenCalledWith(expect.any(String), publicKey, expect.objectContaining({
+        issuer: `${serverUrl}/realms/${realm}`
+      }));
+      expect(loginSpy).toHaveBeenCalledTimes(0);
+      expect(next).toHaveBeenCalledTimes(0);
+      expect(problemSendSpy).toHaveBeenCalledTimes(1);
+      expect(problemSendSpy).toHaveBeenCalledWith(res);
     });
 
-    it('short circuits without keycloak.publicKey and invalid token', async () => {
-      const authorization = 'bearer ';
-
-      problemSendSpy.mockImplementation(() => { });
-      validateAccessTokenSpy.mockResolvedValue(false);
+    it('short circuits without keycloak.publicKey', async () => {
+      jwtVerifySpy.mockReturnValue({ sub: 'sub' });
+      loginSpy.mockImplementation(() => { });
       config.has
         .mockReturnValueOnce(false) // basicAuth.enabled
         .mockReturnValueOnce(true) // keycloak.enabled
@@ -251,8 +247,6 @@ describe('currentUser', () => {
       expect(config.has).toHaveBeenNthCalledWith(1, 'basicAuth.enabled');
       expect(config.has).toHaveBeenNthCalledWith(2, 'keycloak.enabled');
       expect(config.has).toHaveBeenNthCalledWith(3, 'keycloak.publicKey');
-      expect(validateAccessTokenSpy).toHaveBeenCalledTimes(1);
-      expect(validateAccessTokenSpy).toHaveBeenCalledWith(expect.any(String));
       expect(checkBasicAuthSpy).toHaveBeenCalledTimes(0);
       expect(jwtVerifySpy).toHaveBeenCalledTimes(0);
       expect(loginSpy).toHaveBeenCalledTimes(0);

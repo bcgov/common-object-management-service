@@ -39,8 +39,8 @@ const Encrypt = opts => {
         await super.$afterUpdate(queryOptions, context);
         return this.decryptFields();
       }
-      async $afterGet(context) {
-        await super.$afterGet(context);
+      async $afterFind(context) {
+        await super.$afterFind(context);
         return this.decryptFields();
       }
 

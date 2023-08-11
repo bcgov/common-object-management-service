@@ -53,9 +53,11 @@ switch (state.authMode) {
     break;
 }
 if (state.authMode === AuthMode.OIDCAUTH || state.authMode === AuthMode.FULLAUTH) {
-  // Use Keycloak OIDC Middleware
-  const keycloak = require('./src/components/keycloak');
-  app.use(keycloak.middleware());
+  if (!config.has('keycloak.publicKey')) {
+    log.error('OIDC environment variable KC_PUBLICKEY or keycloak.publicKey must be defined');
+    process.exitCode = 1;
+    shutdown();
+  }
 }
 
 // Application privacy Mode mode
