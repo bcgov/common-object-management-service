@@ -266,6 +266,7 @@ const service = {
    * @returns {object} Version model of updated version in db
    */
   updateIsLatest: async ({ id, objectId, isLatest }, etrx = undefined) => {
+    // TODO: consider having accepting a `userId` argument for version.updatedBy when a version becomes 'latest' 
     let trx;
     try {
       trx = etrx ? etrx : await Version.startTransaction();
