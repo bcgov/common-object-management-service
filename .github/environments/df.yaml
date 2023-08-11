@@ -7,6 +7,21 @@ config:
   releaseScoped: true
   configMap:
     OBJECTSTORAGE_KEY: Hai7Xt5Pb7CAk975VNdhUZJSctX6W7LTKQr1h0BT
+    BASICAUTH_ENABLED: "true"
+    DB_PORT: "5432"
+    KC_ENABLED: "true"
+    KC_IDENTITYKEY: idir_user_guid,bceid_user_guid,github_id
+    KC_PUBLICKEY: >-
+      MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuy7zfh2ZgpDV5mH/aXyLDTddZK81rGakJcTy4KvCNOkDDxt1KAhW02lmbCo8YhHCOzjNZBp1+Vi6QiMRgBqAe2GTPZYEiV70aXfROGZe3Nvwcjbtki6HoyRte3SpqLJEIPL2F+hjJkw1UPGnjPTWZkEx9p74b9i3BjuE8RnjJ0Sza2MWw83zoQUZEJRGiopSL0yuVej6t2LO2btVdVf7QuZfPt9ehkcQYlPKpVvJA+pfeqPAdnNt7OjEIeYxinjurZr8Z04hz8UhkRefcWlSbFzFQYmL7O7iArjW0bsSvq8yNUd5r0KCOQkFduwZy26yTzTxj8OLFT91fEmbBBl4rQIDAQAB
+    KC_REALM: standard
+    KC_SERVERURL: "https://dev.loginproxy.gov.bc.ca/auth"
+    OBJECTSTORAGE_BUCKET: bucket
+    OBJECTSTORAGE_TEMP_EXPIRESIN: "300"
+    OBJECTSTORAGE_ENDPOINT: "https://minio-df9936-dev.apps.silver.devops.gov.bc.ca"
+    SERVER_BODYLIMIT: 30mb
+    SERVER_LOGLEVEL: http
+    SERVER_PORT: "3000"
+    SERVER_PRIVACY_MASK: "true"
 
 patroni:
   enabled: true
