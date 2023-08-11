@@ -3,6 +3,7 @@ const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 const { parseIdentityKeyClaims } = require('../components/utils');
 
 const { IdentityProvider, User } = require('../db/models');
+const utils = require('../db/models/utils');
 
 /**
  * The User DB Service
@@ -88,7 +89,9 @@ const service = {
         createdBy: data.userId
       };
 
-      const response = await User.query(trx).insertAndFetch(obj);
+      //       const response = await ObjectQueue.query(trx).insert(jobsArray).onConflict().ignore();
+
+      const response = await User.query(trx).insertAndFetch(obj).onConflict().ignore();
       if (!etrx) await trx.commit();
       return response;
     } catch (err) {
@@ -134,18 +137,24 @@ const service = {
    * @returns {Promise<object>} The result of running the login operation
    */
   login: async (token) => {
+    let response;
     const newUser = service._tokenToUser(token);
-    const oldUser = await User.query()
-      .where('identityId', newUser.identityId)
-      .first();
-
-    if (!oldUser) {
-      // Add user to system
-      return service.createUser(newUser);
-    } else {
-      // Update user data if necessary
-      return service.updateUser(oldUser.userId, newUser);
-    }
+    // start db transaction
+    await utils.trxWrapper(async (trx) => {
+      // check if user exists in db
+      const oldUser = await User.query(trx)
+        .where('identityId', newUser.identityId)
+        .first();
+      // if not found
+      if (!oldUser) {
+        // Add user to system
+        response = service.createUser(newUser, trx);
+      } else {
+        // Update user data if necessary
+        response = service.updateUser(oldUser.userId, newUser, trx);
+      }
+    });
+    return response;
   },
 
   /**
