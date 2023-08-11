@@ -117,7 +117,7 @@ const service = {
         storageService.headObject({ filePath: path, bucketId: bucketId })
           .catch((e) => {
             // return true if object is soft-deleted in S3
-            if(e.$response.headers['x-amz-delete-marker']){
+            if (e.$response.headers['x-amz-delete-marker']) {
               return true; // it's a 'delete-marker'
             }
           })
@@ -134,7 +134,7 @@ const service = {
         let objId = uuidv4();
 
         // IF not a delete-marker,
-        if(typeof s3Object === 'object'){
+        if (typeof s3Object === 'object') {
           // get a COMS uuid using the 'coms-id' tag on object in S3 (if managed by another COMS instance), otherwise add it
           // we can do this here in case not syncing tags later in full mode
           // note, putObjectTagging does a replace in S3 so we concat with existing tags
@@ -146,6 +146,14 @@ const service = {
             await storageService.putObjectTagging({ filePath: path, bucketId: bucketId, tags: s3Obj.TagSet.concat([{ Key: 'coms-id', Value: objId }]) });
           }
         }
+        /**
+         * TODO: if object wass soft-deleted in S3, must check previous version for coms-id tag
+         * else { 
+         * if s3Object === 'dm'... 
+         * list versions.. 
+         * forEach,  look for coms-id tag
+         * }
+        */ 
 
         // create object in COMS db
         response = await objectService.create({
@@ -320,7 +328,7 @@ const service = {
    * @returns {object[]} array of synced tags that exist in COMS and S3 eg:
    * [ <Tag>, <Tag> ]
    */
-  syncTags: async ({ version, path, bucketId=undefined, objectId, userId }, etrx = undefined) => {
+  syncTags: async ({ version, path, bucketId = undefined, objectId, userId }, etrx = undefined) => {
     let trx;
     try {
       trx = etrx ? etrx : await ObjectModel.startTransaction();

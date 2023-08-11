@@ -121,20 +121,22 @@ const service = {
 
 
   /**
- * @function dissociateMetadata
- * Dissociates all provided metadata from a version
- * @param {string} versionId The uuid id column from version table
- * @param {object[]} [metadata=undefined] array of metadata (eg: [{ key: 'a', value: '1'}, {key: 'B', value: ''}])
- * @param {object} [etrx=undefined] An optional Objection Transaction object
- * @returns {Promise<number>} The result of running the delete operation (number of rows deleted)
- * @throws The error encountered upon db transaction failure
- */
+   * @function dissociateMetadata
+   * Dissociates all provided metadata from a version
+   * @param {string} versionId The uuid id column from version table
+   * @param {object[]} [metadata=undefined] array of metadata (eg: [{ key: 'a', value: '1'}, {key: 'B', value: ''}])
+   * @param {object} [etrx=undefined] An optional Objection Transaction object
+   * @returns {Promise<number>} The result of running the delete operation (number of rows deleted)
+   * @throws The error encountered upon db transaction failure
+   */
   dissociateMetadata: async (versionId, metadata = undefined, etrx = undefined) => {
     let trx;
     try {
       trx = etrx ? etrx : await Metadata.startTransaction();
       let response = 0;
 
+      // TODO: consider doing one bulk delete query instead of using forEach
+      // eg: get id's of provided metadata records and do whereIn().delete()
       metadata.forEach(async meta => {
         // match on key
         const params = { 'metadata.key': meta.key };
@@ -166,10 +168,10 @@ const service = {
   /**
    * @function fetchMetadataForObject
    * Fetch metadata for specific objects, optionally scoped to a user's object/bucket READ permission
-  * @param {string[]} [params.bucketIds] An array of uuids representing buckets
+   * @param {string[]} [params.bucketIds] An array of uuids representing buckets
    * @param {string[]} params.objId An array of uuids representing the object
    * @param {object} [params.metadata] Optional object of metadata key/value pairs
-  * @param {string} [params.userId] Optional uuid representing a user
+   * @param {string} [params.userId] Optional uuid representing a user
    * @returns {Promise<object[]>} The result of running the find operation
    */
   fetchMetadataForObject: (params) => {
@@ -258,7 +260,6 @@ const service = {
    * @returns {Promise<number>} The result of running the delete operation (number of rows deleted)
    * @throws The error encountered upon db transaction failure
    */
-  // TODO: check if deleting a version will prune orphan metadata records (sister table)
   pruneOrphanedMetadata: async (etrx = undefined) => {
     let trx;
     try {
@@ -284,9 +285,9 @@ const service = {
 
   /**
    * @function searchMetadata
-    * Search and filter for specific metadata keys
+   * Search and filter for specific metadata keys
    * @param {object} [params.metadata] Optional object of metadata keys to filter on
-  * @param {string} [params.userId] Optional uuid representing a user
+   * @param {string} [params.userId] Optional uuid representing a user
    * @returns {Promise<object[]>} The result of running the find operation
    */
   searchMetadata: (params) => {
