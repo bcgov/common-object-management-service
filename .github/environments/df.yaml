@@ -1,0 +1,15 @@
+image:
+  tag: latest
+  repository: image-registry.openshift-image-registry.svc:5000/df9936-tools
+
+config:
+  enabled: true
+  releaseScoped: true
+  configMap:
+    OBJECTSTORAGE_KEY: Hai7Xt5Pb7CAk975VNdhUZJSctX6W7LTKQr1h0BT
+
+patroni:
+  enabled: true
+  replicaCount: 2
+  persistentVolume:
+    size:128Mi
