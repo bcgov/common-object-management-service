@@ -68,46 +68,35 @@ const service = {
    * @throws The error encountered upon db transaction failure
    */
   createUser: async (data, etrx = undefined) => {
-    let trx, response;
+    let trx;
     try {
-      trx = etrx ? etrx : await User.startTransaction();      
-      console.log('createUser');
+      let response;
+      trx = etrx ? etrx : await User.startTransaction();
 
-      // if user exists
       const exists = await User.query(trx)
         .where({ 'identityId': data.identityId, idp: data.idp })
         .first();
 
-      console.log('x', exists);
-      
       if (exists) {
         response = exists;
-      }
-      // else add new user
-      else {
-
-        console.log('new');
-
-        // add idp if not in db
-        if (data.idp) {
-          const identityProvider = await service.readIdp(data.idp);
-          if (!identityProvider) await service.createIdp(data.idp);
+      } else { // else add new user
+        if (data.idp) { // add idp if not in db
+          const identityProvider = await service.readIdp(data.idp, trx);
+          if (!identityProvider) await service.createIdp(data.idp, trx);
         }
 
-        const obj = {
-          userId: uuidv4(),
-          identityId: data.identityId,
-          username: data.username,
-          fullName: data.fullName,
-          email: data.email,
-          firstName: data.firstName,
-          lastName: data.lastName,
-          idp: data.idp,
-          createdBy: data.userId
-        };
-
         response = await User.query(trx)
-          .insert(obj)
+          .insert({
+            userId: uuidv4(),
+            identityId: data.identityId,
+            username: data.username,
+            fullName: data.fullName,
+            email: data.email,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            idp: data.idp,
+            createdBy: data.userId
+          })
           .returning('*');
       }
 
@@ -156,12 +145,9 @@ const service = {
    * @returns {Promise<object>} The result of running the login operation
    */
   login: async (token) => {
-    let response;
     const newUser = service._tokenToUser(token);
-    // const newUser = { ...service._tokenToUser(token), identityId: 'xyz' };
-
     // wrap with db transaction
-    await utils.trxWrapper(async (trx) => {
+    return await utils.trxWrapper(async (trx) => {
       // check if user exists in db
       const oldUser = await User.query(trx)
         .where({ 'identityId': newUser.identityId, idp: newUser.idp })
@@ -169,13 +155,12 @@ const service = {
 
       if (!oldUser) {
         // Add user to system
-        response = await service.createUser(newUser, trx);
+        return await service.createUser(newUser, trx);
       } else {
         // Update user data if necessary
-        response = await service.updateUser(oldUser.userId, newUser, trx);
+        return await service.updateUser(oldUser.userId, newUser, trx);
       }
     });
-    return response;
   },
 
   /**
@@ -183,9 +168,21 @@ const service = {
    * Gets an identity provider record
    * @param {string} code The identity provider code
    * @returns {Promise<object>} The result of running the find operation
+   * @throws The error encountered upon db transaction failure
    */
-  readIdp: (code) => {
-    return IdentityProvider.query().findById(code);
+  readIdp: async (code, etrx = undefined) => {
+    let trx;
+    try {
+      trx = etrx ? etrx : await IdentityProvider.startTransaction();
+
+      const response = await IdentityProvider.query(trx).findById(code);
+
+      if (!etrx) await trx.commit();
+      return response;
+    } catch (err) {
+      if (!etrx && trx) await trx.rollback();
+      throw err;
+    }
   },
 
   /**
@@ -252,7 +249,7 @@ const service = {
         trx = etrx ? etrx : await User.startTransaction();
 
         if (data.idp) {
-          const identityProvider = await service.readIdp(data.idp);
+          const identityProvider = await service.readIdp(data.idp, trx);
           if (!identityProvider) await service.createIdp(data.idp, trx);
         }
 
