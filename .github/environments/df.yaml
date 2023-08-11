@@ -1,3 +1,6 @@
+features:
+  oidcAuth: true
+  
 image:
   tag: sha-f20ddb7
   repository: ghcr.io/bcgov
