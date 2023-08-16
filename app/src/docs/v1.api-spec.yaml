@@ -39,7 +39,7 @@ tags:
       url: >-
         https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#permission
   - name: Sync
-    description: Operations for syncing existing buckets and objects.
+    description: Operations for syncing existing buckets and objects. Ensures that external S3 modifications are eventually correctly tracked by COMS.
     externalDocs:
       url: >-
         https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#sync
