@@ -206,8 +206,8 @@ paths:
         Synchronize the contents of an existing bucket with COMS so that it can track and manage the objects
         in it. This avoids the need to re-upload preexisting files through the COMS API.
 
-        It looks at all objects in the bucket and adds them to an internal processing queue;
-        once it is eventually processed, it is tracked by COMS.
+        This endpoint does not guarantee immediately synchronized results. Synchronization latency will
+        be affected by the remaining number of objects awaiting synchronization.
       tags:
         - Sync
       operationId: syncBucket
@@ -800,8 +800,8 @@ paths:
         Synchronize an existing COMS object so that any changes made externally (e.g. using an S3 client
         to upload a new version) are tracked by COMS.
 
-        The object is added to an internal processing queue; once it is eventually processed,
-        the changes are tracked by COMS.
+        This endpoint does not guarantee immediately synchronized results. Synchronization latency will
+        be affected by the remaining number of objects awaiting synchronization.
       tags:
         - Sync
       operationId: syncObject
@@ -1253,8 +1253,8 @@ paths:
         that are already in the bucket. This avoids the need to re-upload preexisting files through the
         COMS API.
 
-        It looks at all objects in the bucket and adds them to an internal processing queue;
-        once it is eventually processed, it is tracked by COMS.
+        This endpoint does not guarantee immediately synchronized results. Synchronization latency will
+        be affected by the remaining number of objects awaiting synchronization.
       operationId: sync
       tags:
         - Sync
