@@ -208,7 +208,7 @@ const service = {
       // await call to get versions from both the COMS db and S3
       const [comsVersionPromise, s3VersionPromise] = await Promise.allSettled([
         Version.query(trx).modify('filterObjectId', object.id).orderBy('createdAt', 'desc'),
-        storageService.listObjectVersion({ filePath: object.path, bucketId: object.bucketId })
+        storageService.listAllObjectVersions({ filePath: object.path, bucketId: object.bucketId })
       ]);
 
       // COMS versions

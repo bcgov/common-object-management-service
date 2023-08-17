@@ -310,7 +310,7 @@ const utils = {
     const pathParts = path.split(DELIMITER).filter(part => part);
     const prefixParts = prefix.split(DELIMITER).filter(part => part);
     return prefixParts.every((part, i) => pathParts[i] === part)
-      && pathParts.filter(part => !prefixParts.includes(part)).length === 1;
+      && pathParts.filter(part => !prefixParts.includes(part)).length < 2;
   },
 
   /**

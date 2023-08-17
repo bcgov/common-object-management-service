@@ -47,7 +47,7 @@ const objectStorageService = {
    */
   _getS3Client: ({ accessKeyId, endpoint, region, secretAccessKey } = {}) => {
     if (!accessKeyId || !endpoint || !region || !secretAccessKey) {
-      log.error('Unable to generate S3Client due to missing arguments', { function: '_getS3Client'});
+      log.error('Unable to generate S3Client due to missing arguments', { function: '_getS3Client' });
     }
 
     return new S3Client({
