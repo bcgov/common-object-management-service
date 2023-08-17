@@ -213,7 +213,7 @@ paths:
       operationId: syncBucket
       parameters:
         - $ref: "#/components/parameters/Path-BucketId"
-        - $ref: "#/components/parameters/Query-Public"
+        - $ref: "#/components/parameters/Query-Full"
       responses:
         "202":
           $ref: "#/components/responses/AddedQueueLength"
@@ -807,7 +807,7 @@ paths:
       operationId: syncObject
       parameters:
         - $ref: "#/components/parameters/Path-ObjectId"
-        - $ref: "#/components/parameters/Query-Public"
+        - $ref: "#/components/parameters/Query-Full"
       responses:
         "202":
           description: Returns the number of objects that have been added to the queue.
@@ -1258,6 +1258,8 @@ paths:
       operationId: sync
       tags:
         - Sync
+      parameters:
+        - $ref: "#/components/parameters/Query-Full"
       responses:
         "202":
           $ref: "#/components/responses/AddedQueueLength"
@@ -1621,6 +1623,13 @@ components:
         type: string
         format: uuid
         example: 48a65990-2e48-46b2-94eb-7f4fe13468ea
+    Query-Full:
+      in: query
+      name: all
+      description: Boolean on whether to force-synchronize all versions, metadata, and tags, as opposed to only synchronizing those that have since been updated externally.
+      schema:
+        type: boolean
+        example: true
     Query-DeleteMarker:
       in: query
       name: deleteMarker
