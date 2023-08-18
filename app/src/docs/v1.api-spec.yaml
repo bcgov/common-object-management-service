@@ -1257,7 +1257,7 @@ paths:
         does not guarantee immediately synchronized results. Synchronization
         latency will be affected by the remaining number of objects awaiting
         synchronization.
-      operationId: sync
+      operationId: syncDefault
       tags:
         - Sync
       parameters:
