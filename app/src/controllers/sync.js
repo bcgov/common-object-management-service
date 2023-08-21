@@ -20,15 +20,13 @@ const controller = {
    */
   async syncBucket(req, res, next) {
     try {
-      const allMode = isTruthy(req.query.all);
+      // TODO: Consider adding an "all" mode for checking through all known objects and buckets for job enumeration
+      // const allMode = isTruthy(req.query.all);
       const bucketId = addDashesToUuid(req.params.bucketId);
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER), SYSTEM_USER);
 
-      const dbParams = {};
-      if (!allMode) dbParams.bucketId = bucketId;
-
       const [dbResponse, s3Response] = await Promise.all([
-        objectService.searchObjects(dbParams),
+        objectService.searchObjects({ bucketId: bucketId }),
         storageService.listAllObjectVersions({ bucketId: bucketId, filterLatest: true })
       ]);
 

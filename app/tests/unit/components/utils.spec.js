@@ -455,11 +455,13 @@ describe('isAtPath', () => {
   it.each([
     [false, undefined, undefined],
     [false, null, null],
-    [false, '', ''],
+    [true, '', ''], // Root level empty string identies should technically be true
     [true, '', 'file'],
     [false, '', 'file/bleep'],
     [true, '/', 'file'],
     [false, '/', 'file/bleep'],
+    [true, 'foo', 'foo'], // Root level file identies should be true
+    [false, 'foo', 'bar'], // Non-matching root level path and prefix should be false
     [true, 'foo', 'foo/bar'],
     [true, 'foo', '/foo/bar'],
     [true, '/foo', 'foo/bar'],
