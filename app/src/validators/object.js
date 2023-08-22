@@ -194,7 +194,7 @@ const validator = {
   replaceMetadata: validate(schema.replaceMetadata, { statusCode: 422 }),
   replaceTags: validate(schema.replaceTags, { statusCode: 422 }),
   searchObjects: validate(schema.searchObjects, { statusCode: 422 }),
-  syncObject: validate(schema.searchObjects, { statusCode: 422 }),
+  syncObject: validate(schema.syncObject, { statusCode: 422 }),
   togglePublic: validate(schema.togglePublic, { statusCode: 422 }),
   updateObject: validate(schema.updateObject, { statusCode: 422 })
 };

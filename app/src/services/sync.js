@@ -22,8 +22,8 @@ const service = {
    * Checks an S3 Object for any previous `coms-id` tag traces and returns it if found.
    * Otherwise it writes a new `coms-id` to the S3 Object if none were previously found.
    * @param {object | boolean} s3Object The result of an S3 HeadObject operation
-   * @param {string} options.path String representing the canonical path for the specified object
-   * @param {string | null} options.bucketId uuid of bucket or `null` if syncing object in default bucket
+   * @param {string} path String representing the canonical path for the specified object
+   * @param {string | null} bucketId uuid of bucket or `null` if syncing object in default bucket
    * @returns {Promise<string>} Resolves to an existing objectId or creates a new one
    */
   _deriveObjectId: async (s3Object, path, bucketId) => {
@@ -36,7 +36,7 @@ const service = {
       if (s3ObjectComsId && uuidValidate(s3ObjectComsId)) {
         objId = s3ObjectComsId;
       } else { // Update S3 Object if there is still remaining space in the TagSet
-        if (TagSet.length < 9) { // putObjectTagging replaces S3 tags so new TagSet must contain existing values
+        if (TagSet.length < 10) { // putObjectTagging replaces S3 tags so new TagSet must contain existing values
           await storageService.putObjectTagging({
             filePath: path,
             bucketId: bucketId,
@@ -69,67 +69,39 @@ const service = {
    * @function syncJob
    * Orchestrates the synchronization of all aspects of a specified object
    * Wraps all child processes in one db transaction
-   * @param {string} options.path String representing the canonical path for the specified object
-   * @param {string | null} options.bucketId uuid of bucket or `null` if syncing object in default bucket
-   * @param {boolean} [options.full=false] Optional boolean indicating whether to execute full recursive run
-   * @param {string} [options.userId=SYSTEM_USER] Optional uuid attributing which user added the job
-   * @returns
+   * @param {string} path String representing the canonical path for the specified object
+   * @param {string | null} bucketId uuid of bucket or `null` if syncing object in default bucket
+   * @param {boolean} [full=false] Optional boolean indicating whether to execute full recursive run
+   * @param {string} [userId=SYSTEM_USER] Optional uuid attributing which user added the job
+   * @returns {Promise<string | undefined>} Resolves to object uuid or undefined when sync is completed
    * @throws If the synchronization job encountered an error
    */
-  syncJob: async ({ path, bucketId, full = false, userId = SYSTEM_USER } = {}) => {
+  syncJob: async (path, bucketId, full = false, userId = SYSTEM_USER) => {
     try {
       if (!path) throw new Error('Path must be defined');
 
       return await utils.trxWrapper(async (trx) => {
-        const response = [];
-
         // 1. Sync Object
-        const { newObject, ...object } = await service.syncObject({ path: path, bucketId: bucketId, userId: userId }, trx);
-        response.push(object);
+        const { modified: modifiedObject, object } = await service.syncObject(path, bucketId, userId, trx);
 
         // 2. Sync Object Versions
         let versions = [];
-        if (newObject || full && object) {
-          versions = await service.syncVersions({ objectId: object.id, userId: userId }, trx);
-          response[0].versions = versions;
+        if (modifiedObject || full && object) {
+          versions = await service.syncVersions(object, userId, trx);
         }
 
         // 3. Sync Version Metadata & Tags
-        for (const version of versions) {
-          const tagset = [];
-          const metadata = [];
-          // IF this is a new (or existing) version
-          // OR in full mode
-          // AND version is not a delete-marker
-          if ((version.newVersion || full) && !version.deleteMarker) {
-
-            // sync tags
-            const tags = await service.syncTags({
-              version: version,
-              path: path,
-              bucketId: bucketId,
-              objectId: object.id,
-              userId: userId
-            }, trx);
-            tagset.push(tags);
-
-            // sync metadata
-            const meta = await service.syncMetadata({
-              version: version,
-              path: path,
-              bucketId: bucketId,
-              userId: userId
-            }, trx);
-            metadata.push(meta);
-
-            // add synced tags/meta to response array
-            response[0].versions.find(v => v.id === version.id).tagset = tagset;
-            response[0].versions.find(v => v.id === version.id).metadata = metadata;
+        for (const v of versions) {
+          // Only Update Metadata and Tags if version has modifications or full mode
+          if (v.modified || full) {
+            await Promise.all([
+              service.syncTags(v.version, path, bucketId, userId, trx),
+              service.syncMetadata(v.version, path, bucketId, userId, trx)
+            ]);
           }
         }
 
-        log.verbose(`Finished syncing ${path} in bucket ${bucketId}`, { function: 'syncJob', result: response });
-        return response;
+        return Promise.resolve(object?.id);
       });
     }
     catch (err) {
@@ -141,30 +113,31 @@ const service = {
   /**
    * @function syncObject
    * Synchronizes Object level data
-   * @param {string} options.path The path of object in sync job
-   * @param {string | null} options.bucketId The uuid bucketId of object in sync job
-   * @param {string} [options.userId=SYSTEM_USER] The uuid of a user that created the sync job
+   * @param {string} path The path of object in sync job
+   * @param {string | null} bucketId The uuid bucketId of object in sync job
+   * @param {string} [userId=SYSTEM_USER] The uuid of a user that created the sync job
    * @param {object} [etrx=undefined] An optional Objection Transaction object
-   * @returns {Promise<Array<object | undefined>>} Either an array of synced objects or undefined
-   * (when object was pruned from COMS db after sync)
+   * @returns {Promise<object>} An object containing COMS object if applicable, and modified boolean on whether it was
+   * modified or not
    */
-  syncObject: async ({ path, bucketId, userId = SYSTEM_USER }, etrx = undefined) => {
+  syncObject: async (path, bucketId, userId = SYSTEM_USER, etrx = undefined) => {
     let trx;
     try {
       trx = etrx ? etrx : await ObjectModel.startTransaction();
 
+      let modified = false;
       let response;
 
       // Check for COMS and S3 Object statuses
-      const [comsObject, s3Object] = (await Promise.allSettled([
+      const [comsObject, s3Object] = await Promise.allSettled([
         // COMS Object
-        ObjectModel.query(trx).first().where({ path: path, bucketId: bucketId }),
+        objectService.searchObjects({ path: path, bucketId: bucketId }, trx),
         // S3 Object
         storageService.headObject({ filePath: path, bucketId: bucketId })
           .catch((e) => { // return boolean true if object is soft-deleted in S3
             return !!e.$response.headers['x-amz-delete-marker'];
           })
-      ])).map(promise => promise.value);
+      ]).then(settled => settled.map(promise => Array.isArray(promise.value) ? promise.value[0] : promise.value));
 
       // Case: already synced - record object only
       if (comsObject && s3Object) response = comsObject;
@@ -181,8 +154,7 @@ const service = {
           userId: userId
         }, trx);
 
-        // Add `newObject` attribute, required for version sync logic
-        response.newObject = true;
+        modified = true;
       }
 
       // Case: missing in S3 - drop COMS object
@@ -197,7 +169,7 @@ const service = {
       }
 
       if (!etrx) await trx.commit();
-      return Promise.resolve(response);
+      return Promise.resolve({ modified: modified, object: response });
     } catch (err) {
       if (!etrx && trx) await trx.rollback();
       throw err;
@@ -206,201 +178,195 @@ const service = {
 
   /**
    * @function syncVersions
-   * syncs version-level data
-   * @param {string} [options.objectId] the parent object uuid
-   * @param {string} [options.userId=SYSTEM_USER] The uuid of a user that created the sync job
+   * Synchronizes Version level data
+   * @param {object | string} object The parent object or object uuid
+   * @param {string} [userId=SYSTEM_USER] The uuid of a user that created the sync job
    * @param {object} [etrx=undefined] An optional Objection Transaction object
-   * returns array of synced versions
-   * @returns {object[]} array of synced versions that exist in COMS and S3 eg:
-   * [ <Version>, <Version> ]
+   * @returns {Promise<Array<[object | undefined, boolean]>>} An array of tuples with the COMS versions if applicable,
+   * and boolean on whether it was modified or not
    */
-  syncVersions: async ({ objectId, userId = SYSTEM_USER }, etrx = undefined) => {
+  syncVersions: async (object, userId = SYSTEM_USER, etrx = undefined) => {
     let trx;
     try {
-      let response = []; // synced versions
-      trx = etrx ? etrx : await ObjectModel.startTransaction();
+      trx = etrx ? etrx : await Version.startTransaction();
 
-      // COMS object record
-      const object = await ObjectModel.query(trx).first().where({ id: objectId });
+      // Fetch COMS Object record if necessary
+      const comsObject = typeof object === 'object' ? object : await objectService.read(object, trx);
 
-      // await call to get versions from both the COMS db and S3
-      const [comsVersionPromise, s3VersionPromise] = await Promise.allSettled([
-        Version.query(trx).modify('filterObjectId', object.id).orderBy('createdAt', 'desc'),
-        storageService.listAllObjectVersions({ filePath: object.path, bucketId: object.bucketId })
-      ]);
+      // Check for COMS and S3 Version statuses
+      const [comsVersions, s3VersionsRaw] = await Promise.allSettled([
+        versionService.list(comsObject.id),
+        storageService.listAllObjectVersions({ filePath: comsObject.path, bucketId: comsObject.bucketId })
+      ]).then(settled => settled.map(promise => promise.value));
 
-      // COMS versions
-      const comsVs = comsVersionPromise.value;
+      // Combine S3 DeleteMarkers and Versions into one array
+      const s3Versions = s3VersionsRaw.DeleteMarkers
+        .map(dm => ({ DeleteMarker: true, ...dm }))
+        .concat(s3VersionsRaw.Versions);
 
-      // S3 versions
-      const s3Obj = s3VersionPromise.value;
-      const s3Versions = s3Obj.Versions ? s3Obj.Versions : [];
-      // add DeleteMarker property to reference when comparing with COMS
-      const s3DeleteMarkers = s3Obj.DeleteMarkers ? s3Obj.DeleteMarkers.map(dm => ({ DeleteMarker: true, ...dm })) : [];
-      // merge S3 Versions and DeleteMarkers into one array
-      const s3Vs = s3Versions.concat(s3DeleteMarkers);
-
-      // ---- compare COMS versions (comsVs) and S3 versions (s3Vs)
-      // 1. delete versions from COMS that are not in S3
-      for (const comsV of comsVs) {
-        if (comsV.s3VersionId && !s3Vs.some((s3V) => (s3V.VersionId === comsV.s3VersionId))) {
-          await versionService.delete(object.id, (comsV.s3VersionId ?? null), trx);
+      // Drop versions in COMS that are no longer in S3
+      await Promise.all(comsVersions.map(async cv => {
+        if (cv.s3VersionId && !s3Versions.some(s3v => (s3v.VersionId === cv.s3VersionId))) {
+          await versionService.delete(comsObject.id, (cv.s3VersionId ?? null), trx);
         }
-      }
+      }));
 
-      // 2. insert and update versions in COMS db
-      for (const s3V of s3Vs) {
+      // Add and Update versions in COMS
+      const response = await Promise.all(s3Versions.map(async s3Version => {
+        // S3 Object is in non-versioned bucket
+        if (s3Version.VersionId === 'null') {
+          const mimeType = await storageService.headObject({
+            filePath: comsObject.path,
+            bucketId: comsObject.bucketId
+          }).then(obj => obj.ContentType);
 
-        // if a versioned object (ie: if VersionId is not not 'null')
-        if (s3V.VersionId !== 'null') {
-          // if version in COMS db
-          const comsV = comsVs.find((comsV) => (comsV.s3VersionId === s3V.VersionId));
-          if (comsV) {
-            // if isLatest in s3V, patch with isLatest in COMS
-            if (s3V.IsLatest) {
-              const updated = await versionService.updateIsLatest({ id: comsV.id, objectId: object.id, isLatest: s3V.IsLatest }, trx);
-              response.push(updated[0]);
-            } else { // version record not modified
-              response.push(comsV);
-            }
-          }
-          // else not found in db
-          else {
-            // get mimeType for new version
-            const mimeType = s3V.DeleteMarker ? undefined : await storageService.headObject({ filePath: object.path, s3VersionId: s3V.VersionId, bucketId: object.bucketId }).then((obj => {
-              return obj.ContentType ?? null;
-            }));
+          // Get existing version
+          const existingVersion = comsVersions[0];
 
-            // insert into db
-            const newVersion = await versionService.create({
-              s3VersionId: s3V.VersionId,
-              mimeType: mimeType,
-              id: object.id,
-              deleteMarker: s3V.DeleteMarker,
-              etag: s3V.ETag,
-              isLatest: s3V.IsLatest
-            }, userId, trx);
-            // add to response with `newVersion` attribute, required for sync tags/meta logic
-            response.push({ ...newVersion, newVersion: true });
-          }
-        }
-        // else S3 object is in non-versioned bucket
-        else {
-          // get mimeType of S3 version
-          const mimeType = await storageService.headObject({ filePath: object.path, bucketId: object.bucketId }).then((obj => {
-            return obj.ContentType;
-          }));
-
-          // get existing version
-          const existingVersion = comsVs[0];
-
-          // if no existing version found
+          // No existing version found
           if (!existingVersion) {
             const newVersion = await versionService.create({
               s3VersionId: null,
               mimeType: mimeType,
-              id: object.id,
-              etag: s3V.ETag,
+              id: comsObject.id,
+              etag: s3Version.ETag,
               isLatest: true
             }, userId, trx);
-            response.push({ ...newVersion, newVersion: true });
+            return { modified: true, version: newVersion };
           }
 
-          // if latest version has different etag or mimetype
-          else if (existingVersion.mimeType !== mimeType || existingVersion.etag !== s3V.ETag) {
-            // update latest version
+          // Latest version has different values
+          else if (existingVersion.mimeType !== mimeType || existingVersion.etag !== s3Version.ETag) {
             const updatedVersion = await versionService.update({
               mimeType: mimeType,
-              id: object.id,
-              etag: s3V.ETag,
+              id: comsObject.id,
+              etag: s3Version.ETag,
               isLatest: true
             }, userId, trx);
-            response.push({ ...updatedVersion, newVersion: true });
+            return { modified: true, version: updatedVersion };
           }
-          // version record not modified
-          else {
-            response.push(existingVersion);
+
+          // Version record not modified
+          else return { version: existingVersion };
+        }
+
+        // S3 Object is in versioned bucket (ie: if VersionId is not 'null')
+        else {
+          const comsVersion = comsVersions.find(cv => cv.s3VersionId === s3Version.VersionId);
+
+          if (comsVersion) { // Version is in COMS
+            if (s3Version.IsLatest) { // Patch all isLatest flags if isLatest
+              const updated = await versionService.updateIsLatest({
+                id: comsVersion.id,
+                objectId: comsObject.id,
+                isLatest: s3Version.IsLatest
+              }, trx);
+              return { modified: true, version: updated[0] };
+            } else { // Version record not modified
+              return { version: comsVersion };
+            }
+          } else { // Version is not in COMS
+            const mimeType = s3Version.DeleteMarker
+              ? undefined // Will default to 'application/octet-stream'
+              : await storageService.headObject({
+                filePath: comsObject.path,
+                s3VersionId: s3Version.VersionId,
+                bucketId: comsObject.bucketId
+              }).then(obj => obj.ContentType);
+
+            const newVersion = await versionService.create({
+              s3VersionId: s3Version.VersionId,
+              mimeType: mimeType,
+              id: comsObject.id,
+              deleteMarker: s3Version.DeleteMarker,
+              etag: s3Version.ETag,
+              isLatest: s3Version.IsLatest
+            }, userId, trx);
+            // add to response with `newVersion` attribute, required for sync tags/meta logic
+            return { modified: true, version: newVersion };
           }
         }
-      }
+      }));
 
       if (!etrx) await trx.commit();
-      return response;
+      return Promise.resolve(response);
     } catch (err) {
       if (!etrx && trx) await trx.rollback();
       throw err;
     }
-
   },
 
   /**
    * @function syncTags
-   * syncs tag for an object version between S3 and COMS db
-   * @param {string} [options.version] the COMS version uuid
-   * @param {string} [options.path] String representing the canonical path for the specified object
-   * @param {string} [options.bucketId=undefined] Optional COMS uuid of bucket
-   * @param {string} [options.objectId] the parent object uuid
-   * @param {string} [options.userId=SYSTEM_USER] The uuid of a user that created the sync job
+   * Synchronizes Tag level data for a specific object version
+   * @param {object | string} version The parent version or version uuid
+   * @param {string} path String representing the canonical path for the specified object
+   * @param {string} [bucketId=undefined] Optional COMS uuid of bucket
+   * @param {string} [userId=SYSTEM_USER] The uuid of a user that created the sync job
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * returns array of synced versions
-   * @returns {object[]} array of synced tags that exist in COMS and S3 eg:
-   * [ <Tag>, <Tag> ]
+   * @returns {Promise<Array<object>>} An array of synced tags that exist in both COMS and S3
    */
-  syncTags: async ({ version, path, bucketId = undefined, objectId, userId }, etrx = undefined) => {
+  syncTags: async (version, path, bucketId = undefined, userId = SYSTEM_USER, etrx = undefined) => {
     let trx;
     try {
-      trx = etrx ? etrx : await ObjectModel.startTransaction();
+      trx = etrx ? etrx : await Version.startTransaction();
       let response = [];
 
-      // await calls to look for Tags in both the COMS db and S3
-      const [comsTagPromise, s3TagPromise] = await Promise.allSettled([
-        tagService.fetchTagsForVersion({ versionIds: version.id }),
-        storageService.getObjectTagging({ filePath: path, s3VersionId: version.s3VersionId, bucketId: bucketId })
-      ]);
+      // Fetch COMS Object record if necessary
+      const comsVersion = typeof version === 'object' ? version : await versionService.get({ versionId: version }, trx);
+
+      // Short circuit if version is a delete marker
+      if (comsVersion.deleteMarker) return response;
+
+      // Check for COMS and S3 Tag statuses
+      const [comsTagsForVersion, s3TagsForVersion] = await Promise.allSettled([
+        tagService.fetchTagsForVersion({ versionIds: comsVersion.id }, trx),
+        storageService.getObjectTagging({ filePath: path, s3VersionId: comsVersion.s3VersionId, bucketId: bucketId })
+      ]).then(settled => settled.map(promise => promise.value));
 
       // COMS Tags
-      const comsTagsForVersion = comsTagPromise.value;
       const comsTags = comsTagsForVersion[0]?.tagset ?? [];
       // S3 Tags
-      const S3TagsForVersion = s3TagPromise.value;
-      let S3Tags = [];
+      const s3Tags = toLowerKeys(s3TagsForVersion?.TagSet);
 
-      if (S3TagsForVersion?.TagSet?.length > 0) {
-        S3Tags = toLowerKeys(S3TagsForVersion?.TagSet);
-        // ensure `coms-id` tag exists on this version in S3
-        if (!S3Tags.find((s3T) => (s3T.key === 'coms-id'))) {
-          await storageService.putObjectTagging({ filePath: path, bucketId: bucketId, tags: S3TagsForVersion?.TagSet.concat([{ Key: 'coms-id', Value: objectId }]) });
-          // add to our arrays for comaprison
-          S3Tags.push({ key: 'coms-id', value: objectId });
-        }
+      // Ensure `coms-id` tag exists on this version in S3
+      if (s3Tags.length < 10 && !s3Tags.find(s3T => s3T.key === 'coms-id')) {
+        await storageService.putObjectTagging({
+          filePath: path,
+          tags: s3TagsForVersion?.TagSet.concat([{ Key: 'coms-id', Value: comsVersion.objectId }]),
+          s3VersionId: comsVersion.s3VersionId,
+          bucketId: bucketId,
+        });
+        // add to our arrays for comaprison
+        s3Tags.push({ key: 'coms-id', value: comsVersion.objectId });
       }
 
-      // ---- do differential logic between COMS tags (comsTags) and S3 tags (S3Tags)
-      // 1. dissociate tags not in S3
-      let oldTags = [];
+      // Dissociate Tags not in S3
+      const oldTags = [];
       for (const comsT of comsTags) {
-        if (!S3Tags.some((s3T) => (s3T.key === comsT.key && s3T.value === comsT.value))) {
+        if (!s3Tags.some(s3T => s3T.key === comsT.key && s3T.value === comsT.value)) {
           oldTags.push(comsT);
         }
       }
-      if (oldTags.length > 0) await tagService.dissociateTags(version.id, oldTags, trx);
+      if (oldTags.length > 0) await tagService.dissociateTags(comsVersion.id, oldTags, trx);
 
-      // 2. associate new tags
-      let newTags = [];
-      for (const s3T of S3Tags) {
-        if (!comsTags.some((comsT) => (comsT.key === s3T.key && comsT.value === s3T.value))) {
-          newTags.push(s3T);
+      // Associate new S3 Tags
+      const newTags = [];
+      for (const s3Tag of s3Tags) {
+        if (!comsTags.some(comsT => comsT.key === s3Tag.key && comsT.value === s3Tag.value)) {
+          newTags.push(s3Tag);
         } else {
-          response.push(s3T);
+          response.push(s3Tag);
         }
       }
       if (newTags.length > 0) {
-        await tagService.associateTags(version.id, newTags, userId, trx);
+        await tagService.associateTags(comsVersion.id, newTags, userId, trx);
         response.concat(newTags);
       }
 
       if (!etrx) await trx.commit();
-      return response;
+      return Promise.resolve(response);
     } catch (err) {
       if (!etrx && trx) await trx.rollback();
       throw err;
@@ -409,41 +375,42 @@ const service = {
 
   /**
    * @function syncMetadata
-   * syncs tag for an object version between S3 and COMS db
-   * @param {string} [options.version] the COMS version uuid
-   * @param {string} [options.path] String representing the canonical path for the specified object
-   * @param {string} [options.bucketId=undefined] Optional COMS uuid of bucket
-   * @param {string} [options.userId=SYSTEM_USER] The uuid of a user that created the sync job
+   * Synchronizes Metadata level data for a specific object version
+   * @param {object | string} version The parent version or version uuid
+   * @param {string} path String representing the canonical path for the specified object
+   * @param {string} [bucketId=undefined] Optional COMS uuid of bucket
+   * @param {string} [userId=SYSTEM_USER] The uuid of a user that created the sync job
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * returns array of synced versions
-   * @returns {object[]} array of synced metadata that exist in COMS and S3 eg:
-   * [ <Metadata>, <Metadata> ]
+   * @returns {Promise<Array<object>>} An array of synced metadata that exist in both COMS and S3
    */
-  syncMetadata: async ({ version, path, bucketId, userId }, etrx = undefined) => {
+  syncMetadata: async (version, path, bucketId = undefined, userId = SYSTEM_USER, etrx = undefined) => {
     let trx;
     try {
-      trx = etrx ? etrx : await ObjectModel.startTransaction();
+      trx = etrx ? etrx : await Version.startTransaction();
       let response = [];
 
-      // await calls to look for metadata in both the COMS db and S3
-      const [comsMetadataPromise, s3ObjectHeadPromise] = await Promise.allSettled([
-        metadataService.fetchMetadataForVersion({ versionIds: version.id }),
+      // Fetch COMS Object record if necessary
+      const comsVersion = typeof version === 'object' ? version : await versionService.get({ versionId: version }, trx);
+
+      // Short circuit if version is a delete marker
+      if (comsVersion.deleteMarker) return response;
+
+      // Check for COMS and S3 Metadata statuses
+      const [comsMetadataForVersion, s3ObjectHead] = await Promise.allSettled([
+        metadataService.fetchMetadataForVersion({ versionIds: version.id }, trx),
         storageService.headObject({ filePath: path, s3VersionId: version.s3VersionId, bucketId: bucketId })
-      ]);
+      ]).then(settled => settled.map(promise => promise.value));
 
-      // COMS metadata
-      const comsMetadataForVersion = comsMetadataPromise.value;
+      // COMS Metadata
       const comsMetadata = comsMetadataForVersion[0]?.metadata ?? [];
+      // S3 Metadata
+      const s3Metadata = s3ObjectHead.Metadata ? getKeyValue(s3ObjectHead.Metadata) : [];
 
-      // S3 metadata
-      const s3ObjectHead = s3ObjectHeadPromise.value;
-      const S3Metadata = s3ObjectHead.Metadata?.length > 0 ? getKeyValue(s3ObjectHead.Metadata) : [];
-
-      // ---- do differential logic between COMS metadata (comsMetadata) and S3 metadata (S3Metadata)
-      // 1. dissociate metadata not in S3
-      let oldMetadata = [];
+      // Dissociate Metadata not in S3
+      const oldMetadata = [];
       for (const comsM of comsMetadata) {
-        if (!S3Metadata.some((s3M) => (s3M.key === comsM.key && s3M.value === comsM.value))) {
+        if (!s3Metadata.some(s3M => s3M.key === comsM.key && s3M.value === comsM.value)) {
           oldMetadata.push(comsM);
         }
       }
@@ -451,10 +418,10 @@ const service = {
         await metadataService.dissociateMetadata(version.id, oldMetadata, trx);
       }
 
-      // 2. associate new metadata
-      let newMetadata = [];
-      for (const s3M of S3Metadata) {
-        if (!comsMetadata.some((comsM) => (comsM.key === s3M.key && comsM.value === s3M.value))) {
+      // Associate new S3 Metadata
+      const newMetadata = [];
+      for (const s3M of s3Metadata) {
+        if (!comsMetadata.some(comsM => comsM.key === s3M.key && comsM.value === s3M.value)) {
           newMetadata.push(s3M);
         } else {
           response.push(s3M);
@@ -466,13 +433,12 @@ const service = {
       }
 
       if (!etrx) await trx.commit();
-      return response;
+      return Promise.resolve(response);
     } catch (err) {
       if (!etrx && trx) await trx.rollback();
       throw err;
     }
   }
-
 };
 
 module.exports = service;

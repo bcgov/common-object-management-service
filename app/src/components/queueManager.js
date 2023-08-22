@@ -82,15 +82,10 @@ class QueueManager {
 
         log.verbose(`Started processing job id ${job.id}`, { function: 'processNextJob', job: job });
 
-        const result = await syncService.syncJob({
-          bucketId: job.bucketId,
-          path: job.path,
-          full: job.full,
-          userId: job.createdBy
-        });
+        const objectId = await syncService.syncJob(job.path, job.bucketId, job.full, job.createdBy);
 
         this._isBusy = false;
-        log.verbose(`Finished processing job id ${job.id}`, { function: 'processNextJob', job: job, result: result });
+        log.verbose(`Finished processing job id ${job.id}`, { function: 'processNextJob', job: job, objectId: objectId });
 
         // If job is completed, check if there are more jobs
         if (!this.toClose) this.checkQueue();
