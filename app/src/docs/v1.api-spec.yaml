@@ -19,20 +19,17 @@ security:
     OpenID: []
 tags:
   - name: Bucket
-    description: >-
-      Operations for managing S3 Bucket(s).
+    description: Operations for managing S3 Bucket(s).
     externalDocs:
       url: >-
         https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#bucket
   - name: Metadata
-    description: >-
-      Operations for managing Metadata for S3 Objects.
+    description: Operations for managing Metadata for S3 Objects.
     externalDocs:
       url: >-
         https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#metadata
   - name: Object
-    description: >-
-      Operations directly influencing an S3 Object.
+    description: Operations directly influencing an S3 Object.
     externalDocs:
       url: >-
         https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#object
@@ -42,14 +39,12 @@ tags:
       url: >-
         https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#permission
   - name: Tagging
-    description: >-
-      Operations for managing Tags for S3 Objects.
+    description: Operations for managing Tags for S3 Objects.
     externalDocs:
       url: >-
         https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#tag
   - name: User
-    description: >-
-      Operations to list valid queryable users and identity providers.
+    description: Operations to list valid queryable users and identity providers.
     externalDocs:
       url: >-
         https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#user
@@ -225,7 +220,7 @@ paths:
         default:
           $ref: "#/components/responses/Error"
   /object:
-    post:
+    put:
       summary: Creates an object
       description: >-
         Creates an object in the bucket specified with bucketId parameter or
@@ -236,6 +231,74 @@ paths:
         not already exist in the destination bucket and path. Existing objects
         should be managed with the updateObject endpoint instead.
       operationId: createObject
+      tags:
+        - Object
+      parameters:
+        - $ref: "#/components/parameters/Header-ContentDisposition"
+        - $ref: "#/components/parameters/Header-ContentLength"
+        - $ref: "#/components/parameters/Header-ContentType"
+        - $ref: "#/components/parameters/Header-Metadata"
+        - $ref: "#/components/parameters/Query-TagSet"
+        - in: query
+          name: bucketId
+          description: Uuid representing the bucket
+          schema:
+            type: string
+            format: uuid
+            example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
+      requestBody:
+        description: Raw binary representation of the file
+        required: true
+        content:
+          "*/*":
+            schema:
+              type: string
+              description: >-
+                Contains the binary representation of the file to upload.
+                Maximum filesize of 5TB.
+              format: binary
+              maxLength: 5497558138880
+      responses:
+        "200":
+          description: Returns the created object data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Response-ObjectDetails"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          description: Conflict. Bucket already contains the object
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Response-Conflict"
+        "411":
+          $ref: "#/components/responses/LengthRequired"
+        "413":
+          $ref: "#/components/responses/ContentTooLarge"
+        "415":
+          $ref: "#/components/responses/UnsupportedMediaType"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        default:
+          $ref: "#/components/responses/Error"
+    post:
+      deprecated: true
+      summary: Creates an object
+      description: >-
+        Creates an object in the bucket specified with bucketId parameter or
+        default bucket configured. If COMS is running in either 'OIDC' or 'Full'
+        mode, any objects created with OIDC user authentication will have all
+        object permissions assigned to them by default. This endpoint will do a
+        best attempt effort to create the object as requested as long as it does
+        not already exist in the destination bucket and path. Existing objects
+        should be managed with the updateObject endpoint instead.
+      operationId: createObjectPost
       tags:
         - Object
       parameters:
@@ -260,9 +323,9 @@ paths:
                   type: string
                   description: >-
                     Contains the binary representation of the file to upload.
-                    Maximum filesize of 50GB.
+                    Maximum filesize of 5TB.
                   format: binary
-                  maxLength: 53687091200
+                  maxLength: 5497558138880
       responses:
         "200":
           description: Returns the created object data
@@ -434,13 +497,68 @@ paths:
           $ref: "#/components/responses/Forbidden"
         default:
           $ref: "#/components/responses/Error"
-    post:
+    put:
       summary: Updates an object
       description: >-
         Updates the object in the configured object storage. If the object
         storage supports versioning, a new version will be generated instead of
         overwriting the existing contents.
       operationId: updateObject
+      tags:
+        - Object
+      parameters:
+        - $ref: "#/components/parameters/Header-ContentLength"
+        - $ref: "#/components/parameters/Header-ContentType"
+        - $ref: "#/components/parameters/Header-Metadata"
+        - $ref: "#/components/parameters/Path-ObjectId"
+        - $ref: "#/components/parameters/Query-TagSet"
+      requestBody:
+        description: Raw binary representation of the file
+        required: true
+        content:
+          "*/*":
+            schema:
+              type: string
+              description: >-
+                Contains the binary representation of the file to upload.
+                Maximum filesize of 5TB.
+              format: binary
+              maxLength: 5497558138880
+      responses:
+        "200":
+          description: Returns the updated object data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Response-ObjectDetails"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          description: Conflict. Bucket does not contain the existing object
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Response-Conflict"
+        "411":
+          $ref: "#/components/responses/LengthRequired"
+        "413":
+          $ref: "#/components/responses/ContentTooLarge"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        default:
+          $ref: "#/components/responses/Error"
+    post:
+      deprecated: true
+      summary: Updates an object
+      description: >-
+        Updates the object in the configured object storage. If the object
+        storage supports versioning, a new version will be generated instead of
+        overwriting the existing contents.
+      operationId: updateObjectPost
       tags:
         - Object
       parameters:
@@ -459,9 +577,9 @@ paths:
                   type: string
                   description: >-
                     Contains the binary representation of the file to upload.
-                    Maximum filesize of 50GB.
+                    Maximum filesize of 5TB.
                   format: binary
-                  maxLength: 53687091200
+                  maxLength: 5497558138880
       responses:
         "200":
           description: Returns the updated object data
@@ -1274,11 +1392,14 @@ components:
       description: Specifies presentational information for the object
       schema:
         type: string
-      example: attachment; filename="foobar.txt"
+      example: >-
+        attachment; filename=bittercherrytree.txt;
+        filename*=UTF-8''skwc%E2%80%99%D3%99nj%C3%AD%C5%82c.txt
     Content-Length:
-      description: Size of the body in bytes
+      description: Size of the file body in bytes
       schema:
         type: integer
+        maximum: 5497558138880
       example: 529
     Content-Type:
       description: A standard MIME type describing the format of the object data
@@ -1329,6 +1450,38 @@ components:
         type: string
       example: foobar.txt
   parameters:
+    Header-ContentDisposition:
+      in: header
+      name: Content-Disposition
+      required: true
+      schema:
+        type: string
+        description: >-
+          A valid RFC 6266 header. Must be of type `attachment` with either a
+          `filename` or `filename*` parameter using the encoding defined in RFC
+          8187 (normally UTF-8). For example, `skwc’әnjíłc.txt` must be
+          represented as a url-encoded string
+          `skwc%E2%80%99%D3%99nj%C3%AD%C5%82c.txt`.
+        example: >-
+          attachment; filename=bittercherrytree.txt;
+          filename*=UTF-8''skwc%E2%80%99%D3%99nj%C3%AD%C5%82c.txt
+    Header-ContentLength:
+      in: header
+      name: Content-Length
+      required: true
+      schema:
+        type: integer
+        description: A valid RFC 2616 header. Must be present for PUT requests.
+        maximum: 5497558138880
+        example: 3495
+    Header-ContentType:
+      in: header
+      name: Content-Type
+      schema:
+        type: string
+        description: A valid RFC 2045 MIME type
+        default: application/octet-stream
+        example: application/octet-stream
     Header-Metadata:
       in: header
       name: x-amz-meta-*
@@ -1464,7 +1617,9 @@ components:
       description: The object MIME Type
       schema:
         type: string
-        example: application/octet-stream
+        description: The object MIME Type
+        default: application/octet-stream
+        example: text/plain
     Query-ObjectId:
       in: query
       name: objectId
@@ -1951,7 +2106,8 @@ components:
             mimeType:
               type: string
               description: The MIME Type of the version
-              example: application/octet-stream
+              default: application/octet-stream
+              example: text/plain
             deleteMarker:
               type: boolean
               description: Whether or not this version is a S3 delete-marker
@@ -2159,6 +2315,19 @@ components:
               example: 403
             detail:
               example: User lacks permission to complete this action
+    Response-LengthRequired:
+      title: Length Required
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/Response-Problem"
+        - type: object
+          properties:
+            status:
+              example: 411
+            title:
+              example: Length Required
+            type:
+              example: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/411
     Response-NotFound:
       title: Response Not Found
       type: object
@@ -2202,22 +2371,29 @@ components:
       title: Response Object Details
       type: object
       allOf:
+        - $ref: "#/components/schemas/DB-Object"
         - type: object
           required:
+            - length
             - mimeType
             - Key
             - Location
           properties:
+            length:
+              type: integer
+              description: Size of the file body in bytes
+              maximum: 5497558138880
+              example: 529
             mimeType:
               type: string
               description: The object MIME Type
+              default: application/octet-stream
               example: text/plain
             versionId:
               type: string
               description: The primary identifier for this version in the COMS database
               format: uuid
               example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
-        - $ref: "#/components/schemas/DB-Object"
         - $ref: "#/components/schemas/DB-Metadata"
         - $ref: "#/components/schemas/DB-Tags"
         - $ref: "#/components/schemas/S3-Object"
@@ -2310,6 +2486,19 @@ components:
               example: 401
             detail:
               example: Invalid authorization credentials
+    Response-UnsupportedMediaType:
+      title: Unsupported Media Type
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/Response-Problem"
+        - type: object
+          properties:
+            status:
+              example: 415
+            title:
+              example: Unsupported Media Type
+            type:
+              example: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/415
     Response-ValidationError:
       title: Response Validation Error
       type: object
@@ -2561,6 +2750,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Response-Forbidden"
+    LengthRequired:
+      description: Length Required
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Response-LengthRequired"
     NoContent:
       description: No Content
     NotFound:
@@ -2596,6 +2791,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Response-ValidationError"
+    UnsupportedMediaType:
+      description: Unsupported Media Type
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Response-UnsupportedMediaType"
   securitySchemes:
     BasicAuth:
       type: http

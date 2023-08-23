@@ -32,6 +32,27 @@ describe('addDashesToUuid', () => {
   });
 });
 
+describe('calculatePartSize', () => {
+  it.each([
+    [undefined, undefined],
+    [undefined, null],
+    [undefined, 'foo'],
+    [undefined, []],
+    [undefined, {}],
+    [undefined, 0],
+    [5242880, 1],
+    [5242880, 5242880], // 5MB
+    [5242880, 5368709120], // 5GB
+    [5242880, 52428800000], // ~50GB
+    [10485760, 52428800001], // ~50GB
+    [10485760, 104857600000], // ~100GB
+    [15728640, 104857600001], // ~100GB
+    [550502400, 5497558138880], // 5TB
+  ])('should return %o given %j', (expected, length) => {
+    expect(utils.calculatePartSize(length)).toEqual(expected);
+  });
+});
+
 // TODO: Deprecated, to remove this
 describe('getPath', () => {
   const delimitSpy = jest.spyOn(utils, 'delimit');

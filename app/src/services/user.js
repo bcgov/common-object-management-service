@@ -3,6 +3,7 @@ const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 const { parseIdentityKeyClaims } = require('../components/utils');
 
 const { IdentityProvider, User } = require('../db/models');
+const utils = require('../db/models/utils');
 
 /**
  * The User DB Service
@@ -69,26 +70,36 @@ const service = {
   createUser: async (data, etrx = undefined) => {
     let trx;
     try {
+      let response;
       trx = etrx ? etrx : await User.startTransaction();
 
-      if (data.idp) {
-        const identityProvider = await service.readIdp(data.idp);
-        if (!identityProvider) await service.createIdp(data.idp, trx);
+      const exists = await User.query(trx)
+        .where({ 'identityId': data.identityId, idp: data.idp })
+        .first();
+
+      if (exists) {
+        response = exists;
+      } else { // else add new user
+        if (data.idp) { // add idp if not in db
+          const identityProvider = await service.readIdp(data.idp, trx);
+          if (!identityProvider) await service.createIdp(data.idp, trx);
+        }
+
+        response = await User.query(trx)
+          .insert({
+            userId: uuidv4(),
+            identityId: data.identityId,
+            username: data.username,
+            fullName: data.fullName,
+            email: data.email,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            idp: data.idp,
+            createdBy: data.userId
+          })
+          .returning('*');
       }
 
-      const obj = {
-        userId: uuidv4(),
-        identityId: data.identityId,
-        username: data.username,
-        fullName: data.fullName,
-        email: data.email,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        idp: data.idp,
-        createdBy: data.userId
-      };
-
-      const response = await User.query(trx).insertAndFetch(obj);
       if (!etrx) await trx.commit();
       return response;
     } catch (err) {
@@ -135,17 +146,21 @@ const service = {
    */
   login: async (token) => {
     const newUser = service._tokenToUser(token);
-    const oldUser = await User.query()
-      .where('identityId', newUser.identityId)
-      .first();
+    // wrap with db transaction
+    return await utils.trxWrapper(async (trx) => {
+      // check if user exists in db
+      const oldUser = await User.query(trx)
+        .where({ 'identityId': newUser.identityId, idp: newUser.idp })
+        .first();
 
-    if (!oldUser) {
-      // Add user to system
-      return service.createUser(newUser);
-    } else {
-      // Update user data if necessary
-      return service.updateUser(oldUser.userId, newUser);
-    }
+      if (!oldUser) {
+        // Add user to system
+        return await service.createUser(newUser, trx);
+      } else {
+        // Update user data if necessary
+        return await service.updateUser(oldUser.userId, newUser, trx);
+      }
+    });
   },
 
   /**
@@ -153,9 +168,21 @@ const service = {
    * Gets an identity provider record
    * @param {string} code The identity provider code
    * @returns {Promise<object>} The result of running the find operation
+   * @throws The error encountered upon db transaction failure
    */
-  readIdp: (code) => {
-    return IdentityProvider.query().findById(code);
+  readIdp: async (code, etrx = undefined) => {
+    let trx;
+    try {
+      trx = etrx ? etrx : await IdentityProvider.startTransaction();
+
+      const response = await IdentityProvider.query(trx).findById(code);
+
+      if (!etrx) await trx.commit();
+      return response;
+    } catch (err) {
+      if (!etrx && trx) await trx.rollback();
+      throw err;
+    }
   },
 
   /**
@@ -222,7 +249,7 @@ const service = {
         trx = etrx ? etrx : await User.startTransaction();
 
         if (data.idp) {
-          const identityProvider = await service.readIdp(data.idp);
+          const identityProvider = await service.readIdp(data.idp, trx);
           if (!identityProvider) await service.createIdp(data.idp, trx);
         }
 

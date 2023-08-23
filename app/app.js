@@ -1,8 +1,9 @@
+const Problem = require('api-problem');
 const compression = require('compression');
 const config = require('config');
 const cors = require('cors');
 const express = require('express');
-const Problem = require('api-problem');
+const { unless } = require('express-unless');
 const { ValidationError } = require('express-validation');
 
 const { AuthMode, DEFAULTCORS } = require('./src/components/constants');
@@ -25,9 +26,17 @@ const state = {
 let probeId;
 
 const app = express();
+const jsonParser = express.json({ limit: config.get('server.bodyLimit') });
+jsonParser.unless = unless;
 app.use(compression());
 app.use(cors(DEFAULTCORS));
-app.use(express.json({ limit: config.get('server.bodyLimit') }));
+app.use(jsonParser.unless({
+  path: [{
+    // Matches on only the createObject and updateObject endpoints
+    url: /.*\/object(\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})?(\/)?$/i,
+    methods: ['PUT']
+  }]
+}));
 app.use(express.urlencoded({ extended: true }));
 
 // Skip if running tests
@@ -53,9 +62,11 @@ switch (state.authMode) {
     break;
 }
 if (state.authMode === AuthMode.OIDCAUTH || state.authMode === AuthMode.FULLAUTH) {
-  // Use Keycloak OIDC Middleware
-  const keycloak = require('./src/components/keycloak');
-  app.use(keycloak.middleware());
+  if (!config.has('keycloak.publicKey')) {
+    log.error('OIDC environment variable KC_PUBLICKEY or keycloak.publicKey must be defined');
+    process.exitCode = 1;
+    shutdown();
+  }
 }
 
 // Application privacy Mode mode

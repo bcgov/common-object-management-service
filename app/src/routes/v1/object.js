@@ -3,14 +3,23 @@ const router = require('express').Router();
 const { Permissions } = require('../../components/constants');
 const { objectController } = require('../../controllers');
 const { objectValidator } = require('../../validators');
-const { requireSomeAuth } = require('../../middleware/featureToggle');
 const { checkAppMode, currentObject, hasPermission } = require('../../middleware/authorization');
+const { requireSomeAuth } = require('../../middleware/featureToggle');
+const { currentUpload } = require('../../middleware/upload');
 
 router.use(checkAppMode);
 
 /** Creates new objects */
-router.post('/', objectValidator.createObject, requireSomeAuth, (req, res, next) => {
+router.put('/', objectValidator.createObject, requireSomeAuth, currentUpload(true), (req, res, next) => {
   objectController.createObject(req, res, next);
+});
+
+/**
+ * Creates new objects
+ * @deprecated
+ */
+router.post('/', objectValidator.createObject, requireSomeAuth, (req, res, next) => {
+  objectController.createObjectPost(req, res, next);
 });
 
 /** Search for objects */
@@ -40,8 +49,16 @@ router.get('/:objectId', objectValidator.readObject, currentObject, hasPermissio
 });
 
 /** Updates an object */
-router.post('/:objectId', objectValidator.updateObject, requireSomeAuth, currentObject, hasPermission(Permissions.UPDATE), (req, res, next) => {
+router.put('/:objectId', objectValidator.updateObject, requireSomeAuth, currentUpload(), currentObject, hasPermission(Permissions.UPDATE), (req, res, next) => {
   objectController.updateObject(req, res, next);
+});
+
+/**
+ * Updates an object
+ * @deprecated
+ */
+router.post('/:objectId', objectValidator.updateObject, requireSomeAuth, currentObject, hasPermission(Permissions.UPDATE), (req, res, next) => {
+  objectController.updateObjectPost(req, res, next);
 });
 
 /** Deletes the object */
