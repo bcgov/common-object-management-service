@@ -272,39 +272,52 @@ const service = {
   * @param {string[]} [params.versionIds] An array of uuids representing versions
   * @param {object} [params.tags] Optional object of tags key/value pairs
   * @param {string} [params.userId] Optional uuid representing a user
+  * @param {object} [etrx=undefined] An optional Objection Transaction object
   * @returns {Promise<object[]>} The result of running the database select
   */
-  fetchTagsForVersion: (params) => {
-    return Version.query()
-      .select('version.id as versionId', 'version.s3VersionId')
-      .allowGraph('tag as tagset')
-      .withGraphJoined('tag as tagset')
-      .modifyGraph('tagset', builder => {
-        builder
-          .select('key', 'value')
-          .modify('filterKeyValue', { tag: params.tags });
-      })
-      .modify((query) => {
-        if (params.s3VersionIds) query.modify('filterS3VersionId', params.s3VersionIds);
-        else query.modify('filterId', params.versionIds);
-      })
-      // filter by objects that user(s) has READ permission at object or bucket-level
-      .modify((query) => {
-        if (params.userId) {
-          query
-            .allowGraph('object')
-            .withGraphJoined('object')
-            .modifyGraph('object', query => { query.modify('hasPermission', params.userId, 'READ'); })
-            .whereNotNull('object.id');
-        }
-      })
-      .orderBy('version.createdAt', 'desc')
-      .then(result => result.map(row => {
-        // eslint-disable-next-line no-unused-vars
-        const { object, ...data } = row;
-        return data;
-      }));
+  fetchTagsForVersion: async (params, etrx = undefined) => {
+    let trx;
+    try {
+      trx = etrx ? etrx : await Tag.startTransaction();
+
+      const response = await Version.query(trx)
+        .select('version.id as versionId', 'version.s3VersionId')
+        .allowGraph('tag as tagset')
+        .withGraphJoined('tag as tagset')
+        .modifyGraph('tagset', builder => {
+          builder
+            .select('key', 'value')
+            .modify('filterKeyValue', { tag: params.tags });
+        })
+        .modify((query) => {
+          if (params.s3VersionIds) query.modify('filterS3VersionId', params.s3VersionIds);
+          else query.modify('filterId', params.versionIds);
+        })
+        // filter by objects that user(s) has READ permission at object or bucket-level
+        .modify((query) => {
+          if (params.userId) {
+            query
+              .allowGraph('object')
+              .withGraphJoined('object')
+              .modifyGraph('object', query => { query.modify('hasPermission', params.userId, 'READ'); })
+              .whereNotNull('object.id');
+          }
+        })
+        .orderBy('version.createdAt', 'desc')
+        .then(result => result.map(row => {
+          // eslint-disable-next-line no-unused-vars
+          const { object, ...data } = row;
+          return data;
+        }));
+
+      if (!etrx) await trx.commit();
+      return Promise.resolve(response);
+    } catch (err) {
+      if (!etrx && trx) await trx.rollback();
+      throw err;
+    }
   },
+
   /**
    * @function searchTags
    * Search and filter for specific tag keys

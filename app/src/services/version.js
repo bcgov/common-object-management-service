@@ -144,7 +144,6 @@ const service = {
           .where({ 'id': sq[0]?.id, 'objectId': objId });
       }
 
-
       if (!etrx) await trx.commit();
       return Promise.resolve(response);
     } catch (err) {
@@ -199,16 +198,18 @@ const service = {
    * list versions of an object.
    * @param {string} uuid of an object
    * @param {object} [etrx=undefined] An optional Objection Transaction object
-   * @returns {Promise<array>} Array of rows returned from the database
+   * @returns {Promise<Array<object>>} Array of rows returned from the database
    * @throws The error encountered upon db transaction failure
    */
   list: async (objId, etrx = undefined) => {
     let trx;
     try {
       trx = etrx ? etrx : await Version.startTransaction();
+
       const response = await Version.query(trx)
-        .where({ objectId: objId })
+        .modify('filterObjectId', objId)
         .orderBy('createdAt', 'DESC');
+
       if (!etrx) await trx.commit();
       return Promise.resolve(response);
     } catch (err) {
@@ -266,7 +267,7 @@ const service = {
    * @returns {object} Version model of updated version in db
    */
   updateIsLatest: async ({ id, objectId, isLatest }, etrx = undefined) => {
-    // TODO: consider having accepting a `userId` argument for version.updatedBy when a version becomes 'latest' 
+    // TODO: consider having accepting a `userId` argument for version.updatedBy when a version becomes 'latest'
     let trx;
     try {
       trx = etrx ? etrx : await Version.startTransaction();

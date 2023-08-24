@@ -112,49 +112,73 @@ const service = {
    * @param {string} [params.name] Optional metadata name string to match on
    * @param {object} [params.metadata] Optional object of metadata key/value pairs
    * @param {object} [params.tag] Optional object of tag key/value pairs
+   * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<object[]>} The result of running the find operation
    */
-  searchObjects: (params) => {
-    return ObjectModel.query()
-      .allowGraph('version')
-      .modify('filterIds', params.id)
-      .modify('filterBucketIds', params.bucketId)
-      .modify('filterName', params.name)
-      .modify('filterPath', params.path)
-      .modify('filterPublic', params.public)
-      .modify('filterActive', params.active)
-      .modify('filterMimeType', params.mimeType)
-      .modify('filterDeleteMarker', params.deleteMarker)
-      .modify('filterLatest', params.latest)
-      .modify('filterMetadataTag', {
-        metadata: params.metadata,
-        tag: params.tag
-      })
-      .modify('hasPermission', params.userId, 'READ')
-      // format result
-      .then(result => {
-        // just return object table records
-        const res = result.map(row => {
-          // eslint-disable-next-line no-unused-vars
-          const { objectPermission, bucketPermission, version, ...object } = row;
-          return object;
+  searchObjects: async (params, etrx = undefined) => {
+    let trx;
+    try {
+      trx = etrx ? etrx : await ObjectModel.startTransaction();
+
+      const response = await ObjectModel.query(trx)
+        .allowGraph('version')
+        .modify('filterIds', params.id)
+        .modify('filterBucketIds', params.bucketId)
+        .modify('filterName', params.name)
+        .modify('filterPath', params.path)
+        .modify('filterPublic', params.public)
+        .modify('filterActive', params.active)
+        .modify('filterMimeType', params.mimeType)
+        .modify('filterDeleteMarker', params.deleteMarker)
+        .modify('filterLatest', params.latest)
+        .modify('filterMetadataTag', {
+          metadata: params.metadata,
+          tag: params.tag
+        })
+        .modify('hasPermission', params.userId, 'READ')
+        // format result
+        .then(result => {
+          // just return object table records
+          const res = result.map(row => {
+            // eslint-disable-next-line no-unused-vars
+            const { objectPermission, bucketPermission, version, ...object } = row;
+            return object;
+          });
+          // remove duplicates
+          return [...new Map(res.map(item => [item.id, item])).values()];
         });
-        // remove duplicates
-        return [...new Map(res.map(item => [item.id, item])).values()];
-      });
+
+      if (!etrx) await trx.commit();
+      return Promise.resolve(response);
+    } catch (err) {
+      if (!etrx && trx) await trx.rollback();
+      throw err;
+    }
   },
 
   /**
    * @function read
    * Get an object db record
    * @param {string} objId The object uuid to read
+   * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<object>} The result of running the read operation
    * @throws If there are no records found
    */
-  read: (objId) => {
-    return ObjectModel.query()
-      .findById(objId)
-      .throwIfNotFound();
+  read: async (objId, etrx = undefined) => {
+    let trx;
+    try {
+      trx = etrx ? etrx : await ObjectModel.startTransaction();
+
+      const response = await ObjectModel.query(trx)
+        .findById(objId)
+        .throwIfNotFound();
+
+      if (!etrx) await trx.commit();
+      return Promise.resolve(response);
+    } catch (err) {
+      if (!etrx && trx) await trx.rollback();
+      throw err;
+    }
   },
 
   /**
