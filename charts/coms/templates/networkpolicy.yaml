@@ -3,7 +3,7 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: allow-openshift-ingress-to-{{ include "coms.fullname" . }}-app
+  name: aps-gateway-allow-traffic-{{ include "coms.fullname" . }}-app
   labels:
     {{- include "coms.labels" . | nindent 4 }}
 spec:
@@ -11,7 +11,20 @@ spec:
     - from:
         - namespaceSelector:
             matchLabels:
-              network.openshift.io/policy-group: ingress
+              environment: test
+              name: 264e6f
+        - namespaceSelector:
+            matchLabels:
+              environment: prod
+              name: 264e6f
+        - namespaceSelector:
+            matchLabels:
+              environment: test
+              name: b8840c
+        - namespaceSelector:
+            matchLabels:
+              environment: prod
+              name: b8840c
         - podSelector:
             matchLabels: {{ include "coms.selectorLabels" . | nindent 14 }}
       ports:
@@ -19,6 +32,8 @@ spec:
           protocol: TCP
   podSelector:
     matchLabels: {{- include "coms.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
 {{- if .Values.patroni.enabled }}
 ---
 apiVersion: networking.k8s.io/v1
