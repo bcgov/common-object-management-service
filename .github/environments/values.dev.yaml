@@ -1,4 +1,3 @@
----
 features:
   basicAuth: true
   oidcAuth: true
