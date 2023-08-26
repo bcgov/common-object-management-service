@@ -198,7 +198,7 @@ const service = {
 
       // Check for COMS and S3 Version statuses
       const [comsVersions, s3VersionsRaw] = await Promise.allSettled([
-        versionService.list(comsObject.id),
+        versionService.list(comsObject.id, trx),
         storageService.listAllObjectVersions({ filePath: comsObject.path, bucketId: comsObject.bucketId })
       ]).then(settled => settled.map(promise => promise.value));
 
@@ -355,7 +355,9 @@ const service = {
           oldTags.push(comsT);
         }
       }
-      if (oldTags.length > 0) await tagService.dissociateTags(comsVersion.id, oldTags, trx);
+      if (oldTags.length > 0) {
+        await tagService.dissociateTags(comsVersion.id, oldTags, trx);
+      }
 
       // Associate new S3 Tags
       const newTags = [];
@@ -368,7 +370,7 @@ const service = {
       }
       if (newTags.length > 0) {
         await tagService.associateTags(comsVersion.id, newTags, userId, trx);
-        response.concat(newTags);
+        response.push(...newTags);
       }
 
       if (!etrx) await trx.commit();
@@ -404,14 +406,14 @@ const service = {
 
       // Check for COMS and S3 Metadata statuses
       const [comsMetadataForVersion, s3ObjectHead] = await Promise.allSettled([
-        metadataService.fetchMetadataForVersion({ versionIds: version.id }, trx),
-        storageService.headObject({ filePath: path, s3VersionId: version.s3VersionId, bucketId: bucketId })
+        metadataService.fetchMetadataForVersion({ versionIds: comsVersion.id }, trx),
+        storageService.headObject({ filePath: path, s3VersionId: comsVersion.s3VersionId, bucketId: bucketId })
       ]).then(settled => settled.map(promise => promise.value));
 
       // COMS Metadata
       const comsMetadata = comsMetadataForVersion[0]?.metadata ?? [];
       // S3 Metadata
-      const s3Metadata = s3ObjectHead.Metadata ? getKeyValue(s3ObjectHead.Metadata) : [];
+      const s3Metadata = getKeyValue(s3ObjectHead?.Metadata ?? {});
 
       // Dissociate Metadata not in S3
       const oldMetadata = [];
@@ -435,7 +437,7 @@ const service = {
       }
       if (newMetadata.length > 0) {
         await metadataService.associateMetadata(version.id, newMetadata, userId, trx);
-        response.concat(newMetadata);
+        response.push(...newMetadata);
       }
 
       if (!etrx) await trx.commit();

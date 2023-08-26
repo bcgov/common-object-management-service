@@ -12,7 +12,7 @@ const service = {
    * Dissociaate extraneous metadata and also does collision detection for null versions (non-versioned)
    * @param {string} versionId The uuid id column from version table
    * @param {object[]} metadata Incoming array of metadata objects to add for this version (eg: [{ key: 'a', value: '1'}, {key: 'B', value: '2'}]).
-   * This will always be the difinitive metadata we want on the version
+   * This will always be the definitive metadata we want on the version
    * @param {string} [currentUserId=SYSTEM_USER] The optional userId uuid actor; defaults to system user if unspecified
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<object>} The result of running the insert operation
