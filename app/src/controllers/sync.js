@@ -1,7 +1,7 @@
 const { NIL: SYSTEM_USER } = require('uuid');
 
 const errorToProblem = require('../components/errorToProblem');
-const { addDashesToUuid, getCurrentIdentity, isTruthy } = require('../components/utils');
+const { addDashesToUuid, getCurrentIdentity } = require('../components/utils');
 const { objectService, storageService, objectQueueService, userService } = require('../services');
 
 const SERVICE = 'ObjectQueueService';
@@ -37,7 +37,7 @@ const controller = {
         ...s3Response.Versions.map(object => object.Key)
       ])].map(path => ({ path: path, bucketId: bucketId }));
 
-      const response = await objectQueueService.enqueue({ jobs: jobs, full: isTruthy(req.query.full), createdBy: userId });
+      const response = await objectQueueService.enqueue({ jobs: jobs, createdBy: userId });
       res.status(202).json(response);
     } catch (e) {
       next(errorToProblem(SERVICE, e));
@@ -60,7 +60,6 @@ const controller = {
 
       const response = await objectQueueService.enqueue({
         jobs: [{ path: path, bucketId: bucketId }],
-        full: isTruthy(req.query.full),
         createdBy: userId
       });
       res.status(202).json(response);

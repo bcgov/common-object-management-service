@@ -153,9 +153,6 @@ const schema = {
   syncObject: {
     params: Joi.object({
       objectId: type.uuidv4.required()
-    }),
-    query: Joi.object({
-      full: type.truthy
     })
   },
 
