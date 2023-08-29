@@ -2,7 +2,7 @@ features:
   oidcAuth: true
   
 image:
-  tag: latest
+  version: latest
   repository: image-registry.openshift-image-registry.svc:5000/df9936-tools
   pullPolicy: IfNotPresent
 
