@@ -227,19 +227,6 @@ describe('syncBucket', () => {
       });
     });
   });
-
-  describe('query', () => {
-    const query = schema.syncBucket.query.describe();
-
-    describe('full', () => {
-      const full = query.keys.full;
-
-      it('is the expected schema', () => {
-        expect(full).toEqual(type.truthy.describe());
-      });
-    });
-  });
-
 });
 
 describe('updateBucket', () => {

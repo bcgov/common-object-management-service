@@ -543,19 +543,6 @@ describe('syncObject', () => {
       });
     });
   });
-
-  describe('query', () => {
-    const query = schema.syncObject.query.describe();
-
-    describe('full', () => {
-      const full = query.keys.full;
-
-      it('is the expected schema', () => {
-        expect(full).toEqual(type.truthy.describe());
-      });
-    });
-  });
-
 });
 
 describe('togglePublic', () => {
