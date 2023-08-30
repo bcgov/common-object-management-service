@@ -12,6 +12,7 @@ jest.mock('../../../src/db/models/tables/version', () => ({
   delete: jest.fn(),
   first: jest.fn(),
   insert: jest.fn(),
+  modify: jest.fn(),
   orderBy: jest.fn(),
   patch: jest.fn(),
   query: jest.fn(),
@@ -174,7 +175,9 @@ describe('list', () => {
     expect(Version.startTransaction).toHaveBeenCalledTimes(1);
     expect(Version.query).toHaveBeenCalledTimes(1);
     expect(Version.query).toHaveBeenCalledWith(expect.anything());
-    expect(Version.where).toHaveBeenCalledWith({ objectId: 'abc' });
+    expect(Version.modify).toHaveBeenCalledTimes(1);
+    expect(Version.modify).toHaveBeenCalledWith('filterObjectId', 'abc');
+    expect(Version.orderBy).toHaveBeenCalledTimes(1);
     expect(Version.orderBy).toHaveBeenCalledWith('createdAt', 'DESC');
   });
 });

@@ -46,9 +46,6 @@ const schema = {
   syncBucket: {
     params: Joi.object({
       bucketId: type.uuidv4.required()
-    }),
-    query: Joi.object({
-      full: type.truthy
     })
   },
 

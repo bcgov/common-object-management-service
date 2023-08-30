@@ -11,4 +11,4 @@ The simple test scripts (for example: [createObject.js](createObject.js) can be 
 
 ### Command example
 
-`k6 run -e BUCKET_ID=41046be7-43d8-486f-a97e-ee360043d454 -e API_PATH=http://localhost:3000/api/v1 -e AUTH_TOKEN=dXNlcjE6cGFzczE= -e FILE_PATH=./file.txt --vus=1 --iterations=1 createObject.js`
+`k6 run -e BUCKET_ID=95fc01c4-c900-4fe6-b5af-b39bfd047036 -e API_PATH=http://localhost:3000/api/v1 -e AUTH_TOKEN=dXNlcjE6cGFzczE= -e FILE_PATH=./test.txt --vus=1 --iterations=10 createObject.js`
