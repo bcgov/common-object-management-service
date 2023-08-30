@@ -82,23 +82,26 @@ const service = {
 
       return await utils.trxWrapper(async (trx) => {
         // 1. Sync Object
-        const { modified: modifiedObject, object } = await service.syncObject(path, bucketId, userId, trx);
+        const object = await service.syncObject(path, bucketId, userId, trx)
+          .then(obj => obj.object);
 
         // 2. Sync Object Versions
         let versions = [];
-        if (modifiedObject || full && object) {
+        if (object) {
           versions = await service.syncVersions(object, userId, trx);
         }
 
         // 3. Sync Version Metadata & Tags
         for (const v of versions) {
-          // Only Update Metadata and Tags if version has modifications or full mode
+          const tasks = [ // Always Update Tags regardless of modification state
+            service.syncTags(v.version, path, bucketId, userId, trx)
+          ];
+          // Only Update Metadata if version has modifications or full mode
           if (v.modified || full) {
-            await Promise.all([
-              service.syncTags(v.version, path, bucketId, userId, trx),
-              service.syncMetadata(v.version, path, bucketId, userId, trx)
-            ]);
+            tasks.push(service.syncMetadata(v.version, path, bucketId, userId, trx));
           }
+
+          await Promise.all(tasks);
         }
 
         return Promise.resolve(object?.id);
