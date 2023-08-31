@@ -30,7 +30,7 @@ const service = {
     let objId = uuidv4();
 
     if (typeof s3Object === 'object') { // If regular S3 Object
-      const { TagSet } = await storageService.getObjectTagging({ filePath: path, bucketId: bucketId });
+      const TagSet = await storageService.getObjectTagging({ filePath: path, bucketId: bucketId }).then(result => result.TagSet ?? []);
       const s3ObjectComsId = TagSet.find(obj => (obj.Key === 'coms-id'))?.Value;
 
       if (s3ObjectComsId && uuidValidate(s3ObjectComsId)) {
@@ -48,12 +48,12 @@ const service = {
       const { Versions } = await storageService.listAllObjectVersions({ filePath: path, bucketId: bucketId });
 
       for (const versionId of Versions.map(version => version.VersionId)) {
-        const result = await storageService.getObjectTagging({
+        const TagSet = await storageService.getObjectTagging({
           filePath: path,
           s3VersionId: versionId,
           bucketId: bucketId
-        });
-        const oldObjId = result?.TagSet.find(obj => obj.Key === 'coms-id')?.Value;
+        }).then(result => result.TagSet ?? []);
+        const oldObjId = TagSet.find(obj => obj.Key === 'coms-id')?.Value;
 
         if (oldObjId && uuidValidate(oldObjId)) {
           objId = oldObjId;
@@ -331,13 +331,16 @@ const service = {
       // COMS Tags
       const comsTags = comsTagsForVersion[0]?.tagset ?? [];
       // S3 Tags
-      const s3Tags = toLowerKeys(s3TagsForVersion?.TagSet);
+      const s3Tags = toLowerKeys(s3TagsForVersion?.TagSet ?? []);
 
       // Ensure `coms-id` tag exists on this version in S3
       if (s3Tags.length < 10 && !s3Tags.find(s3T => s3T.key === 'coms-id')) {
         await storageService.putObjectTagging({
           filePath: path,
-          tags: s3TagsForVersion?.TagSet.concat([{ Key: 'coms-id', Value: comsVersion.objectId }]),
+          tags: (s3TagsForVersion?.TagSet ?? []).concat([{
+            Key: 'coms-id',
+            Value: comsVersion.objectId
+          }]),
           s3VersionId: comsVersion.s3VersionId,
           bucketId: bucketId,
         });
