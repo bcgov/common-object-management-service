@@ -31,12 +31,12 @@ const service = {
 
     if (typeof s3Object === 'object') { // If regular S3 Object
       const { TagSet } = await storageService.getObjectTagging({ filePath: path, bucketId: bucketId });
-      const s3ObjectComsId = TagSet.find(obj => (obj.Key === 'coms-id'))?.Value;
+      const s3ObjectComsId = TagSet?.find(obj => (obj.Key === 'coms-id'))?.Value;
 
       if (s3ObjectComsId && uuidValidate(s3ObjectComsId)) {
         objId = s3ObjectComsId;
       } else { // Update S3 Object if there is still remaining space in the TagSet
-        if (TagSet.length < 10) { // putObjectTagging replaces S3 tags so new TagSet must contain existing values
+        if (TagSet?.length < 10) { // putObjectTagging replaces S3 tags so new TagSet must contain existing values
           await storageService.putObjectTagging({
             filePath: path,
             bucketId: bucketId,
@@ -53,7 +53,7 @@ const service = {
           s3VersionId: versionId,
           bucketId: bucketId
         });
-        const oldObjId = result?.TagSet.find(obj => obj.Key === 'coms-id')?.Value;
+        const oldObjId = result?.TagSet?.find(obj => obj.Key === 'coms-id')?.Value;
 
         if (oldObjId && uuidValidate(oldObjId)) {
           objId = oldObjId;
@@ -334,7 +334,7 @@ const service = {
       const s3Tags = toLowerKeys(s3TagsForVersion?.TagSet);
 
       // Ensure `coms-id` tag exists on this version in S3
-      if (s3Tags.length < 10 && !s3Tags.find(s3T => s3T.key === 'coms-id')) {
+      if (s3Tags?.length < 10 && !s3Tags.find(s3T => s3T.key === 'coms-id')) {
         await storageService.putObjectTagging({
           filePath: path,
           tags: s3TagsForVersion?.TagSet.concat([{ Key: 'coms-id', Value: comsVersion.objectId }]),
@@ -348,7 +348,7 @@ const service = {
       // Dissociate Tags not in S3
       const oldTags = [];
       for (const comsT of comsTags) {
-        if (!s3Tags.some(s3T => s3T.key === comsT.key && s3T.value === comsT.value)) {
+        if (!s3Tags?.some(s3T => s3T.key === comsT.key && s3T.value === comsT.value)) {
           oldTags.push(comsT);
         }
       }
@@ -356,7 +356,7 @@ const service = {
 
       // Associate new S3 Tags
       const newTags = [];
-      for (const s3Tag of s3Tags) {
+      for (const s3Tag of (s3Tags?.lenghth ? s3Tags : [])) {
         if (!comsTags.some(comsT => comsT.key === s3Tag.key && comsT.value === s3Tag.value)) {
           newTags.push(s3Tag);
         } else {
