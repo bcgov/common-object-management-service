@@ -117,7 +117,7 @@ const controller = {
       }
       // get existing tags on source object, eg: { 'animal': 'bear', colour': 'black' }
       const sourceObject = await storageService.getObjectTagging({ filePath: objPath, s3VersionId: sourceS3VersionId, bucketId: bucketId });
-      const sourceTags = Object.assign({}, ...(sourceObject.TagSet.map(item => ({ [item.Key]: item.Value }))));
+      const sourceTags = sourceObject.TagSet ? Object.assign({}, ...(sourceObject.TagSet.map(item => ({ [item.Key]: item.Value })))) : [];
 
       const metadataToAppend = getMetadata(req.headers);
       const data = {
@@ -178,8 +178,8 @@ const controller = {
       const { TagSet: existingTags } = await storageService.getObjectTagging({ filePath: objPath, s3VersionId: sourceS3VersionId, bucketId: bucketId });
 
       const newSet = newTags
-        // Join new tags and existing tags
-        .concat(existingTags)
+        // Join new tags and existing tags if defined
+        .concat(existingTags ? existingTags : [])
         // remove existing 'coms-id' tag if it exists
         .filter(x => x.Key !== 'coms-id')
         // filter duplicates
@@ -528,7 +528,7 @@ const controller = {
         s3VersionId: sourceS3VersionId,
         bucketId: bucketId
       });
-      const sourceTags = Object.assign({}, ...(sourceObject.TagSet.map(item => ({ [item.Key]: item.Value }))));
+      const sourceTags = sourceObject.TagSet ? Object.assign({}, ...(sourceObject.TagSet.map(item => ({ [item.Key]: item.Value })))) : [];
 
       const data = {
         bucketId: bucketId,
@@ -892,7 +892,7 @@ const controller = {
         s3VersionId: sourceS3VersionId,
         bucketId: bucketId
       });
-      const sourceTags = Object.assign({}, ...(sourceObject.TagSet.map(item => ({ [item.Key]: item.Value }))));
+      const sourceTags = sourceObject.TagSet ? Object.assign({}, ...(sourceObject.TagSet.map(item => ({ [item.Key]: item.Value })))) : [];
 
       const newMetadata = getMetadata(req.headers);
 
