@@ -306,11 +306,12 @@ const utils = {
    */
   isAtPath(prefix, path) {
     if (typeof prefix !== 'string' || typeof path !== 'string') return false;
+    if (prefix === path) return true; // Matching strings are always at the at the path
 
     const pathParts = path.split(DELIMITER).filter(part => part);
     const prefixParts = prefix.split(DELIMITER).filter(part => part);
     return prefixParts.every((part, i) => pathParts[i] === part)
-      && pathParts.filter(part => !prefixParts.includes(part)).length < 2;
+      && pathParts.filter(part => !prefixParts.includes(part)).length === 1;
   },
 
   /**

@@ -455,20 +455,22 @@ describe('isAtPath', () => {
   it.each([
     [false, undefined, undefined],
     [false, null, null],
-    [true, '', ''], // Root level empty string identies should technically be true
+    [true, '', ''], // Root level empty string identities should technically be true
     [true, '', 'file'],
     [false, '', 'file/bleep'],
     [true, '/', 'file'],
     [false, '/', 'file/bleep'],
-    [true, 'foo', 'foo'], // Root level file identies should be true
+    [true, 'foo', 'foo'], // Root level file identities should be true
     [false, 'foo', 'bar'], // Non-matching root level path and prefix should be false
     [true, 'foo', 'foo/bar'],
     [true, 'foo', '/foo/bar'],
     [true, '/foo', 'foo/bar'],
     [true, '/foo', '/foo/bar'],
     [true, 'a/b', 'a/b/foo.jpg'],
+    [false, 'a/b', 'a/b/'], // Trailing slashes references the folder and should be excluded
     [false, 'a/b', 'a/b/z/deep.jpg'],
     [false, 'a/b', 'a/b/y/z/deep.jpg'],
+    [false, 'a/b/c', 'a/b/c/'], // Trailing slashes references the folder and should be excluded
     [false, 'a/b/c', 'a/bar.png'],
     [false, 'c/b/a', 'a/b/c/bar.png'],
     [false, 'c/a/b', 'a/b/c/bar.png'],
