@@ -15,7 +15,7 @@ config:
     KC_ENABLED: "true"
     KC_IDENTITYKEY: idir_user_guid,bceid_user_guid,github_id
     KC_PUBLICKEY: >-
-      MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuy7zfh2ZgpDV5mH/aXyLDTddZK81rGakJcTy4KvCNOkDDxt1KAhW02lmbCo8YhHCOzjNZBp1+Vi6QiMRgBqAe2GTPZYEiV70aXfROGZe3Nvwcjbtki6HoyRte3SpqLJEIPL2F+hjJkw1UPGnjPTWZkEx9p74b9i3BjuE8RnjJ0Sza2MWw83zoQUZEJRGiopSL0yuVej6t2LO2btVdVf7QuZfPt9ehkcQYlPKpVvJA+pfeqPAdnNt7OjEIeYxinjurZr8Z04hz8UhkRefcWlSbFzFQYmL7O7iArjW0bsSvq8yNUd5r0KCOQkFduwZy26yTzTxj8OLFT91fEmbBBl4rQIDAQAB
+      MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAiFdv9GA83uHuy8Eu9yiZHGGF9j6J8t7FkbcpaN81GDjwbjsIJ0OJO9dKRAx6BAtTC4ubJTBJMPvQER5ikOhIeBi4o25fg61jpgsU6oRZHkCXc9gX6mrjMjbsPaf3/bjjYxP5jicBDJQeD1oRa24+tiGggoQ7k6gDEN+cRYqqNpzC/GQbkUPk8YsgroncEgu8ChMh/3ERsLV2zorchMANUq76max16mHrhtWIQxrb/STpSt4JuSlUzzBV/dcXjJe5gywZHe0jAutFhNqjHzHdgyaC4RAd3eYQo+Kl/JOgy2AZrnx+CiPmvOJKe9tAW4k4H087ng8aVE40v4HW/FEbnwIDAQAB
     KC_REALM: standard
     KC_SERVERURL: "https://test.loginproxy.gov.bc.ca/auth"
     OBJECTSTORAGE_BUCKET: data-bcstats-lockbox-test-bkt
