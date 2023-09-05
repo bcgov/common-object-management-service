@@ -30,7 +30,7 @@ const service = {
     let objId = uuidv4();
 
     if (typeof s3Object === 'object') { // If regular S3 Object
-      const { TagSet } = await storageService.getObjectTagging({ filePath: path, bucketId: bucketId });
+      const TagSet = await storageService.getObjectTagging({ filePath: path, bucketId: bucketId }).then(result => result.TagSet ?? []);
       const s3ObjectComsId = TagSet.find(obj => (obj.Key === 'coms-id'))?.Value;
 
       if (s3ObjectComsId && uuidValidate(s3ObjectComsId)) {
@@ -48,12 +48,12 @@ const service = {
       const { Versions } = await storageService.listAllObjectVersions({ filePath: path, bucketId: bucketId });
 
       for (const versionId of Versions.map(version => version.VersionId)) {
-        const result = await storageService.getObjectTagging({
+        const TagSet = await storageService.getObjectTagging({
           filePath: path,
           s3VersionId: versionId,
           bucketId: bucketId
-        });
-        const oldObjId = result?.TagSet.find(obj => obj.Key === 'coms-id')?.Value;
+        }).then(result => result.TagSet ?? []);
+        const oldObjId = TagSet.find(obj => obj.Key === 'coms-id')?.Value;
 
         if (oldObjId && uuidValidate(oldObjId)) {
           objId = oldObjId;
@@ -198,7 +198,7 @@ const service = {
 
       // Check for COMS and S3 Version statuses
       const [comsVersions, s3VersionsRaw] = await Promise.allSettled([
-        versionService.list(comsObject.id),
+        versionService.list(comsObject.id, trx),
         storageService.listAllObjectVersions({ filePath: comsObject.path, bucketId: comsObject.bucketId })
       ]).then(settled => settled.map(promise => promise.value));
 
@@ -331,13 +331,16 @@ const service = {
       // COMS Tags
       const comsTags = comsTagsForVersion[0]?.tagset ?? [];
       // S3 Tags
-      const s3Tags = toLowerKeys(s3TagsForVersion?.TagSet);
+      const s3Tags = toLowerKeys(s3TagsForVersion?.TagSet ?? []);
 
       // Ensure `coms-id` tag exists on this version in S3
       if (s3Tags.length < 10 && !s3Tags.find(s3T => s3T.key === 'coms-id')) {
         await storageService.putObjectTagging({
           filePath: path,
-          tags: s3TagsForVersion?.TagSet.concat([{ Key: 'coms-id', Value: comsVersion.objectId }]),
+          tags: (s3TagsForVersion?.TagSet ?? []).concat([{
+            Key: 'coms-id',
+            Value: comsVersion.objectId
+          }]),
           s3VersionId: comsVersion.s3VersionId,
           bucketId: bucketId,
         });
@@ -352,7 +355,9 @@ const service = {
           oldTags.push(comsT);
         }
       }
-      if (oldTags.length > 0) await tagService.dissociateTags(comsVersion.id, oldTags, trx);
+      if (oldTags.length > 0) {
+        await tagService.dissociateTags(comsVersion.id, oldTags, trx);
+      }
 
       // Associate new S3 Tags
       const newTags = [];
@@ -365,7 +370,7 @@ const service = {
       }
       if (newTags.length > 0) {
         await tagService.associateTags(comsVersion.id, newTags, userId, trx);
-        response.concat(newTags);
+        response.push(...newTags);
       }
 
       if (!etrx) await trx.commit();
@@ -401,14 +406,14 @@ const service = {
 
       // Check for COMS and S3 Metadata statuses
       const [comsMetadataForVersion, s3ObjectHead] = await Promise.allSettled([
-        metadataService.fetchMetadataForVersion({ versionIds: version.id }, trx),
-        storageService.headObject({ filePath: path, s3VersionId: version.s3VersionId, bucketId: bucketId })
+        metadataService.fetchMetadataForVersion({ versionIds: comsVersion.id }, trx),
+        storageService.headObject({ filePath: path, s3VersionId: comsVersion.s3VersionId, bucketId: bucketId })
       ]).then(settled => settled.map(promise => promise.value));
 
       // COMS Metadata
       const comsMetadata = comsMetadataForVersion[0]?.metadata ?? [];
       // S3 Metadata
-      const s3Metadata = s3ObjectHead.Metadata ? getKeyValue(s3ObjectHead.Metadata) : [];
+      const s3Metadata = getKeyValue(s3ObjectHead?.Metadata ?? {});
 
       // Dissociate Metadata not in S3
       const oldMetadata = [];
@@ -432,7 +437,7 @@ const service = {
       }
       if (newMetadata.length > 0) {
         await metadataService.associateMetadata(version.id, newMetadata, userId, trx);
-        response.concat(newMetadata);
+        response.push(...newMetadata);
       }
 
       if (!etrx) await trx.commit();
