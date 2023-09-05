@@ -364,6 +364,7 @@ describe('deleteObject', () => {
   it('should call version service to delete a version', async () => {
     // version delete request includes s3VersionId query param
     req.query = { s3VersionId: '123' };
+    getCurrentUserIdSpy.mockResolvedValue('456');
     // S3 returns version that was deleted
     storageDeleteObjectSpy.mockReturnValue({
       VersionId: '123'
@@ -371,7 +372,7 @@ describe('deleteObject', () => {
 
     await controller.deleteObject(req, res, next);
     expect(versionDeleteSpy).toHaveBeenCalledTimes(1);
-    expect(versionDeleteSpy).toHaveBeenCalledWith('xyz-789', '123');
+    expect(versionDeleteSpy).toHaveBeenCalledWith('xyz-789', '123', '456');
   });
 
   it('should delete object if object has no other remaining versions', async () => {

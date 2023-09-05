@@ -210,7 +210,7 @@ const service = {
       // Drop versions in COMS that are no longer in S3
       await Promise.all(comsVersions.map(async cv => {
         if (cv.s3VersionId && !s3Versions.some(s3v => (s3v.VersionId === cv.s3VersionId))) {
-          await versionService.delete(comsObject.id, (cv.s3VersionId ?? null), trx);
+          await versionService.delete(comsObject.id, (cv.s3VersionId ?? null), userId, trx);
         }
       }));
 
@@ -258,13 +258,9 @@ const service = {
           const comsVersion = comsVersions.find(cv => cv.s3VersionId === s3Version.VersionId);
 
           if (comsVersion) { // Version is in COMS
-            if (s3Version.IsLatest) { // Patch all isLatest flags if isLatest
-              const updated = await versionService.updateIsLatest({
-                id: comsVersion.id,
-                objectId: comsObject.id,
-                isLatest: s3Version.IsLatest
-              }, trx);
-              return { modified: true, version: updated[0] };
+            if (s3Version.IsLatest) { // Patch isLatest flags if changed
+              const updated = await versionService.updateIsLatest(comsVersion.id, trx);
+              return { modified: true, version: updated };
             } else { // Version record not modified
               return { version: comsVersion };
             }

@@ -27,21 +27,6 @@ export const options = {
   },
 };
 
-// create url with random tags
-const randomLetter = () => String.fromCharCode(65 + Math.floor(Math.random() * 26));
-const url = `${apiPath}/object?bucketId=${bucketId}&tagset[${randomLetter()}]=${randomLetter()}`;
-
-// create a random file name
-function randomFilename(length) {
-  let randomFilename = '';
-  let counter = 0;
-  while (counter < 6) {
-    randomFilename += randomLetter();
-    counter += 1;
-  }
-  return randomFilename + '.txt';
-}
-
 // open() the file as binary (with the 'b' argument, must be declared in init scope)
 // ref: https://k6.io/docs/examples/data-uploads/#multipart-request-uploading-a-file
 // eslint-disable-next-line
@@ -49,6 +34,22 @@ const binFile = open(filePath, 'b');
 
 // run k6
 export default function () {
+
+  // create url with random tags
+  const randomLetter = () => String.fromCharCode(65 + Math.floor(Math.random() * 26));
+  const url = `${apiPath}/object?bucketId=${bucketId}&tagset[${randomLetter()}]=${randomLetter()}`;
+
+  // create a random file name
+  function randomFilename(length) {
+    let randomFilename = '';
+    let counter = 0;
+    while (counter < 6) {
+      randomFilename += randomLetter();
+      counter += 1;
+    }
+    return randomFilename + '.txt';
+  }
+
   const data = {
     // attach file, specify file name and content type
     file: http.file(binFile, randomFilename(), 'text/plain')

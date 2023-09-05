@@ -81,7 +81,7 @@ class Version extends Timestamps(Model) {
   static get jsonSchema() {
     return {
       type: 'object',
-      required: ['objectId'],
+      // required: ['objectId'],
       properties: {
         id: { type: 'string', minLength: 1, maxLength: 255 },
         s3VersionId: { type: ['string', 'null'], maxLength: 1024 },
