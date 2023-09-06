@@ -55,11 +55,7 @@ const service = {
         .returning('*');
 
       // set all other versions to islatest: false
-      await Version.query(trx)
-        .update({ 'isLatest': false, 'objectId': objectId })
-        .whereNot({ 'id': response.id })
-        .andWhere('objectId', objectId)
-        .returning('*');
+      await service.removeDuplicateLatest(response.id, objectId, trx);
 
       if (!etrx) await trx.commit();
       return Promise.resolve(response);
@@ -96,12 +92,7 @@ const service = {
         .returning('*');
 
       // if new version is latest, set all other versions to islatest: false
-      if (data.isLatest) {
-        await Version.query(trx)
-          .update({ 'isLatest': false, 'objectId': data.id })
-          .whereNot({ 'id': response.id })
-          .andWhere('objectId', data.id);
-      }
+      if (data.isLatest) await service.removeDuplicateLatest(response.id, data.id, trx);
 
       if (!etrx) await trx.commit();
       return Promise.resolve(response);
@@ -116,11 +107,12 @@ const service = {
    * Delete a version record of an object
    * @param {string} objId The object uuid
    * @param {string} s3VersionId The version ID or null if deleting an object
+   * @param {string} [userId=undefined] An optional uuid of a user
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<integer>} The number of remaining versions in db after the delete
    * @throws The error encountered upon db transaction failure
    */
-  delete: async (objId, s3VersionId, etrx = undefined) => {
+  delete: async (objId, s3VersionId, userId = undefined, etrx = undefined) => {
     let trx;
     try {
       trx = etrx ? etrx : await Version.startTransaction();
@@ -133,16 +125,9 @@ const service = {
         .returning('*')
         .throwIfNotFound();
 
-      // set `isLatest: true` on most recent, if none exist with isLatest: true
-      const sq = await Version.query(trx)
-        .where({ 'objectId': objId })
-        .whereNot({ 'id': response[0].id })
-        .orderBy('createdAt', 'desc');
-      if (sq.length && !sq.some(v => v.isLatest).length) {
-        await Version.query(trx)
-          .update({ 'isLatest': true, 'objectId': objId })
-          .where({ 'id': sq[0]?.id, 'objectId': objId });
-      }
+      // sync other versions with isLatest
+      const { syncVersions } = require('./sync');
+      await syncVersions(objId, userId, trx);
 
       if (!etrx) await trx.commit();
       return Promise.resolve(response);
@@ -219,6 +204,40 @@ const service = {
   },
 
   /**
+   * @function removeDuplicateLatest
+   * Ensures only the specified `versionId` has isLatest: true
+   * @param {string} versionId COMS version uuid
+   * @param {string} objectId COMS object uuid
+   * @param {object} [etrx=undefined] An optional Objection Transaction object
+   * @returns {Promise<Array<object>>} Array of versions that were updated
+   */
+  removeDuplicateLatest: async(versionId, objectId, etrx = undefined) => {
+    let trx;
+    try {
+      trx = etrx ? etrx : await Version.startTransaction();
+
+      const allVersions = await Version.query(trx)
+        .where('objectId', objectId);
+
+      let updated = [];
+      if (allVersions.reduce((acc, curr) => curr.isLatest ? acc + 1 : acc, 0) > 1) {
+        // set all other versions to islatest: false
+        updated = await Version.query(trx)
+          .update({ isLatest: false })
+          .whereNot({ 'id': versionId })
+          .andWhere('objectId',  objectId)
+          .andWhere({ isLatest: true });
+      }
+
+      if (!etrx) await trx.commit();
+      return Promise.resolve(updated);
+    } catch (err) {
+      if (!etrx && trx) await trx.rollback();
+      throw err;
+    }
+  },
+
+  /**
    * @function update
    * Updates a version of an object.
    * Typically happens when updating the 'null-version' created for an object
@@ -258,53 +277,33 @@ const service = {
 
   /**
    * @function updateIsLatest
-   * updates a given version with isLatest: true|false in COMS db
+   * Set specified version as latest in COMS db
    * and ensures only one version has isLatest: true
-   * @param {string} options.id COMS uuid of a version
-   * @param {string} options.objectId COMS uuid of an object
-   * @param {boolean} options.isLatest isLatest value to set in db
+   * @param {string} versionId COMS version uuid
    * @param {object} [etrx=undefined] An optional Objection Transaction object
-   * @returns {object} Version model of updated version in db
+   * @returns {object} Version model of provided version in db
    */
-  updateIsLatest: async ({ id, objectId, isLatest }, etrx = undefined) => {
+  updateIsLatest: async (versionId, etrx = undefined) => {
     // TODO: consider having accepting a `userId` argument for version.updatedBy when a version becomes 'latest'
     let trx;
     try {
       trx = etrx ? etrx : await Version.startTransaction();
-      // update this version
-      const updated = await Version.query(trx)
-        .update({ isLatest: isLatest, objectId: objectId })
-        .where({ id: id })
-        .returning('*');
-      // if we set this version with isLatest: true
-      if (isLatest) {
-        // set all other versions to islatest: false
-        await Version.query(trx)
-          .update({ isLatest: false, objectId: objectId })
-          .whereNot({ 'id': id })
-          .andWhere('objectId', objectId)
-          .returning('*');
-      }
-      // else we set this version with isLatest: false.
-      else {
-        // integrity process:
-        // if no other versions have isLatest: true
-        // set most recent to true
-        const sq = await Version.query(trx)
-          .where({ 'objectId': objectId })
-          .whereNot({ 'id': updated[0].id })
-          .orderBy('createdAt', 'desc');
 
-        if (sq.length && !sq.some(v => v.isLatest).length) {
-          await Version.query(trx)
-            .update({ 'isLatest': true, 'objectId': objectId })
-            .where({ 'id': sq[0]?.id, 'objectId': objectId });
-        }
+      const current = await Version.query(trx)
+        .findById(versionId)
+        .throwIfNotFound();
+
+      let updated;
+      // if the version is not already marked as isLatest
+      if (!current.isLatest) {
+        // update this version as latest and fetch
+        updated = await Version.query(trx)
+          .updateAndFetchById(versionId, { isLatest: true });
       }
+      await service.removeDuplicateLatest(versionId, current.objectId, trx);
 
       if (!etrx) await trx.commit();
-
-      return Promise.resolve(updated);
+      return Promise.resolve(updated ?? current);
     } catch (err) {
       if (!etrx && trx) await trx.rollback();
       throw err;

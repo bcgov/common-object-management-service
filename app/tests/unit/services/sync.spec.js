@@ -723,7 +723,7 @@ describe('syncVersions', () => {
       expect(Version.startTransaction).toHaveBeenCalledTimes(1);
       expect(createSpy).toHaveBeenCalledTimes(2);
       expect(deleteSpy).toHaveBeenCalledTimes(1);
-      expect(deleteSpy).toHaveBeenCalledWith(comsObject.id, validUuidv4, expect.any(Object));
+      expect(deleteSpy).toHaveBeenCalledWith(comsObject.id, validUuidv4, expect.any(String), expect.any(Object));
       expect(headObjectSpy).toHaveBeenCalledTimes(1);
       expect(headObjectSpy).toHaveBeenCalledWith(expect.objectContaining({
         filePath: comsObject.path,
@@ -776,11 +776,7 @@ describe('syncVersions', () => {
       expect(readSpy).toHaveBeenCalledTimes(0);
       expect(updateSpy).toHaveBeenCalledTimes(0);
       expect(updateIsLatestSpy).toHaveBeenCalledTimes(1);
-      expect(updateIsLatestSpy).toHaveBeenCalledWith(expect.objectContaining({
-        id: validUuidv4,
-        objectId: comsObject.id,
-        isLatest: true
-      }), expect.any(Object));
+      expect(updateIsLatestSpy).toHaveBeenCalledWith(validUuidv4, expect.any(Object));
       expect(versionTrx.commit).toHaveBeenCalledTimes(1);
     });
 
