@@ -38,5 +38,5 @@ patroni:
       cpu: 20m
       memory: 192Mi
   persistentVolume:
-    enabled: false
+    enabled: true
     size: 128Mi
