@@ -1,7 +1,7 @@
 const router = require('express').Router();
 
 const { Permissions } = require('../../components/constants');
-const { bucketController } = require('../../controllers');
+const { bucketController, syncController } = require('../../controllers');
 const { bucketValidator } = require('../../validators');
 const { requireSomeAuth } = require('../../middleware/featureToggle');
 const { checkAppMode, hasPermission } = require('../../middleware/authorization');
@@ -42,6 +42,11 @@ router.patch('/:bucketId', bucketValidator.updateBucket, hasPermission(Permissio
 /** Deletes the bucket */
 router.delete('/:bucketId', bucketValidator.deleteBucket, hasPermission(Permissions.DELETE), (req, res, next) => {
   bucketController.deleteBucket(req, res, next);
+});
+
+/** Synchronizes a bucket */
+router.get('/:bucketId/sync', bucketValidator.syncBucket, hasPermission(Permissions.READ), (req, res, next) => {
+  syncController.syncBucket(req, res, next);
 });
 
 module.exports = router;

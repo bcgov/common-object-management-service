@@ -103,7 +103,7 @@ describe('getBucketKey', () => {
 });
 
 describe('searchObjects', () => {
-  it('Search and filter for specific object records', () => {
+  it('Search and filter for specific object records', async () => {
     ObjectModel.then.mockImplementation(() => { });
     const params = {
       bucketId: BUCKET_ID,
@@ -113,9 +113,11 @@ describe('searchObjects', () => {
       userId: SYSTEM_USER
     };
 
-    service.searchObjects(params);
+    await service.searchObjects(params);
 
+    expect(ObjectModel.startTransaction).toHaveBeenCalledTimes(1);
     expect(ObjectModel.query).toHaveBeenCalledTimes(1);
+    expect(ObjectModel.query).toHaveBeenCalledWith(expect.anything());
     expect(ObjectModel.allowGraph).toHaveBeenCalledTimes(1);
     expect(ObjectModel.modify).toHaveBeenCalledTimes(11);
     expect(ObjectModel.modify).toHaveBeenNthCalledWith(1, 'filterIds', params.id);
@@ -133,18 +135,22 @@ describe('searchObjects', () => {
     });
     expect(ObjectModel.modify).toHaveBeenNthCalledWith(11, 'hasPermission', params.userId, 'READ');
     expect(ObjectModel.then).toHaveBeenCalledTimes(1);
+    expect(objectModelTrx.commit).toHaveBeenCalledTimes(1);
   });
 });
 
 describe('read', () => {
-  it('Get an object db record', () => {
-    service.read(SYSTEM_USER);
+  it('Get an object db record', async () => {
+    await service.read(SYSTEM_USER);
 
+    expect(ObjectModel.startTransaction).toHaveBeenCalledTimes(1);
     expect(ObjectModel.query).toHaveBeenCalledTimes(1);
+    expect(ObjectModel.query).toHaveBeenCalledWith(expect.anything());
     expect(ObjectModel.findById).toHaveBeenCalledTimes(1);
     expect(ObjectModel.findById).toBeCalledWith(OBJECT_ID);
     expect(ObjectModel.throwIfNotFound).toHaveBeenCalledTimes(1);
     expect(ObjectModel.throwIfNotFound).toBeCalledWith();
+    expect(objectModelTrx.commit).toHaveBeenCalledTimes(1);
   });
 });
 

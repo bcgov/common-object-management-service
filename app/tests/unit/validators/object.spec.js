@@ -530,6 +530,21 @@ describe('searchObjects', () => {
   });
 });
 
+describe('syncObject', () => {
+
+  describe('params', () => {
+    const params = schema.syncObject.params.describe();
+
+    describe('bucketId', () => {
+      const objectId = params.keys.objectId;
+
+      it('is the expected schema', () => {
+        expect(objectId).toEqual(type.uuidv4.required().describe());
+      });
+    });
+  });
+});
+
 describe('togglePublic', () => {
 
   describe('params', () => {

@@ -12,6 +12,8 @@ router.get('/', (_req, res) => {
       '/metadata',
       '/object',
       '/permission',
+      '/sync',
+      '/tagging',
       '/user',
       '/version'
     ]
@@ -32,6 +34,9 @@ router.use('/object', require('./object'));
 
 /** Permission Router */
 router.use('/permission', require('./permission'));
+
+/** Sync Router */
+router.use('/sync', require('./sync'));
 
 /** Tagging Router */
 router.use('/tagging', require('./tag'));

@@ -27,34 +27,46 @@ export const options = {
   },
 };
 
-
-const randomLetter = () => String.fromCharCode(65 + Math.floor(Math.random() * 26));
-const url = `${apiPath}/object?bucketId=${bucketId}&tagset[${randomLetter()}]=${randomLetter()}`;
-
 // open() the file as binary (with the 'b' argument, must be declared in init scope)
 // ref: https://k6.io/docs/examples/data-uploads/#multipart-request-uploading-a-file
 // eslint-disable-next-line
 const binFile = open(filePath, 'b');
 
-console.log(authToken );
-
 // run k6
 export default function () {
+
+  // create url with random tags
+  const randomLetter = () => String.fromCharCode(65 + Math.floor(Math.random() * 26));
+  const url = `${apiPath}/object?bucketId=${bucketId}&tagset[${randomLetter()}]=${randomLetter()}`;
+
+  // create a random file name
+  function randomFilename(length) {
+    let randomFilename = '';
+    let counter = 0;
+    while (counter < 6) {
+      randomFilename += randomLetter();
+      counter += 1;
+    }
+    return randomFilename + '.txt';
+  }
+
   const data = {
     // attach file, specify file name and content type
-    file: http.file(binFile, 'abc.txt', 'text/plain')
+    file: http.file(binFile, randomFilename(), 'text/plain')
   };
   // make the http request
-  const res = http.post(url, data, {
+  const res = http.put(url, data, {
     // Add Authorization header
     // note: you can hardcode an auth token here or pass it as a paramter
     headers: {
-      'Authorization': `Basic ${authToken}`
+      'Authorization': `Basic ${authToken}`,
+      'Content-Disposition': 'attachment; filename="' + randomFilename() + '"',
+      'Content-Type': 'text/plain'
     }
   });
   // tests
   check(res, {
-    'is status 201': (r) => r.status === 201,
+    'is status 200': (r) => r.status === 200,
   });
   // optional delay (per VU) between iterations
   sleep(1);

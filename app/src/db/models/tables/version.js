@@ -54,32 +54,42 @@ class Version extends Timestamps(Model) {
 
   static get modifiers() {
     return {
+      filterDeleteMarker(query, value) {
+        if (value !== undefined) query.where('version.deleteMarker', value);
+      },
+      filterETag(query, value) {
+        if (value) query.where('version.etag', value);
+      },
       filterId(query, value) {
         filterOneOrMany(query, value, 'version.id');
+      },
+      filterIsLatest(query, value) {
+        if (value !== undefined) query.where('version.isLatest', value);
+      },
+      filterMimeType(query, value) {
+        filterILike(query, value, 'version.mimeType');
+      },
+      filterObjectId(query, value) {
+        filterOneOrMany(query, value, 'version.objectId');
       },
       filterS3VersionId(query, value) {
         filterOneOrMany(query, value, 'version.s3VersionId');
       },
-      filterObjectId(query, value) {
-        filterOneOrMany(query, value, 'objectId');
-      },
-      filterMimeType(query, value) {
-        filterILike(query, value, 'mimeType');
-      }
     };
   }
 
   static get jsonSchema() {
     return {
       type: 'object',
-      required: ['objectId'],
+      // required: ['objectId'],
       properties: {
         id: { type: 'string', minLength: 1, maxLength: 255 },
         s3VersionId: { type: ['string', 'null'], maxLength: 1024 },
-        objectId:{ type: 'string', minLength: 1, maxLength: 255 },
+        objectId: { type: 'string', minLength: 1, maxLength: 255 },
         mimeType: { type: 'string', maxLength: 255 },
         deleteMarker: { type: 'boolean' },
         etag: { type: 'string', maxLength: 65536 },
+        isLatest: { type: 'boolean' },
         ...stamps
       },
       additionalProperties: false
