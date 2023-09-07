@@ -7,11 +7,9 @@
     "poolMax": "10",
     "username": "app"
   },
-  "objectStorage": {
-    "defaultTempExpiresIn": "300"
-  },
   "server": {
     "bodyLimit": "30mb",
+    "defaultTempExpiresIn": "300",
     "logLevel": "http",
     "maxRetries": "3",
     "port": "3000"

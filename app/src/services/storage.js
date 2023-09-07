@@ -27,7 +27,7 @@ const utils = require('../components/utils');
 const DELIMITER = '/';
 
 // Get app configuration
-const defaultTempExpiresIn = parseInt(config.get('objectStorage.defaultTempExpiresIn'), 10);
+const defaultTempExpiresIn = parseInt(config.get('server.defaultTempExpiresIn'), 10);
 
 /**
  * The Core S3 Object Storage Service

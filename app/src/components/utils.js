@@ -69,33 +69,33 @@ const utils = {
    * @throws If there are no records found with `bucketId` and `throwable` is true
    */
   async getBucket(bucketId = undefined, throwable = false) {
-    const data = {
-      accessKeyId: config.get('objectStorage.accessKeyId'),
-      bucket: config.get('objectStorage.bucket'),
-      endpoint: config.get('objectStorage.endpoint'),
-      key: config.get('objectStorage.key'),
-      region: DEFAULTREGION,
-      secretAccessKey: config.get('objectStorage.secretAccessKey')
-    };
-
-    if (bucketId) {
-      // Function scoped import to avoid circular dependencies
-      const { bucketService } = require('../services');
-
-      try {
+    const data = { region: DEFAULTREGION };
+    try {
+      if (bucketId) {
+        // Function scoped import to avoid circular dependencies
+        const { bucketService } = require('../services');
         const bucketData = await bucketService.read(bucketId);
+
         data.accessKeyId = bucketData.accessKeyId;
         data.bucket = bucketData.bucket;
         data.endpoint = bucketData.endpoint;
         data.key = bucketData.key;
         data.secretAccessKey = bucketData.secretAccessKey;
         if (bucketData.region) data.region = bucketData.region;
-      } catch (err) {
-        log.warn(err.message, { function: 'getBucket' });
-        if (throwable) throw new Problem(404, { details: err.message });
+      } else if (config.has('objectStorage')) {
+        data.accessKeyId = config.get('objectStorage.accessKeyId');
+        data.bucket = config.get('objectStorage.bucket');
+        data.endpoint = config.get('objectStorage.endpoint');
+        data.key = config.get('objectStorage.key');
+        data.secretAccessKey = config.get('objectStorage.secretAccessKey');
+        if (config.has('objectStorage.region')) data.region = config.get('objectStorage.region');
+      } else {
+        throw new Error('Unable to get bucket');
       }
+    } catch (err) {
+      log.warn(err.message, { function: 'getBucket' });
+      if (throwable) throw new Problem(404, { details: err.message });
     }
-
     return data;
   },
 

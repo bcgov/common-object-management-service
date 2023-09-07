@@ -13,6 +13,7 @@ const QueueManager = require('./src/components/queueManager');
 const { getAppAuthMode, getGitRevision } = require('./src/components/utils');
 const DataConnection = require('./src/db/dataConnection');
 const v1Router = require('./src/routes/v1');
+const { readUnique } = require('./src/services/bucket');
 
 const dataConnection = new DataConnection();
 const queueManager = new QueueManager();
@@ -214,6 +215,12 @@ function initializeConnections() {
 
       if (state.connections.data) {
         log.info('DataConnection Reachable', { function: 'initializeConnections' });
+      }
+      if (config.has('objectStorage')) {
+        readUnique(config.get('objectStorage')).then(() => {
+          log.error('Default bucket cannot also exist in database', { function: 'initializeConnections' });
+          fatalErrorHandler();
+        }).catch(() => { });
       }
     })
     .catch(error => {
