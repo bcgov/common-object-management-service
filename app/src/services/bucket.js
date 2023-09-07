@@ -1,5 +1,7 @@
 const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 
+const config = require('config');
+
 const bucketPermissionService = require('./bucketPermission');
 const { Permissions } = require('../components/constants');
 const { Bucket } = require('../db/models');
@@ -81,11 +83,11 @@ const service = {
       const obj = {
         bucketId: uuidv4(),
         bucketName: data.bucketName,
-        accessKeyId: data.accessKeyId,
-        bucket: data.bucket,
-        endpoint: data.endpoint,
+        accessKeyId: data.accessKeyId ? data.accessKeyId : config.get('objectStorage.accessKeyId'),
+        bucket: data.bucket ? data.bucket : config.get('objectStorage.bucket'),
+        endpoint: data.endpoint ? data.endpoint : config.get('objectStorage.endpoint'),
         key: data.key ? data.key : '/',
-        secretAccessKey: data.secretAccessKey,
+        secretAccessKey: data.secretAccessKey ? data.secretAccessKey : config.get('objectStorage.secretAccessKey'),
         region: data.region,
         active: data.active,
         createdBy: data.userId
@@ -217,10 +219,10 @@ const service = {
       // Update bucket record in DB
       const response = await Bucket.query(trx).patchAndFetchById(data.bucketId, {
         bucketName: data.bucketName,
-        accessKeyId: data.accessKeyId,
-        bucket: data.bucket,
-        endpoint: data.endpoint,
-        secretAccessKey: data.secretAccessKey,
+        accessKeyId: data.accessKeyId ? data.accessKeyId : config.get('objectStorage.accessKeyId'),
+        bucket: data.bucket ? data.bucket : config.get('objectStorage.bucket'),
+        endpoint: data.endpoint ? data.endpoint : config.get('objectStorage.endpoint'),
+        secretAccessKey: data.secretAccessKey ? data.secretAccessKey : config.get('objectStorage.secretAccessKey'),
         region: data.region,
         active: data.active,
         updatedBy: data.userId
