@@ -11,6 +11,7 @@ const schema = {
       endpoint: Joi.string().uri({ scheme: /https?/ }).max(255),
       key: Joi.string().trim().max(255),
       secretAccessKey: Joi.string().max(255),
+      adminPass: Joi.string().max(255).required(),
       region: Joi.string().max(255),
       active: type.truthy
     }).required(),
@@ -50,6 +51,7 @@ const schema = {
       bucket: Joi.string().max(255),
       endpoint: Joi.string().uri({ scheme: /https?/ }).max(255),
       secretAccessKey: Joi.string().max(255),
+      adminPass: Joi.string().max(255).required(),
       region: Joi.string().max(255),
       active: type.truthy
     }),
@@ -60,7 +62,7 @@ const schema = {
 };
 
 const validator = {
-  createBucket: validate(schema.createBucket, { statusCode: 422 }),
+  createBucket: validate(schema.createBucket, { statusCode: 424 }),
   deleteBucket: validate(schema.deleteBucket, { statusCode: 422 }),
   headBucket: validate(schema.headBucket, { statusCode: 422 }),
   readBucket: validate(schema.readBucket, { statusCode: 422 }),
