@@ -2,6 +2,8 @@ const Problem = require('api-problem');
 const { UniqueViolationError } = require('objection');
 const { NIL: SYSTEM_USER } = require('uuid');
 
+const config = require('config');
+
 const { DEFAULTREGION } = require('../components/constants');
 const errorToProblem = require('../components/errorToProblem');
 const log = require('../components/log')(module.filename);
@@ -76,12 +78,12 @@ const controller = {
   async _validateCredentials(credentials) {
     try {
       const bucketSettings = {
-        accessKeyId: credentials.accessKeyId,
-        bucket: credentials.bucket,
-        endpoint: credentials.endpoint,
+        accessKeyId: credentials.accessKeyId ? credentials.accessKeyId : config.get('objectStorage.accessKeyId'),
+        bucket: credentials.bucket ? credentials.bucket : config.get('objectStorage.bucket'),
+        endpoint: credentials.endpoint ? credentials.endpoint : config.get('objectStorage.endpoint'),
         key: credentials.key ? credentials.key : '/',
         region: credentials.region || DEFAULTREGION,
-        secretAccessKey: credentials.secretAccessKey,
+        secretAccessKey: credentials.secretAccessKey ? credentials.secretAccessKey : config.get('objectStorage.secretAccessKey'),
       };
       await storageService.headBucket(bucketSettings);
     } catch (e) {

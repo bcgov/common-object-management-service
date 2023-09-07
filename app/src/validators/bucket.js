@@ -6,11 +6,11 @@ const schema = {
   createBucket: {
     body: Joi.object().keys({
       bucketName: Joi.string().max(255).required(),
-      accessKeyId: Joi.string().max(255).required(),
-      bucket: Joi.string().max(255).required(),
-      endpoint: Joi.string().uri({ scheme: /https?/ }).max(255).required(),
+      accessKeyId: Joi.string().max(255),
+      bucket: Joi.string().max(255),
+      endpoint: Joi.string().uri({ scheme: /https?/ }).max(255),
       key: Joi.string().trim().max(255),
-      secretAccessKey: Joi.string().max(255).required(),
+      secretAccessKey: Joi.string().max(255),
       region: Joi.string().max(255),
       active: type.truthy
     }).required(),
