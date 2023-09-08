@@ -36,6 +36,7 @@
     "logLevel": "SERVER_LOGLEVEL",
     "passphrase": "SERVER_PASSPHRASE",
     "port": "SERVER_PORT",
-    "privacyMask": "SERVER_PRIVACY_MASK"
+    "privacyMask": "SERVER_PRIVACY_MASK",
+    "adminpass": "ADMIN_PASS"
   }
 }
