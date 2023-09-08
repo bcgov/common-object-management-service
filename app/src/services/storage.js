@@ -24,6 +24,8 @@ const { MetadataDirective, TaggingDirective } = require('../components/constants
 const log = require('../components/log')(module.filename);
 const utils = require('../components/utils');
 
+const DELIMITER = '/';
+
 // Get app configuration
 const defaultTempExpiresIn = parseInt(config.get('objectStorage.defaultTempExpiresIn'), 10);
 
@@ -45,17 +47,17 @@ const objectStorageService = {
    */
   _getS3Client: ({ accessKeyId, endpoint, region, secretAccessKey } = {}) => {
     if (!accessKeyId || !endpoint || !region || !secretAccessKey) {
-      log.error('Unable to generate S3Client due to missing arguments', { function: '_getS3Client'});
+      log.error('Unable to generate S3Client due to missing arguments', { function: '_getS3Client' });
     }
 
     return new S3Client({
-      apiVersion: '2006-03-01',
       credentials: {
         accessKeyId: accessKeyId,
         secretAccessKey: secretAccessKey
       },
       endpoint: endpoint,
       forcePathStyle: true,
+      logger: ['silly', 'debug'].includes(config.get('server.logLevel')) ? log : undefined,
       region: region
     });
   },
@@ -234,6 +236,83 @@ const objectStorageService = {
   },
 
   /**
+   * @function listAllObjects
+   * Lists all objects in the bucket with the prefix of `filePath`.
+   * Performs pagination behind the scenes if required.
+   * @param {string} [options.filePath=undefined] Optional filePath of the objects
+   * @param {string} [options.bucketId=undefined] Optional bucketId
+   * @param {boolean} [options.precisePath=true] Optional boolean for filtering results based on the precise path
+   * @returns {Promise<object[]>} An array of objects matching the criteria
+   */
+  async listAllObjects({ filePath = undefined, bucketId = undefined, precisePath = true } = {}) {
+    const key = filePath ?? (await utils.getBucket(bucketId)).key;
+    const path = key !== DELIMITER ? key : '';
+
+    const objects = [];
+
+    let incomplete = false;
+    let nextToken = undefined;
+    do {
+      const { Contents, IsTruncated, NextContinuationToken } = await this.listObjectsV2({
+        filePath: path,
+        continuationToken: nextToken,
+        bucketId: bucketId
+      });
+
+      if (Contents) objects.push(
+        ...Contents.filter(object => !precisePath || utils.isAtPath(path, object.Key))
+      );
+      incomplete = IsTruncated;
+      nextToken = NextContinuationToken;
+    } while (incomplete);
+
+    return Promise.resolve(objects);
+  },
+
+  /**
+   * @function listAllObjectVersions
+   * Lists all objects in the bucket with the prefix of `filePath`.
+   * Performs pagination behind the scenes if required.
+   * @param {string} [options.filePath=undefined] Optional filePath of the objects
+   * @param {string} [options.bucketId=undefined] Optional bucketId
+   * @param {boolean} [options.precisePath=true] Optional boolean for filtering results based on the precise path
+   * @param {boolean} [options.filterLatest=false] Optional boolean for filtering results to only entries with IsLatest being true
+   * @returns {Promise<object>} An object containg an array of DeleteMarkers and Versions
+   */
+  async listAllObjectVersions({ filePath = undefined, bucketId = undefined, precisePath = true, filterLatest = false } = {}) {
+    const key = filePath ?? (await utils.getBucket(bucketId)).key;
+    const path = key !== DELIMITER ? key : '';
+
+    const deleteMarkers = [];
+    const versions = [];
+
+    let incomplete = false;
+    let nextKeyMarker = undefined;
+    do {
+      const { DeleteMarkers, Versions, IsTruncated, NextKeyMarker } = await this.listObjectVersion({
+        filePath: path,
+        keyMarker: nextKeyMarker,
+        bucketId: bucketId
+      });
+
+      if (DeleteMarkers) deleteMarkers.push(
+        ...DeleteMarkers
+          .filter(object => !precisePath || utils.isAtPath(path, object.Key))
+          .filter(object => !filterLatest || object.IsLatest === true)
+      );
+      if (Versions) versions.push(
+        ...Versions
+          .filter(object => !precisePath || utils.isAtPath(path, object.Key))
+          .filter(object => !filterLatest || object.IsLatest === true)
+      );
+      incomplete = IsTruncated;
+      nextKeyMarker = NextKeyMarker;
+    } while (incomplete);
+
+    return Promise.resolve({ DeleteMarkers: deleteMarkers, Versions: versions });
+  },
+
+  /**
    * @deprecated Use `listObjectsV2` instead
    * @function listObjects
    * Lists the objects in the bucket with the prefix of `filePath`
@@ -256,19 +335,20 @@ const objectStorageService = {
   /**
    * @function listObjectsV2
    * Lists the objects in the bucket with the prefix of `filePath`
-   * @param {string} options.filePath The filePath of the object
-   * @param {string} [options.continuationToken] Optional continuationtoken for pagination
-   * @param {number} [options.maxKeys] Optional maximum number of keys to return
-   * @param {string} [options.bucketId] Optional bucketId
-   * @returns {Promise<object>} The response of the list objects operation
+   * @param {string} [options.filePath=undefined] Optional filePath of the objects
+   * @param {string} [options.continuationToken=undefined] Optional continuationtoken for pagination
+   * @param {number} [options.maxKeys=undefined] Optional maximum number of keys to return
+   * @param {string} [options.bucketId=undefined] Optional bucketId
+   * @returns {Promise<object>} The response of the list objects v2 operation
    */
-  async listObjectsV2({ filePath, continuationToken = undefined, maxKeys = undefined, bucketId = undefined }) {
+  async listObjectsV2({ filePath = undefined, continuationToken = undefined, maxKeys = undefined, bucketId = undefined } = {}) {
     const data = await utils.getBucket(bucketId);
+    const prefix = data.key !== DELIMITER ? data.key : '';
     const params = {
       Bucket: data.bucket,
       ContinuationToken: continuationToken,
-      Prefix: filePath, // Must filter via "prefix" - https://stackoverflow.com/a/56569856
-      MaxKeys: maxKeys
+      MaxKeys: maxKeys,
+      Prefix: filePath ?? prefix // Must filter via "prefix" - https://stackoverflow.com/a/56569856
     };
 
     return this._getS3Client(data).send(new ListObjectsV2Command(params));
@@ -277,15 +357,20 @@ const objectStorageService = {
   /**
    * @function ListObjectVersion
    * Lists the versions for the object at `filePath`
-   * @param {string} options.filePath The filePath of the object
-   * @param {string} [options.bucketId] Optional bucketId
+   * @param {string} [options.filePath=undefined] Optional filePath of the objects
+   * @param {string} [options.keyMarker=undefined] Optional keyMarker for pagination
+   * @param {number} [options.maxKeys=undefined] Optional maximum number of keys to return
+   * @param {string} [options.bucketId=undefined] Optional bucketId
    * @returns {Promise<object>} The response of the list object version operation
    */
-  async listObjectVersion({ filePath, bucketId = undefined }) {
+  async listObjectVersion({ filePath = undefined, keyMarker = undefined, maxKeys = undefined, bucketId = undefined } = {}) {
     const data = await utils.getBucket(bucketId);
+    const prefix = data.key !== DELIMITER ? data.key : '';
     const params = {
       Bucket: data.bucket,
-      Prefix: filePath // Must filter via "prefix" - https://stackoverflow.com/a/56569856
+      KeyMarker: keyMarker,
+      MaxKeys: maxKeys,
+      Prefix: filePath ?? prefix // Must filter via "prefix" - https://stackoverflow.com/a/56569856
     };
 
     return this._getS3Client(data).send(new ListObjectVersionsCommand(params));

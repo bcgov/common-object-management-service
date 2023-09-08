@@ -273,8 +273,9 @@ describe('fetchTagsForVersion', () => {
       }
     ]);
 
-    service.fetchTagsForVersion(params);
+    await service.fetchTagsForVersion(params);
 
+    expect(Tag.startTransaction).toHaveBeenCalledTimes(1);
     expect(Version.query).toHaveBeenCalledTimes(1);
     expect(Version.select).toHaveBeenCalledTimes(1);
     expect(Version.select).toBeCalledWith('version.id as versionId', 'version.s3VersionId');
@@ -287,6 +288,7 @@ describe('fetchTagsForVersion', () => {
     expect(Version.orderBy).toHaveBeenCalledTimes(1);
     expect(Version.orderBy).toBeCalledWith('version.createdAt', 'desc');
     expect(Version.then).toHaveBeenCalledTimes(1);
+    expect(tagTrx.commit).toHaveBeenCalledTimes(1);
   });
 });
 

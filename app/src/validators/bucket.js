@@ -44,6 +44,12 @@ const schema = {
     })
   },
 
+  syncBucket: {
+    params: Joi.object({
+      bucketId: type.uuidv4.required()
+    })
+  },
+
   updateBucket: {
     body: Joi.object().keys({
       bucketName: Joi.string().max(255),
@@ -66,6 +72,7 @@ const validator = {
   deleteBucket: validate(schema.deleteBucket, { statusCode: 422 }),
   headBucket: validate(schema.headBucket, { statusCode: 422 }),
   readBucket: validate(schema.readBucket, { statusCode: 422 }),
+  syncBucket: validate(schema.readBucket, { statusCode: 422 }),
   searchBuckets: validate(schema.searchBuckets, { statusCode: 422 }),
   updateBucket: validate(schema.updateBucket, { statusCode: 422 })
 };

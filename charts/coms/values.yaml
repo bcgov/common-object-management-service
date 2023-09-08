@@ -144,6 +144,7 @@ config:
     OBJECTSTORAGE_KEY: ~
 
     SERVER_BODYLIMIT: "30mb"
+    # SERVER_HARDRESET: "true"
     # SERVER_LOGFILE: ~
     SERVER_LOGLEVEL: "http"
     SERVER_PORT: "3000"

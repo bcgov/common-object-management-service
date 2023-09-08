@@ -34,6 +34,7 @@ const service = {
           .where({
             objectId: objectId
           })
+          // TODO: use isLatest where possible
           .orderBy([
             { column: 'createdAt', order: 'desc' },
             { column: 'updatedAt', order: 'desc', nulls: 'last' }
@@ -48,8 +49,13 @@ const service = {
           objectId: objectId,
           mimeType: sourceVersion.mimeType,
           deleteMarker: sourceVersion.deleteMarker,
+          isLatest: true,
           createdBy: userId
-        });
+        })
+        .returning('*');
+
+      // set all other versions to islatest: false
+      await service.removeDuplicateLatest(response.id, objectId, trx);
 
       if (!etrx) await trx.commit();
       return Promise.resolve(response);
@@ -80,9 +86,13 @@ const service = {
           objectId: data.id,
           createdBy: userId,
           deleteMarker: data.deleteMarker,
-          etag: data.etag
+          etag: data.etag,
+          isLatest: data.isLatest
         })
-        .returning('id', 'objectId');
+        .returning('*');
+
+      // if new version is latest, set all other versions to islatest: false
+      if (data.isLatest) await service.removeDuplicateLatest(response.id, data.id, trx);
 
       if (!etrx) await trx.commit();
       return Promise.resolve(response);
@@ -97,22 +107,27 @@ const service = {
    * Delete a version record of an object
    * @param {string} objId The object uuid
    * @param {string} s3VersionId The version ID or null if deleting an object
+   * @param {string} [userId=undefined] An optional uuid of a user
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<integer>} The number of remaining versions in db after the delete
    * @throws The error encountered upon db transaction failure
    */
-  delete: async (objId, versionId, etrx = undefined) => {
+  delete: async (objId, s3VersionId, userId = undefined, etrx = undefined) => {
     let trx;
     try {
       trx = etrx ? etrx : await Version.startTransaction();
       const response = await Version.query(trx)
         .delete()
         .where('objectId', objId)
-        .where('s3VersionId', versionId)
+        .where('s3VersionId', s3VersionId)
         // Returns array of deleted rows instead of count
         // https://vincit.github.io/objection.js/recipes/returning-tricks.html
         .returning('*')
         .throwIfNotFound();
+
+      // sync other versions with isLatest
+      const { syncVersions } = require('./sync');
+      await syncVersions(objId, userId, trx);
 
       if (!etrx) await trx.commit();
       return Promise.resolve(response);
@@ -139,24 +154,19 @@ const service = {
       let response = undefined;
       if (s3VersionId) {
         response = await Version.query(trx)
-          .where({
-            s3VersionId: s3VersionId,
-            objectId: objectId
-          })
+          .where({ s3VersionId: s3VersionId, objectId: objectId })
           .first();
       }
       else if (versionId) {
         response = await Version.query(trx)
-          .where({
-            id: versionId,
-            objectId: objectId
-          })
+          .where({ id: versionId, objectId: objectId })
           .first();
       }
       else {
         response = await Version.query(trx)
           .where('objectId', objectId)
           .andWhere('deleteMarker', false)
+          // TODO: use isLatest where possible
           .orderBy('createdAt', 'desc')
           .first();
       }
@@ -173,18 +183,54 @@ const service = {
    * list versions of an object.
    * @param {string} uuid of an object
    * @param {object} [etrx=undefined] An optional Objection Transaction object
-   * @returns {Promise<array>} Array of rows returned from the database
+   * @returns {Promise<Array<object>>} Array of rows returned from the database
    * @throws The error encountered upon db transaction failure
    */
   list: async (objId, etrx = undefined) => {
     let trx;
     try {
       trx = etrx ? etrx : await Version.startTransaction();
+
       const response = await Version.query(trx)
-        .where({ objectId: objId })
+        .modify('filterObjectId', objId)
         .orderBy('createdAt', 'DESC');
+
       if (!etrx) await trx.commit();
       return Promise.resolve(response);
+    } catch (err) {
+      if (!etrx && trx) await trx.rollback();
+      throw err;
+    }
+  },
+
+  /**
+   * @function removeDuplicateLatest
+   * Ensures only the specified `versionId` has isLatest: true
+   * @param {string} versionId COMS version uuid
+   * @param {string} objectId COMS object uuid
+   * @param {object} [etrx=undefined] An optional Objection Transaction object
+   * @returns {Promise<Array<object>>} Array of versions that were updated
+   */
+  removeDuplicateLatest: async(versionId, objectId, etrx = undefined) => {
+    let trx;
+    try {
+      trx = etrx ? etrx : await Version.startTransaction();
+
+      const allVersions = await Version.query(trx)
+        .where('objectId', objectId);
+
+      let updated = [];
+      if (allVersions.reduce((acc, curr) => curr.isLatest ? acc + 1 : acc, 0) > 1) {
+        // set all other versions to islatest: false
+        updated = await Version.query(trx)
+          .update({ isLatest: false })
+          .whereNot({ 'id': versionId })
+          .andWhere('objectId',  objectId)
+          .andWhere({ isLatest: true });
+      }
+
+      if (!etrx) await trx.commit();
+      return Promise.resolve(updated);
     } catch (err) {
       if (!etrx && trx) await trx.rollback();
       throw err;
@@ -195,11 +241,11 @@ const service = {
    * @function update
    * Updates a version of an object.
    * Typically happens when updating the 'null-version' created for an object
-   * on a non-versioned or version-suspnded bucket.
-   * @param {object[]} data array of object attributes
+   * on a bucket without versioning.
+   * @param {object[]} data array of version attributes
    * @param {string} userId uuid of the current user
    * @param {object} [etrx=undefined] An optional Objection Transaction object
-   * @returns {Promise<integer>} id of Version object updated in the database
+   * @returns {Promise<integer>} id of version updated in the database
    * @throws The error encountered upon db transaction failure
    */
   update: async (data = {}, userId = SYSTEM_USER, etrx = undefined) => {
@@ -214,13 +260,13 @@ const service = {
           objectId: data.id,
           updatedBy: userId,
           mimeType: data.mimeType,
-          etag: data.etag
+          etag: data.etag,
+          isLatest: data.isLatest
         })
         .first()
-        .returning('id');
+        .returning('*');
 
       // TODO: consider updating metadata here instead of the controller
-
       if (!etrx) await trx.commit();
       return Promise.resolve(version);
     } catch (err) {
@@ -228,6 +274,41 @@ const service = {
       throw err;
     }
   },
+
+  /**
+   * @function updateIsLatest
+   * Set specified version as latest in COMS db
+   * and ensures only one version has isLatest: true
+   * @param {string} versionId COMS version uuid
+   * @param {object} [etrx=undefined] An optional Objection Transaction object
+   * @returns {object} Version model of provided version in db
+   */
+  updateIsLatest: async (versionId, etrx = undefined) => {
+    // TODO: consider having accepting a `userId` argument for version.updatedBy when a version becomes 'latest'
+    let trx;
+    try {
+      trx = etrx ? etrx : await Version.startTransaction();
+
+      const current = await Version.query(trx)
+        .findById(versionId)
+        .throwIfNotFound();
+
+      let updated;
+      // if the version is not already marked as isLatest
+      if (!current.isLatest) {
+        // update this version as latest and fetch
+        updated = await Version.query(trx)
+          .updateAndFetchById(versionId, { isLatest: true });
+      }
+      await service.removeDuplicateLatest(versionId, current.objectId, trx);
+
+      if (!etrx) await trx.commit();
+      return Promise.resolve(updated ?? current);
+    } catch (err) {
+      if (!etrx && trx) await trx.rollback();
+      throw err;
+    }
+  }
 
 };
 

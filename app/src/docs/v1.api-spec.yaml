@@ -38,6 +38,13 @@ tags:
     externalDocs:
       url: >-
         https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#permission
+  - name: Sync
+    description: >-
+      Operations for syncing existing buckets and objects. Ensures that external
+      S3 modifications are eventually correctly tracked by COMS.
+    externalDocs:
+      url: >-
+        https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#sync
   - name: Tagging
     description: Operations for managing Tags for S3 Objects.
     externalDocs:
@@ -192,6 +199,31 @@ paths:
           description: Returns no content success
         "403":
           $ref: "#/components/responses/Forbidden"
+        default:
+          $ref: "#/components/responses/Error"
+  /bucket/{bucketId}/sync:
+    get:
+      summary: Synchronize a bucket
+      description: >-
+        Synchronize the contents of an existing bucket with COMS so that it can
+        track and manage the objects in it. This avoids the need to re-upload
+        preexisting files through the COMS API. This endpoint does not guarantee
+        immediately synchronized results. Synchronization latency will be
+        affected by the remaining number of objects awaiting synchronization.
+      tags:
+        - Sync
+      operationId: syncBucket
+      parameters:
+        - $ref: "#/components/parameters/Path-BucketId"
+      responses:
+        "202":
+          $ref: "#/components/responses/AddedQueueLength"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
         default:
           $ref: "#/components/responses/Error"
   /metadata:
@@ -762,6 +794,37 @@ paths:
           $ref: "#/components/responses/Forbidden"
         default:
           $ref: "#/components/responses/Error"
+  /object/{objectId}/sync:
+    get:
+      summary: Synchronize an existing object
+      description: >-
+        Synchronize an existing COMS object so that any changes made externally
+        (e.g. using an S3 client to upload a new version) are tracked by COMS.
+        This endpoint does not guarantee immediately synchronized results.
+        Synchronization latency will be affected by the remaining number of
+        objects awaiting synchronization.
+      tags:
+        - Sync
+      operationId: syncObject
+      parameters:
+        - $ref: "#/components/parameters/Path-ObjectId"
+      responses:
+        "202":
+          description: Returns the number of objects that have been added to the queue.
+          content:
+            text/plain:
+              schema:
+                type: integer
+                example: 5
+                description: number of objects added to the queue
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        default:
+          $ref: "#/components/responses/Error"
   /object/{objectId}/tagging:
     patch:
       summary: Adds tags to an object
@@ -1176,6 +1239,50 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/DB-ObjectPermission"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        default:
+          $ref: "#/components/responses/Error"
+  /sync:
+    get:
+      summary: Synchronize with the default bucket
+      description: >-
+        Synchronize the contents of the default bucket with COMS so that it can
+        track and manage objects that are already in the bucket. This avoids the
+        need to re-upload preexisting files through the COMS API. This endpoint
+        does not guarantee immediately synchronized results. Synchronization
+        latency will be affected by the remaining number of objects awaiting
+        synchronization.
+      operationId: syncDefault
+      tags:
+        - Sync
+      responses:
+        "202":
+          $ref: "#/components/responses/AddedQueueLength"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        default:
+          $ref: "#/components/responses/Error"
+  /sync/status:
+    get:
+      summary: Get sync queue size
+      description: Returns the number of objects currently awaiting processing by COMS.
+      operationId: syncStatus
+      tags:
+        - Sync
+      responses:
+        "200":
+          description: Returns the number of objects currently in the queue
+          content:
+            text/plain:
+              schema:
+                type: integer
+                example: 5
+                description: number of objects currently in the queue
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -2716,6 +2823,14 @@ components:
       format: uuid
       example: c05c7650-5f48-4e51-bf17-762e8fc121a1
   responses:
+    AddedQueueLength:
+      description: Returns the number of objects that have been added to the queue
+      content:
+        text/plain:
+          schema:
+            type: integer
+            example: 5
+            description: Number of objects added to the queue
     Accepted:
       description: Accepted
     BadRequest:

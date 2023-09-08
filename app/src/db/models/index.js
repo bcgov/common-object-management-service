@@ -6,6 +6,7 @@ const models = {
   Metadata: require('./tables/metadata'),
   ObjectModel: require('./tables/objectModel'),
   ObjectPermission: require('./tables/objectPermission'),
+  ObjectQueue: require('./tables/objectQueue'),
   Permission: require('./tables/permission'),
   Tag: require('./tables/tag'),
   User: require('./tables/user'),

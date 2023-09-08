@@ -7,7 +7,7 @@
 #
 # Build the application
 #
-FROM registry.access.redhat.com/ubi9/nodejs-18:1-59 as builder
+FROM registry.access.redhat.com/ubi9/nodejs-18:1-62.1692771036 as builder
 
 ENV NO_UPDATE_NOTIFIER=true
 
@@ -22,7 +22,7 @@ RUN npm ci --omit=dev
 #
 # Create the final container image
 #
-FROM registry.access.redhat.com/ubi9/nodejs-18-minimal:1-63
+FROM registry.access.redhat.com/ubi9/nodejs-18-minimal:1-67
 
 ENV APP_PORT=3000 \
     NO_UPDATE_NOTIFIER=true

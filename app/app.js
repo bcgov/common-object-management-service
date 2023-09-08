@@ -9,11 +9,13 @@ const { ValidationError } = require('express-validation');
 const { AuthMode, DEFAULTCORS } = require('./src/components/constants');
 const log = require('./src/components/log')(module.filename);
 const httpLogger = require('./src/components/log').httpLogger;
+const QueueManager = require('./src/components/queueManager');
 const { getAppAuthMode, getGitRevision } = require('./src/components/utils');
+const DataConnection = require('./src/db/dataConnection');
 const v1Router = require('./src/routes/v1');
 
-const DataConnection = require('./src/db/dataConnection');
 const dataConnection = new DataConnection();
+const queueManager = new QueueManager();
 
 const apiRouter = express.Router();
 const state = {
@@ -23,7 +25,9 @@ const state = {
   ready: false,
   shutdown: false
 };
+
 let probeId;
+let queueId;
 
 const app = express();
 const jsonParser = express.json({ limit: config.get('server.bodyLimit') });
@@ -138,63 +142,75 @@ app.use((req, res) => {
   }).send(res);
 });
 
-// Prevent unhandled errors from crashing application
+// Ensure unhandled errors gracefully shut down the application
 process.on('unhandledRejection', err => {
-  if (err && err.stack) {
-    log.error(err);
-  }
+  log.error(`Unhandled Rejection: ${err.message ?? err}`, { function: 'onUnhandledRejection' });
+  fatalErrorHandler();
+});
+process.on('uncaughtException', err => {
+  log.error(`Unhandled Exception: ${err.message ?? err}`, { function: 'onUncaughtException' });
+  fatalErrorHandler();
 });
 
 // Graceful shutdown support
-process.on('SIGTERM', shutdown);
-process.on('SIGINT', shutdown);
-process.on('SIGUSR1', shutdown);
-process.on('SIGUSR2', shutdown);
-process.on('exit', () => {
-  log.info('Exiting...');
+['SIGHUP', 'SIGINT', 'SIGTERM', 'SIGQUIT', 'SIGUSR1', 'SIGUSR2']
+  .forEach(signal => process.on(signal, shutdown));
+process.on('exit', code => {
+  log.info(`Exiting with code ${code}`, { function: 'onExit' });
 });
-
-/**
- * @function shutdown
- * Shuts down this application after at least 3 seconds.
- */
-function shutdown() {
-  log.info('Received kill signal. Shutting down...');
-  // Wait 3 seconds before starting cleanup
-  if (!state.shutdown) setTimeout(cleanup, 3000);
-}
 
 /**
  * @function cleanup
  * Cleans up connections in this application.
  */
 function cleanup() {
-  log.info('Service no longer accepting traffic', { function: 'cleanup' });
-  state.shutdown = true;
+  log.info('Cleaning up', { function: 'cleanup' });
+  // Set 10 seconds max deadline before hard exiting
+  setTimeout(process.exit, 10000).unref(); // Prevents the timeout from registering on event loop
 
-  log.info('Cleaning up...', { function: 'cleanup' });
   clearInterval(probeId);
+  clearInterval(queueId);
+  queueManager.close(dataConnection.close(process.exit));
+}
 
-  dataConnection.close(() => process.exit());
+/**
+ * @function checkConnections
+ * Checks Database connectivity
+ * This may force the application to exit if a connection fails
+ */
+function checkConnections() {
+  const wasReady = state.ready;
+  if (!state.shutdown) {
+    dataConnection.checkConnection().then(results => {
+      state.connections.data = results;
+      state.ready = Object.values(state.connections).every(x => x);
+      if (!wasReady && state.ready) log.info('Application ready to accept traffic', { function: 'checkConnections' });
+      if (wasReady && !state.ready) log.warn('Application not ready to accept traffic', { function: 'checkConnections' });
+      log.silly('App state', { function: 'checkConnections', state: state });
+      if (!state.ready) notReadyHandler();
+    });
+  }
+}
 
-  // Wait 10 seconds max before hard exiting
-  setTimeout(() => process.exit(), 10000);
+/**
+ * @function fatalErrorHandler
+ * Forces the application to shutdown
+ */
+function fatalErrorHandler() {
+  process.exitCode = 1;
+  shutdown();
 }
 
 /**
  * @function initializeConnections
  * Initializes the database connections
- * This will force the application to exit if it fails
+ * This may force the application to exit if it fails
  */
 function initializeConnections() {
   // Initialize connections and exit if unsuccessful
-  const tasks = [
-    dataConnection.checkAll()
-  ];
-
-  Promise.all(tasks)
+  dataConnection.checkAll()
     .then(results => {
-      state.connections.data = results[0];
+      state.connections.data = results;
 
       if (state.connections.data) {
         log.info('DataConnection Reachable', { function: 'initializeConnections' });
@@ -203,43 +219,41 @@ function initializeConnections() {
     .catch(error => {
       log.error(`Initialization failed: Database OK = ${state.connections.data}`, { function: 'initializeConnections' });
       log.error('Connection initialization failure', error.message, { function: 'initializeConnections' });
-      if (!state.ready) {
-        process.exitCode = 1;
-        shutdown();
-      }
+      if (!state.ready) notReadyHandler();
     })
     .finally(() => {
       state.ready = Object.values(state.connections).every(x => x);
-      if (state.ready) {
-        log.info('Service ready to accept traffic', { function: 'initializeConnections' });
-        // Start periodic 10 second connection probe check
-        probeId = setInterval(checkConnections, 10000);
-      }
+      if (state.ready) log.info('Application ready to accept traffic', { function: 'initializeConnections' });
+
+      // Start periodic 10 second connection probes
+      probeId = setInterval(checkConnections, 10000);
+      queueId = setInterval(() => {
+        if (state.ready) queueManager.checkQueue();
+      }, 10000);
     });
 }
 
 /**
- * @function checkConnections
- * Checks Database connectivity
- * This will force the application to exit if a connection fails
+ * @function notReadyHandler
+ * Forces an application shutdown if `server.hardReset` is defined.
+ * Otherwise will flush and attempt to reset the connection pool.
  */
-function checkConnections() {
-  const wasReady = state.ready;
-  if (!state.shutdown) {
-    const tasks = [
-      dataConnection.checkConnection()
-    ];
+function notReadyHandler() {
+  if (config.has('server.hardReset')) fatalErrorHandler();
+  else dataConnection.resetConnection();
+}
 
-    Promise.all(tasks).then(results => {
-      state.connections.data = results[0];
-      state.ready = Object.values(state.connections).every(x => x);
-      if (!wasReady && state.ready) log.info('Service ready to accept traffic', { function: 'checkConnections' });
-      log.silly('App state', { function: 'checkConnections', state });
-      if (!state.ready) {
-        process.exitCode = 1;
-        shutdown();
-      }
-    });
+/**
+ * @function shutdown
+ * Shuts down this application after at least 3 seconds.
+ */
+function shutdown() {
+  log.info('Shutting down', { function: 'shutdown' });
+  // Wait 3 seconds before starting cleanup
+  if (!state.shutdown) {
+    state.shutdown = true;
+    log.info('Application no longer accepting traffic', { function: 'shutdown' });
+    setTimeout(cleanup, 3000);
   }
 }
 

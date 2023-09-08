@@ -60,7 +60,11 @@ class ObjectModel extends Timestamps(Model) {
         filterOneOrMany(query, value, 'object.id');
       },
       filterBucketIds(query, value) {
-        filterOneOrMany(query, value, 'object.bucketId');
+        if (value === null) {
+          query.whereNull('object.bucketId');
+        } else {
+          filterOneOrMany(query, value, 'object.bucketId');
+        }
       },
       filterName(query, value) {
         filterILike(query, value, 'object.name');
@@ -153,6 +157,9 @@ class ObjectModel extends Timestamps(Model) {
             });
         }
       },
+      findPath(query, value) {
+        if (value) query.where('object.path', value);
+      },
       hasPermission(query, userId, permCode) {
         if (userId && permCode) {
           query
@@ -189,7 +196,7 @@ class ObjectModel extends Timestamps(Model) {
         path: { type: 'string', minLength: 1, maxLength: 1024 },
         public: { type: 'boolean' },
         active: { type: 'boolean' },
-        bucketId: { type: 'string', maxLength: 255 },
+        bucketId: { type: 'string', maxLength: 255, nullable: true },
         name: { type: 'string', maxLength: 1024 },
         ...stamps
       },

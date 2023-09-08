@@ -193,7 +193,7 @@ describe('fetchMetadataForObject', () => {
 });
 
 describe('fetchMetadataForVersion', () => {
-  it('Fetch metadata for specific versions', () => {
+  it('Fetch metadata for specific versions', async () => {
     Version.then.mockResolvedValue([
       {
         ...metadata,
@@ -201,8 +201,9 @@ describe('fetchMetadataForVersion', () => {
       }
     ]);
 
-    service.fetchMetadataForVersion(params);
+    await service.fetchMetadataForVersion(params);
 
+    expect(Metadata.startTransaction).toHaveBeenCalledTimes(1);
     expect(Version.query).toHaveBeenCalledTimes(1);
     expect(Version.select).toHaveBeenCalledTimes(1);
     expect(Version.select).toHaveBeenCalledWith('version.id as versionId', 'version.s3VersionId');
@@ -217,6 +218,7 @@ describe('fetchMetadataForVersion', () => {
     expect(Version.orderBy).toHaveBeenCalledTimes(1);
     expect(Version.orderBy).toHaveBeenCalledWith('version.createdAt', 'desc');
     expect(Version.then).toHaveBeenCalledTimes(1);
+    expect(metadataTrx.commit).toHaveBeenCalledTimes(1);
   });
 });
 
