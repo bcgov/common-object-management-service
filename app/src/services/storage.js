@@ -207,7 +207,7 @@ const objectStorageService = {
    */
   async headBucket(options = {}) {
     const data = options.bucketId
-      ? await utils.getBucket(options.bucketId, true)
+      ? await utils.getBucket(options.bucketId)
       : options;
     const params = {
       Bucket: data.bucket,
