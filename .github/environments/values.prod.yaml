@@ -3,6 +3,10 @@ features:
   basicAuth: true
   oidcAuth: true
 
+autoscaling:
+  enabled: true
+  maxReplicas: 4
+
 config:
   enabled: true
   configMap:
