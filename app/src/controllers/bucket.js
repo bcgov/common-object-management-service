@@ -76,6 +76,12 @@ const controller = {
    * @throws A conflict error problem if the bucket is not reachable
    */
   async _validateCredentials(credentials) {
+    if (credentials.adminPass != config.get('server.passphrase')){
+      throw new Problem(409, {
+        details: 'Failure validating admin password',
+      });
+    }
+
     try {
       const bucketSettings = {
         accessKeyId: credentials.accessKeyId ? credentials.accessKeyId : config.get('objectStorage.accessKeyId'),

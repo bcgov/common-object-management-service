@@ -62,7 +62,7 @@ const schema = {
 };
 
 const validator = {
-  createBucket: validate(schema.createBucket, { statusCode: 424 }),
+  createBucket: validate(schema.createBucket, { statusCode: 422 }),
   deleteBucket: validate(schema.deleteBucket, { statusCode: 422 }),
   headBucket: validate(schema.headBucket, { statusCode: 422 }),
   readBucket: validate(schema.readBucket, { statusCode: 422 }),
