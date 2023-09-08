@@ -84,7 +84,6 @@ The following variables enable and enforce the use of OIDC Bearer Authentication
 | --- | --- | --- | --- |
 | `accessKeyId` | `OBJECTSTORAGE_ACCESSKEYID` | | The Access Key for your S3 compatible object storage account  |
 | `bucket` | `OBJECTSTORAGE_BUCKET` | | The object storage bucket name |
-| `defaultTempExpiresIn` | `OBJECTSTORAGE_TEMP_EXPIRESIN` | 300 | The expiry time for pre-signed URLs to objects in seconds  |
 | `endpoint` | `OBJECTSTORAGE_ENDPOINT` | | Object store URL. eg: `https://nrs.objectstore.gov.bc.ca` |
 | `key` | `OBJECTSTORAGE_KEY` | | The base path for storage location |
 | `secretAccessKey` | `OBJECTSTORAGE_SECRETACCESSKEY` | | The Secret Access Key for your S3 compatible object storage account |
@@ -96,6 +95,7 @@ The following variables alter the general Express application behavior. For most
 | Config Var | Env Var | Default | Notes |
 | --- | --- | --- | --- |
 | `bodyLimit` | `SERVER_BODYLIMIT` | 30mb | Maximum body size accepted for parsing to JSON body |
+| `defaultTempExpiresIn` | `SERVER_TEMP_EXPIRESIN` | 300 | The expiry time for pre-signed S3 URLs to objects in seconds  |
 | `logFile` | `SERVER_LOGFILE` | | Writes logs to the following file only if defined |
 | `logLevel` | `SERVER_LOGLEVEL` | http | The logging level of COMS |
 | `passphrase` | `SERVER_PASSPHRASE` | | A key to encrypt/decrypt bucket secretAccessKey's saved to the database |

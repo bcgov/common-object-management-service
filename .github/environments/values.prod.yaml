@@ -19,7 +19,6 @@ config:
     KC_REALM: standard
     KC_SERVERURL: "https://loginproxy.gov.bc.ca/auth"
     OBJECTSTORAGE_BUCKET: egejyy
-    OBJECTSTORAGE_TEMP_EXPIRESIN: "300"
     OBJECTSTORAGE_ENDPOINT: "https://nrs.objectstore.gov.bc.ca"
     # OBJECTSTORAGE_KEY: ~
     SERVER_BODYLIMIT: 30mb
@@ -27,6 +26,7 @@ config:
     SERVER_LOGLEVEL: http
     SERVER_PORT: "3000"
     SERVER_PRIVACY_MASK: "true"
+    SERVER_TEMP_EXPIRESIN: "300"
 
 patroni:
   enabled: true

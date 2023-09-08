@@ -139,7 +139,6 @@ config:
     KC_SERVERURL: ~
 
     OBJECTSTORAGE_BUCKET: ~
-    OBJECTSTORAGE_TEMP_EXPIRESIN: "300"
     OBJECTSTORAGE_ENDPOINT: ~
     OBJECTSTORAGE_KEY: ~
 
@@ -149,6 +148,7 @@ config:
     SERVER_LOGLEVEL: "http"
     SERVER_PORT: "3000"
     # SERVER_PRIVACY_MASK: "true"
+    SERVER_TEMP_EXPIRESIN: "300"
 
 # Modify the following variables if you need to acquire secret values from a custom-named resource
 basicAuthSecretOverride:
