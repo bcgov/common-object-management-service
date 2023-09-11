@@ -13,7 +13,7 @@ backup:
       memory: 50Mi
 
   backupConfig: |
-    postgres=patroni-bcstats-coms-0:5432/app
+    postgres=patroni-bcstats-coms:5432/app
     
     0 1 * * * default ./backup.sh -s
     0 4 * * * default ./backup.sh -s -v all
