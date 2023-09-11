@@ -46,6 +46,10 @@ spec:
     - from:
         - podSelector:
             matchLabels: {{ include "coms.selectorLabels" . | nindent 14 }}
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: bcstats-patroni-backup
+              app.kubernetes.io/name: backup
       ports:
         - port: {{ default "5432" .Values.config.configMap.DB_PORT | atoi }}
           protocol: TCP
