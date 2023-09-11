@@ -25,6 +25,7 @@
   "objectStorage": {
     "accessKeyId": "OBJECTSTORAGE_ACCESSKEYID",
     "bucket": "OBJECTSTORAGE_BUCKET",
+    "enabled": "OBJECTSTORAGE_ENABLED",
     "endpoint": "OBJECTSTORAGE_ENDPOINT",
     "key": "OBJECTSTORAGE_KEY",
     "secretAccessKey": "OBJECTSTORAGE_SECRETACCESSKEY"

@@ -216,7 +216,7 @@ function initializeConnections() {
       if (state.connections.data) {
         log.info('DataConnection Reachable', { function: 'initializeConnections' });
       }
-      if (config.has('objectStorage')) {
+      if (config.has('objectStorage.enabled')) {
         readUnique(config.get('objectStorage')).then(() => {
           log.error('Default bucket cannot also exist in database', { function: 'initializeConnections' });
           fatalErrorHandler();

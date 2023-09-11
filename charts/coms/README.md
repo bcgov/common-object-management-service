@@ -1,6 +1,6 @@
 # common-object-management-service
 
-![Version: 0.0.17](https://img.shields.io/badge/Version-0.0.17-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.6.0](https://img.shields.io/badge/AppVersion-0.6.0-informational?style=flat-square)
+![Version: 0.0.18](https://img.shields.io/badge/Version-0.0.18-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.6.0](https://img.shields.io/badge/AppVersion-0.6.0-informational?style=flat-square)
 
 A microservice for managing access control to S3 Objects
 
@@ -42,6 +42,7 @@ Kubernetes: `>= 1.13.0`
 | dbSecretOverride.username | string | `nil` |  |
 | failurePolicy | string | `"Retry"` |  |
 | features.basicAuth | bool | `false` | Specifies whether basic auth is enabled |
+| features.defaultBucket | bool | `false` | Specifies whether a default bucket is enabled |
 | features.oidcAuth | bool | `false` | Specifies whether oidc auth is enabled |
 | fullnameOverride | string | `nil` | String to fully override fullname |
 | image.pullPolicy | string | `"IfNotPresent"` |  |

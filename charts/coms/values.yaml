@@ -106,6 +106,8 @@ resources:
 features:
   # -- Specifies whether basic auth is enabled
   basicAuth: false
+  # -- Specifies whether a default bucket is enabled
+  defaultBucket: false
   # -- Specifies whether oidc auth is enabled
   oidcAuth: false
 
@@ -139,6 +141,7 @@ config:
     KC_SERVERURL: ~
 
     OBJECTSTORAGE_BUCKET: ~
+    # OBJECTSTORAGE_ENABLED: "true"
     OBJECTSTORAGE_ENDPOINT: ~
     OBJECTSTORAGE_KEY: ~
 

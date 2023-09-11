@@ -73,8 +73,8 @@ const utils = {
       const data = { region: DEFAULTREGION };
       if (bucketId) {
         // Function scoped import to avoid circular dependencies
-        const { bucketService } = require('../services');
-        const bucketData = await bucketService.read(bucketId);
+        const { read } = require('../services/bucket');
+        const bucketData = await read(bucketId);
 
         data.accessKeyId = bucketData.accessKeyId;
         data.bucket = bucketData.bucket;
@@ -82,7 +82,7 @@ const utils = {
         data.key = bucketData.key;
         data.secretAccessKey = bucketData.secretAccessKey;
         if (bucketData.region) data.region = bucketData.region;
-      } else if (config.has('objectStorage')) {
+      } else if (config.has('objectStorage') && config.has('objectStorage.enabled')) {
         data.accessKeyId = config.get('objectStorage.accessKeyId');
         data.bucket = config.get('objectStorage.bucket');
         data.endpoint = config.get('objectStorage.endpoint');
