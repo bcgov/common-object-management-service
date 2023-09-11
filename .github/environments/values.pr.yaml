@@ -2,6 +2,7 @@
 features:
   basicAuth: true
   oidcAuth: true
+  defaultBucket: false
 
 patroni:
   enabled: true

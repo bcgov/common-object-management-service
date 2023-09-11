@@ -82,9 +82,9 @@ The following variables enable and enforce the use of OIDC Bearer Authentication
 
 | Config Var | Env Var | Default | Notes |
 | --- | --- | --- | --- |
+| `enabled` | `OBJECTSTORAGE_ENABLED` | | Whether to run COMS with a default bucket |
 | `accessKeyId` | `OBJECTSTORAGE_ACCESSKEYID` | | The Access Key for your S3 compatible object storage account  |
 | `bucket` | `OBJECTSTORAGE_BUCKET` | | The object storage bucket name |
-| `defaultTempExpiresIn` | `OBJECTSTORAGE_TEMP_EXPIRESIN` | 300 | The expiry time for pre-signed URLs to objects in seconds  |
 | `endpoint` | `OBJECTSTORAGE_ENDPOINT` | | Object store URL. eg: `https://nrs.objectstore.gov.bc.ca` |
 | `key` | `OBJECTSTORAGE_KEY` | | The base path for storage location |
 | `secretAccessKey` | `OBJECTSTORAGE_SECRETACCESSKEY` | | The Secret Access Key for your S3 compatible object storage account |
@@ -96,6 +96,7 @@ The following variables alter the general Express application behavior. For most
 | Config Var | Env Var | Default | Notes |
 | --- | --- | --- | --- |
 | `bodyLimit` | `SERVER_BODYLIMIT` | 30mb | Maximum body size accepted for parsing to JSON body |
+| `defaultTempExpiresIn` | `SERVER_TEMP_EXPIRESIN` | 300 | The expiry time for pre-signed S3 URLs to objects in seconds  |
 | `logFile` | `SERVER_LOGFILE` | | Writes logs to the following file only if defined |
 | `logLevel` | `SERVER_LOGLEVEL` | http | The logging level of COMS |
 | `passphrase` | `SERVER_PASSPHRASE` | | A key to encrypt/decrypt bucket secretAccessKey's saved to the database |
@@ -122,6 +123,7 @@ Run COMS in **Unauthenticated mode** (replace environment values as necessary)
 
 ``` sh
 docker run -it --rm -p 3000:3000 \
+  -e OBJECTSTORAGE_ENABLED=true \
   -e OBJECTSTORAGE_ACCESSKEYID=<Access Key ID for your S3 account> \
   -e OBJECTSTORAGE_BUCKET=<Object storage bucket name> \
   -e OBJECTSTORAGE_ENDPOINT=<Object store URL. eg: https://nrs.objectstore.gov.bc.ca> \
@@ -134,6 +136,7 @@ Run COMS in **Basic Auth mode** (replace environment values as necessary)
 
 ``` sh
 docker run -it --rm -p 3000:3000 \
+  -e OBJECTSTORAGE_ENABLED=true \
   -e OBJECTSTORAGE_ACCESSKEYID=<Access Key ID for your S3 account> \
   -e OBJECTSTORAGE_BUCKET=<Object storage bucket name> \
   -e OBJECTSTORAGE_ENDPOINT=<Object store URL. eg: https://nrs.objectstore.gov.bc.ca> \
@@ -158,6 +161,7 @@ Run COMS in **OIDC Auth Mode** (replace environment values as necessary)
 
 ``` sh
 docker run -it --rm -p 3000:3000 \
+  -e OBJECTSTORAGE_ENABLED=true \
   -e OBJECTSTORAGE_ACCESSKEYID=<Access Key ID for your S3 account> \
   -e OBJECTSTORAGE_BUCKET=<Object storage bucket name> \
   -e OBJECTSTORAGE_ENDPOINT=<Object store URL. eg: https://nrs.objectstore.gov.bc.ca> \
@@ -178,6 +182,7 @@ Run COMS in **Full Auth Mode** (replace environment values as necessary)
 
 ``` sh
 docker run -it --rm -p 3000:3000 \
+  -e OBJECTSTORAGE_ENABLED=true \
   -e OBJECTSTORAGE_ACCESSKEYID=<Access Key ID for your S3 account> \
   -e OBJECTSTORAGE_BUCKET=<Object storage bucket name> \
   -e OBJECTSTORAGE_ENDPOINT=<Object store URL. eg: https://nrs.objectstore.gov.bc.ca> \
@@ -233,6 +238,7 @@ To run COMS in Full Auth mode you will want your `local.json` to have the follow
     "serverUrl": "<OIDC server auth URL>"
   },
   "objectStorage": {
+    "enabled": true,
     "secretAccessKey": "<Secret Access Key for your S3 compatible object storage account>",
     "key": "<base path for storage location>",
     "accessKeyId": "<Access Key ID for your S3 account>",

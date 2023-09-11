@@ -239,7 +239,7 @@ const controller = {
       }
 
       // Preflight existence check for bucketId
-      const { key: bucketKey } = await getBucket(bucketId, true);
+      const { key: bucketKey } = await getBucket(bucketId);
 
       const objId = uuidv4();
       const data = {
@@ -373,7 +373,7 @@ const controller = {
       }
 
       // Preflight existence check for bucketId
-      const { key: bucketKey } = await getBucket(bucketId, true);
+      const { key: bucketKey } = await getBucket(bucketId);
 
       bb.on('file', async (name, stream, info) => {
         try {
@@ -1059,7 +1059,7 @@ const controller = {
 
       // Preflight existence check for bucketId
       const bucketId = req.currentObject?.bucketId;
-      const { key: bucketKey } = await getBucket(bucketId, true);
+      const { key: bucketKey } = await getBucket(bucketId);
 
       const filename = req.currentObject?.path.match(/(?!.*\/)(.*)$/)[0];
       const objId = addDashesToUuid(req.params.objectId);
@@ -1196,7 +1196,7 @@ const controller = {
 
       // Preflight existence check for bucketId
       const bucketId = req.currentObject?.bucketId;
-      const { key: bucketKey } = await getBucket(bucketId, true);
+      const { key: bucketKey } = await getBucket(bucketId);
 
       bb.on('file', async (name, stream, info) => {
         try {

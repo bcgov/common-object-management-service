@@ -29,7 +29,7 @@ const { MetadataDirective, TaggingDirective } = require('../../../src/components
 const DEFAULTREGION = 'us-east-1'; // Need to specify valid AWS region or it'll explode ('us-east-1' is default, 'ca-central-1' for Canada)
 const bucket = 'bucket';
 const key = 'filePath';
-const defaultTempExpiresIn = parseInt(config.get('objectStorage.defaultTempExpiresIn'), 10);
+const defaultTempExpiresIn = parseInt(config.get('server.defaultTempExpiresIn'), 10);
 
 const s3ClientMock = mockClient(S3Client);
 

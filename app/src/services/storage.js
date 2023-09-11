@@ -27,7 +27,7 @@ const utils = require('../components/utils');
 const DELIMITER = '/';
 
 // Get app configuration
-const defaultTempExpiresIn = parseInt(config.get('objectStorage.defaultTempExpiresIn'), 10);
+const defaultTempExpiresIn = parseInt(config.get('server.defaultTempExpiresIn'), 10);
 
 /**
  * The Core S3 Object Storage Service
@@ -207,7 +207,7 @@ const objectStorageService = {
    */
   async headBucket(options = {}) {
     const data = options.bucketId
-      ? await utils.getBucket(options.bucketId, true)
+      ? await utils.getBucket(options.bucketId)
       : options;
     const params = {
       Bucket: data.bucket,

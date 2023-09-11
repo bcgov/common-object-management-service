@@ -61,42 +61,44 @@ const utils = {
 
   /**
    * @function getBucket
-   * Acquire core S3 bucket credential information with graceful default fallback
-   * @param {string} [bucketId=undefined] An optional bucketId to lookup
-   * @param {boolean} [throwable=false] Throws an error if no `bucketId` is found
+   * Acquire core S3 bucket credential information from database or configuration
+   * @param {string} [bucketId=undefined] An optional bucket ID to query database for bucket
    * @returns {object} An object containing accessKeyId, bucket, endpoint, key,
    * region and secretAccessKey attributes
-   * @throws If there are no records found with `bucketId` and `throwable` is true
+   * @throws If there are no records found with `bucketId` or, if `bucketId` is undefined,
+   * no bucket details exist in the configuration
    */
-  async getBucket(bucketId = undefined, throwable = false) {
-    const data = {
-      accessKeyId: config.get('objectStorage.accessKeyId'),
-      bucket: config.get('objectStorage.bucket'),
-      endpoint: config.get('objectStorage.endpoint'),
-      key: config.get('objectStorage.key'),
-      region: DEFAULTREGION,
-      secretAccessKey: config.get('objectStorage.secretAccessKey')
-    };
+  async getBucket(bucketId = undefined) {
+    try {
+      const data = { region: DEFAULTREGION };
+      if (bucketId) {
+        // Function scoped import to avoid circular dependencies
+        const { read } = require('../services/bucket');
+        const bucketData = await read(bucketId);
 
-    if (bucketId) {
-      // Function scoped import to avoid circular dependencies
-      const { bucketService } = require('../services');
-
-      try {
-        const bucketData = await bucketService.read(bucketId);
         data.accessKeyId = bucketData.accessKeyId;
         data.bucket = bucketData.bucket;
         data.endpoint = bucketData.endpoint;
         data.key = bucketData.key;
         data.secretAccessKey = bucketData.secretAccessKey;
         if (bucketData.region) data.region = bucketData.region;
-      } catch (err) {
-        log.warn(err.message, { function: 'getBucket' });
-        if (throwable) throw new Problem(404, { details: err.message });
+      } else if (config.has('objectStorage') && config.has('objectStorage.enabled')) {
+        data.accessKeyId = config.get('objectStorage.accessKeyId');
+        data.bucket = config.get('objectStorage.bucket');
+        data.endpoint = config.get('objectStorage.endpoint');
+        data.key = config.get('objectStorage.key');
+        data.secretAccessKey = config.get('objectStorage.secretAccessKey');
+        if (config.has('objectStorage.region')) {
+          data.region = config.get('objectStorage.region');
+        }
+      } else {
+        throw new Error('Unable to get bucket');
       }
+      return data;
+    } catch (err) {
+      log.error(err.message, { function: 'getBucket' });
+      throw new Problem(404, { details: err.message });
     }
-
-    return data;
   },
 
   /**
