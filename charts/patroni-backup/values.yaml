@@ -1,0 +1,45 @@
+backup:
+  image:
+    repository: docker.io/bcgovimages/backup-container
+    pullPolicy: IfNotPresent
+    tag: 2.6
+
+  resources:
+    limits:
+      cpu: 100m
+      memory: 200Mi
+    requests:
+      cpu: 25m
+      memory: 50Mi
+
+  backupConfig: |
+    postgres=patroni-bcstats-coms-0:5432/app
+    
+    0 1 * * * default ./backup.sh -s
+    0 4 * * * default ./backup.sh -s -v all
+
+  db:
+    secretName: patroni-bcstats-coms
+    usernameKey: superuser-username
+    passwordKey: superuser-password
+
+  env:
+    DATABASE_SERVICE_NAME:
+      value: patroni
+    ENVIRONMENT_FRIENDLY_NAME:
+      value: "Patroni DB Backups"
+    TZ:
+      value: America/Vancouver
+
+  persistence:
+    backup:
+      size: 1Gi
+      mountPath: /backups/
+      storageClassName: netapp-file-backup
+      storageAccessMode: ReadWriteOnce
+
+    verification:
+      size: 128Mi
+      mountPath: /var/lib/mysql/data
+      storageClassName: netapp-block-standard
+      storageAccessMode: ReadWriteOnce

@@ -1,0 +1,15 @@
+apiVersion: v2
+name: patroni-backup
+description: A Helm chart for backing up and restoring a patroni database
+
+type: application
+
+version: 0.1.13
+
+appVersion: 2.5.2
+
+dependencies:
+  - name: backup-storage
+    version: 0.1.13
+    repository: https://bcgov.github.io/helm-charts
+    alias: backup
