@@ -3,6 +3,41 @@ entries:
   common-object-management-service:
   - apiVersion: v2
     appVersion: 0.6.0
+    created: "2023-09-11T22:07:36.187548724Z"
+    dependencies:
+    - condition: patroni.enabled
+      name: patroni
+      repository: https://bcgov.github.io/nr-patroni-chart
+      tags:
+      - patroni
+      version: ~0.0.4
+    description: A microservice for managing access control to S3 Objects
+    digest: d9bffa3cc6a3ed25a8a56a54a15d19f496ddffd6b05f2a829cbbafd1740b09e1
+    home: https://bcgov.github.io/common-object-management-service
+    keywords:
+    - nodejs
+    - javascript
+    - docker
+    - microservice
+    - s3
+    - document-management
+    - access-control
+    - object-storage
+    - domo
+    kubeVersion: '>= 1.13.0'
+    maintainers:
+    - email: NR.CommonServiceShowcase@gov.bc.ca
+      name: NR Common Service Showcase Team
+      url: https://bcgov.github.io/common-service-showcase/team.html
+    name: common-object-management-service
+    sources:
+    - https://github.com/bcgov/common-object-management-service
+    type: application
+    urls:
+    - https://github.com/bcgov/common-object-management-service/releases/download/common-object-management-service-0.0.18/common-object-management-service-0.0.18.tgz
+    version: 0.0.18
+  - apiVersion: v2
+    appVersion: 0.6.0
     created: "2023-08-11T23:46:59.499905545Z"
     dependencies:
     - condition: patroni.enabled
@@ -596,4 +631,4 @@ entries:
     urls:
     - https://github.com/bcgov/common-object-management-service/releases/download/common-object-management-service-0.0.1/common-object-management-service-0.0.1.tgz
     version: 0.0.1
-generated: "2023-08-11T23:46:59.500036446Z"
+generated: "2023-09-11T22:07:36.187688232Z"
