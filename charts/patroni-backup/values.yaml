@@ -33,7 +33,7 @@ backup:
 
   persistence:
     backup:
-      size: 1Gi
+      size: 128Mi
       mountPath: /backups/
       storageClassName: netapp-file-backup
       storageAccessMode: ReadWriteOnce
