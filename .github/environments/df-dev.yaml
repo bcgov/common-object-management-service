@@ -40,3 +40,5 @@ patroni:
   persistentVolume:
     enabled: true
     size: 128Mi
+  postgresqlConfiguration: {maxWalSize: “100MB”}
+    
