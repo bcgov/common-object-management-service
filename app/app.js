@@ -161,7 +161,9 @@ function cleanup() {
 
   clearInterval(probeId);
   clearInterval(queueId);
-  queueManager.close(dataConnection.close(process.exit));
+  queueManager.close(() => setTimeout(() => {
+    dataConnection.close(process.exit);
+  }, 3000));
 }
 
 /**
@@ -242,15 +244,14 @@ function notReadyHandler() {
 
 /**
  * @function shutdown
- * Shuts down this application after at least 3 seconds.
+ * Begins the shutdown procedure for this application
  */
 function shutdown() {
   log.info('Shutting down', { function: 'shutdown' });
-  // Wait 3 seconds before starting cleanup
   if (!state.shutdown) {
     state.shutdown = true;
     log.info('Application no longer accepting traffic', { function: 'shutdown' });
-    setTimeout(cleanup, 3000);
+    cleanup();
   }
 }
 
