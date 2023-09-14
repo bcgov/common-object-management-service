@@ -2,31 +2,28 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE) [![Lifecycle:Stable](https://img.shields.io/badge/Lifecycle-Stable-97ca00)](https://github.com/bcgov/repomountie/blob/master/doc/lifecycle-badges.md)
 
-![Tests](https://github.com/bcgov/common-object-management-service/workflows/Tests/badge.svg)
-[![Maintainability](https://api.codeclimate.com/v1/badges/91d2b0aebc348a1d5d0a/maintainability)](https://codeclimate.com/github/bcgov/common-object-management-service/maintainability)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/91d2b0aebc348a1d5d0a/test_coverage)](https://codeclimate.com/github/bcgov/common-object-management-service/test_coverage)
-
-[![version](https://img.shields.io/docker/v/bcgovimages/common-object-management-service.svg?sort=semver)](https://hub.docker.com/r/bcgovimages/common-object-management-service)
-[![pulls](https://img.shields.io/docker/pulls/bcgovimages/common-object-management-service.svg)](https://hub.docker.com/r/bcgovimages/common-object-management-service)
-[![size](https://img.shields.io/docker/image-size/bcgovimages/common-object-management-service.svg)](https://hub.docker.com/r/bcgovimages/common-object-management-service)
-
 A microservice for managing access control to S3 Objects
 
-To learn more about the **Common Services** available visit the [Common Services Showcase](https://bcgov.github.io/common-service-showcase/) page.
+Forked from the COMS Common Service developed by the Common Services Team.To learn more about the **Common Services** available visit the [Common Services Showcase](https://bcgov.github.io/common-service-showcase/) page.
 
 ## Table of Contents
 
-- [OpenAPI Specification](#openapi-specification)
-- [Environment Variables](#environment-variables)
-  - [Basic Auth Variables](#basic-auth-variables)
-  - [Database Variables](#database-variables)
-  - [Keycloak Variables](#keycloak-variables)
-  - [Object Storage Variables](#object-storage-variables)
-  - [Server Variables](#server-variables)
-- [Quick Start](#quick-start)
-  - [Docker](#docker)
-  - [Local Machine](#local-machine)
-- [License](#license)
+- [Common Object Management Service](#common-object-management-service)
+  - [Table of Contents](#table-of-contents)
+  - [OpenAPI Specification](#openapi-specification)
+  - [Environment Variables](#environment-variables)
+    - [Basic Auth Variables](#basic-auth-variables)
+    - [Database Variables](#database-variables)
+    - [Keycloak Variables](#keycloak-variables)
+    - [Object Storage Variables](#object-storage-variables)
+    - [Server Variables](#server-variables)
+  - [Quick Start](#quick-start)
+    - [Docker](#docker)
+    - [Local Machine](#local-machine)
+      - [Configuration](#configuration)
+      - [Database Setup](#database-setup)
+      - [Common Commands](#common-commands)
+  - [License](#license)
 
 ## OpenAPI Specification
 
@@ -36,7 +33,7 @@ When the API is running, you should be able to view the specification through Re
 
 ## Environment Variables
 
-COMS supports a large array of environment variables to configure how it will behave. Depending on which sections below are enabled, you will have certain subsets of functionality available. Visit our wiki documentation on [Authentication modes](https://github.com/bcgov/common-object-management-service/wiki/Deployment-Guide#authentication-modes) for more details on the impacts of enabling each section.
+COMS supports a large array of environment variables to configure how it will behave. Depending on which sections below are enabled, you will have certain subsets of functionality available.
 
 ### Basic Auth Variables
 
