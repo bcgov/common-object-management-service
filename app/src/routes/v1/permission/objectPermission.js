@@ -1,4 +1,5 @@
-const router = require('express').Router();
+const express = require('express');
+const router = express.Router();
 
 const { Permissions } = require('../../../components/constants');
 const { objectPermissionController } = require('../../../controllers');
@@ -20,7 +21,7 @@ router.get('/:objectId', objectPermissionValidator.listPermissions, currentObjec
 });
 
 /** Grants object permissions to users */
-router.put('/:objectId', objectPermissionValidator.addPermissions, currentObject, hasPermission(Permissions.MANAGE), (req, res, next) => {
+router.put('/:objectId', express.json(), objectPermissionValidator.addPermissions, currentObject, hasPermission(Permissions.MANAGE), (req, res, next) => {
   objectPermissionController.addPermissions(req, res, next);
 });
 

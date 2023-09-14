@@ -1,4 +1,5 @@
-const router = require('express').Router();
+const express = require('express');
+const router = express.Router();
 
 const { Permissions } = require('../../components/constants');
 const { bucketController, syncController } = require('../../controllers');
@@ -10,7 +11,7 @@ router.use(checkAppMode);
 router.use(requireSomeAuth);
 
 /** Creates a bucket */
-router.put('/', bucketValidator.createBucket, (req, res, next) => {
+router.put('/', express.json(), bucketValidator.createBucket, (req, res, next) => {
   bucketController.createBucket(req, res, next);
 });
 
@@ -35,7 +36,7 @@ router.get('/', bucketValidator.searchBuckets, (req, res, next) => {
 });
 
 /** Updates a bucket */
-router.patch('/:bucketId', bucketValidator.updateBucket, hasPermission(Permissions.UPDATE), (req, res, next) => {
+router.patch('/:bucketId', express.json(), bucketValidator.updateBucket, hasPermission(Permissions.UPDATE), (req, res, next) => {
   bucketController.updateBucket(req, res, next);
 });
 
