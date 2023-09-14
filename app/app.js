@@ -13,6 +13,7 @@ const QueueManager = require('./src/components/queueManager');
 const { getAppAuthMode, getGitRevision } = require('./src/components/utils');
 const DataConnection = require('./src/db/dataConnection');
 const v1Router = require('./src/routes/v1');
+const { readUnique } = require('./src/services/bucket');
 
 const dataConnection = new DataConnection();
 const queueManager = new QueueManager();
@@ -37,7 +38,7 @@ app.use(cors(DEFAULTCORS));
 app.use(jsonParser.unless({
   path: [{
     // Matches on only the createObject and updateObject endpoints
-    url: /.*\/object(\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})?(\/)?$/i,
+    url: /.*(?<!permission)\/object(\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})?(\/)?(\?.*)?$/i,
     methods: ['PUT']
   }]
 }));
@@ -214,6 +215,12 @@ function initializeConnections() {
 
       if (state.connections.data) {
         log.info('DataConnection Reachable', { function: 'initializeConnections' });
+      }
+      if (config.has('objectStorage.enabled')) {
+        readUnique(config.get('objectStorage')).then(() => {
+          log.error('Default bucket cannot also exist in database', { function: 'initializeConnections' });
+          fatalErrorHandler();
+        }).catch(() => { });
       }
     })
     .catch(error => {

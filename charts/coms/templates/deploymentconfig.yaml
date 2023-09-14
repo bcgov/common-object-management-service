@@ -148,6 +148,7 @@ spec:
                   key: password
                   name: {{ include "coms.configname" . }}-keycloak
             {{- end }}
+            {{- if or .Values.features.defaultBucket .Values.config.configMap.OBJECTSTORAGE_ENABLED }}
             - name: OBJECTSTORAGE_ACCESSKEYID
               valueFrom:
                 secretKeyRef:
@@ -158,6 +159,7 @@ spec:
                 secretKeyRef:
                   key: password
                   name: {{ include "coms.configname" . }}-objectstorage
+            {{- end }}
             - name: SERVER_PASSPHRASE
               valueFrom:
                 secretKeyRef:

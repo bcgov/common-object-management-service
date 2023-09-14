@@ -25,13 +25,14 @@
   "objectStorage": {
     "accessKeyId": "OBJECTSTORAGE_ACCESSKEYID",
     "bucket": "OBJECTSTORAGE_BUCKET",
-    "defaultTempExpiresIn": "OBJECTSTORAGE_TEMP_EXPIRESIN",
+    "enabled": "OBJECTSTORAGE_ENABLED",
     "endpoint": "OBJECTSTORAGE_ENDPOINT",
     "key": "OBJECTSTORAGE_KEY",
     "secretAccessKey": "OBJECTSTORAGE_SECRETACCESSKEY"
   },
   "server": {
     "bodyLimit": "SERVER_BODYLIMIT",
+    "defaultTempExpiresIn": "SERVER_TEMP_EXPIRESIN",
     "hardReset": "SERVER_HARDRESET",
     "logFile": "SERVER_LOGFILE",
     "logLevel": "SERVER_LOGLEVEL",
