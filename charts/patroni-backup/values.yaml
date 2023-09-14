@@ -40,6 +40,6 @@ backup:
 
     verification:
       size: 128Mi
-      mountPath: /var/lib/pgsql/data/
+      mountPath: /var/lib/pgsql/data
       storageClassName: netapp-block-standard
       storageAccessMode: ReadWriteOnce
