@@ -38,7 +38,7 @@ app.use(cors(DEFAULTCORS));
 app.use(jsonParser.unless({
   path: [{
     // Matches on only the createObject and updateObject endpoints
-    url: /.*\/object(\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})?(\/)?$/i,
+    url: /.*(?<!permission)\/object(\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})?(\/)?(\?.*)?$/i,
     methods: ['PUT']
   }]
 }));
