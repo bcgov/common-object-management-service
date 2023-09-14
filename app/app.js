@@ -31,7 +31,7 @@ let probeId;
 let queueId;
 
 const app = express();
-const jsonParser = express.json({ limit: config.get('server.bodyLimit') });
+const jsonParser = express.json();
 jsonParser.unless = unless;
 app.use(compression());
 app.use(cors(DEFAULTCORS));
