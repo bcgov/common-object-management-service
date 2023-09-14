@@ -3,7 +3,6 @@ const compression = require('compression');
 const config = require('config');
 const cors = require('cors');
 const express = require('express');
-const { unless } = require('express-unless');
 const { ValidationError } = require('express-validation');
 
 const { AuthMode, DEFAULTCORS } = require('./src/components/constants');
@@ -31,17 +30,8 @@ let probeId;
 let queueId;
 
 const app = express();
-const jsonParser = express.json({ limit: config.get('server.bodyLimit') });
-jsonParser.unless = unless;
 app.use(compression());
 app.use(cors(DEFAULTCORS));
-app.use(jsonParser.unless({
-  path: [{
-    // Matches on only the createObject and updateObject endpoints
-    url: /.*(?<!permission)\/object(\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})?(\/)?(\?.*)?$/i,
-    methods: ['PUT']
-  }]
-}));
 app.use(express.urlencoded({ extended: true }));
 
 // Skip if running tests
