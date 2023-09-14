@@ -1,8 +1,6 @@
-const { NIL: SYSTEM_USER } = require('uuid');
-
 const errorToProblem = require('../components/errorToProblem');
-const { addDashesToUuid, getCurrentIdentity } = require('../components/utils');
-const { objectService, storageService, objectQueueService, userService } = require('../services');
+const { addDashesToUuid } = require('../components/utils');
+const { objectService, storageService, objectQueueService } = require('../services');
 
 const SERVICE = 'ObjectQueueService';
 
@@ -23,7 +21,6 @@ const controller = {
       // TODO: Consider adding an "all" mode for checking through all known objects and buckets for job enumeration
       // const allMode = isTruthy(req.query.all);
       const bucketId = addDashesToUuid(req.params.bucketId);
-      const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER), SYSTEM_USER);
 
       const [dbResponse, s3Response] = await Promise.all([
         objectService.searchObjects({ bucketId: bucketId }),
@@ -37,7 +34,7 @@ const controller = {
         ...s3Response.Versions.map(object => object.Key)
       ])].map(path => ({ path: path, bucketId: bucketId }));
 
-      const response = await objectQueueService.enqueue({ jobs: jobs, createdBy: userId });
+      const response = await objectQueueService.enqueue({ jobs: jobs });
       res.status(202).json(response);
     } catch (e) {
       next(errorToProblem(SERVICE, e));
@@ -56,12 +53,8 @@ const controller = {
     try {
       const bucketId = req.currentObject?.bucketId;
       const path = req.currentObject?.path;
-      const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER), SYSTEM_USER);
 
-      const response = await objectQueueService.enqueue({
-        jobs: [{ path: path, bucketId: bucketId }],
-        createdBy: userId
-      });
+      const response = await objectQueueService.enqueue({ jobs: [{ path: path, bucketId: bucketId }] });
       res.status(202).json(response);
     } catch (e) {
       next(errorToProblem(SERVICE, e));
