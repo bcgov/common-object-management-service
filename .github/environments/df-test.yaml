@@ -1,10 +1,15 @@
 features:
   oidcAuth: true
+  defaultBucket: true
   
 image:
   tag: latest
   repository: image-registry.openshift-image-registry.svc:5000/df9936-tools
   pullPolicy: IfNotPresent
+
+autoscaling:
+  enabled: true
+  maxReplicas: 2
 
 config:
   enabled: true
