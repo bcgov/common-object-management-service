@@ -537,6 +537,145 @@ describe('listAllObjects', () => {
   });
 });
 
+describe('listAllObjectVersions', () => {
+  const listObjectVersionMock = jest.spyOn(service, 'listObjectVersion');
+  const bucketId = 'abc';
+
+  beforeEach(() => {
+    listObjectVersionMock.mockReset();
+  });
+
+  afterAll(() => {
+    listObjectVersionMock.mockRestore();
+  });
+
+  it('should call listObjectVersion at least once and yield empty arrays', async () => {
+    listObjectVersionMock.mockResolvedValue({ IsTruncated: false });
+
+    const result = await service.listAllObjectVersions({ filePath: '/' });
+
+    expect(result).toBeTruthy();
+    expect(Array.isArray(result.DeleteMarkers)).toBeTruthy();
+    expect(result.DeleteMarkers).toHaveLength(0);
+    expect(Array.isArray(result.Versions)).toBeTruthy();
+    expect(result.Versions).toHaveLength(0);
+    expect(utils.getBucket).toHaveBeenCalledTimes(0);
+    expect(utils.isAtPath).toHaveBeenCalledTimes(0);
+    expect(listObjectVersionMock).toHaveBeenCalledTimes(1);
+    expect(listObjectVersionMock).toHaveBeenCalledWith(expect.objectContaining({
+      filePath: ''
+    }));
+  });
+
+  it('should call listObjectVersion at least once with bucket lookup and yield empty arrays', async () => {
+    utils.getBucket.mockResolvedValue({ key: key });
+    listObjectVersionMock.mockResolvedValue({ IsTruncated: false });
+
+    const result = await service.listAllObjectVersions({ bucketId: bucketId });
+
+    expect(result).toBeTruthy();
+    expect(Array.isArray(result.DeleteMarkers)).toBeTruthy();
+    expect(result.DeleteMarkers).toHaveLength(0);
+    expect(Array.isArray(result.Versions)).toBeTruthy();
+    expect(result.Versions).toHaveLength(0);
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
+    expect(utils.getBucket).toHaveBeenCalledWith(bucketId);
+    expect(utils.isAtPath).toHaveBeenCalledTimes(0);
+    expect(listObjectVersionMock).toHaveBeenCalledTimes(1);
+    expect(listObjectVersionMock).toHaveBeenCalledWith(expect.objectContaining({
+      filePath: key,
+      bucketId: bucketId
+    }));
+  });
+
+  it('should call listObjectVersion multiple times and return precise path objects', async () => {
+    const nextKeyMarker = 'token';
+    listObjectVersionMock.mockResolvedValueOnce({ DeleteMarkers: [{ Key: 'filePath/foo' }], IsTruncated: true, NextKeyMarker: nextKeyMarker });
+    listObjectVersionMock.mockResolvedValueOnce({ Versions: [{ Key: 'filePath/bar' }], IsTruncated: false });
+
+    const result = await service.listAllObjectVersions({ filePath: 'filePath' });
+
+    expect(result).toBeTruthy();
+    expect(Array.isArray(result.DeleteMarkers)).toBeTruthy();
+    expect(result.DeleteMarkers).toHaveLength(1);
+    expect(result.DeleteMarkers).toEqual(expect.arrayContaining([
+      { Key: 'filePath/foo' }
+    ]));
+    expect(Array.isArray(result.Versions)).toBeTruthy();
+    expect(result.Versions).toHaveLength(1);
+    expect(result.Versions).toEqual(expect.arrayContaining([
+      { Key: 'filePath/bar' }
+    ]));
+    expect(utils.getBucket).toHaveBeenCalledTimes(0);
+    expect(utils.isAtPath).toHaveBeenCalledTimes(2);
+    expect(listObjectVersionMock).toHaveBeenCalledTimes(2);
+    expect(listObjectVersionMock).toHaveBeenNthCalledWith(1, expect.objectContaining({
+      filePath: key
+    }));
+    expect(listObjectVersionMock).toHaveBeenNthCalledWith(2, expect.objectContaining({
+      filePath: key,
+      keyMarker: nextKeyMarker
+    }));
+  });
+
+  it('should call listObjectVersion multiple times and return all path objects', async () => {
+    const nextKeyMarker = 'token';
+    listObjectVersionMock.mockResolvedValueOnce({ DeleteMarkers: [{ Key: 'filePath/test/foo' }], IsTruncated: true, NextKeyMarker: nextKeyMarker });
+    listObjectVersionMock.mockResolvedValueOnce({ Versions: [{ Key: 'filePath/test/bar' }], IsTruncated: false });
+
+    const result = await service.listAllObjectVersions({ filePath: 'filePath', precisePath: false });
+
+    expect(result).toBeTruthy();
+    expect(Array.isArray(result.DeleteMarkers)).toBeTruthy();
+    expect(result.DeleteMarkers).toHaveLength(1);
+    expect(result.DeleteMarkers).toEqual(expect.arrayContaining([
+      { Key: 'filePath/test/foo' }
+    ]));
+    expect(Array.isArray(result.Versions)).toBeTruthy();
+    expect(result.Versions).toHaveLength(1);
+    expect(result.Versions).toEqual(expect.arrayContaining([
+      { Key: 'filePath/test/bar' }
+    ]));
+    expect(utils.getBucket).toHaveBeenCalledTimes(0);
+    expect(utils.isAtPath).toHaveBeenCalledTimes(0);
+    expect(listObjectVersionMock).toHaveBeenCalledTimes(2);
+    expect(listObjectVersionMock).toHaveBeenNthCalledWith(1, expect.objectContaining({
+      filePath: key
+    }));
+    expect(listObjectVersionMock).toHaveBeenNthCalledWith(2, expect.objectContaining({
+      filePath: key,
+      keyMarker: nextKeyMarker
+    }));
+  });
+
+  it('should call listObjectVersion multiple times and return all latest path objects', async () => {
+    const nextKeyMarker = 'token';
+    listObjectVersionMock.mockResolvedValueOnce({ DeleteMarkers: [{ Key: 'filePath/test/foo', IsLatest: true }], IsTruncated: true, NextKeyMarker: nextKeyMarker });
+    listObjectVersionMock.mockResolvedValueOnce({ Versions: [{ Key: 'filePath/test/bar', IsLatest: false }], IsTruncated: false });
+
+    const result = await service.listAllObjectVersions({ filePath: 'filePath', precisePath: false, filterLatest: true });
+
+    expect(result).toBeTruthy();
+    expect(Array.isArray(result.DeleteMarkers)).toBeTruthy();
+    expect(result.DeleteMarkers).toHaveLength(1);
+    expect(result.DeleteMarkers).toEqual(expect.arrayContaining([
+      { Key: 'filePath/test/foo', IsLatest: true }
+    ]));
+    expect(Array.isArray(result.Versions)).toBeTruthy();
+    expect(result.Versions).toHaveLength(0);
+    expect(utils.getBucket).toHaveBeenCalledTimes(0);
+    expect(utils.isAtPath).toHaveBeenCalledTimes(0);
+    expect(listObjectVersionMock).toHaveBeenCalledTimes(2);
+    expect(listObjectVersionMock).toHaveBeenNthCalledWith(1, expect.objectContaining({
+      filePath: key
+    }));
+    expect(listObjectVersionMock).toHaveBeenNthCalledWith(2, expect.objectContaining({
+      filePath: key,
+      keyMarker: nextKeyMarker
+    }));
+  });
+});
+
 describe('listObjects', () => {
   beforeEach(() => {
     s3ClientMock.on(ListObjectsCommand).resolves({});
