@@ -319,70 +319,6 @@ paths:
           $ref: "#/components/responses/UnprocessableEntity"
         default:
           $ref: "#/components/responses/Error"
-    post:
-      deprecated: true
-      summary: Creates an object
-      description: >-
-        Creates an object in the bucket specified with bucketId parameter or
-        default bucket configured. If COMS is running in either 'OIDC' or 'Full'
-        mode, any objects created with OIDC user authentication will have all
-        object permissions assigned to them by default. This endpoint will do a
-        best attempt effort to create the object as requested as long as it does
-        not already exist in the destination bucket and path. Existing objects
-        should be managed with the updateObject endpoint instead.
-      operationId: createObjectPost
-      tags:
-        - Object
-      parameters:
-        - $ref: "#/components/parameters/Header-Metadata"
-        - $ref: "#/components/parameters/Query-TagSet"
-        - in: query
-          name: bucketId
-          description: Uuid representing the bucket
-          schema:
-            type: string
-            format: uuid
-            example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
-      requestBody:
-        description: Form-data containing files
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                file:
-                  type: string
-                  description: >-
-                    Contains the binary representation of the file to upload.
-                    Maximum filesize of 5TB.
-                  format: binary
-                  maxLength: 5497558138880
-      responses:
-        "200":
-          description: Returns the created object data
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Response-ObjectDetails"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "409":
-          description: Conflict. Bucket already contains the object
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Response-Conflict"
-        "413":
-          $ref: "#/components/responses/ContentTooLarge"
-        "422":
-          $ref: "#/components/responses/UnprocessableEntity"
-        default:
-          $ref: "#/components/responses/Error"
     get:
       summary: Search for objects
       description: >-
@@ -577,60 +513,6 @@ paths:
                 $ref: "#/components/schemas/Response-Conflict"
         "411":
           $ref: "#/components/responses/LengthRequired"
-        "413":
-          $ref: "#/components/responses/ContentTooLarge"
-        "422":
-          $ref: "#/components/responses/UnprocessableEntity"
-        default:
-          $ref: "#/components/responses/Error"
-    post:
-      deprecated: true
-      summary: Updates an object
-      description: >-
-        Updates the object in the configured object storage. If the object
-        storage supports versioning, a new version will be generated instead of
-        overwriting the existing contents.
-      operationId: updateObjectPost
-      tags:
-        - Object
-      parameters:
-        - $ref: "#/components/parameters/Header-Metadata"
-        - $ref: "#/components/parameters/Path-ObjectId"
-        - $ref: "#/components/parameters/Query-TagSet"
-      requestBody:
-        description: Form-data containing files
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                file:
-                  type: string
-                  description: >-
-                    Contains the binary representation of the file to upload.
-                    Maximum filesize of 5TB.
-                  format: binary
-                  maxLength: 5497558138880
-      responses:
-        "200":
-          description: Returns the updated object data
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Response-ObjectDetails"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "409":
-          description: Conflict. Bucket does not contain the existing object
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Response-Conflict"
         "413":
           $ref: "#/components/responses/ContentTooLarge"
         "422":

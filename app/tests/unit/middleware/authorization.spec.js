@@ -197,8 +197,6 @@ describe('currentObject', () => {
 
     expect(req.currentObject).toBeUndefined();
     expect(objectReadSpy).toHaveBeenCalledTimes(0);
-    // expect(storageListObjectVersionSpy).toHaveBeenCalledTimes(0);
-    expect(utils.getPath).toHaveBeenCalledTimes(0);
     expect(next).toHaveBeenCalledTimes(1);
     expect(next).toHaveBeenCalledWith();
   });
@@ -214,8 +212,6 @@ describe('currentObject', () => {
     expect(req.currentObject).toBeUndefined();
     expect(objectReadSpy).toHaveBeenCalledTimes(1);
     expect(objectReadSpy).toHaveBeenCalledWith(objectId);
-    // expect(storageListObjectVersionSpy).toHaveBeenCalledTimes(0);
-    expect(utils.getPath).toHaveBeenCalledTimes(0);
     expect(next).toHaveBeenCalledTimes(1);
     expect(next).toHaveBeenCalledWith();
   });
@@ -226,8 +222,6 @@ describe('currentObject', () => {
     // const testStorage = { b: 2 };
     req.params = { objectId: objectId };
     objectReadSpy.mockResolvedValue(testRecord);
-    // storageListObjectVersionSpy.mockResolvedValue(testStorage);
-    // utils.getPath.mockReturnValue(`/path/${objectId}`);
 
     await mw.currentObject(req, res, next);
 
@@ -236,12 +230,6 @@ describe('currentObject', () => {
     // expect(req.currentObject).toEqual(expect.objectContaining(testStorage));
     expect(objectReadSpy).toHaveBeenCalledTimes(1);
     expect(objectReadSpy).toHaveBeenCalledWith(objectId);
-    // expect(storageListObjectVersionSpy).toHaveBeenCalledTimes(1);
-    // expect(storageListObjectVersionSpy).toHaveBeenCalledWith({
-    //   filePath: expect.stringMatching(`/path/${objectId}`)
-    // });
-    // expect(utils.getPath).toHaveBeenCalledTimes(1);
-    // expect(utils.getPath).toHaveBeenCalledWith(objectId);
     expect(next).toHaveBeenCalledTimes(1);
     expect(next).toHaveBeenCalledWith();
   });

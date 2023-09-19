@@ -225,30 +225,6 @@ const utils = {
   },
 
   /**
-   * @deprecated To be removed in v0.6.0
-   * @function getPath
-   * Gets the relative path of `objId`
-   * @param {string} objId The object id
-   * @returns {Promise<string>} The path
-   */
-  async getPath(objId) {
-    let key = utils.delimit(config.get('objectStorage.key'));
-
-    // Function scoped import to avoid circular dependencies
-    const { objectService } = require('../services');
-
-    try {
-      key = (await objectService.getBucketKey(objId)).key;
-    } catch (err) {
-      log.verbose(`${err.message}. Using default fallback path instead.`, {
-        function: 'getPath', objId: objId
-      });
-    }
-
-    return utils.joinPath(key, objId);
-  },
-
-  /**
    * @function getS3VersionId
    * Gets the s3VersionId from database using given internal COMS version id
    * or returns given s3VersionId

@@ -88,8 +88,6 @@ const currentObject = async (req, _res, next) => {
     if (req.params.objectId) {
       req.currentObject = Object.freeze({
         ...await objectService.read(req.params.objectId)
-        // TODO: Determine if this is required or can be pushed down to controller level because this inflates all object related service call times by ~300ms
-        //...await storageService.listObjectVersion({ filePath: await getPath(req.params.objectId) })
       });
     }
   } catch (err) {
