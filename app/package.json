@@ -33,7 +33,6 @@
     "@aws-sdk/lib-storage": "^3.388.0",
     "@aws-sdk/s3-request-presigner": "^3.388.0",
     "api-problem": "^9.0.1",
-    "busboy": "^1.6.0",
     "compression": "^1.7.4",
     "config": "^3.3.9",
     "content-disposition": "^0.5.4",
