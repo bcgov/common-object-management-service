@@ -1,6 +1,3 @@
-
-// const utils = require('../../../src/db/models/utils');
-
 const controller = require('../../../src/controllers/tag');
 const { tagService } = require('../../../src/services');
 
