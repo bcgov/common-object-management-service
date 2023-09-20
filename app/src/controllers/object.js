@@ -704,11 +704,11 @@ const controller = {
 
       // loop through all versions & delete each one
 
-      const { Versions } = await versionService.list(objId);
+      const versions = await versionService.list(objId);
 
-      for (const versionId of Versions.map(version => version.VersionId)) {
+      for (const version in versions) {
         // target S3 version to delete
-        const targetS3VersionId = await getS3VersionId(versionId, addDashesToUuid(versionId), objId);
+        const targetS3VersionId = await getS3VersionId(version.versionId, addDashesToUuid(version.versionId), objId);
 
         const data = {
           bucketId: req.currentObject?.bucketId,
@@ -727,12 +727,12 @@ const controller = {
         // if other versions in DB, delete object record
         const remainingVersions = await versionService.list(objId);
         if (remainingVersions.length === 0) await objectService.delete(objId);
-
-        res.status(200).json(renameObjectProperty(s3Response, 'VersionId', 's3VersionId'));
       }
     } catch (e) {
       next(errorToProblem(SERVICE, e));
     }
+
+    res.status(200).json(renameObjectProperty(s3Response, 'VersionId', 's3VersionId'));
   },
 
   /**
