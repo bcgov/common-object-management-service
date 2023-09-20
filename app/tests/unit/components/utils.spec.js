@@ -1,7 +1,7 @@
 const config = require('config');
 
 const { AuthMode, AuthType } = require('../../../src/components/constants');
-const { bucketService, objectService } = require('../../../src/services');
+const { bucketService } = require('../../../src/services');
 const utils = require('../../../src/components/utils');
 const Problem = require('api-problem');
 
@@ -50,53 +50,6 @@ describe('calculatePartSize', () => {
     [550502400, 5497558138880], // 5TB
   ])('should return %o given %j', (expected, length) => {
     expect(utils.calculatePartSize(length)).toEqual(expected);
-  });
-});
-
-// TODO: Deprecated, to remove this
-describe('getPath', () => {
-  const delimitSpy = jest.spyOn(utils, 'delimit');
-  const joinPath = jest.spyOn(utils, 'joinPath');
-  const getBucketKey = jest.spyOn(objectService, 'getBucketKey');
-
-  const key = 'abc';
-  const osKey = 'key';
-  const value = 'abc/obj';
-
-  it('should return a valid path', async () => {
-    delimitSpy.mockReturnValue('wrong');
-    joinPath.mockReturnValue(value);
-    getBucketKey.mockResolvedValue({ key: key });
-    config.get.mockReturnValueOnce(osKey); // objectStorage.key
-
-    const result = await utils.getPath('obj');
-
-    expect(result).toEqual(value);
-
-    expect(delimitSpy).toHaveBeenCalledTimes(1);
-    expect(delimitSpy).toHaveBeenCalledWith(osKey);
-    expect(joinPath).toHaveBeenCalledTimes(1);
-    expect(joinPath).toHaveBeenCalledWith(key, 'obj');
-    expect(getBucketKey).toHaveBeenCalledTimes(1);
-    expect(getBucketKey).toHaveBeenCalledWith('obj');
-  });
-
-  it('should return a valid path', async () => {
-    delimitSpy.mockReturnValue(key);
-    joinPath.mockReturnValue(value);
-    getBucketKey.mockImplementation(() => { throw new Error(); });
-    config.get.mockReturnValueOnce(osKey); // objectStorage.key
-
-    const result = await utils.getPath('obj');
-
-    expect(result).toEqual(value);
-
-    expect(delimitSpy).toHaveBeenCalledTimes(1);
-    expect(delimitSpy).toHaveBeenCalledWith(osKey);
-    expect(joinPath).toHaveBeenCalledTimes(1);
-    expect(joinPath).toHaveBeenCalledWith(key, 'obj');
-    expect(getBucketKey).toHaveBeenCalledTimes(1);
-    expect(getBucketKey).toHaveBeenCalledWith('obj');
   });
 });
 

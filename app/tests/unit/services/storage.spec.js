@@ -8,7 +8,6 @@ const {
   GetObjectTaggingCommand,
   HeadBucketCommand,
   HeadObjectCommand,
-  ListObjectsCommand,
   ListObjectsV2Command,
   ListObjectVersionsCommand,
   PutBucketEncryptionCommand,
@@ -676,41 +675,6 @@ describe('listAllObjectVersions', () => {
   });
 });
 
-describe('listObjects', () => {
-  beforeEach(() => {
-    s3ClientMock.on(ListObjectsCommand).resolves({});
-  });
-
-  it('should send a list objects command with default undefined maxKeys', async () => {
-    const filePath = 'filePath';
-    const result = await service.listObjects({ filePath });
-
-    expect(result).toBeTruthy();
-    expect(utils.getBucket).toHaveBeenCalledTimes(1);
-    expect(s3ClientMock).toHaveReceivedCommandTimes(ListObjectsCommand, 1);
-    expect(s3ClientMock).toHaveReceivedCommandWith(ListObjectsCommand, {
-      Bucket: bucket,
-      Prefix: filePath,
-      MaxKeys: undefined
-    });
-  });
-
-  it('should send a list objects command with 200 maxKeys', async () => {
-    const filePath = 'filePath';
-    const maxKeys = 200;
-    const result = await service.listObjects({ filePath, maxKeys });
-
-    expect(result).toBeTruthy();
-    expect(utils.getBucket).toHaveBeenCalledTimes(1);
-    expect(s3ClientMock).toHaveReceivedCommandTimes(ListObjectsCommand, 1);
-    expect(s3ClientMock).toHaveReceivedCommandWith(ListObjectsCommand, {
-      Bucket: bucket,
-      Prefix: filePath,
-      MaxKeys: maxKeys
-    });
-  });
-});
-
 describe('listObjectsV2', () => {
   beforeEach(() => {
     s3ClientMock.on(ListObjectsV2Command).resolves({});
@@ -823,18 +787,12 @@ describe('putBucketEncryption', () => {
 });
 
 describe('putObject', () => {
-  const getPathSpy = jest.spyOn(utils, 'getPath');
   const name = 'foo.txt';
   const keyPath = utils.joinPath(key, name);
   const length = 123;
 
   beforeEach(() => {
-    getPathSpy.mockResolvedValue(keyPath);
     s3ClientMock.on(PutObjectCommand).resolves({});
-  });
-
-  afterAll(() => {
-    getPathSpy.mockRestore();
   });
 
   it('should send a put object command', async () => {
@@ -1038,12 +996,9 @@ describe('readSignedUrl', () => {
 });
 
 describe('upload', () => {
-  const getPathSpy = jest.spyOn(utils, 'getPath');
   const id = 'id';
-  const keyPath = utils.joinPath(key, id);
 
   beforeEach(() => {
-    getPathSpy.mockResolvedValue(keyPath);
     s3ClientMock.on(PutObjectCommand).resolves({});
     s3ClientMock.on(PutObjectTaggingCommand).resolves({});
   });

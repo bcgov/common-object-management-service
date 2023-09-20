@@ -8,7 +8,6 @@ const {
   GetObjectTaggingCommand,
   HeadBucketCommand,
   HeadObjectCommand,
-  ListObjectsCommand,
   ListObjectsV2Command,
   ListObjectVersionsCommand,
   PutObjectCommand,
@@ -310,26 +309,6 @@ const objectStorageService = {
     } while (incomplete);
 
     return Promise.resolve({ DeleteMarkers: deleteMarkers, Versions: versions });
-  },
-
-  /**
-   * @deprecated Use `listObjectsV2` instead
-   * @function listObjects
-   * Lists the objects in the bucket with the prefix of `filePath`
-   * @param {string} options.filePath The filePath of the object
-   * @param {number} [options.maxKeys] Optional maximum number of keys to return
-   * @param {string} [options.bucketId] Optional bucketId
-   * @returns {Promise<object>} The response of the list objects operation
-   */
-  async listObjects({ filePath, maxKeys = undefined, bucketId = undefined }) {
-    const data = await utils.getBucket(bucketId);
-    const params = {
-      Bucket: data.bucket,
-      Prefix: filePath, // Must filter via "prefix" - https://stackoverflow.com/a/56569856
-      MaxKeys: maxKeys
-    };
-
-    return this._getS3Client(data).send(new ListObjectsCommand(params));
   },
 
   /**

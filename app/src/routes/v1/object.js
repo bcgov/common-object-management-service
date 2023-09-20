@@ -14,14 +14,6 @@ router.put('/', objectValidator.createObject, requireSomeAuth, currentUpload(tru
   objectController.createObject(req, res, next);
 });
 
-/**
- * Creates new objects
- * @deprecated
- */
-router.post('/', objectValidator.createObject, requireSomeAuth, (req, res, next) => {
-  objectController.createObjectPost(req, res, next);
-});
-
 /** Search for objects */
 router.get('/', objectValidator.searchObjects, requireSomeAuth, (req, res, next) => {
   objectController.searchObjects(req, res, next);
@@ -51,14 +43,6 @@ router.get('/:objectId', objectValidator.readObject, currentObject, hasPermissio
 /** Updates an object */
 router.put('/:objectId', objectValidator.updateObject, requireSomeAuth, currentUpload(), currentObject, hasPermission(Permissions.UPDATE), (req, res, next) => {
   objectController.updateObject(req, res, next);
-});
-
-/**
- * Updates an object
- * @deprecated
- */
-router.post('/:objectId', objectValidator.updateObject, requireSomeAuth, currentObject, hasPermission(Permissions.UPDATE), (req, res, next) => {
-  objectController.updateObjectPost(req, res, next);
 });
 
 /** Deletes the object */
