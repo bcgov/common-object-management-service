@@ -31,7 +31,6 @@
     "secretAccessKey": "OBJECTSTORAGE_SECRETACCESSKEY"
   },
   "server": {
-    "bodyLimit": "SERVER_BODYLIMIT",
     "defaultTempExpiresIn": "SERVER_TEMP_EXPIRESIN",
     "hardReset": "SERVER_HARDRESET",
     "logFile": "SERVER_LOGFILE",

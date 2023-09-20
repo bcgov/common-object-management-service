@@ -1,4 +1,5 @@
-const router = require('express').Router();
+const express = require('express');
+const router = express.Router();
 
 const { Permissions } = require('../../../components/constants');
 const { bucketPermissionController } = require('../../../controllers');
@@ -20,7 +21,7 @@ router.get('/:bucketId', bucketPermissionValidator.listPermissions, currentObjec
 });
 
 /** Grants bucket permissions to users */
-router.put('/:bucketId', bucketPermissionValidator.addPermissions, currentObject, hasPermission(Permissions.MANAGE), (req, res, next) => {
+router.put('/:bucketId', express.json(), bucketPermissionValidator.addPermissions, currentObject, hasPermission(Permissions.MANAGE), (req, res, next) => {
   bucketPermissionController.addPermissions(req, res, next);
 });
 
