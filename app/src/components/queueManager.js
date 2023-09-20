@@ -13,7 +13,7 @@ class QueueManager {
    */
   constructor() {
     if (!QueueManager._instance) {
-      this._isBusy = false;
+      this.isBusy = false;
       this._toClose = false;
       QueueManager._instance = this;
     }
@@ -27,6 +27,19 @@ class QueueManager {
    */
   get isBusy() {
     return this._isBusy;
+  }
+
+  /**
+   * @function isBusy
+   * @param {boolean} v The new state
+   * Sets the isBusy state
+   */
+  set isBusy(v) {
+    this._isBusy = v;
+    if (!v && this.toClose) {
+      log.info('No longer processing jobs', { function: 'isBusy' });
+      if (this._cb) this._cb();
+    }
   }
 
   /**
@@ -53,13 +66,13 @@ class QueueManager {
 
   /**
    * @function close
-   * Spinlock until any remaining jobs are completed
+   * Stalls the callback until any remaining jobs are completed
    * @param {function} [cb] Optional callback
    */
   close(cb = undefined) {
     this._toClose = true;
-    if (this.isBusy) setTimeout(this.close(cb), 250);
-    else {
+    this._cb = cb;
+    if (!this.isBusy) {
       log.info('No longer processing jobs', { function: 'close' });
       if (cb) cb();
     }
@@ -77,16 +90,16 @@ class QueueManager {
       const response = await objectQueueService.dequeue();
 
       if (response.length) {
+        this.isBusy = true;
         job = response[0];
-        this._isBusy = true;
 
         log.verbose(`Started processing job id ${job.id}`, { function: 'processNextJob', job: job });
 
         const objectId = await syncService.syncJob(job.path, job.bucketId, job.full, job.createdBy);
 
-        this._isBusy = false;
         log.verbose(`Finished processing job id ${job.id}`, { function: 'processNextJob', job: job, objectId: objectId });
 
+        this.isBusy = false;
         // If job is completed, check if there are more jobs
         if (!this.toClose) this.checkQueue();
       }
@@ -109,7 +122,7 @@ class QueueManager {
         });
       }
 
-      this._isBusy = false;
+      this.isBusy = false;
     }
   }
 }
