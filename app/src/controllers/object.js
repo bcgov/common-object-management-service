@@ -708,7 +708,7 @@ const controller = {
 
       for (const versionId of Versions.map(version => version.VersionId)) {
         // target S3 version to delete
-        const targetS3VersionId = await getS3VersionId(versionId, addDashesToUuid(req.query.versionId), objId);
+        const targetS3VersionId = await getS3VersionId(versionId, addDashesToUuid(versionId), objId);
 
         const data = {
           bucketId: req.currentObject?.bucketId,
