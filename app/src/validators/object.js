@@ -68,6 +68,12 @@ const schema = {
     }).nand('s3VersionId', 'versionId')
   },
 
+  destroyObject: {
+    params: Joi.object({
+      objectId: type.uuidv4
+    })
+  },
+
   fetchMetadata: {
     headers: type.metadata(),
     query: Joi.object({
@@ -183,6 +189,7 @@ const validator = {
   deleteMetadata: validate(schema.deleteMetadata, { statusCode: 422 }),
   deleteObject: validate(schema.deleteObject, { statusCode: 422 }),
   deleteTags: validate(schema.deleteTags, { statusCode: 422 }),
+  destroyObject: validate(schema.destroyObject, { statusCode: 422}),
   fetchMetadata: validate(schema.fetchMetadata, { statusCode: 422 }),
   fetchTags: validate(schema.fetchTags, { statusCode: 422 }),
   headObject: validate(schema.headObject, { statusCode: 422 }),

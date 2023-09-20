@@ -66,6 +66,11 @@ router.delete('/:objectId', objectValidator.deleteObject, requireSomeAuth, curre
   objectController.deleteObject(req, res, next);
 });
 
+/** Destroys the object */
+router.delete('/:objectId/destroy', objectValidator.destroyObject, requireSomeAuth, currentObject, hasPermission(Permissions.DELETE), (req, res, next) => {
+  objectController.destroyObject(req, res, next);
+});
+
 /** Returns the object version history */
 router.get('/:objectId/version', objectValidator.listObjectVersion, requireSomeAuth, currentObject, hasPermission(Permissions.READ), (req, res, next) => {
   objectController.listObjectVersion(req, res, next);
