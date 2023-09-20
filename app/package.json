@@ -39,6 +39,7 @@
     "content-disposition": "^0.5.4",
     "cors": "^2.8.5",
     "date-fns": "^2.30.0",
+    "debug": "^4.3.4",
     "express": "^4.18.2",
     "express-basic-auth": "^1.2.1",
     "express-validation": "^4.1.0",
