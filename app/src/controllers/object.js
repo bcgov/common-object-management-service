@@ -705,7 +705,7 @@ const controller = {
       // loop through all versions & delete each one
       const versions = await versionService.list(objId);
 
-      for (const i = 0; i < versions.length; i++) {
+      for (var i = 0; i < versions.length; i++) {
          log.debug('Versions[i] in Loop in destroyObject', {
           version: versions[i],
           function: 'destroyObject'
