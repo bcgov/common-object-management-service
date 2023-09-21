@@ -712,10 +712,14 @@ const controller = {
       });
 
       for (const version in versions) {
+        log.debug('VersionId in Loop in destroyObject', {
+          versionId: version.id,
+          function: 'destroyObject'
+        });
         // target S3 version to delete
-        const targetS3VersionId = await getS3VersionId(version.versionId, addDashesToUuid(version.versionId), objId);
+        const targetS3VersionId = await getS3VersionId(version.id, addDashesToUuid(version.id), objId);
 
-        log.debug('Loop in destroyObject', {
+        log.debug('TargetVersionId in Loop in destroyObject', {
           targetVersionId: targetS3VersionId,
           function: 'destroyObject'
         });
