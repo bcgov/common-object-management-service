@@ -703,22 +703,13 @@ const controller = {
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
       // loop through all versions & delete each one
-
       const versions = await versionService.list(objId);
-
-      log.debug('Before loop in destroyObject', {
-        versionsLength: versions.length,
-        function: 'destroyObject'
-      });
 
       for (const i = 0; i < versions.length; i++) {
          log.debug('Versions[i] in Loop in destroyObject', {
           version: versions[i],
           function: 'destroyObject'
         });
-
-        // target S3 version to delete
-        //const targetS3VersionId = await getS3VersionId(versions[i].id, addDashesToUuid(versions[i].id), objId);
 
         const data = {
           bucketId: req.currentObject?.bucketId,
@@ -729,39 +720,19 @@ const controller = {
         // delete version on S3
         await storageService.deleteObject(data);
 
-        log.debug('After storageService.deleteObject in destroyObject', {
-          function: 'destroyObject'
-        });
-
         // delete version in DB
         await versionService.delete(objId, versions[i].s3VersionId, userId);
 
-        log.debug('Deleted in DB in destroyObject', {
-          function: 'destroyObject'
-        });
-
-        // prune tags amd metadata
+          // prune tags amd metadata
         await metadataService.pruneOrphanedMetadata();
-
-        log.debug('Pruned metadata in destroyObject', {
-          function: 'destroyObject'
-        });
-
         await tagService.pruneOrphanedTags();
-
-        log.debug('Pruned Tags in destroyObject', {
-          function: 'destroyObject'
-        });
-        // if other versions in DB, delete object record
-        const remainingVersions = await versionService.list(objId);
-
-        log.debug('remaingVersions call in destroyObject', {
-          function: 'destroyObject'
-        });
-        if (remainingVersions.length === 0) await objectService.delete(objId);
       }
+      const response = await objectService.delete(objId);
+      log.debug('finished loop in destroyObject', {
+        function: 'destroyObject'
+      });
 
-      res.status(200);
+      res.status(200).json(response);
     } catch (e) {
       next(errorToProblem(SERVICE, e));
     }
