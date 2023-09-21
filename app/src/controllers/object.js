@@ -760,11 +760,11 @@ const controller = {
         });
         if (remainingVersions.length === 0) await objectService.delete(objId);
       }
+
+      res.status(200);
     } catch (e) {
       next(errorToProblem(SERVICE, e));
     }
-
-    res.status(200).json(renameObjectProperty(s3Response, 'VersionId', 's3VersionId'));
   },
 
   /**
