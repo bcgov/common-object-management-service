@@ -712,6 +712,21 @@ const controller = {
       });
 
       for (const version in versions) {
+        log.debug('Version in Loop in destroyObject', {
+          version: version,
+          function: 'destroyObject'
+        });
+
+        log.debug('Versions[0] in Loop in destroyObject', {
+          versionsZero: versions[0],
+          function: 'destroyObject'
+        });
+
+        log.debug('Versions[0].id in Loop in destroyObject', {
+          versionsZeroId: versions[0].id,
+          function: 'destroyObject'
+        });
+
         log.debug('VersionId in Loop in destroyObject', {
           versionId: version.id,
           function: 'destroyObject'
