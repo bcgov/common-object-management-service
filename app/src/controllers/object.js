@@ -717,10 +717,10 @@ const controller = {
         };
 
         // delete version on S3
-        const s3Response = await storageService.deleteObject(data);
+        await storageService.deleteObject(data);
 
         // delete version in DB
-        await versionService.delete(objId, s3Response.VersionId, userId);
+        await versionService.delete(objId, targetS3VersionId, userId);
         // prune tags amd metadata
         await metadataService.pruneOrphanedMetadata();
         await tagService.pruneOrphanedTags();
