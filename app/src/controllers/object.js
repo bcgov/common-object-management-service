@@ -706,9 +706,19 @@ const controller = {
 
       const versions = await versionService.list(objId);
 
+      log.debug('Before loop in destroyObject', {
+        versionsLength: versions.length,
+        function: 'destroyObject'
+      });
+
       for (const version in versions) {
         // target S3 version to delete
         const targetS3VersionId = await getS3VersionId(version.versionId, addDashesToUuid(version.versionId), objId);
+
+        log.debug('Loop in destroyObject', {
+          targetVersionId: targetS3VersionId,
+          function: 'destroyObject'
+        });
 
         const data = {
           bucketId: req.currentObject?.bucketId,
@@ -719,13 +729,35 @@ const controller = {
         // delete version on S3
         await storageService.deleteObject(data);
 
+        log.debug('After storageService.deleteObject in destroyObject', {
+          function: 'destroyObject'
+        });
+
         // delete version in DB
         await versionService.delete(objId, targetS3VersionId, userId);
+
+        log.debug('Deleted in DB in destroyObject', {
+          function: 'destroyObject'
+        });
+
         // prune tags amd metadata
         await metadataService.pruneOrphanedMetadata();
+
+        log.debug('Pruned metadata in destroyObject', {
+          function: 'destroyObject'
+        });
+
         await tagService.pruneOrphanedTags();
+
+        log.debug('Pruned Tags in destroyObject', {
+          function: 'destroyObject'
+        });
         // if other versions in DB, delete object record
         const remainingVersions = await versionService.list(objId);
+
+        log.debug('remaingVersions call in destroyObject', {
+          function: 'destroyObject'
+        });
         if (remainingVersions.length === 0) await objectService.delete(objId);
       }
     } catch (e) {

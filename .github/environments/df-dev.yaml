@@ -27,7 +27,7 @@ config:
     OBJECTSTORAGE_BUCKET: data-bcstats-lockbox-dev-bkt
     OBJECTSTORAGE_ENDPOINT: "https://bc-stats-obj.objectstore.gov.bc.ca"
     OBJECTSTORAGE_KEY: X
-    SERVER_LOGLEVEL: http
+    SERVER_LOGLEVEL: debug
     SERVER_PORT: "3000"
     SERVER_PRIVACY_MASK: "true"
     SERVER_TEMP_EXPIRESIN: "300"
