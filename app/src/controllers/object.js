@@ -711,38 +711,19 @@ const controller = {
         function: 'destroyObject'
       });
 
-      for (const version in versions) {
-        log.debug('Version in Loop in destroyObject', {
-          version: version,
+      for (const i = 0; i < versions.length; i++) {
+         log.debug('Versions[i] in Loop in destroyObject', {
+          version: versions[i],
           function: 'destroyObject'
         });
 
-        log.debug('Versions[0] in Loop in destroyObject', {
-          versionsZero: versions[0],
-          function: 'destroyObject'
-        });
-
-        log.debug('Versions[0].id in Loop in destroyObject', {
-          versionsZeroId: versions[0].id,
-          function: 'destroyObject'
-        });
-
-        log.debug('VersionId in Loop in destroyObject', {
-          versionId: version.id,
-          function: 'destroyObject'
-        });
         // target S3 version to delete
-        const targetS3VersionId = await getS3VersionId(version.id, addDashesToUuid(version.id), objId);
-
-        log.debug('TargetVersionId in Loop in destroyObject', {
-          targetVersionId: targetS3VersionId,
-          function: 'destroyObject'
-        });
+        //const targetS3VersionId = await getS3VersionId(versions[i].id, addDashesToUuid(versions[i].id), objId);
 
         const data = {
           bucketId: req.currentObject?.bucketId,
           filePath: req.currentObject?.path,
-          s3VersionId: targetS3VersionId
+          s3VersionId: versions[i].s3VersionId
         };
 
         // delete version on S3
@@ -753,7 +734,7 @@ const controller = {
         });
 
         // delete version in DB
-        await versionService.delete(objId, targetS3VersionId, userId);
+        await versionService.delete(objId, versions[i].s3VersionId, userId);
 
         log.debug('Deleted in DB in destroyObject', {
           function: 'destroyObject'
