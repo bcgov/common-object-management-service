@@ -706,10 +706,6 @@ const controller = {
       const versions = await versionService.list(objId);
 
       for (var i = 0; i < versions.length; i++) {
-         log.debug('Versions[i] in Loop in destroyObject', {
-          version: versions[i],
-          function: 'destroyObject'
-        });
 
         const data = {
           bucketId: req.currentObject?.bucketId,
@@ -728,10 +724,6 @@ const controller = {
         await tagService.pruneOrphanedTags();
       }
       const response = await objectService.delete(objId);
-      log.debug('finished loop in destroyObject', {
-        function: 'destroyObject'
-      });
-
       res.status(200).json(response);
     } catch (e) {
       next(errorToProblem(SERVICE, e));
