@@ -90,7 +90,7 @@ const controller = {
         function: '_validateCredentials',
       });
       throw new Problem(409, {
-        details: 'Unable to validate supplied credentials for the bucket',
+        detail: 'Unable to validate supplied credentials for the bucket',
       });
     }
   },
@@ -122,7 +122,7 @@ const controller = {
       if (e instanceof UniqueViolationError) {
         // Grant all permissions if credentials precisely match
         response = await bucketService.checkGrantPermissions(data).catch(permErr => {
-          throw new Problem(403, { details: permErr.message }).send(res);
+          throw new Problem(403, { detail: permErr.message }).send(res);
         });
       } else {
         next(errorToProblem(SERVICE, e));

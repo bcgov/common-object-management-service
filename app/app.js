@@ -74,9 +74,9 @@ if (config.has('server.privacyMask')) {
 // Block requests until service is ready
 app.use((_req, res, next) => {
   if (state.shutdown) {
-    new Problem(503, { details: 'Server is shutting down' }).send(res);
+    new Problem(503, { detail: 'Server is shutting down' }).send(res);
   } else if (!state.ready) {
-    new Problem(503, { details: 'Server is not ready' }).send(res);
+    new Problem(503, { detail: 'Server is not ready' }).send(res);
   } else {
     next();
   }
@@ -120,17 +120,13 @@ app.use((err, _req, res, _next) => {
     // Only log unexpected errors
     if (err.stack) log.error(err);
 
-    new Problem(500, 'Server Error', {
-      detail: (err.message) ? err.message : err
-    }).send(res);
+    new Problem(500, { detail: err.message ?? err }).send(res);
   }
 });
 
 // Handle 404
 app.use((req, res) => {
-  new Problem(404, 'Page Not Found', {
-    detail: req.originalUrl
-  }).send(res);
+  new Problem(404, { instance: req.originalUrl }).send(res);
 });
 
 // Ensure unhandled errors gracefully shut down the application

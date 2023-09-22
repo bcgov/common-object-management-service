@@ -31,9 +31,7 @@ const helper = {
       } else if (err instanceof ValidationError) {
         return res.status(err.statusCode).json(err);
       } else {
-        new Problem(500, {
-          details: (err.message) ? err.message : err
-        }).send(res);
+        new Problem(500, { detail: err.message ?? err }).send(res);
       }
     });
 

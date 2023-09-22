@@ -40,8 +40,10 @@ function errorToProblem(service, e) {
     if (e.$response && e.$response.body) delete e.$response.body;
     return new Problem(e.$metadata.httpStatusCode, { detail: e });
   } else {
-    log.error(`Unknown error calling ${service}: ${e.message}`, { function: 'errorToProblem', status: 502 });
-    return new Problem(502, `Unknown ${service} Error`, { detail: e.message });
+    // Handle all other errors
+    const message = `${service} Error: ${e.message}`;
+    log.error(message, { error: e, function: 'errorToProblem', status: 500 });
+    return new Problem(500, { detail: message });
   }
 }
 
