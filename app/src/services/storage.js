@@ -510,7 +510,6 @@ const objectStorageService = {
         // ServerSideEncryption: 'AES256'
       },
       partSize: utils.calculatePartSize(length),
-      queueSize: 1
     });
 
     upload.on('httpUploadProgress', progress => {

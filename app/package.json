@@ -19,7 +19,7 @@
     "purge": "rm -rf node_modules",
     "rebuild": "npm run clean && npm run build",
     "reinstall": "npm run purge && npm install",
-    "migrate": "npm run migrate:latest",
+    "migrate": "echo no migration ",
     "migrate:down": "knex migrate:down",
     "migrate:latest": "knex migrate:latest",
     "migrate:make": "knex migrate:make",

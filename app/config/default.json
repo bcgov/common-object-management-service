@@ -1,16 +1,7 @@
 {
-  "db": {
-    "database": "coms",
-    "host": "localhost",
-    "port": "5432",
-    "poolMin": "2",
-    "poolMax": "10",
-    "username": "app"
-  },
   "server": {
     "defaultTempExpiresIn": "300",
-    "logLevel": "http",
-    "maxRetries": "3",
+    "logLevel": "debug",
     "port": "3000"
   }
 }

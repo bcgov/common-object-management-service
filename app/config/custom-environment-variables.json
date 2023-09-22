@@ -1,43 +1,7 @@
 {
-  "basicAuth": {
-    "enabled": "BASICAUTH_ENABLED",
-    "password": "BASICAUTH_PASSWORD",
-    "username": "BASICAUTH_USERNAME"
-  },
-  "db": {
-    "database": "DB_DATABASE",
-    "host": "DB_HOST",
-    "password": "DB_PASSWORD",
-    "poolMin": "DB_POOL_MIN",
-    "poolMax": "DB_POOL_MAX",
-    "port": "DB_PORT",
-    "username": "DB_USERNAME"
-  },
-  "keycloak": {
-    "enabled": "KC_ENABLED",
-    "clientId": "KC_CLIENTID",
-    "clientSecret": "KC_CLIENTSECRET",
-    "identityKey": "KC_IDENTITYKEY",
-    "publicKey": "KC_PUBLICKEY",
-    "realm": "KC_REALM",
-    "serverUrl": "KC_SERVERURL"
-  },
-  "objectStorage": {
-    "accessKeyId": "OBJECTSTORAGE_ACCESSKEYID",
-    "bucket": "OBJECTSTORAGE_BUCKET",
-    "enabled": "OBJECTSTORAGE_ENABLED",
-    "endpoint": "OBJECTSTORAGE_ENDPOINT",
-    "key": "OBJECTSTORAGE_KEY",
-    "secretAccessKey": "OBJECTSTORAGE_SECRETACCESSKEY"
-  },
   "server": {
     "defaultTempExpiresIn": "SERVER_TEMP_EXPIRESIN",
-    "hardReset": "SERVER_HARDRESET",
-    "logFile": "SERVER_LOGFILE",
     "logLevel": "SERVER_LOGLEVEL",
-    "maxRetries": "SERVER_MAXRETRIES",
-    "passphrase": "SERVER_PASSPHRASE",
-    "port": "SERVER_PORT",
-    "privacyMask": "SERVER_PRIVACY_MASK"
+    "port": "SERVER_PORT"
   }
 }

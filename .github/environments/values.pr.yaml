@@ -5,7 +5,7 @@ features:
   defaultBucket: false
 
 patroni:
-  enabled: true
+  enabled: false
   replicaCount: 2
   resources:
     limits:

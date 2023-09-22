@@ -2,6 +2,7 @@ const Problem = require('api-problem');
 const config = require('config');
 const cors = require('cors');
 const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
+const fs = require('fs');
 
 const {
   DEFAULTCORS,
@@ -337,6 +338,106 @@ const controller = {
       next(errorToProblem(SERVICE, e));
     }
   },
+
+
+
+
+
+
+
+
+
+
+
+
+  /**
+   * TEST NETWORK CONNECTION ISSUES
+   * 
+   * @param {object} req Express request object
+   * @param {object} res Express response object
+   * @param {function} next The next callback function
+   * @returns {function} Express middleware function
+   */
+  async upload(req, res, next) {
+    try {
+
+      req.on('error', function (e) { 
+        log.debug('stream error', { contentLength: req.currentUpload.contentLength, error: e, function: 'upload' });
+      });
+
+      // when stream has closed, return filesize of written file
+      req.on('close', function () { 
+        log.debug('stream closed', { contentLength: req.currentUpload.contentLength, function: 'upload' });
+
+        const x = fs.statSync('/tmp/' + req.currentUpload.filename);
+
+        res.status(200).json(x);
+      });
+
+      // pipe file to write process
+      const myFile = fs.createWriteStream('/tmp/' + req.currentUpload.filename, { flags: 'w' });
+      req.pipe(myFile);
+
+    } catch (e) {
+      next(errorToProblem(SERVICE, e));
+    }
+  },
+
+
+
+
+
+
+
+
+
+
+
+
+  async createObjectUpload(req, res, next) {
+    try {
+      const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
+
+      // Preflight CREATE permission check if bucket scoped and OIDC authenticated
+      const bucketId = req.query.bucketId ? addDashesToUuid(req.query.bucketId) : undefined;
+      if (bucketId && userId) {
+        const permission = await bucketPermissionService.searchPermissions({ userId: userId, bucketId: bucketId, permCode: 'CREATE' });
+        if (!permission.length) {
+          throw new Problem(403, { detail: 'User lacks permission to complete this action' });
+        }
+      }
+
+      const objId = uuidv4();
+      const data = {
+        id: objId,
+        bucketId: bucketId,
+        length: req.currentUpload.contentLength,
+        name: req.currentUpload.filename,
+        mimeType: req.currentUpload.mimeType,
+        metadata: getMetadata(req.headers),
+        tags: {
+          ...req.query.tagset,
+          'coms-id': objId // Enforce `coms-id:<objectId>` tag
+        }
+      };
+
+      let s3Response;
+
+      const fileFromDisk = '/tmp/6gb.txt';
+      s3Response = await storageService.upload({ ...data, stream: fileFromDisk });
+
+      const dbResponse = {};
+
+      res.status(200).json({
+        ...data,
+        ...dbResponse,
+        ...renameObjectProperty(s3Response, 'VersionId', 's3VersionId')
+      });
+    } catch (e) {
+      next(errorToProblem(SERVICE, e));
+    }
+  },
+
 
   /**
    * @function deleteMetadata
