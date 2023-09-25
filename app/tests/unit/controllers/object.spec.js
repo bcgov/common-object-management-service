@@ -55,7 +55,7 @@ describe('addMetadata', () => {
 
     storageHeadObjectSpy.mockReturnValue(BadResponse);
     await controller.addMetadata(req, res, next);
-    expect(next).toHaveBeenCalledWith(new Problem(502, 'Unknown ObjectService Error'));
+    expect(next).toHaveBeenCalledWith(new Problem(500, 'Internal Server Error'));
   });
 
   it('should add the metadata', async () => {
@@ -228,7 +228,7 @@ describe('deleteMetadata', () => {
 
     storageHeadObjectSpy.mockReturnValue(BadResponse);
     await controller.deleteMetadata(req, res, next);
-    expect(next).toHaveBeenCalledWith(new Problem(502, 'Unknown ObjectService Error'));
+    expect(next).toHaveBeenCalledWith(new Problem(500, 'Internal Server Error'));
   });
 
   it('should delete the requested metadata', async () => {
@@ -400,7 +400,7 @@ describe('deleteObject', () => {
     await controller.deleteObject(req, res, next);
     expect(storageDeleteObjectSpy).toHaveBeenCalledTimes(1);
     expect(next).toHaveBeenCalledTimes(1);
-    expect(next).toHaveBeenCalledWith(new Problem(502, 'Unknown ObjectService Error'));
+    expect(next).toHaveBeenCalledWith(new Problem(500, 'Internal Server Error'));
   });
 });
 
@@ -518,7 +518,7 @@ describe('replaceMetadata', () => {
 
     storageHeadObjectSpy.mockReturnValue(BadResponse);
     await controller.replaceMetadata(req, res, next);
-    expect(next).toHaveBeenCalledWith(new Problem(502, 'Unknown ObjectService Error'));
+    expect(next).toHaveBeenCalledWith(new Problem(500, 'Internal Server Error'));
   });
 
   it('should replace the metadata', async () => {

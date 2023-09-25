@@ -1,6 +1,5 @@
 const express = require('express');
 const Problem = require('api-problem');
-const { ValidationError } = require('express-validation');
 
 /**
  * @class helper
@@ -28,8 +27,6 @@ const helper = {
     app.use((err, _req, res, _next) => {
       if (err instanceof Problem) {
         err.send(res);
-      } else if (err instanceof ValidationError) {
-        return res.status(err.statusCode).json(err);
       } else {
         new Problem(500, { detail: err.message ?? err }).send(res);
       }

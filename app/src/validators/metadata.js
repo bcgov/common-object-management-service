@@ -1,6 +1,5 @@
-const { validate } = require('express-validation');
-
 const { type } = require('./common');
+const { validate } = require('../middleware/validation');
 
 const schema = {
   searchMetadata: {
@@ -9,7 +8,7 @@ const schema = {
 };
 
 const validator = {
-  searchMetadata: validate(schema.searchMetadata, { statusCode: 422 })
+  searchMetadata: validate(schema.searchMetadata)
 };
 
 module.exports = validator;

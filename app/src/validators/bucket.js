@@ -1,6 +1,7 @@
-const { validate, Joi } = require('express-validation');
+const Joi = require('joi');
 
 const { scheme, type } = require('./common');
+const { validate } = require('../middleware/validation');
 
 const schema = {
   createBucket: {
@@ -66,13 +67,13 @@ const schema = {
 };
 
 const validator = {
-  createBucket: validate(schema.createBucket, { statusCode: 422 }),
-  deleteBucket: validate(schema.deleteBucket, { statusCode: 422 }),
-  headBucket: validate(schema.headBucket, { statusCode: 422 }),
-  readBucket: validate(schema.readBucket, { statusCode: 422 }),
-  syncBucket: validate(schema.readBucket, { statusCode: 422 }),
-  searchBuckets: validate(schema.searchBuckets, { statusCode: 422 }),
-  updateBucket: validate(schema.updateBucket, { statusCode: 422 })
+  createBucket: validate(schema.createBucket),
+  deleteBucket: validate(schema.deleteBucket),
+  headBucket: validate(schema.headBucket),
+  readBucket: validate(schema.readBucket),
+  syncBucket: validate(schema.readBucket),
+  searchBuckets: validate(schema.searchBuckets),
+  updateBucket: validate(schema.updateBucket)
 };
 
 module.exports = validator;

@@ -1,7 +1,8 @@
-const { validate, Joi } = require('express-validation');
+const Joi = require('joi');
 
 const { scheme, type } = require('./common');
 const { DownloadMode } = require('../components/constants');
+const { validate } = require('../middleware/validation');
 
 const schema = {
   addMetadata: {
@@ -177,23 +178,23 @@ const schema = {
 };
 
 const validator = {
-  addMetadata: validate(schema.addMetadata, { statusCode: 422 }),
-  addTags: validate(schema.addTags, { statusCode: 422 }),
-  createObject: validate(schema.createObject, { statusCode: 422 }),
-  deleteMetadata: validate(schema.deleteMetadata, { statusCode: 422 }),
-  deleteObject: validate(schema.deleteObject, { statusCode: 422 }),
-  deleteTags: validate(schema.deleteTags, { statusCode: 422 }),
-  fetchMetadata: validate(schema.fetchMetadata, { statusCode: 422 }),
-  fetchTags: validate(schema.fetchTags, { statusCode: 422 }),
-  headObject: validate(schema.headObject, { statusCode: 422 }),
-  listObjectVersion: validate(schema.listObjectVersion, { statusCode: 422 }),
-  readObject: validate(schema.readObject, { statusCode: 422 }),
-  replaceMetadata: validate(schema.replaceMetadata, { statusCode: 422 }),
-  replaceTags: validate(schema.replaceTags, { statusCode: 422 }),
-  searchObjects: validate(schema.searchObjects, { statusCode: 422 }),
-  syncObject: validate(schema.syncObject, { statusCode: 422 }),
-  togglePublic: validate(schema.togglePublic, { statusCode: 422 }),
-  updateObject: validate(schema.updateObject, { statusCode: 422 })
+  addMetadata: validate(schema.addMetadata),
+  addTags: validate(schema.addTags),
+  createObject: validate(schema.createObject),
+  deleteMetadata: validate(schema.deleteMetadata),
+  deleteObject: validate(schema.deleteObject),
+  deleteTags: validate(schema.deleteTags),
+  fetchMetadata: validate(schema.fetchMetadata),
+  fetchTags: validate(schema.fetchTags),
+  headObject: validate(schema.headObject),
+  listObjectVersion: validate(schema.listObjectVersion),
+  readObject: validate(schema.readObject),
+  replaceMetadata: validate(schema.replaceMetadata),
+  replaceTags: validate(schema.replaceTags),
+  searchObjects: validate(schema.searchObjects),
+  syncObject: validate(schema.syncObject),
+  togglePublic: validate(schema.togglePublic),
+  updateObject: validate(schema.updateObject)
 };
 
 module.exports = validator;

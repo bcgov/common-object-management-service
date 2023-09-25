@@ -1,6 +1,7 @@
-const { validate, Joi } = require('express-validation');
-const { scheme, type } = require('./common');
+const Joi = require('joi');
 
+const { scheme, type } = require('./common');
+const { validate } = require('../middleware/validation');
 
 const schema = {
   searchUsers: {
@@ -26,8 +27,8 @@ const schema = {
 };
 
 const validator = {
-  searchUsers: validate(schema.searchUsers, { statusCode: 422 }),
-  listIdps: validate(schema.listIdps, { statusCode: 422 })
+  searchUsers: validate(schema.searchUsers),
+  listIdps: validate(schema.listIdps)
 };
 
 module.exports = validator;

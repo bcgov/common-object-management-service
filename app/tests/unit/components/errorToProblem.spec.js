@@ -101,7 +101,7 @@ describe('errorToProblem', () => {
     expect(result.errors).toBeUndefined();
   });
 
-  it('should throw a 502 problem', () => {
+  it('should throw a 500 problem', () => {
     const e = {
       message: 'msg'
     };
@@ -109,8 +109,8 @@ describe('errorToProblem', () => {
 
     expect(result).toBeTruthy();
     expect(result instanceof Problem).toBeTruthy();
-    expect(result.title).toMatch(`Unknown ${SERVICE} Error`);
-    expect(result.status).toBe(502);
+    expect(result.title).toMatch('Internal Server Error');
+    expect(result.status).toBe(500);
     expect(result.detail).toMatch(e.message);
   });
 });

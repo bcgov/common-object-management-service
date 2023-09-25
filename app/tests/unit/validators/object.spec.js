@@ -1,6 +1,6 @@
 const config = require('config');
 const crypto = require('crypto');
-const { Joi } = require('express-validation');
+const Joi = require('joi');
 const jestJoi = require('jest-joi');
 const { DownloadMode } = require('../../../src/components/constants');
 expect.extend(jestJoi.matchers);

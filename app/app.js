@@ -3,7 +3,6 @@ const compression = require('compression');
 const config = require('config');
 const cors = require('cors');
 const express = require('express');
-const { ValidationError } = require('express-validation');
 
 const { AuthMode, DEFAULTCORS } = require('./src/components/constants');
 const log = require('./src/components/log')(module.filename);
@@ -113,9 +112,6 @@ app.use(/(\/api)?/, apiRouter);
 app.use((err, _req, res, _next) => {
   if (err instanceof Problem) {
     err.send(res);
-  } else if (err instanceof ValidationError) {
-    log.debug(err);
-    return res.status(err.statusCode).json(err);
   } else {
     // Only log unexpected errors
     if (err.stack) log.error(err);
