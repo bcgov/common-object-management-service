@@ -509,8 +509,7 @@ const objectStorageService = {
         // TODO: Consider adding API param support for Server Side Encryption
         // ServerSideEncryption: 'AES256'
       },
-      partSize: utils.calculatePartSize(length),
-      queueSize: 1
+      partSize: utils.calculatePartSize(length)
     });
 
     upload.on('httpUploadProgress', progress => {
