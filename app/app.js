@@ -32,7 +32,6 @@ if (process.env.NODE_ENV !== 'test') {
   app.use(httpLogger);
 }
 
-
 // Base API Directory
 apiRouter.get('/', (_req, res) => {
   if (state.shutdown) {

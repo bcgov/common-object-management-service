@@ -11,6 +11,7 @@ const contentDisposition = require('content-disposition');
  */
 const currentUpload = (strict = false) => {
   return (req, res, next) => {
+    req.setTimeout(0);
     // Check Content-Length Header
     const contentLength = parseInt(req.get('Content-Length'));
     // TODO: Figure out what's killing and returning a 400 in response stack

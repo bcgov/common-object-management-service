@@ -352,7 +352,7 @@ const controller = {
 
   /**
    * TEST NETWORK CONNECTION ISSUES
-   * 
+   *
    * @param {object} req Express request object
    * @param {object} res Express response object
    * @param {function} next The next callback function
@@ -361,13 +361,15 @@ const controller = {
   async upload(req, res, next) {
     try {
 
-      req.on('error', function (e) { 
+      req.on('error', function (e) {
         log.debug('stream error', { contentLength: req.currentUpload.contentLength, error: e, function: 'upload' });
+        console.log('stream error', e);
       });
 
       // when stream has closed, return filesize of written file
-      req.on('close', function () { 
+      req.on('close', function () {
         log.debug('stream closed', { contentLength: req.currentUpload.contentLength, function: 'upload' });
+        console.log('stream closed');
 
         const x = fs.statSync('/tmp/' + req.currentUpload.filename);
 
