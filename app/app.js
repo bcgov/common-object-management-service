@@ -33,21 +33,35 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 // Base API Directory
-apiRouter.get('/', (_req, res) => {
+apiRouter.get('/', (req, res) => {
   if (state.shutdown) {
     throw new Error('Server shutting down');
   } else {
-    res.status(200).json({
-      app: {
-        authMode: state.authMode,
-        gitRev: state.gitRev,
-        name: process.env.npm_package_name,
-        nodeVersion: process.version,
-        version: process.env.npm_package_version
-      },
-      endpoints: ['/api/v1'],
-      versions: [1]
-    });
+
+    // ---- set request timeout of 1 second
+    // req.timeout = 100;
+
+    // req.setTimeout(1000, () => {
+    //   console.log('a');
+    // });
+
+
+
+    // ----- respond after 5 seconds
+    setTimeout(() => {
+      res.status(200).json({
+        app: {
+          gitRev: state.gitRev,
+          name: process.env.npm_package_name,
+          nodeVersion: process.version,
+          version: process.env.npm_package_version
+        },
+        endpoints: ['/api/v1'],
+        versions: [1]
+      });
+    }, 1000);
+
+
   }
 });
 

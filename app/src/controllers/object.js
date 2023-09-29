@@ -279,7 +279,9 @@ const controller = {
         }
 
         // Object does not exist on bucket
-        if (req.currentUpload.contentLength < MAXCOPYOBJECTLENGTH) {
+        // if (req.currentUpload.contentLength < MAXCOPYOBJECTLENGTH) {
+        const abc = false;
+        if (abc) {
           log.debug('Uploading with putObject', {
             contentLength: req.currentUpload.contentLength,
             function: 'createObject',
@@ -360,21 +362,30 @@ const controller = {
    */
   async upload(req, res, next) {
     try {
-
       req.on('error', function (e) {
         log.debug('stream error', { contentLength: req.currentUpload.contentLength, error: e, function: 'upload' });
         console.log('stream error', e);
       });
 
+      // on stream.data event log contentLength, only log for first packet
+      let it = 0;
+      req.on('data', function () {
+        //
+        if(it === 0) {
+          log.debug('stream data', { contentLength: req.currentUpload.contentLength, function: 'upload' });
+          console.log(it, 'stream data');
+        }
+        it++;
+      });
+
       // when stream has closed, return filesize of written file
       req.on('close', function () {
-        log.debug('stream closed', { contentLength: req.currentUpload.contentLength, function: 'upload' });
-        console.log('stream closed');
-
+        log.debug('stream close', { contentLength: req.currentUpload.contentLength, function: 'upload' });
+        console.log('stream close');
         const x = fs.statSync('/tmp/' + req.currentUpload.filename);
-
         res.status(200).json(x);
       });
+
 
       // pipe file to write process
       const myFile = fs.createWriteStream('/tmp/' + req.currentUpload.filename, { flags: 'w' });
@@ -385,60 +396,6 @@ const controller = {
     }
   },
 
-
-
-
-
-
-
-
-
-
-
-
-  async createObjectUpload(req, res, next) {
-    try {
-      const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
-
-      // Preflight CREATE permission check if bucket scoped and OIDC authenticated
-      const bucketId = req.query.bucketId ? addDashesToUuid(req.query.bucketId) : undefined;
-      if (bucketId && userId) {
-        const permission = await bucketPermissionService.searchPermissions({ userId: userId, bucketId: bucketId, permCode: 'CREATE' });
-        if (!permission.length) {
-          throw new Problem(403, { detail: 'User lacks permission to complete this action' });
-        }
-      }
-
-      const objId = uuidv4();
-      const data = {
-        id: objId,
-        bucketId: bucketId,
-        length: req.currentUpload.contentLength,
-        name: req.currentUpload.filename,
-        mimeType: req.currentUpload.mimeType,
-        metadata: getMetadata(req.headers),
-        tags: {
-          ...req.query.tagset,
-          'coms-id': objId // Enforce `coms-id:<objectId>` tag
-        }
-      };
-
-      let s3Response;
-
-      const fileFromDisk = '/tmp/6gb.txt';
-      s3Response = await storageService.upload({ ...data, stream: fileFromDisk });
-
-      const dbResponse = {};
-
-      res.status(200).json({
-        ...data,
-        ...dbResponse,
-        ...renameObjectProperty(s3Response, 'VersionId', 's3VersionId')
-      });
-    } catch (e) {
-      next(errorToProblem(SERVICE, e));
-    }
-  },
 
 
   /**

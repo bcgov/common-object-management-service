@@ -65,9 +65,16 @@ app.set('port', port);
 /** Create HTTP server. */
 const server = http.createServer(app);
 
-// server.setTimeout(1000);
-// server.timeout = 1000;
-server.setTimeout(0);
+// --- set 'global' request timeout of 5 hrs
+server.timeout = 18000000;
+server.requestTimeout = 18000000;
+server.setTimeout(18000000);
+
+server.on('timeout', () => {
+  console.log('timeout');
+});
+
+
 
 
 /** Listen on provided port, on all network interfaces. */
