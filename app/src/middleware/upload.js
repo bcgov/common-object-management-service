@@ -52,6 +52,14 @@ const currentUpload = (strict = false) => {
       mimeType: mimeType
     });
 
+    /**
+     * Removes the default 5 minute request timeout added in Node v18
+     * This change reverts the behavior to be similar to Node v16 and earlier
+     * This value should not be 0x7FFFFFFF as behavior becomes unpredictable
+     * @see {@link https://nodejs.org/en/blog/release/v18.0.0#http-timeouts}
+     */
+    req.socket.server.requestTimeout = 0;
+
     next();
   };
 };
