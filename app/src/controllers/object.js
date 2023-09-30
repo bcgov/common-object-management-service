@@ -164,6 +164,7 @@ const controller = {
    * @param {object} res Express response object
    * @param {function} next The next callback function
    * @returns {function} Express middleware function
+   * @throws The error encountered upon failure
    */
   async addTags(req, res, next) {
     try {
@@ -190,7 +191,10 @@ const controller = {
 
       if (newSet.length > 10) {
         // 409 when total tag limit exceeded
-        return new Problem(409, { detail: 'Request exceeds maximum of 9 user-defined tag sets allowed' }).send(res);
+        throw new Problem(409, {
+          detail: 'Request exceeds maximum of 9 user-defined tag sets allowed',
+          instance: req.originalUrl
+        });
       }
 
       const data = {
@@ -233,7 +237,10 @@ const controller = {
       if (bucketId && userId) {
         const permission = await bucketPermissionService.searchPermissions({ userId: userId, bucketId: bucketId, permCode: 'CREATE' });
         if (!permission.length) {
-          throw new Problem(403, { detail: 'User lacks permission to complete this action' });
+          throw new Problem(403, {
+            detail: 'User lacks permission to complete this action',
+            instance: req.originalUrl
+          });
         }
       }
 
@@ -263,18 +270,27 @@ const controller = {
         });
 
         // Hard short circuit skip file as the object already exists on bucket
-        throw new Problem(409, { detail: 'Bucket already contains object' });
+        throw new Problem(409, {
+          detail: 'Bucket already contains object',
+          instance: req.originalUrl
+        });
       } catch (err) {
         if (err instanceof Problem) throw err; // Rethrow Problem type errors
 
         // Object is soft deleted from the bucket
         if (err.$response?.headers['x-amz-delete-marker']) {
-          throw new Problem(409, { detail: 'Bucket already contains object' });
+          throw new Problem(409, {
+            detail: 'Bucket already contains object',
+            instance: req.originalUrl
+          });
         }
 
         // Skip upload in the unlikely event we get an unexpected error from headObject
         if (err.$metadata?.httpStatusCode !== 404) {
-          throw new Problem(502, { detail: 'Bucket communication error' });
+          throw new Problem(502, {
+            detail: 'Bucket communication error',
+            instance: req.originalUrl
+          });
         }
 
         // Object does not exist on bucket
@@ -293,7 +309,10 @@ const controller = {
           });
           s3Response = await storageService.upload({ ...data, stream: req });
         } else {
-          throw new Problem(413, { detail: 'File exceeds maximum 50GB limit' });
+          throw new Problem(413, {
+            detail: 'File exceeds maximum 50GB limit',
+            instance: req.originalUrl
+          });
         }
       }
 
@@ -932,7 +951,10 @@ const controller = {
 
         // Skip upload in the unlikely event we get an unexpected response from headObject
         if (headResponse.$metadata?.httpStatusCode !== 200) {
-          throw new Problem(502, { detail: 'Bucket communication error' });
+          throw new Problem(502, {
+            detail: 'Bucket communication error',
+            instance: req.originalUrl
+          });
         }
 
         // Object exists on bucket
@@ -951,20 +973,32 @@ const controller = {
           });
           s3Response = await storageService.upload({ ...data, stream: req });
         } else {
-          throw new Problem(413, { detail: 'File exceeds maximum 50GB limit' });
+          throw new Problem(413, {
+            detail: 'File exceeds maximum 50GB limit',
+            instance: req.originalUrl
+          });
         }
       } catch (err) {
         if (err instanceof Problem) throw err; // Rethrow Problem type errors
         else if (err.$metadata?.httpStatusCode !== 404) {
           // An unexpected response from headObject
-          throw new Problem(502, { detail: 'Bucket communication error' });
+          throw new Problem(502, {
+            detail: 'Bucket communication error',
+            instance: req.originalUrl
+          });
         } else {
           if (err.$response?.headers['x-amz-delete-marker']) {
             // Object is soft deleted from the bucket
-            throw new Problem(409, { detail: 'Unable to update soft deleted object' });
+            throw new Problem(409, {
+              detail: 'Unable to update soft deleted object',
+              instance: req.originalUrl
+            });
           } else {
             // Bucket is missing the existing object
-            throw new Problem(409, { detail: 'Bucket does not contain existing object' });
+            throw new Problem(409, {
+              detail: 'Bucket does not contain existing object',
+              instance: req.originalUrl
+            });
           }
           // TODO: Add in sync operation to update object record in COMS DB?
         }

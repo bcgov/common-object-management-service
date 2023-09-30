@@ -22,19 +22,19 @@ const helper = {
     }));
     app.use(basePath, router);
 
+    // Handle 404
+    app.use((req, _res) => { // eslint-disable-line no-unused-vars
+      throw new Problem(404, { instance: req.originalUrl });
+    });
+
     // Handle 500
     // eslint-disable-next-line no-unused-vars
-    app.use((err, _req, res, _next) => {
+    app.use((err, req, res, _next) => {
       if (err instanceof Problem) {
         err.send(res);
       } else {
-        new Problem(500, { detail: err.message ?? err }).send(res);
+        new Problem(500, { detail: err.message ?? err, instance: req.originalUrl }).send(res);
       }
-    });
-
-    // Handle 404
-    app.use((_req, res) => {
-      new Problem(404).send(res);
     });
 
     return app;

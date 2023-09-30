@@ -86,7 +86,6 @@ describe('currentUser', () => {
   const checkBasicAuthSpy = jest.spyOn(mw, '_checkBasicAuth');
   const jwtVerifySpy = jest.spyOn(jwt, 'verify');
   const loginSpy = jest.spyOn(userService, 'login');
-  const problemSendSpy = jest.spyOn(Problem.prototype, 'send');
 
   let req, res, next;
 
@@ -117,7 +116,6 @@ describe('currentUser', () => {
       expect(checkBasicAuthSpy).toHaveBeenCalledTimes(0);
       expect(next).toHaveBeenCalledTimes(1);
       expect(next).toHaveBeenCalledWith();
-      expect(problemSendSpy).toHaveBeenCalledTimes(0);
     });
   });
 
@@ -141,7 +139,6 @@ describe('currentUser', () => {
       expect(checkBasicAuthSpy).toHaveBeenCalledTimes(1);
       expect(checkBasicAuthSpy).toHaveBeenCalledWith(req, res, next);
       expect(next).toHaveBeenCalledTimes(0);
-      expect(problemSendSpy).toHaveBeenCalledTimes(0);
     });
   });
 
@@ -192,13 +189,11 @@ describe('currentUser', () => {
       expect(loginSpy).toHaveBeenCalledWith(expect.objectContaining({ sub: 'sub' }));
       expect(next).toHaveBeenCalledTimes(1);
       expect(next).toHaveBeenCalledWith();
-      expect(problemSendSpy).toHaveBeenCalledTimes(0);
     });
 
-    it('short circuits with invalid auth token', async () => {
+    it('short circuits with invalid auth token', () => {
       const authorization = 'bearer ';
 
-      problemSendSpy.mockImplementation(() => { });
       config.has
         .mockReturnValueOnce(false) // basicAuth.enabled
         .mockReturnValueOnce(true) // keycloak.enabled
@@ -209,7 +204,7 @@ describe('currentUser', () => {
         .mockReturnValueOnce(realm); // keycloak.realm
       req.get.mockReturnValueOnce(authorization);
 
-      await mw.currentUser(req, res, next);
+      expect(() => mw.currentUser(req, res, next)).rejects.toThrow();
 
       expect(req.currentUser).toBeFalsy();
       expect(req.get).toHaveBeenCalledTimes(1);
@@ -225,11 +220,9 @@ describe('currentUser', () => {
       }));
       expect(loginSpy).toHaveBeenCalledTimes(0);
       expect(next).toHaveBeenCalledTimes(0);
-      expect(problemSendSpy).toHaveBeenCalledTimes(1);
-      expect(problemSendSpy).toHaveBeenCalledWith(res);
     });
 
-    it('short circuits without keycloak.publicKey', async () => {
+    it('short circuits without keycloak.publicKey', () => {
       jwtVerifySpy.mockReturnValue({ sub: 'sub' });
       loginSpy.mockImplementation(() => { });
       config.has
@@ -238,7 +231,7 @@ describe('currentUser', () => {
         .mockReturnValueOnce(false); // keycloak.publicKey
       req.get.mockReturnValueOnce(authorization);
 
-      await mw.currentUser(req, res, next);
+      expect(() => mw.currentUser(req, res, next)).rejects.toThrow();
 
       expect(req.currentUser).toBeFalsy();
       expect(req.get).toHaveBeenCalledTimes(1);
@@ -251,8 +244,6 @@ describe('currentUser', () => {
       expect(jwtVerifySpy).toHaveBeenCalledTimes(0);
       expect(loginSpy).toHaveBeenCalledTimes(0);
       expect(next).toHaveBeenCalledTimes(0);
-      expect(problemSendSpy).toHaveBeenCalledTimes(1);
-      expect(problemSendSpy).toHaveBeenCalledWith(res);
     });
   });
 });

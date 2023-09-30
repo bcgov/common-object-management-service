@@ -1,5 +1,3 @@
-const Problem = require('api-problem');
-
 const { currentUpload } = require('../../../src/middleware/upload');
 
 beforeEach(() => {
@@ -11,13 +9,9 @@ afterAll(() => {
 });
 
 describe('currentUpload', () => {
-  const problemSendSpy = jest.spyOn(Problem.prototype, 'send');
-
   let req, res, next;
 
   beforeEach(() => {
-    problemSendSpy.mockImplementation(() => { });
-
     req = { get: jest.fn() };
     res = {};
     next = jest.fn();
@@ -53,13 +47,12 @@ describe('currentUpload', () => {
 
     const result = currentUpload(strict);
     expect(result).toBeInstanceOf(Function);
-    result(req, res, next);
+    if (sendCount) expect(() => result(req, res, next)).toThrow();
+    else expect(() => result(req, res, next)).not.toThrow();
 
     expect(req.currentUpload).toEqual(current);
     expect(next).toHaveBeenCalledTimes(nextCount);
     if (nextCount) expect(next).toHaveBeenCalledWith();
-    expect(problemSendSpy).toHaveBeenCalledTimes(sendCount);
-    if (sendCount) expect(problemSendSpy).toHaveBeenCalledWith(res);
   });
 });
 

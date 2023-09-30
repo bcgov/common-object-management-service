@@ -8,13 +8,17 @@ const contentDisposition = require('content-disposition');
  * @param {object} _res Express response object
  * @param {function} next The next callback function
  * @returns {function} Express middleware function
+ * @throws The error encountered upon failure
  */
 const currentUpload = (strict = false) => {
-  return (req, res, next) => {
+  return (req, _res, next) => {
     // Check Content-Length Header
     const contentLength = parseInt(req.get('Content-Length'));
     // TODO: Figure out what's killing and returning a 400 in response stack
-    if (!contentLength) return new Problem(411, { detail: 'Content-Length must be greater than 0' }).send(res);
+    if (!contentLength) throw new Problem(411, {
+      detail: 'Content-Length must be greater than 0',
+      instance: req.originalUrl
+    });
 
     // Check Content-Disposition Header
     let filename;
@@ -27,10 +31,16 @@ const currentUpload = (strict = false) => {
         filename = parameters?.filename;
       } catch (e) {
         // Ignore improperly formatted Content-Disposition when not in strict mode
-        if (strict) return new Problem(400, { detail: `Content-Disposition header error: ${e.message}` }).send(res);
+        if (strict) throw new Problem(400, {
+          detail: `Content-Disposition header error: ${e.message}`,
+          instance: req.originalUrl
+        });
       }
     } else {
-      if (strict) return new Problem(415, { detail: 'Content-Disposition header missing' }).send(res);
+      if (strict) throw new Problem(415, {
+        detail: 'Content-Disposition header missing',
+        instance: req.originalUrl
+      });
     }
 
     // Check Content-Type Header

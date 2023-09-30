@@ -71,11 +71,11 @@ if (config.has('server.privacyMask')) {
 }
 
 // Block requests until service is ready
-app.use((_req, res, next) => {
+app.use((_req, _res, next) => {
   if (state.shutdown) {
-    new Problem(503, { detail: 'Server is shutting down' }).send(res);
+    throw new Problem(503, { detail: 'Server is shutting down' });
   } else if (!state.ready) {
-    new Problem(503, { detail: 'Server is not ready' }).send(res);
+    throw new Problem(503, { detail: 'Server is not ready' });
   } else {
     next();
   }
@@ -107,22 +107,19 @@ apiRouter.use('/v1', v1Router);
 // Root level Router
 app.use(/(\/api)?/, apiRouter);
 
-// Handle ValidationError & 500
-// eslint-disable-next-line no-unused-vars
-app.use((err, _req, res, _next) => {
+// Handle 404
+app.use((req, _res) => { // eslint-disable-line no-unused-vars
+  throw new Problem(404, { instance: req.originalUrl });
+});
+
+// Handle Problem Responses
+app.use((err, req, res, _next) => { // eslint-disable-line no-unused-vars
   if (err instanceof Problem) {
     err.send(res);
   } else {
-    // Only log unexpected errors
-    if (err.stack) log.error(err);
-
-    new Problem(500, { detail: err.message ?? err }).send(res);
+    if (err.stack) log.error(err); // Only log unexpected errors
+    new Problem(500, { detail: err.message ?? err, instance: req.originalUrl }).send(res);
   }
-});
-
-// Handle 404
-app.use((req, res) => {
-  new Problem(404, { instance: req.originalUrl }).send(res);
 });
 
 // Ensure unhandled errors gracefully shut down the application

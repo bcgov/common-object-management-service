@@ -1,5 +1,3 @@
-const Problem = require('api-problem');
-
 const { requireBasicAuth, requireSomeAuth } = require('../../../src/middleware/featureToggle');
 const { AuthMode, AuthType } = require('../../../src/components/constants');
 const utils = require('../../../src/components/utils');
@@ -19,13 +17,10 @@ afterAll(() => {
 
 describe('requireBasicAuth', () => {
   const getAppAuthModeSpy = jest.spyOn(utils, 'getAppAuthMode');
-  const problemSendSpy = jest.spyOn(Problem.prototype, 'send');
 
   let req, res, next;
 
   beforeEach(() => {
-    problemSendSpy.mockImplementation(() => { });
-
     req = {};
     res = {};
     next = jest.fn();
@@ -53,24 +48,20 @@ describe('requireBasicAuth', () => {
     getAppAuthModeSpy.mockReturnValue(mode);
     if (type) req.currentUser = { authType: type };
 
-    requireBasicAuth(req, res, next);
+    if (sendCount) expect(() => requireBasicAuth(req, res, next)).toThrow();
+    else expect(() => requireBasicAuth(req, res, next)).not.toThrow();
 
     expect(next).toHaveBeenCalledTimes(nextCount);
     if (nextCount) expect(next).toHaveBeenCalledWith();
-    expect(problemSendSpy).toHaveBeenCalledTimes(sendCount);
-    if (sendCount) expect(problemSendSpy).toHaveBeenCalledWith(res);
   });
 });
 
 describe('requireSomeAuth', () => {
   const getAppAuthModeSpy = jest.spyOn(utils, 'getAppAuthMode');
-  const problemSendSpy = jest.spyOn(Problem.prototype, 'send');
 
   let req, res, next;
 
   beforeEach(() => {
-    problemSendSpy.mockImplementation(() => { });
-
     req = {};
     res = {};
     next = jest.fn();
@@ -98,11 +89,10 @@ describe('requireSomeAuth', () => {
     getAppAuthModeSpy.mockReturnValue(mode);
     if (type) req.currentUser = { authType: type };
 
-    requireSomeAuth(req, res, next);
+    if (sendCount) expect(() => requireSomeAuth(req, res, next)).toThrow();
+    else expect(() => requireSomeAuth(req, res, next)).not.toThrow();
 
     expect(next).toHaveBeenCalledTimes(nextCount);
     if (nextCount) expect(next).toHaveBeenCalledWith();
-    expect(problemSendSpy).toHaveBeenCalledTimes(sendCount);
-    if (sendCount) expect(problemSendSpy).toHaveBeenCalledWith(res);
   });
 });

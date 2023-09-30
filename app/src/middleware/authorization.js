@@ -49,11 +49,12 @@ const _checkPermission = async ({ currentObject, currentUser, params }, permissi
  * @function checkAppMode
  * Rejects the request if the incoming authentication mode does not match the application mode
  * @param {object} req Express request object
- * @param {object} res Express response object
+ * @param {object} _res Express response object
  * @param {function} next The next callback function
  * @returns {function} Express middleware function
+ * @throws The error encountered upon failure
  */
-const checkAppMode = (req, res, next) => {
+const checkAppMode = (req, _res, next) => {
   const authMode = getAppAuthMode();
   const authType = req.currentUser ? req.currentUser.authType : undefined;
 
@@ -65,11 +66,12 @@ const checkAppMode = (req, res, next) => {
     }
   } catch (err) {
     log.verbose(err.message, { function: 'checkAppMode', authMode: authMode, authType: authType });
-    return new Problem(501, {
+    throw new Problem(501, {
       detail: 'Current application mode does not support incoming authentication type',
+      instance: req.originalUrl,
       authMode: authMode,
       authType: authType
-    }).send(res);
+    });
   }
 
   next();
@@ -107,9 +109,10 @@ const currentObject = async (req, _res, next) => {
  * - if passed permission exists for current user on object or bucket (see: _checkPermission)
  * @param {string} permission a permission code (eg: READ)
  * @returns {function} Express middleware function
+ * @throws The error encountered upon failure
  */
 const hasPermission = (permission) => {
-  return async (req, res, next) => {
+  return async (req, _res, next) => {
     const authMode = getAppAuthMode();
     const authType = req.currentUser ? req.currentUser.authType : undefined;
 
@@ -133,7 +136,7 @@ const hasPermission = (permission) => {
       }
     } catch (err) {
       log.verbose(err.message, { function: 'hasPermission' });
-      return new Problem(403, { detail: 'User lacks permission to complete this action' }).send(res);
+      throw new Problem(403, { detail: 'User lacks permission to complete this action', instance: req.originalUrl });
     }
 
     next();

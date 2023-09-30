@@ -27,8 +27,6 @@ const schema = {
     }).nand('s3VersionId', 'versionId')
   },
 
-  // TODO: Make this schema definition unit-testable
-  // bucketId property was undefined in unit test
   createObject: {
     headers: type.metadata(),
     query: Joi.object({
