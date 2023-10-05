@@ -191,7 +191,7 @@ describe('currentUser', () => {
       expect(next).toHaveBeenCalledWith();
     });
 
-    it('short circuits with invalid auth token', () => {
+    it('short circuits with invalid auth token', async () => {
       const authorization = 'bearer ';
 
       config.has
@@ -204,7 +204,7 @@ describe('currentUser', () => {
         .mockReturnValueOnce(realm); // keycloak.realm
       req.get.mockReturnValueOnce(authorization);
 
-      expect(() => mw.currentUser(req, res, next)).rejects.toThrow();
+      await mw.currentUser(req, res, next);
 
       expect(req.currentUser).toBeFalsy();
       expect(req.get).toHaveBeenCalledTimes(1);
@@ -219,10 +219,11 @@ describe('currentUser', () => {
         issuer: `${serverUrl}/realms/${realm}`
       }));
       expect(loginSpy).toHaveBeenCalledTimes(0);
-      expect(next).toHaveBeenCalledTimes(0);
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(next).toHaveBeenCalledWith(expect.any(Object));
     });
 
-    it('short circuits without keycloak.publicKey', () => {
+    it('short circuits without keycloak.publicKey', async () => {
       jwtVerifySpy.mockReturnValue({ sub: 'sub' });
       loginSpy.mockImplementation(() => { });
       config.has
@@ -231,7 +232,7 @@ describe('currentUser', () => {
         .mockReturnValueOnce(false); // keycloak.publicKey
       req.get.mockReturnValueOnce(authorization);
 
-      expect(() => mw.currentUser(req, res, next)).rejects.toThrow();
+      await mw.currentUser(req, res, next);
 
       expect(req.currentUser).toBeFalsy();
       expect(req.get).toHaveBeenCalledTimes(1);
@@ -243,7 +244,8 @@ describe('currentUser', () => {
       expect(checkBasicAuthSpy).toHaveBeenCalledTimes(0);
       expect(jwtVerifySpy).toHaveBeenCalledTimes(0);
       expect(loginSpy).toHaveBeenCalledTimes(0);
-      expect(next).toHaveBeenCalledTimes(0);
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(next).toHaveBeenCalledWith(expect.any(Object));
     });
   });
 });

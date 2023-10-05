@@ -85,7 +85,7 @@ const currentUser = async (req, res, next) => {
           throw new Error('Invalid authorization token');
         }
       } catch (err) {
-        throw new Problem(403, { detail: err.message, instance: req.originalUrl });
+        return next(new Problem(403, { detail: err.message, instance: req.originalUrl }));
       }
     }
   }

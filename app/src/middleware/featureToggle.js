@@ -7,12 +7,12 @@ const { getAppAuthMode } = require('../components/utils');
  * @function requireBasicAuth
  * Only allows basic authentication requests if application is in the appropriate mode
  * @param {object} req Express request object
- * @param {object} res Express response object
+ * @param {object} _res Express response object
  * @param {function} next The next callback function
  * @returns {function} Express middleware function
  * @throws The error encountered upon failure
  */
-const requireBasicAuth = (req, res, next) => {
+const requireBasicAuth = (req, _res, next) => {
   const authMode = getAppAuthMode();
   const authType = req.currentUser ? req.currentUser.authType : undefined;
 
@@ -39,12 +39,12 @@ const requireBasicAuth = (req, res, next) => {
  * @function requireSomeAuth
  * Rejects the request if there is no authorization in the appropriate mode
  * @param {object} req Express request object
- * @param {object} res Express response object
+ * @param {object} _res Express response object
  * @param {function} next The next callback function
  * @returns {function} Express middleware function
  * @throws The error encountered upon failure
  */
-const requireSomeAuth = (req, res, next) => {
+const requireSomeAuth = (req, _res, next) => {
   const authMode = getAppAuthMode();
   const authType = req.currentUser ? req.currentUser.authType : undefined;
 

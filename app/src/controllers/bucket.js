@@ -123,7 +123,7 @@ const controller = {
       if (e instanceof UniqueViolationError) {
         // Grant all permissions if credentials precisely match
         response = await bucketService.checkGrantPermissions(data).catch(permErr => {
-          throw new Problem(403, { detail: permErr.message, instance: req.originalUrl });
+          next(new Problem(403, { detail: permErr.message, instance: req.originalUrl }));
         });
       } else {
         next(errorToProblem(SERVICE, e));
