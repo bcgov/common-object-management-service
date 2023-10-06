@@ -12,7 +12,10 @@ describe('currentUpload', () => {
   let req, res, next;
 
   beforeEach(() => {
-    req = { get: jest.fn() };
+    req = {
+      get: jest.fn(),
+      socket: { server: {} }
+    };
     res = {};
     next = jest.fn();
   });
@@ -52,7 +55,10 @@ describe('currentUpload', () => {
 
     expect(req.currentUpload).toEqual(current);
     expect(next).toHaveBeenCalledTimes(nextCount);
-    if (nextCount) expect(next).toHaveBeenCalledWith();
+    if (nextCount) {
+      expect(req.socket.server.requestTimeout).toEqual(0);
+      expect(next).toHaveBeenCalledWith();
+    }
   });
 });
 
