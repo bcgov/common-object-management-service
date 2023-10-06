@@ -44,6 +44,7 @@ const _spkiWrapper = (spki) => `-----BEGIN PUBLIC KEY-----\n${spki}\n-----END PU
  * @param {object} res Express response object
  * @param {function} next The next callback function
  * @returns {function} Express middleware function
+ * @throws The error encountered upon failure
  */
 const currentUser = async (req, res, next) => {
   const authorization = req.get('Authorization');
@@ -84,7 +85,7 @@ const currentUser = async (req, res, next) => {
           throw new Error('Invalid authorization token');
         }
       } catch (err) {
-        return new Problem(403, { detail: err.message }).send(res);
+        return next(new Problem(403, { detail: err.message, instance: req.originalUrl }));
       }
     }
   }

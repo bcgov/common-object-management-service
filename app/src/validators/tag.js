@@ -1,6 +1,8 @@
-const { validate, Joi } = require('express-validation');
+const Joi = require('joi');
 
 const { type } = require('./common');
+const { validate } = require('../middleware/validation');
+
 
 const schema = {
   searchTags: {
@@ -11,7 +13,7 @@ const schema = {
 };
 
 const validator = {
-  searchTags: validate(schema.searchTags, { statusCode: 422 })
+  searchTags: validate(schema.searchTags)
 };
 
 module.exports = validator;

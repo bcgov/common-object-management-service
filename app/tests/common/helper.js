@@ -1,6 +1,5 @@
 const express = require('express');
 const Problem = require('api-problem');
-const { ValidationError } = require('express-validation');
 
 /**
  * @class helper
@@ -23,23 +22,19 @@ const helper = {
     }));
     app.use(basePath, router);
 
-    // Handle 500
-    // eslint-disable-next-line no-unused-vars
-    app.use((err, _req, res, _next) => {
-      if (err instanceof Problem) {
-        err.send(res);
-      } else if (err instanceof ValidationError) {
-        return res.status(err.statusCode).json(err);
-      } else {
-        new Problem(500, {
-          details: (err.message) ? err.message : err
-        }).send(res);
-      }
+    // Handle 404
+    app.use((req, _res) => { // eslint-disable-line no-unused-vars
+      throw new Problem(404, { instance: req.originalUrl });
     });
 
-    // Handle 404
-    app.use((_req, res) => {
-      new Problem(404).send(res);
+    // Handle 500
+    // eslint-disable-next-line no-unused-vars
+    app.use((err, req, res, _next) => {
+      if (err instanceof Problem) {
+        err.send(res);
+      } else {
+        new Problem(500, { detail: err.message ?? err, instance: req.originalUrl }).send(res);
+      }
     });
 
     return app;

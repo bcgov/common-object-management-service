@@ -90,7 +90,7 @@ const controller = {
         function: '_validateCredentials',
       });
       throw new Problem(409, {
-        details: 'Unable to validate supplied credentials for the bucket',
+        detail: 'Unable to validate supplied credentials for the bucket',
       });
     }
   },
@@ -102,6 +102,7 @@ const controller = {
    * @param {object} res Express response object
    * @param {function} next The next callback function
    * @returns {function} Express middleware function
+   * @throws The error encountered upon failure
    */
   async createBucket(req, res, next) {
     const data = {
@@ -122,7 +123,7 @@ const controller = {
       if (e instanceof UniqueViolationError) {
         // Grant all permissions if credentials precisely match
         response = await bucketService.checkGrantPermissions(data).catch(permErr => {
-          throw new Problem(403, { details: permErr.message }).send(res);
+          next(new Problem(403, { detail: permErr.message, instance: req.originalUrl }));
         });
       } else {
         next(errorToProblem(SERVICE, e));

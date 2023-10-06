@@ -1,6 +1,7 @@
-const { validate, Joi } = require('express-validation');
+const Joi = require('joi');
 
 const { scheme, type } = require('./common');
+const { validate } = require('../middleware/validation');
 
 
 const schema = {
@@ -22,8 +23,8 @@ const schema = {
 };
 
 const validator = {
-  fetchMetadata: validate(schema.fetchMetadata, { statusCode: 422 }),
-  fetchTags: validate(schema.fetchTags, { statusCode: 422 }),
+  fetchMetadata: validate(schema.fetchMetadata),
+  fetchTags: validate(schema.fetchTags)
 };
 
 module.exports = validator;

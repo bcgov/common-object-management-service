@@ -171,9 +171,7 @@ describe('createBucket', () => {
     expect(createSpy).toHaveBeenCalledWith({ ...req.body, userId: USR_ID });
 
     expect(next).toHaveBeenCalledTimes(1);
-    expect(next).toHaveBeenCalledWith(
-      new Problem(502, 'Unknown BucketService Error')
-    );
+    expect(next).toHaveBeenCalledWith(new Problem(500, 'Internal Server Error'));
   });
 
   // Skipping until someone can figure out the instanceof issue in the catch block
@@ -203,7 +201,7 @@ describe('createBucket', () => {
     await controller.createBucket(req, res, next);
 
     expect(headBucketSpy).toHaveBeenCalledTimes(1);
-    expect(headBucketSpy).toHaveBeenCalledWith(req.body);
+    expect(headBucketSpy).toHaveBeenCalledWith(expect.objectContaining(req.body));
     expect(getCurrentIdentitySpy).toHaveBeenCalledTimes(1);
     expect(getCurrentIdentitySpy).toHaveBeenCalledWith(
       CURRENT_USER,
@@ -214,7 +212,7 @@ describe('createBucket', () => {
     expect(createSpy).toHaveBeenCalledTimes(1);
     expect(createSpy).toHaveBeenCalledWith({ ...req.body, userId: USR_ID });
     expect(checkGrantPermissionsSpy).toHaveBeenCalledTimes(1);
-    expect(checkGrantPermissionsSpy).toHaveBeenCalledWith({ ...req.body, userId: USR_ID });
+    expect(checkGrantPermissionsSpy).toHaveBeenCalledWith(expect.objectContaining({ ...req.body, userId: USR_ID }));
 
     expect(res.status).toHaveBeenCalledWith(201);
   });

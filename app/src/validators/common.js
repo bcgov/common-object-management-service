@@ -1,4 +1,4 @@
-const { Joi: baseJoi } = require('express-validation');
+const baseJoi = require('joi');
 
 const { EMAILREGEX, Permissions } = require('../components/constants');
 
@@ -6,15 +6,13 @@ const { EMAILREGEX, Permissions } = require('../components/constants');
  * @constant Joi
  * Extend Base Joi with a custom 'csvArray' parser
  */
-const Joi = baseJoi.extend((joi) => {
-  return {
-    type: 'csvArray',
-    base: joi.array(),
-    coerce: (value) => ({
-      value: value.split ? value.split(',').map(item => item.trim()) : value,
-    })
-  };
-});
+const Joi = baseJoi.extend(joi => ({
+  type: 'csvArray',
+  base: joi.array(),
+  coerce: (value) => ({
+    value: value.split ? value.split(',').map(item => item.trim()) : value,
+  })
+}));
 
 /**
  * @function oneOrMany

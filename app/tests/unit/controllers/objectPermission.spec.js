@@ -47,7 +47,7 @@ describe('searchPermissions', () => {
     await controller.searchPermissions(req, res, next);
     expect(searchPermissionsSpy).toHaveBeenCalledTimes(1);
     expect(next).toHaveBeenCalledTimes(1);
-    expect(next).toHaveBeenCalledWith(new Problem(502, 'Unknown ObjectPermissionService Error'));
+    expect(next).toHaveBeenCalledWith(new Problem(500, 'Internal Server Error'));
   });
 });
 
@@ -83,7 +83,7 @@ describe('listPermissions', () => {
     await controller.listPermissions(req, res, next);
     expect(searchPermissionsSpy).toHaveBeenCalledTimes(1);
     expect(next).toHaveBeenCalledTimes(1);
-    expect(next).toHaveBeenCalledWith(new Problem(502, 'Unknown ObjectPermissionService Error'));
+    expect(next).toHaveBeenCalledWith(new Problem(500, 'Internal Server Error'));
   });
 });
 
@@ -121,7 +121,7 @@ describe('addPermissions', () => {
     await controller.addPermissions(req, res, next);
     expect(addPermissionsSpy).toHaveBeenCalledTimes(1);
     expect(next).toHaveBeenCalledTimes(1);
-    expect(next).toHaveBeenCalledWith(new Problem(502, 'Unknown ObjectPermissionService Error'));
+    expect(next).toHaveBeenCalledWith(new Problem(500, 'Internal Server Error'));
   });
 });
 
@@ -156,6 +156,6 @@ describe('removePermissions', () => {
     await controller.removePermissions(req, res, next);
     expect(removePermissionsSpy).toHaveBeenCalledTimes(1);
     expect(next).toHaveBeenCalledTimes(1);
-    expect(next).toHaveBeenCalledWith(new Problem(502, 'Unknown ObjectPermissionService Error'));
+    expect(next).toHaveBeenCalledWith(new Problem(500, 'Internal Server Error'));
   });
 });

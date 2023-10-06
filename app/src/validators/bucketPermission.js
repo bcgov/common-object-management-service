@@ -1,7 +1,9 @@
 
-const { validate, Joi } = require('express-validation');
+const Joi = require('joi');
+
 const { scheme, type } = require('./common');
 const { Permissions } = require('../components/constants');
+const { validate } = require('../middleware/validation');
 
 const schema = {
   searchPermissions: {
@@ -56,10 +58,10 @@ const schema = {
 };
 
 const validator = {
-  searchPermissions: validate(schema.searchPermissions, { statusCode: 422 }),
-  listPermissions: validate(schema.listPermissions, { statusCode: 422 }),
-  addPermissions: validate(schema.addPermissions, { statusCode: 422 }),
-  removePermissions: validate(schema.removePermissions, { statusCode: 422 }),
+  searchPermissions: validate(schema.searchPermissions),
+  listPermissions: validate(schema.listPermissions),
+  addPermissions: validate(schema.addPermissions),
+  removePermissions: validate(schema.removePermissions)
 };
 
 module.exports = validator;

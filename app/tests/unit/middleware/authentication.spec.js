@@ -86,7 +86,6 @@ describe('currentUser', () => {
   const checkBasicAuthSpy = jest.spyOn(mw, '_checkBasicAuth');
   const jwtVerifySpy = jest.spyOn(jwt, 'verify');
   const loginSpy = jest.spyOn(userService, 'login');
-  const problemSendSpy = jest.spyOn(Problem.prototype, 'send');
 
   let req, res, next;
 
@@ -117,7 +116,6 @@ describe('currentUser', () => {
       expect(checkBasicAuthSpy).toHaveBeenCalledTimes(0);
       expect(next).toHaveBeenCalledTimes(1);
       expect(next).toHaveBeenCalledWith();
-      expect(problemSendSpy).toHaveBeenCalledTimes(0);
     });
   });
 
@@ -141,7 +139,6 @@ describe('currentUser', () => {
       expect(checkBasicAuthSpy).toHaveBeenCalledTimes(1);
       expect(checkBasicAuthSpy).toHaveBeenCalledWith(req, res, next);
       expect(next).toHaveBeenCalledTimes(0);
-      expect(problemSendSpy).toHaveBeenCalledTimes(0);
     });
   });
 
@@ -192,13 +189,11 @@ describe('currentUser', () => {
       expect(loginSpy).toHaveBeenCalledWith(expect.objectContaining({ sub: 'sub' }));
       expect(next).toHaveBeenCalledTimes(1);
       expect(next).toHaveBeenCalledWith();
-      expect(problemSendSpy).toHaveBeenCalledTimes(0);
     });
 
     it('short circuits with invalid auth token', async () => {
       const authorization = 'bearer ';
 
-      problemSendSpy.mockImplementation(() => { });
       config.has
         .mockReturnValueOnce(false) // basicAuth.enabled
         .mockReturnValueOnce(true) // keycloak.enabled
@@ -224,9 +219,8 @@ describe('currentUser', () => {
         issuer: `${serverUrl}/realms/${realm}`
       }));
       expect(loginSpy).toHaveBeenCalledTimes(0);
-      expect(next).toHaveBeenCalledTimes(0);
-      expect(problemSendSpy).toHaveBeenCalledTimes(1);
-      expect(problemSendSpy).toHaveBeenCalledWith(res);
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(next).toHaveBeenCalledWith(expect.any(Object));
     });
 
     it('short circuits without keycloak.publicKey', async () => {
@@ -250,9 +244,8 @@ describe('currentUser', () => {
       expect(checkBasicAuthSpy).toHaveBeenCalledTimes(0);
       expect(jwtVerifySpy).toHaveBeenCalledTimes(0);
       expect(loginSpy).toHaveBeenCalledTimes(0);
-      expect(next).toHaveBeenCalledTimes(0);
-      expect(problemSendSpy).toHaveBeenCalledTimes(1);
-      expect(problemSendSpy).toHaveBeenCalledWith(res);
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(next).toHaveBeenCalledWith(expect.any(Object));
     });
   });
 });

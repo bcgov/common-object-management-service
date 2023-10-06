@@ -1,6 +1,5 @@
-const config = require('config');
 const crypto = require('crypto');
-const { Joi } = require('express-validation');
+const Joi = require('joi');
 const jestJoi = require('jest-joi');
 const { DownloadMode } = require('../../../src/components/constants');
 expect.extend(jestJoi.matchers);
@@ -96,17 +95,10 @@ describe('createObject', () => {
 
   describe('query', () => {
     describe('bucketId', () => {
+      const bucketId = schema.createObject.query.describe().keys.bucketId;
 
-      it.skip('is in schema when DB mode enabled', () => {
-        config.has.mockReturnValueOnce(true);
-        const bucketId = schema.createObject.query.describe().keys.bucketId;
+      it('is the expected schema', () => {
         expect(bucketId).toEqual(type.uuidv4.describe());
-      });
-
-      it.skip('is not in schema when DB mode not enabled', () => {
-        config.has.mockReturnValueOnce(false);
-        const bucketId = schema.createObject.query.describe().keys.bucketId;
-        expect(bucketId).toEqual(undefined);
       });
     });
 
@@ -396,8 +388,7 @@ describe('searchObjects', () => {
       }));
     });
 
-    // TODO: define expected schema
-    it.skip('enforces general metadata pattern', () => {
+    it('enforces general metadata pattern', () => {
       expect(headers.patterns).toEqual(expect.arrayContaining([
         expect.objectContaining({
           regex: '/^x-amz-meta-.{1,255}$/i',
@@ -407,7 +398,7 @@ describe('searchObjects', () => {
               expect.objectContaining({
                 name: 'min',
                 args: expect.objectContaining({
-                  limit: 0
+                  limit: 1
                 })
               }),
               expect.objectContaining({

@@ -97,7 +97,7 @@ const utils = {
       return data;
     } catch (err) {
       log.error(err.message, { function: 'getBucket' });
-      throw new Problem(404, { details: err.message });
+      throw new Problem(404, { detail: err.message });
     }
   },
 

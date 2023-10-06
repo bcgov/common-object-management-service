@@ -1,4 +1,3 @@
-const Problem = require('api-problem');
 const { NIL: SYSTEM_USER } = require('uuid');
 
 const mw = require('../../../src/middleware/authorization');
@@ -131,7 +130,6 @@ describe('_checkPermission', () => {
 
 describe('checkAppMode', () => {
   const getAppAuthModeSpy = jest.spyOn(utils, 'getAppAuthMode');
-  const problemSendSpy = jest.spyOn(Problem.prototype, 'send');
 
   let req, res, next;
 
@@ -161,23 +159,20 @@ describe('checkAppMode', () => {
   ])('should call next %i times given authMode %s and authType %s', (nextCount, mode, type) => {
     const sendCount = 1 - nextCount;
     getAppAuthModeSpy.mockReturnValue(mode);
-    problemSendSpy.mockImplementation(() => { });
     if (type) req.currentUser = { authType: type };
 
-    mw.checkAppMode(req, res, next);
+    const result = () => mw.checkAppMode(req, res, next);
+    if (sendCount) expect(result).toThrow();
+    else expect(result).not.toThrow();
 
     expect(getAppAuthModeSpy).toHaveBeenCalledTimes(1);
     expect(getAppAuthModeSpy).toHaveBeenCalledWith();
-    expect(problemSendSpy).toHaveBeenCalledTimes(sendCount);
-    if (sendCount) expect(problemSendSpy).toHaveBeenCalledWith(res);
     expect(next).toHaveBeenCalledTimes(nextCount);
   });
 });
 
-// TODO: Determine if storage call is still part of the injected object
 describe('currentObject', () => {
   const objectReadSpy = jest.spyOn(objectService, 'read');
-  // const storageListObjectVersionSpy = jest.spyOn(storageService, 'listObjectVersion');
 
   let req, res, next;
 
@@ -205,7 +200,6 @@ describe('currentObject', () => {
     const objectId = '1234';
     req.params = { objectId: objectId };
     objectReadSpy.mockImplementation(() => { throw new Error('test'); });
-    // storageListObjectVersionSpy.mockResolvedValue({});
 
     mw.currentObject(req, res, next);
 
@@ -219,7 +213,6 @@ describe('currentObject', () => {
   it('injects the current object based on the service results', async () => {
     const objectId = '1234';
     const testRecord = { a: 1 };
-    // const testStorage = { b: 2 };
     req.params = { objectId: objectId };
     objectReadSpy.mockResolvedValue(testRecord);
 
@@ -227,7 +220,6 @@ describe('currentObject', () => {
 
     expect(req.currentObject).toBeTruthy();
     expect(req.currentObject).toEqual(expect.objectContaining(testRecord));
-    // expect(req.currentObject).toEqual(expect.objectContaining(testStorage));
     expect(objectReadSpy).toHaveBeenCalledTimes(1);
     expect(objectReadSpy).toHaveBeenCalledWith(objectId);
     expect(next).toHaveBeenCalledTimes(1);
@@ -240,13 +232,10 @@ describe('hasPermission', () => {
   const getCurrentIdentitySpy = jest.spyOn(utils, 'getCurrentIdentity');
   const getCurrentUserIdSpy = jest.spyOn(userService, 'getCurrentUserId');
   const objSearchPermissionsSpy = jest.spyOn(objectPermissionService, 'searchPermissions');
-  const problemSendSpy = jest.spyOn(Problem.prototype, 'send');
 
   let req, res, next;
 
   beforeEach(() => {
-    problemSendSpy.mockImplementation(() => { });
-
     req = {};
     res = {};
     next = jest.fn();
@@ -258,18 +247,16 @@ describe('hasPermission', () => {
       [1, AuthMode.BASICAUTH],
       [0, AuthMode.OIDCAUTH],
       [0, AuthMode.FULLAUTH]
-    ])('should call next %i times given authMode %s', (nextCount, mode) => {
-      const sendCount = 1 - nextCount;
+    ])('should call next %i times given authMode %s', async (nextCount, mode) => {
       getAppAuthModeSpy.mockReturnValue(mode);
 
       const result = mw.hasPermission(Permissions.READ);
       expect(result).toBeInstanceOf(Function);
-      result(req, res, next);
+      await result(req, res, next);
 
-      expect(next).toHaveBeenCalledTimes(nextCount);
+      expect(next).toHaveBeenCalledTimes(1);
       if (nextCount) expect(next).toHaveBeenCalledWith();
-      expect(problemSendSpy).toHaveBeenCalledTimes(sendCount);
-      if (sendCount) expect(problemSendSpy).toHaveBeenCalledWith(res);
+      else expect(next).toHaveBeenCalledWith(expect.any(Object));
       expect(objSearchPermissionsSpy).toHaveBeenCalledTimes(0);
     });
   });
@@ -286,7 +273,6 @@ describe('hasPermission', () => {
       [0, AuthMode.OIDCAUTH],
       [0, AuthMode.FULLAUTH]
     ])('should call next %i times given authMode %s', async (nextCount, mode) => {
-      const sendCount = 1 - nextCount;
       getAppAuthModeSpy.mockReturnValue(mode);
       getCurrentUserIdSpy.mockResolvedValue(SYSTEM_USER);
       getCurrentIdentitySpy.mockReturnValue(SYSTEM_USER);
@@ -295,10 +281,9 @@ describe('hasPermission', () => {
       expect(result).toBeInstanceOf(Function);
       await result(req, res, next);
 
-      expect(next).toHaveBeenCalledTimes(nextCount);
+      expect(next).toHaveBeenCalledTimes(1);
       if (nextCount) expect(next).toHaveBeenCalledWith();
-      expect(problemSendSpy).toHaveBeenCalledTimes(sendCount);
-      if (sendCount) expect(problemSendSpy).toHaveBeenCalledWith(res);
+      else expect(next).toHaveBeenCalledWith(expect.any(Object));
       expect(objSearchPermissionsSpy).toHaveBeenCalledTimes(0);
     });
   });
@@ -323,9 +308,8 @@ describe('hasPermission', () => {
       expect(result).toBeInstanceOf(Function);
       await result(req, res, next);
 
-      expect(next).toHaveBeenCalledTimes(0);
-      expect(problemSendSpy).toHaveBeenCalledTimes(1);
-      expect(problemSendSpy).toHaveBeenCalledWith(res);
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(next).toHaveBeenCalledWith(expect.any(Object));
     });
   });
 
@@ -342,7 +326,6 @@ describe('hasPermission', () => {
       [0, AuthMode.OIDCAUTH],
       [1, AuthMode.FULLAUTH]
     ])('should call next %i times when authType BASIC and authMode %s', async (nextCount, mode) => {
-      const sendCount = 1 - nextCount;
       getAppAuthModeSpy.mockReturnValue(mode);
       checkPermissionSpy.mockResolvedValue(false);
       req.currentUser.authType = AuthType.BASIC;
@@ -351,10 +334,9 @@ describe('hasPermission', () => {
       expect(result).toBeInstanceOf(Function);
       await result(req, res, next);
 
-      expect(next).toHaveBeenCalledTimes(nextCount);
+      expect(next).toHaveBeenCalledTimes(1);
       if (nextCount) expect(next).toHaveBeenCalledWith();
-      expect(problemSendSpy).toHaveBeenCalledTimes(sendCount);
-      if (sendCount) expect(problemSendSpy).toHaveBeenCalledWith(res);
+      else expect(next).toHaveBeenCalledWith(expect.any(Object));
       expect(checkPermissionSpy).toHaveBeenCalledTimes(0);
     });
 
@@ -370,7 +352,6 @@ describe('hasPermission', () => {
       [0, true, Permissions.DELETE],
       [0, true, Permissions.MANAGE]
     ])('should call next %i times when public %s and permission %s', async (nextCount, isPublic, perm) => {
-      const sendCount = 1 - nextCount;
       getAppAuthModeSpy.mockReturnValue(AuthMode.OIDCAUTH);
       getCurrentUserIdSpy.mockResolvedValue(SYSTEM_USER);
       req.currentUser.authType = AuthType.OIDC;
@@ -380,10 +361,9 @@ describe('hasPermission', () => {
       expect(result).toBeInstanceOf(Function);
       await result(req, res, next);
 
-      expect(next).toHaveBeenCalledTimes(nextCount);
+      expect(next).toHaveBeenCalledTimes(1);
       if (nextCount) expect(next).toHaveBeenCalledWith();
-      expect(problemSendSpy).toHaveBeenCalledTimes(sendCount);
-      if (sendCount) expect(problemSendSpy).toHaveBeenCalledWith(res);
+      else expect(next).toHaveBeenCalledWith(expect.any(Object));
       expect(objSearchPermissionsSpy).toHaveBeenCalledTimes(0);
     });
   });
@@ -405,7 +385,6 @@ describe('hasPermission', () => {
       [0, AuthType.BEARER, SYSTEM_USER, [{ permCode: Permissions.UPDATE }]],
       [1, AuthType.BEARER, SYSTEM_USER, [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }]]
     ])('should call next %i times when authType %s, userId %o and have permissions %j', async (nextCount, type, userId, perms) => {
-      const sendCount = 1 - nextCount;
       const searchPermCount = +(type === AuthType.BEARER && !!userId);
       getAppAuthModeSpy.mockReturnValue(AuthMode.OIDCAUTH);
       getCurrentUserIdSpy.mockResolvedValue(userId);
@@ -418,10 +397,10 @@ describe('hasPermission', () => {
       expect(result).toBeInstanceOf(Function);
       await result(req, res, next);
 
-      expect(next).toHaveBeenCalledTimes(nextCount);
+      expect(next).toHaveBeenCalledTimes(1);
       if (nextCount) expect(next).toHaveBeenCalledWith();
-      expect(problemSendSpy).toHaveBeenCalledTimes(sendCount);
-      if (sendCount) expect(problemSendSpy).toHaveBeenCalledWith(res);
+      else expect(next).toHaveBeenCalledWith(expect.any(Object));
+
       expect(objSearchPermissionsSpy).toHaveBeenCalledTimes(searchPermCount);
       if (searchPermCount) {
         expect(objSearchPermissionsSpy).toHaveBeenCalledWith(expect.objectContaining({ objId: SYSTEM_USER }));
