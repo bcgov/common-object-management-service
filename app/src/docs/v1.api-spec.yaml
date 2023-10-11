@@ -1477,10 +1477,10 @@ components:
       description: >-
         An arbitrary metadata key/value pair. Must contain the x-amz-meta-
         prefix to be valid. Multiple metadata pairs can be defined. Keys must be
-        unique and will be converted to lowercase.
+        unique, contain no whitespace, and will be converted to lowercase.
       schema:
         type: string
-        maximum: 255
+        minimum: 1
         example:
           - x-amz-meta-foo
           - x-amz-meta-bar

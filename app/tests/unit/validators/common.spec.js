@@ -147,7 +147,7 @@ describe('type', () => {
     it('enforces general metadata pattern', () => {
       expect(model.patterns).toEqual(expect.arrayContaining([
         expect.objectContaining({
-          regex: '/^x-amz-meta-.{1,255}$/i',
+          regex: '/^x-amz-meta-\\S+$/i',
           rule: expect.objectContaining({
             type: 'string',
             rules: expect.arrayContaining([
@@ -155,12 +155,6 @@ describe('type', () => {
                 name: 'min',
                 args: expect.objectContaining({
                   limit: 1
-                })
-              }),
-              expect.objectContaining({
-                name: 'max',
-                args: expect.objectContaining({
-                  limit: 255
                 })
               })
             ])

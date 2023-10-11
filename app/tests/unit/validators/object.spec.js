@@ -391,7 +391,7 @@ describe('searchObjects', () => {
     it('enforces general metadata pattern', () => {
       expect(headers.patterns).toEqual(expect.arrayContaining([
         expect.objectContaining({
-          regex: '/^x-amz-meta-.{1,255}$/i',
+          regex: '/^x-amz-meta-\\S+$/i',
           rule: expect.objectContaining({
             type: 'string',
             rules: expect.arrayContaining([
@@ -399,12 +399,6 @@ describe('searchObjects', () => {
                 name: 'min',
                 args: expect.objectContaining({
                   limit: 1
-                })
-              }),
-              expect.objectContaining({
-                name: 'max',
-                args: expect.objectContaining({
-                  limit: 255
                 })
               })
             ])
