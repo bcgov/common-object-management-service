@@ -33,6 +33,9 @@ const logWrapper = (level, msg) => log.log(level, msg);
 module.exports = {
   client: 'pg',
   connection: {
+    // connectionString is highest priority to use. If left unspecified then connection
+    // details will be determined using the individual connection fields (host, port, etc)
+    connectionString: config.has('db.connectionString') ? config.get('db.connectionString') : undefined,
     host: config.get('db.host'),
     user: config.get('db.username'),
     password: config.get('db.password'),
