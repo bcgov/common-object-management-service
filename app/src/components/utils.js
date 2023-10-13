@@ -277,7 +277,7 @@ const utils = {
 
   /**
    * @function isAtPath
-   * Predicate function determining if the `path` is a member of the `prefix` path
+   * Predicate function determining if the `path` is a non-directory member of the `prefix` path
    * @param {string} prefix The base "folder"
    * @param {string} path The "file" to check
    * @returns {boolean} True if path is member of prefix. False in all other cases.
@@ -285,6 +285,7 @@ const utils = {
   isAtPath(prefix, path) {
     if (typeof prefix !== 'string' || typeof path !== 'string') return false;
     if (prefix === path) return true; // Matching strings are always at the at the path
+    if (path.endsWith(DELIMITER)) return false; // Trailing slashes references the folder
 
     const pathParts = path.split(DELIMITER).filter(part => part);
     const prefixParts = prefix.split(DELIMITER).filter(part => part);

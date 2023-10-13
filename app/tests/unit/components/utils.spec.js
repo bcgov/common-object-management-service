@@ -396,9 +396,11 @@ describe('isAtPath', () => {
     [true, '/foo', 'foo/bar'],
     [true, '/foo', '/foo/bar'],
     [true, 'a/b', 'a/b/foo.jpg'],
+    [false, 'a', 'a/b/'], // Trailing slashes references the folder and should be excluded
     [false, 'a/b', 'a/b/'], // Trailing slashes references the folder and should be excluded
     [false, 'a/b', 'a/b/z/deep.jpg'],
     [false, 'a/b', 'a/b/y/z/deep.jpg'],
+    [false, 'a/b', 'a/b/c/'], // Trailing slashes references the folder and should be excluded
     [false, 'a/b/c', 'a/b/c/'], // Trailing slashes references the folder and should be excluded
     [false, 'a/b/c', 'a/bar.png'],
     [false, 'c/b/a', 'a/b/c/bar.png'],
