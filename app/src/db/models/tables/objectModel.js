@@ -103,21 +103,13 @@ class ObjectModel extends Timestamps(Model) {
             query.modifyGraph('version', builder => {
               builder
                 .select('version.*')
-                .distinctOn('version.objectId')
-                .orderBy([
-                  { column: 'version.objectId' },
-                  { column: 'version.createdAt', order: 'desc' }
-                ]);
+                .where('version.isLatest', value);
             });
           } else {
             // TODO: Consider modifying graph to join on all versions except latest
             const subquery = Version.query()
               .select('version.id')
-              .distinctOn('objectId')
-              .orderBy([
-                { column: 'objectId' },
-                { column: 'version.createdAt', order: 'desc' }
-              ]);
+              .where('version.isLatest', true);
             query.whereNotIn('version.id', builder => {
               builder.intersect(subquery);
             });
