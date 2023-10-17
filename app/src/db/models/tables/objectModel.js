@@ -100,25 +100,18 @@ class ObjectModel extends Timestamps(Model) {
 
           query.withGraphJoined('version');
           if (value) {
+            // join on version where isLatest = true
             query.modifyGraph('version', builder => {
               builder
                 .select('version.*')
-                .distinctOn('version.objectId')
-                .orderBy([
-                  { column: 'version.objectId' },
-                  { column: 'version.createdAt', order: 'desc' }
-                ]);
+                .where('version.isLatest', true);
             });
           } else {
-            // TODO: Consider modifying graph to join on all versions except latest
+            // join on ALL versions where isLatest = false
             const subquery = Version.query()
               .select('version.id')
-              .distinctOn('objectId')
-              .orderBy([
-                { column: 'objectId' },
-                { column: 'version.createdAt', order: 'desc' }
-              ]);
-            query.whereNotIn('version.id', builder => {
+              .where('version.isLatest', false);
+            query.whereIn('version.id', builder => {
               builder.intersect(subquery);
             });
           }
