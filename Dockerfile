@@ -1,34 +1,20 @@
-# FROM docker.io/node:16.15.0-alpine # Last known working alpine image
+FROM docker.io/node:18.18.2-alpine
 
-# RedHat Image Catalog references
-# https://catalog.redhat.com/software/containers/ubi9/nodejs-18/62e8e7ed22d1d3c2dfe2ca01
-# https://catalog.redhat.com/software/containers/ubi9/nodejs-18-minimal/62e8e919d4f57d92a9dee838
-
-#
-# Build the application
-#
-FROM registry.access.redhat.com/ubi9/nodejs-18:1-70.1695740477 as builder
-
-ENV NO_UPDATE_NOTIFIER=true
-
-USER 0
-COPY . /tmp/src
-WORKDIR /tmp/src/app
-RUN chown -R 1001:0 /tmp/src
-
-USER 1001
-RUN npm ci --omit=dev
-
-#
-# Create the final container image
-#
-FROM registry.access.redhat.com/ubi9/nodejs-18-minimal:1-74.1695740475
-
-ENV APP_PORT=3000 \
+ARG APP_ROOT=/opt/app-root/src
+ENV APP_PORT=8080 \
     NO_UPDATE_NOTIFIER=true
+WORKDIR ${APP_ROOT}
 
-COPY --from=builder /tmp/src ${HOME}
-WORKDIR ${HOME}/app
+# NPM Permission Fix
+RUN mkdir -p /.npm
+RUN chown -R 1001:0 /.npm
+
+# Install Application
+COPY . ${APP_ROOT}
+RUN chown -R 1001:0 ${APP_ROOT}
+USER 1001
+WORKDIR ${APP_ROOT}/app
+RUN npm ci --omit=dev
 
 EXPOSE ${APP_PORT}
 CMD ["npm", "run", "start"]
