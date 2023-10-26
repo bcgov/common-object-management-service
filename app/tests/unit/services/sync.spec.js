@@ -825,7 +825,8 @@ describe('syncTags', () => {
   const comsVersion = {
     id: validUuidv4,
     objectId: validUuidv4,
-    s3VersionId: validUuidv4
+    s3VersionId: validUuidv4,
+    isLatest: true
   };
 
   beforeEach(() => {
@@ -898,7 +899,6 @@ describe('syncTags', () => {
         Key: 'coms-id',
         Value: comsVersion.objectId
       }]),
-      s3VersionId: comsVersion.s3VersionId,
       bucketId: bucketId,
     }));
     expect(versionTrx.commit).toHaveBeenCalledTimes(1);
@@ -940,7 +940,75 @@ describe('syncTags', () => {
         Key: 'coms-id',
         Value: comsVersion.objectId
       }]),
+      bucketId: bucketId,
+    }));
+    expect(versionTrx.commit).toHaveBeenCalledTimes(1);
+  });
+
+  it('should not write coms-id tag when coms version is not latest', async () => {
+    fetchTagsForVersionSpy.mockResolvedValue([{}]);
+    getObjectTaggingSpy.mockResolvedValue({});
+    putObjectTaggingSpy.mockResolvedValue({});
+
+    comsVersion.isLatest = false;
+    const result = await service.syncTags(comsVersion, path, bucketId);
+    // reset for other tests
+    comsVersion.isLatest = true;
+
+    expect(result).toBeTruthy();
+    expect(Array.isArray(result)).toBeTruthy();
+    expect(result).toHaveLength(0);
+
+    expect(Version.startTransaction).toHaveBeenCalledTimes(1);
+    expect(associateTagsSpy).toHaveBeenCalledTimes(0);
+    expect(dissociateTagsSpy).toHaveBeenCalledTimes(0);
+    expect(fetchTagsForVersionSpy).toHaveBeenCalledTimes(1);
+    expect(fetchTagsForVersionSpy).toHaveBeenCalledWith(expect.objectContaining({
+      versionIds: comsVersion.id
+    }), expect.any(Object));
+    expect(getObjectTaggingSpy).toHaveBeenCalledTimes(1);
+    expect(getObjectTaggingSpy).toHaveBeenCalledWith(expect.objectContaining({
+      filePath: path,
       s3VersionId: comsVersion.s3VersionId,
+      bucketId: bucketId
+    }));
+    expect(getSpy).toHaveBeenCalledTimes(0);
+    expect(putObjectTaggingSpy).toHaveBeenCalledTimes(0);
+    expect(versionTrx.commit).toHaveBeenCalledTimes(1);
+  });
+
+  it('should write coms-id tag when coms version is latest', async () => {
+    fetchTagsForVersionSpy.mockResolvedValue([{}]);
+    getObjectTaggingSpy.mockResolvedValue({});
+    putObjectTaggingSpy.mockResolvedValue({});
+
+    const result = await service.syncTags(comsVersion, path, bucketId);
+
+    expect(result).toBeTruthy();
+    expect(Array.isArray(result)).toBeTruthy();
+    expect(result).toHaveLength(1);
+
+    expect(Version.startTransaction).toHaveBeenCalledTimes(1);
+    expect(associateTagsSpy).toHaveBeenCalledTimes(1);
+    expect(dissociateTagsSpy).toHaveBeenCalledTimes(0);
+    expect(fetchTagsForVersionSpy).toHaveBeenCalledTimes(1);
+    expect(fetchTagsForVersionSpy).toHaveBeenCalledWith(expect.objectContaining({
+      versionIds: comsVersion.id
+    }), expect.any(Object));
+    expect(getObjectTaggingSpy).toHaveBeenCalledTimes(1);
+    expect(getObjectTaggingSpy).toHaveBeenCalledWith(expect.objectContaining({
+      filePath: path,
+      s3VersionId: comsVersion.s3VersionId,
+      bucketId: bucketId
+    }));
+    expect(getSpy).toHaveBeenCalledTimes(0);
+    expect(putObjectTaggingSpy).toHaveBeenCalledTimes(1);
+    expect(putObjectTaggingSpy).toHaveBeenCalledWith(expect.objectContaining({
+      filePath: path,
+      tags: expect.arrayContaining([{
+        Key: 'coms-id',
+        Value: comsVersion.objectId
+      }]),
       bucketId: bucketId,
     }));
     expect(versionTrx.commit).toHaveBeenCalledTimes(1);
