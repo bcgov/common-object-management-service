@@ -328,17 +328,25 @@ const service = {
       const comsTags = comsTagsForVersion[0]?.tagset ?? [];
       // S3 Tags
       const s3Tags = toLowerKeys(s3TagsForVersion?.TagSet ?? []);
-
-      // Ensure `coms-id` tag exists on this version in S3
-      if (s3Tags.length < 10 && !s3Tags.find(s3T => s3T.key === 'coms-id')) {
+      /**
+       * Add coms-id tag to latest version in S3 if not already present
+       * NOTE: For a sync job the _deriveObjectId() function will have already added
+       * the coms-id to latest version.
+       * TODO: check if this version is still also the latest on corresponding version in S3
+       */
+      if (comsVersion.isLatest && s3Tags.length < 10 && !s3Tags.find(s3T => s3T.key === 'coms-id')) {
+        /**
+         * NOTE: adding tags to a specified version (passing a `VersionId` parameter) will affect `Last Modified`
+         * attribute of multiple versions on some s3 storage providors including Dell ECS
+         */
         await storageService.putObjectTagging({
           filePath: path,
           tags: (s3TagsForVersion?.TagSet ?? []).concat([{
             Key: 'coms-id',
             Value: comsVersion.objectId
           }]),
-          s3VersionId: comsVersion.s3VersionId,
           bucketId: bucketId,
+          // s3VersionId: comsVersion.s3VersionId,
         });
         // add to our arrays for comaprison
         s3Tags.push({ key: 'coms-id', value: comsVersion.objectId });
