@@ -372,7 +372,7 @@ describe('deleteObject', () => {
 
     await controller.deleteObject(req, res, next);
     expect(versionDeleteSpy).toHaveBeenCalledTimes(1);
-    expect(versionDeleteSpy).toHaveBeenCalledWith('xyz-789', '123', '456');
+    expect(versionDeleteSpy).toHaveBeenCalledWith('xyz-789', '123');
   });
 
   it('should delete object if object has no other remaining versions', async () => {

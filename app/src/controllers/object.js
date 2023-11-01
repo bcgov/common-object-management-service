@@ -463,11 +463,11 @@ const controller = {
       // if request is to delete a version
       if (data.s3VersionId) {
         // delete version in DB
-        await versionService.delete(objId, s3Response.VersionId, userId);
+        await versionService.delete(objId, s3Response.VersionId);
         // prune tags amd metadata
         await metadataService.pruneOrphanedMetadata();
         await tagService.pruneOrphanedTags();
-        // if other versions in DB, delete object record
+        // if no other versions in DB, delete object record
         const remainingVersions = await versionService.list(objId);
         if (remainingVersions.length === 0) await objectService.delete(objId);
       } else { // else deleting the object
