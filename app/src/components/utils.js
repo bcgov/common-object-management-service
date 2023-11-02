@@ -250,10 +250,12 @@ const utils = {
   /**
    * @function getUniqueObjects
    * @param {object[]} arr array of objects
+   * @param {string} key key of object property whose value we are comparing
    * @returns array of unique objects based on value of a given property
    */
-  getUniqueObjects(arr, differentiator) {
-    return [...new Set(arr.map(item => item[differentiator]))];
+  getUniqueObjects(array, key) {
+    return [...new Map(array.map(item =>
+      [item[key], item])).values()];
   },
 
   /**

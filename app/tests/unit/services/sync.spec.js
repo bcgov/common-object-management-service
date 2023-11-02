@@ -15,11 +15,9 @@ jest.mock('../../../src/db/models/tables/version', () => ({
   query: jest.fn(),
   startTransaction: jest.fn(),
   then: jest.fn(),
-  returning: jest.fn(),
-  throwIfNotFound: jest.fn(),
   where: jest.fn(),
+  whereIn: jest.fn(),
   whereNotNull: jest.fn(),
-  whereNotIn: jest.fn(),
 }));
 
 const {
@@ -589,7 +587,7 @@ describe('syncVersions', () => {
 
     it('should update existing version if mimeType has changed', async () => {
       headObjectSpy.mockResolvedValue({ ContentType: 'application/octet-stream' });
-      listSpy.mockResolvedValue([{ etag: 'etag', mimeType: 'text/plain' }]);
+      listSpy.mockResolvedValue([{ etag: 'etag', mimeType: 'text/plain', s3VersionId: null }]);
       listAllObjectVersionsSpy.mockResolvedValue({
         DeleteMarkers: [],
         Versions: [{ ETag: 'etag', IsLatest: true, VersionId: 'null' }]
@@ -629,7 +627,7 @@ describe('syncVersions', () => {
 
     it('should update existing version if etag has changed', async () => {
       headObjectSpy.mockResolvedValue({ ContentType: 'application/octet-stream' });
-      listSpy.mockResolvedValue([{ etag: 'old', mimeType: 'application/octet-stream' }]);
+      listSpy.mockResolvedValue([{ etag: 'old', mimeType: 'application/octet-stream', s3VersionId: null }]);
       listAllObjectVersionsSpy.mockResolvedValue({
         DeleteMarkers: [],
         Versions: [{ ETag: 'new', IsLatest: true, VersionId: 'null' }]
@@ -669,7 +667,7 @@ describe('syncVersions', () => {
 
     it('should update nothing when version record not modified', async () => {
       headObjectSpy.mockResolvedValue({ ContentType: 'application/octet-stream' });
-      listSpy.mockResolvedValue([{ etag: 'etag', mimeType: 'application/octet-stream' }]);
+      listSpy.mockResolvedValue([{ etag: 'etag', mimeType: 'application/octet-stream', s3VersionId: null }]);
       listAllObjectVersionsSpy.mockResolvedValue({
         DeleteMarkers: [],
         Versions: [{ ETag: 'etag', IsLatest: true, VersionId: 'null' }]

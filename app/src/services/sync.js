@@ -208,25 +208,26 @@ const service = {
         .concat(s3VersionsRaw.Versions);
 
       // delete versions from COMS that are not in S3
-      // get unique coms versions
-      const uniqueComsVersionIds = getUniqueObjects(comsVersions, 's3VersionId').map(v => v.id);
-      console.log('uniqueComsVersionIds', uniqueComsVersionIds);
+      // get list of unique coms versions
+      const uniqueCVIds = getUniqueObjects(comsVersions, 's3VersionId').map(v => v.id);
 
-      // if comsVersions contains versions (not in s3 OR not in uniqueComsVersionIds)
-      const comsVersionsToDelete = comsVersions.filter(function(cv) {
-        const notInS3Versions = !s3Versions.some(s3v => (s3v.VersionId === cv.s3VersionId));
-        const notInUnique = !uniqueComsVersionIds.some(uv => (uv.id === cv.id));
-        return notInS3Versions || notInUnique;
-      })
-        .map(cv => cv.id);
+      // get COMS versions that are not in S3 (matching on s3VersionId) OR not
+      // in list of unique COMS versions (matching on id)
+      const cVsToDelete = comsVersions.filter(function(cv) {
+        const notInS3 = !s3Versions.some(s3v => (s3v.VersionId === String(cv.s3VersionId)));
+        const isDuplicate = !uniqueCVIds.includes(cv.id);
+        return notInS3 || isDuplicate;
+      });
 
-      if(comsVersionsToDelete?.length > 0){
+      if(cVsToDelete?.length > 0){
         await Version.query(trx)
           .delete()
           .where('objectId', comsObject.id)
           .whereNotNull('s3VersionId')
-          .whereIn('id', comsVersionsToDelete);
+          .whereIn('id', cVsToDelete.map(cv => cv.id));
       }
+      // delete versions from comsVersions array for further comparisons
+      const comsVersionsToKeep = comsVersions.filter(cv => !cVsToDelete.some(v => cv.id === v.id));
 
       // Add and Update versions in COMS
       const response = await Promise.all(s3Versions.map(async s3Version => {
@@ -268,12 +269,15 @@ const service = {
         }
         // S3 Object is in versioned bucket (ie: if VersionId is not 'null')
         else {
-          const comsVersion = comsVersions.find(cv => cv.s3VersionId === s3Version.VersionId);
+          const comsVersion = comsVersionsToKeep.find(cv => cv.s3VersionId === s3Version.VersionId);
+
           if (comsVersion) { // Version is in COMS
-            // set isLatest in COMS db
-            return s3Version.IsLatest ?
-              { modified: true, version: await versionService.updateIsLatest(comsObject.id, trx) } :
-              { version: comsVersion };
+            if (s3Version.IsLatest) { // Patch isLatest flags if changed
+              const updated = await versionService.updateIsLatest(comsObject.id, trx);
+              return { modified: true, version: updated };
+            } else { // Version record not modified
+              return { version: comsVersion };
+            }
           } else { // Version is not in COMS
             const mimeType = s3Version.DeleteMarker
               ? undefined // Will default to 'application/octet-stream'
@@ -322,7 +326,7 @@ const service = {
       trx = etrx ? etrx : await Version.startTransaction();
       let response = [];
 
-      // Fetch COMS Object record if necessary
+      // Fetch COMS version record if necessary
       const comsVersion = typeof version === 'object' ? version : await versionService.get({ versionId: version }, trx);
 
       // Short circuit if version is a delete marker
@@ -376,7 +380,9 @@ const service = {
       // Associate new S3 Tags
       const newTags = [];
       for (const s3Tag of s3Tags) {
-        if (!comsTags.some(comsT => comsT.key === s3Tag.key && comsT.value === s3Tag.value)) {
+        if (!comsTags.some(comsT => {
+          return (comsT.key === s3Tag.key && comsT.value === s3Tag.value);
+        })) {
           newTags.push(s3Tag);
         } else {
           response.push(s3Tag);
