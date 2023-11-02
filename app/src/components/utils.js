@@ -248,6 +248,15 @@ const utils = {
   },
 
   /**
+   * @function getUniqueObjects
+   * @param {object[]} arr array of objects
+   * @returns array of unique objects based on value of a given property
+   */
+  getUniqueObjects(arr, differentiator) {
+    return [...new Set(arr.map(item => item[differentiator]))];
+  },
+
+  /**
    * @function groupByObject
    * Re-structure array of nested objects
    * @see {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce#grouping_objects_by_a_property}

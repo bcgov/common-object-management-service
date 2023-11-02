@@ -4,7 +4,7 @@ const log = require('../components/log')(module.filename);
 const utils = require('../db/models/utils');
 
 const { ObjectModel, Version } = require('../db/models');
-const { getKeyValue, toLowerKeys } = require('../components/utils');
+const { getKeyValue, getUniqueObjects, toLowerKeys } = require('../components/utils');
 
 const metadataService = require('./metadata');
 const objectService = require('./object');
@@ -208,23 +208,24 @@ const service = {
         .concat(s3VersionsRaw.Versions);
 
       // delete versions from COMS that are not in S3
-      // if array length of coms versions is longer than length of s3 versions
-      if(comsVersions.length > s3Versions.length){
-        // only keep first of duplicates
-        const uniqueComsVersions = comsVersions.filter((obj, index) =>
-          comsVersions.findIndex((item) => item.s3VersionId === obj.s3VersionId) === index
-        );
+      // get unique coms versions
+      const uniqueComsVersionIds = getUniqueObjects(comsVersions, 's3VersionId').map(v => v.id);
+      console.log('uniqueComsVersionIds', uniqueComsVersionIds);
 
+      // if comsVersions contains versions (not in s3 OR not in uniqueComsVersionIds)
+      const comsVersionsToDelete = comsVersions.filter(function(cv) {
+        const notInS3Versions = !s3Versions.some(s3v => (s3v.VersionId === cv.s3VersionId));
+        const notInUnique = !uniqueComsVersionIds.some(uv => (uv.id === cv.id));
+        return notInS3Versions || notInUnique;
+      })
+        .map(cv => cv.id);
+
+      if(comsVersionsToDelete?.length > 0){
         await Version.query(trx)
           .delete()
           .where('objectId', comsObject.id)
-          .whereNotNull('s3VersionId',)
-          .where(q =>
-            q.whereNotIn('id', uniqueComsVersions.map(v => v.id))
-              .orWhereNotIn('s3VersionId', s3Versions.map(v => v.VersionId)
-              ))
-          .returning('*')
-          .throwIfNotFound();
+          .whereNotNull('s3VersionId')
+          .whereIn('id', comsVersionsToDelete);
       }
 
       // Add and Update versions in COMS
