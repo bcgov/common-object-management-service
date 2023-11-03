@@ -254,8 +254,7 @@ const utils = {
    * @returns array of unique objects based on value of a given property
    */
   getUniqueObjects(array, key) {
-    return [...new Map(array.map(item =>
-      [item[key], item])).values()];
+    return [...new Map(array.map(item => [item[key], item])).values()];
   },
 
   /**

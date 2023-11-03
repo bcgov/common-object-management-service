@@ -108,8 +108,6 @@ const service = {
   /**
    * @function delete
    * Delete a version record of an object
-   * Note: For consistency, it is recommended to sync isLatest with S3 by calling
-   * `service.updateIsLatest()` after invoking this function
    * @param {string} objId The object uuid
    * @param {string} s3VersionId The version ID or null if deleting an object
    * @param {string} [userId=undefined] An optional uuid of a user
@@ -284,7 +282,7 @@ const service = {
    * Determines latest by checking S3 and ensures only one version has isLatest: true
    * @param {string} objectId COMS object uuid
    * @param {object} [etrx=undefined] An optional Objection Transaction object
-   * @returns {object} Version model of provided version in db
+   * @returns {object} Version model of latest version
    */
   updateIsLatest: async (objectId, etrx = undefined) => {
     // TODO: consider having accepting a `userId` argument for version.updatedBy when a version becomes 'latest'

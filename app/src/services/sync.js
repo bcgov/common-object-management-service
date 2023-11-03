@@ -213,13 +213,13 @@ const service = {
 
       // get COMS versions that are not in S3 (matching on s3VersionId) OR not
       // in list of unique COMS versions (matching on id)
-      const cVsToDelete = comsVersions.filter(function(cv) {
+      const cVsToDelete = comsVersions.filter(cv => {
         const notInS3 = !s3Versions.some(s3v => (s3v.VersionId === String(cv.s3VersionId)));
         const isDuplicate = !uniqueCVIds.includes(cv.id);
         return notInS3 || isDuplicate;
       });
 
-      if(cVsToDelete?.length > 0){
+      if(cVsToDelete.length){
         await Version.query(trx)
           .delete()
           .where('objectId', comsObject.id)
@@ -380,9 +380,7 @@ const service = {
       // Associate new S3 Tags
       const newTags = [];
       for (const s3Tag of s3Tags) {
-        if (!comsTags.some(comsT => {
-          return (comsT.key === s3Tag.key && comsT.value === s3Tag.value);
-        })) {
+        if (!comsTags.some(comsT => comsT.key === s3Tag.key && comsT.value === s3Tag.value)) {
           newTags.push(s3Tag);
         } else {
           response.push(s3Tag);
