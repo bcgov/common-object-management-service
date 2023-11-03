@@ -103,7 +103,11 @@ const controller = {
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
       // get source S3 VersionId
-      const sourceS3VersionId = await getS3VersionId(req.query.s3VersionId, addDashesToUuid(req.query.versionId), objId);
+      const sourceS3VersionId = await getS3VersionId(
+        req.query.s3VersionId,
+        addDashesToUuid(req.query.versionId),
+        objId
+      );
 
       // get version from S3
       const source = await storageService.headObject({
@@ -115,7 +119,11 @@ const controller = {
         throw new Error('Cannot copy an object larger than 5GB');
       }
       // get existing tags on source object, eg: { 'animal': 'bear', colour': 'black' }
-      const sourceObject = await storageService.getObjectTagging({ filePath: objPath, s3VersionId: sourceS3VersionId, bucketId: bucketId });
+      const sourceObject = await storageService.getObjectTagging({
+        filePath: objPath,
+        s3VersionId: sourceS3VersionId,
+        bucketId: bucketId
+      });
       const sourceTags = Object.assign({},
         ...(sourceObject.TagSet?.map(item => ({ [item.Key]: item.Value })) ?? [])
       );

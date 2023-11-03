@@ -17,7 +17,8 @@ const utils = {
    */
   addDashesToUuid(str) {
     if ((typeof str === 'string' || str instanceof String) && str.length === 32) {
-      return `${str.slice(0, 8)}-${str.slice(8, 12)}-${str.slice(12, 16)}-${str.slice(16, 20)}-${str.slice(20)}`.toLowerCase();
+      return `${str.slice(0, 8)}-${str.slice(8, 12)}-${str.slice(12, 16)}-${str.slice(16, 20)}-${str.slice(20)}`
+        .toLowerCase();
     }
     else return str;
   },

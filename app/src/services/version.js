@@ -292,8 +292,13 @@ const service = {
 
       // get VersionId of latest version in S3
       const object = await objectService.read(objectId, trx);
-      const s3Versions = await storageService.listAllObjectVersions({ filePath: object.path, bucketId: object.bucketId });
-      const latestS3VersionId = s3Versions.DeleteMarkers.concat(s3Versions.Versions).filter((v) => v.IsLatest)[0].VersionId;
+      const s3Versions = await storageService.listAllObjectVersions({
+        filePath: object.path,
+        bucketId: object.bucketId
+      });
+      const latestS3VersionId = s3Versions.DeleteMarkers
+        .concat(s3Versions.Versions)
+        .filter((v) => v.IsLatest)[0].VersionId;
 
       // get same version from COMS db
       const current = await Version.query(trx)
