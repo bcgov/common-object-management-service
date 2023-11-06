@@ -1,6 +1,9 @@
 const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 const { Version } = require('../db/models');
 
+const objectService = require('./object');
+const storageService = require('./storage');
+
 /**
  * The Version DB Service
  */
@@ -112,7 +115,7 @@ const service = {
    * @returns {Promise<integer>} The number of remaining versions in db after the delete
    * @throws The error encountered upon db transaction failure
    */
-  delete: async (objId, s3VersionId, userId = undefined, etrx = undefined) => {
+  delete: async (objId, s3VersionId, etrx = undefined) => {
     let trx;
     try {
       trx = etrx ? etrx : await Version.startTransaction();
@@ -125,9 +128,7 @@ const service = {
         .returning('*')
         .throwIfNotFound();
 
-      // sync other versions with isLatest
-      const { syncVersions } = require('./sync');
-      await syncVersions(objId, userId, trx);
+      await service.updateIsLatest(objId, trx);
 
       if (!etrx) await trx.commit();
       return Promise.resolve(response);
@@ -277,30 +278,41 @@ const service = {
 
   /**
    * @function updateIsLatest
-   * Set specified version as latest in COMS db
-   * and ensures only one version has isLatest: true
-   * @param {string} versionId COMS version uuid
+   * Set version as latest in COMS db.
+   * Determines latest by checking S3 and ensures only one version has isLatest: true
+   * @param {string} objectId COMS object uuid
    * @param {object} [etrx=undefined] An optional Objection Transaction object
-   * @returns {object} Version model of provided version in db
+   * @returns {object} Version model of latest version
    */
-  updateIsLatest: async (versionId, etrx = undefined) => {
+  updateIsLatest: async (objectId, etrx = undefined) => {
     // TODO: consider having accepting a `userId` argument for version.updatedBy when a version becomes 'latest'
     let trx;
     try {
       trx = etrx ? etrx : await Version.startTransaction();
 
-      const current = await Version.query(trx)
-        .findById(versionId)
-        .throwIfNotFound();
+      // get VersionId of latest version in S3
+      const object = await objectService.read(objectId, trx);
+      const s3Versions = await storageService.listAllObjectVersions({
+        filePath: object.path,
+        bucketId: object.bucketId
+      });
+      const latestS3VersionId = s3Versions.DeleteMarkers
+        .concat(s3Versions.Versions)
+        .filter((v) => v.IsLatest)[0].VersionId;
 
+      // get same version from COMS db
+      const current = await Version.query(trx)
+        .first()
+        .where({ objectId: objectId, s3VersionId: latestS3VersionId })
+        .throwIfNotFound();
       let updated;
-      // if the version is not already marked as isLatest
+      // update as latest if not already and fetch
       if (!current.isLatest) {
-        // update this version as latest and fetch
         updated = await Version.query(trx)
-          .updateAndFetchById(versionId, { isLatest: true });
+          .updateAndFetchById(current.id, { isLatest: true });
       }
-      await service.removeDuplicateLatest(versionId, current.objectId, trx);
+      // set other versions in COMS db to isLatest=false
+      await service.removeDuplicateLatest(current.id, current.objectId, trx);
 
       if (!etrx) await trx.commit();
       return Promise.resolve(updated ?? current);

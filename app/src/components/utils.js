@@ -17,7 +17,8 @@ const utils = {
    */
   addDashesToUuid(str) {
     if ((typeof str === 'string' || str instanceof String) && str.length === 32) {
-      return `${str.slice(0, 8)}-${str.slice(8, 12)}-${str.slice(12, 16)}-${str.slice(16, 20)}-${str.slice(20)}`.toLowerCase();
+      return `${str.slice(0, 8)}-${str.slice(8, 12)}-${str.slice(12, 16)}-${str.slice(16, 20)}-${str.slice(20)}`
+        .toLowerCase();
     }
     else return str;
   },
@@ -245,6 +246,16 @@ const utils = {
       }
     }
     return result;
+  },
+
+  /**
+   * @function getUniqueObjects
+   * @param {object[]} arr array of objects
+   * @param {string} key key of object property whose value we are comparing
+   * @returns array of unique objects based on value of a given property
+   */
+  getUniqueObjects(array, key) {
+    return [...new Map(array.map(item => [item[key], item])).values()];
   },
 
   /**

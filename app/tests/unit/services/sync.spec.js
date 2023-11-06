@@ -11,8 +11,13 @@ jest.mock('../../../src/db/models/tables/objectModel', () => ({
 
 const versionTrx = trxBuilder();
 jest.mock('../../../src/db/models/tables/version', () => ({
+  delete: jest.fn(),
+  query: jest.fn(),
   startTransaction: jest.fn(),
-  then: jest.fn()
+  then: jest.fn(),
+  where: jest.fn(),
+  whereIn: jest.fn(),
+  whereNotNull: jest.fn(),
 }));
 
 const {
@@ -430,7 +435,6 @@ describe('syncObject', () => {
 
 describe('syncVersions', () => {
   const createSpy = jest.spyOn(versionService, 'create');
-  const deleteSpy = jest.spyOn(versionService, 'delete');
   const listSpy = jest.spyOn(versionService, 'list');
   const listAllObjectVersionsSpy = jest.spyOn(storageService, 'listAllObjectVersions');
   const readSpy = jest.spyOn(objectService, 'read');
@@ -445,7 +449,6 @@ describe('syncVersions', () => {
 
   beforeEach(() => {
     createSpy.mockReset();
-    deleteSpy.mockReset();
     headObjectSpy.mockReset();
     listSpy.mockReset();
     listAllObjectVersionsSpy.mockReset();
@@ -456,7 +459,6 @@ describe('syncVersions', () => {
 
   afterAll(() => {
     createSpy.mockRestore();
-    deleteSpy.mockRestore();
     listSpy.mockRestore();
     listAllObjectVersionsSpy.mockRestore();
     readSpy.mockRestore();
@@ -484,7 +486,7 @@ describe('syncVersions', () => {
 
       expect(Version.startTransaction).toHaveBeenCalledTimes(1);
       expect(createSpy).toHaveBeenCalledTimes(2);
-      expect(deleteSpy).toHaveBeenCalledTimes(0);
+      expect(Version.delete).toHaveBeenCalledTimes(0);
       expect(headObjectSpy).toHaveBeenCalledTimes(1);
       expect(headObjectSpy).toHaveBeenCalledWith(expect.objectContaining({
         filePath: comsObject.path,
@@ -522,7 +524,7 @@ describe('syncVersions', () => {
 
       expect(Version.startTransaction).toHaveBeenCalledTimes(1);
       expect(createSpy).toHaveBeenCalledTimes(2);
-      expect(deleteSpy).toHaveBeenCalledTimes(0);
+      expect(Version.delete).toHaveBeenCalledTimes(0);
       expect(headObjectSpy).toHaveBeenCalledTimes(1);
       expect(headObjectSpy).toHaveBeenCalledWith(expect.objectContaining({
         filePath: comsObject.path,
@@ -564,7 +566,7 @@ describe('syncVersions', () => {
 
       expect(Version.startTransaction).toHaveBeenCalledTimes(1);
       expect(createSpy).toHaveBeenCalledTimes(1);
-      expect(deleteSpy).toHaveBeenCalledTimes(0);
+      expect(Version.delete).toHaveBeenCalledTimes(0);
       expect(headObjectSpy).toHaveBeenCalledTimes(1);
       expect(headObjectSpy).toHaveBeenCalledWith(expect.objectContaining({
         filePath: comsObject.path,
@@ -585,7 +587,7 @@ describe('syncVersions', () => {
 
     it('should update existing version if mimeType has changed', async () => {
       headObjectSpy.mockResolvedValue({ ContentType: 'application/octet-stream' });
-      listSpy.mockResolvedValue([{ etag: 'etag', mimeType: 'text/plain' }]);
+      listSpy.mockResolvedValue([{ etag: 'etag', mimeType: 'text/plain', s3VersionId: null }]);
       listAllObjectVersionsSpy.mockResolvedValue({
         DeleteMarkers: [],
         Versions: [{ ETag: 'etag', IsLatest: true, VersionId: 'null' }]
@@ -604,7 +606,7 @@ describe('syncVersions', () => {
 
       expect(Version.startTransaction).toHaveBeenCalledTimes(1);
       expect(createSpy).toHaveBeenCalledTimes(0);
-      expect(deleteSpy).toHaveBeenCalledTimes(0);
+      expect(Version.delete).toHaveBeenCalledTimes(0);
       expect(headObjectSpy).toHaveBeenCalledTimes(1);
       expect(headObjectSpy).toHaveBeenCalledWith(expect.objectContaining({
         filePath: comsObject.path,
@@ -625,7 +627,7 @@ describe('syncVersions', () => {
 
     it('should update existing version if etag has changed', async () => {
       headObjectSpy.mockResolvedValue({ ContentType: 'application/octet-stream' });
-      listSpy.mockResolvedValue([{ etag: 'old', mimeType: 'application/octet-stream' }]);
+      listSpy.mockResolvedValue([{ etag: 'old', mimeType: 'application/octet-stream', s3VersionId: null }]);
       listAllObjectVersionsSpy.mockResolvedValue({
         DeleteMarkers: [],
         Versions: [{ ETag: 'new', IsLatest: true, VersionId: 'null' }]
@@ -644,7 +646,7 @@ describe('syncVersions', () => {
 
       expect(Version.startTransaction).toHaveBeenCalledTimes(1);
       expect(createSpy).toHaveBeenCalledTimes(0);
-      expect(deleteSpy).toHaveBeenCalledTimes(0);
+      expect(Version.delete).toHaveBeenCalledTimes(0);
       expect(headObjectSpy).toHaveBeenCalledTimes(1);
       expect(headObjectSpy).toHaveBeenCalledWith(expect.objectContaining({
         filePath: comsObject.path,
@@ -665,7 +667,7 @@ describe('syncVersions', () => {
 
     it('should update nothing when version record not modified', async () => {
       headObjectSpy.mockResolvedValue({ ContentType: 'application/octet-stream' });
-      listSpy.mockResolvedValue([{ etag: 'etag', mimeType: 'application/octet-stream' }]);
+      listSpy.mockResolvedValue([{ etag: 'etag', mimeType: 'application/octet-stream', s3VersionId: null }]);
       listAllObjectVersionsSpy.mockResolvedValue({
         DeleteMarkers: [],
         Versions: [{ ETag: 'etag', IsLatest: true, VersionId: 'null' }]
@@ -683,7 +685,7 @@ describe('syncVersions', () => {
 
       expect(Version.startTransaction).toHaveBeenCalledTimes(1);
       expect(createSpy).toHaveBeenCalledTimes(0);
-      expect(deleteSpy).toHaveBeenCalledTimes(0);
+      expect(Version.delete).toHaveBeenCalledTimes(0);
       expect(headObjectSpy).toHaveBeenCalledTimes(1);
       expect(headObjectSpy).toHaveBeenCalledWith(expect.objectContaining({
         filePath: comsObject.path,
@@ -707,7 +709,12 @@ describe('syncVersions', () => {
     it('should drop COMS versions that are not in S3', async () => {
       createSpy.mockResolvedValue({});
       headObjectSpy.mockResolvedValue({});
-      listSpy.mockResolvedValue([{ s3VersionId: validUuidv4 }]);
+      // extra versions in coms to delete
+      listSpy.mockResolvedValue([
+        { s3VersionId: validUuidv4 },
+        { s3VersionId: validUuidv4 },
+        { s3VersionId: validUuidv4 }
+      ]);
       listAllObjectVersionsSpy.mockResolvedValue({ DeleteMarkers: [{}], Versions: [{}] });
 
       const result = await service.syncVersions(comsObject);
@@ -722,8 +729,8 @@ describe('syncVersions', () => {
 
       expect(Version.startTransaction).toHaveBeenCalledTimes(1);
       expect(createSpy).toHaveBeenCalledTimes(2);
-      expect(deleteSpy).toHaveBeenCalledTimes(1);
-      expect(deleteSpy).toHaveBeenCalledWith(comsObject.id, validUuidv4, expect.any(String), expect.any(Object));
+      expect(Version.delete).toHaveBeenCalledTimes(1);
+
       expect(headObjectSpy).toHaveBeenCalledTimes(1);
       expect(headObjectSpy).toHaveBeenCalledWith(expect.objectContaining({
         filePath: comsObject.path,
@@ -764,7 +771,7 @@ describe('syncVersions', () => {
 
       expect(Version.startTransaction).toHaveBeenCalledTimes(1);
       expect(createSpy).toHaveBeenCalledTimes(1);
-      expect(deleteSpy).toHaveBeenCalledTimes(0);
+      expect(Version.delete).toHaveBeenCalledTimes(0);
       expect(headObjectSpy).toHaveBeenCalledTimes(0);
       expect(listSpy).toHaveBeenCalledTimes(1);
       expect(listSpy).toHaveBeenCalledWith(validUuidv4, expect.any(Object));
@@ -800,7 +807,7 @@ describe('syncVersions', () => {
 
       expect(Version.startTransaction).toHaveBeenCalledTimes(1);
       expect(createSpy).toHaveBeenCalledTimes(1);
-      expect(deleteSpy).toHaveBeenCalledTimes(0);
+      expect(Version.delete).toHaveBeenCalledTimes(0);
       expect(headObjectSpy).toHaveBeenCalledTimes(0);
       expect(listSpy).toHaveBeenCalledTimes(1);
       expect(listSpy).toHaveBeenCalledWith(validUuidv4, expect.any(Object));

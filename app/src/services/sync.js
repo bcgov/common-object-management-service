@@ -4,7 +4,7 @@ const log = require('../components/log')(module.filename);
 const utils = require('../db/models/utils');
 
 const { ObjectModel, Version } = require('../db/models');
-const { getKeyValue, toLowerKeys } = require('../components/utils');
+const { getKeyValue, getUniqueObjects, toLowerKeys } = require('../components/utils');
 
 const metadataService = require('./metadata');
 const objectService = require('./object');
@@ -207,12 +207,27 @@ const service = {
         .map(dm => ({ DeleteMarker: true, ...dm }))
         .concat(s3VersionsRaw.Versions);
 
-      // Drop versions in COMS that are no longer in S3
-      await Promise.all(comsVersions.map(async cv => {
-        if (cv.s3VersionId && !s3Versions.some(s3v => (s3v.VersionId === cv.s3VersionId))) {
-          await versionService.delete(comsObject.id, (cv.s3VersionId ?? null), userId, trx);
-        }
-      }));
+      // delete versions from COMS that are not in S3
+      // get list of unique coms versions
+      const uniqueCVIds = getUniqueObjects(comsVersions, 's3VersionId').map(v => v.id);
+
+      // get COMS versions that are not in S3 (matching on s3VersionId) OR not
+      // in list of unique COMS versions (matching on id)
+      const cVsToDelete = comsVersions.filter(cv => {
+        const notInS3 = !s3Versions.some(s3v => (s3v.VersionId === String(cv.s3VersionId)));
+        const isDuplicate = !uniqueCVIds.includes(cv.id);
+        return notInS3 || isDuplicate;
+      });
+
+      if(cVsToDelete.length){
+        await Version.query(trx)
+          .delete()
+          .where('objectId', comsObject.id)
+          .whereNotNull('s3VersionId')
+          .whereIn('id', cVsToDelete.map(cv => cv.id));
+      }
+      // delete versions from comsVersions array for further comparisons
+      const comsVersionsToKeep = comsVersions.filter(cv => !cVsToDelete.some(v => cv.id === v.id));
 
       // Add and Update versions in COMS
       const response = await Promise.all(s3Versions.map(async s3Version => {
@@ -252,14 +267,13 @@ const service = {
           // Version record not modified
           else return { version: existingVersion };
         }
-
         // S3 Object is in versioned bucket (ie: if VersionId is not 'null')
         else {
-          const comsVersion = comsVersions.find(cv => cv.s3VersionId === s3Version.VersionId);
+          const comsVersion = comsVersionsToKeep.find(cv => cv.s3VersionId === s3Version.VersionId);
 
           if (comsVersion) { // Version is in COMS
             if (s3Version.IsLatest) { // Patch isLatest flags if changed
-              const updated = await versionService.updateIsLatest(comsVersion.id, trx);
+              const updated = await versionService.updateIsLatest(comsObject.id, trx);
               return { modified: true, version: updated };
             } else { // Version record not modified
               return { version: comsVersion };
@@ -312,7 +326,7 @@ const service = {
       trx = etrx ? etrx : await Version.startTransaction();
       let response = [];
 
-      // Fetch COMS Object record if necessary
+      // Fetch COMS version record if necessary
       const comsVersion = typeof version === 'object' ? version : await versionService.get({ versionId: version }, trx);
 
       // Short circuit if version is a delete marker
