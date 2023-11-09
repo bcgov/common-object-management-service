@@ -867,6 +867,45 @@ const controller = {
   },
 
   /**
+   * @function searchObjects
+   * Search and filter for specific objects
+   * @param {object} req Express request object
+   * @param {object} res Express response object
+   * @param {function} next The next callback function
+   * @returns {function} Express middleware function
+   */
+  async listObjects(req, res, next) {
+    // TODO: Consider support for filtering by set of permissions?
+    // TODO: handle additional parameters. Eg: deleteMarker, latest
+    try {
+      const bucketIds = mixedQueryToArray(req.query.bucketId);
+      const objIds = mixedQueryToArray(req.query.objectId);
+      const metadata = getMetadata(req.headers);
+      const tagging = req.query.tagset;
+      const params = {
+        id: objIds ? objIds.map(id => addDashesToUuid(id)) : objIds,
+        bucketId: bucketIds ? bucketIds.map(id => addDashesToUuid(id)) : bucketIds,
+        name: req.query.name,
+        path: req.query.path,
+        mimeType: req.query.mimeType,
+        metadata: metadata && Object.keys(metadata).length ? metadata : undefined,
+        tag: tagging && Object.keys(tagging).length ? tagging : undefined,
+        public: isTruthy(req.query.public),
+        active: isTruthy(req.query.active),
+        deleteMarker: isTruthy(req.query.deleteMarker),
+        latest: isTruthy(req.query.latest)
+      };
+      // if scoping to current user permissions on objects
+      if (config.has('server.privacyMask')) {
+        params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
+      }
+      const response = await objectService.listObjects(params);
+      res.status(200).json(response);
+    } catch (error) {
+      next(error);
+    }
+  },
+  /**
    * @function togglePublic
    * Sets the public flag of an object
    * @param {object} req Express request object

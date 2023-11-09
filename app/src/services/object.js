@@ -2,7 +2,11 @@ const { NIL: SYSTEM_USER } = require('uuid');
 
 const objectPermissionService = require('./objectPermission');
 const { Permissions } = require('../components/constants');
-const { ObjectModel } = require('../db/models');
+const { ObjectModel, ObjectPermission } = require('../db/models');
+//const { objectPermission } = require('../db/objectPermission');
+
+const graphql = require('graphql').graphql;
+const graphQlBuilder = require('objectionjs-graphql').builder;
 
 /**
  * The Object DB Service
@@ -156,6 +160,67 @@ const service = {
     }
   },
 
+  listObjects: async (params, etrx = undefined) => {
+    let trx;
+    try {
+      trx = etrx ? etrx : await ObjectModel.startTransaction();
+
+      const graphQlSchema2 = async() => {
+        const builder = await graphQlBuilder()
+          .allModels([ObjectModel, ObjectPermission]);
+        console.log(builder.build());
+        return builder.build();
+      };
+
+      // Execute a GraphQL query.
+      // graphql(
+      //   graphQlSchema2,
+      //   `
+      //   {
+      //     ojm(nameLike: "%a%", orderBy: id) {
+      //     name
+      //     id
+      //   }
+      //   }
+      // `,
+      // ).then((result) => {
+      //   console.log(result);
+      // });
+      const response = await ObjectModel.query(trx)
+        .allowGraph('version')
+        .modify('filterIds', params.id)
+        .modify('filterBucketIds', params.bucketId)
+        .modify('filterName', params.name)
+        .modify('filterPath', params.path)
+        .modify('filterPublic', params.public)
+        .modify('filterActive', params.active)
+        .modify('filterMimeType', params.mimeType)
+        .modify('filterDeleteMarker', params.deleteMarker)
+        .modify('filterLatest', params.latest)
+        .modify('filterMetadataTag', {
+          metadata: params.metadata,
+          tag: params.tag
+        })
+        .modify('hasPermission', params.userId, 'READ')
+        // format result
+        .then(result => {
+          // just return object table records
+          const res = result.map(row => {
+            // eslint-disable-next-line no-unused-vars
+            const { objectPermission, bucketPermission, version, ...object } = row;
+            return object;
+          });
+          // remove duplicates
+          return [...new Map(res.map(item => [item.id, item])).values()];
+        });
+
+      if (!etrx) await trx.commit();
+      return Promise.resolve(response);
+    } catch (err) {
+      if (!etrx && trx) await trx.rollback();
+      throw err;
+    }
+  },
   /**
    * @function read
    * Get an object db record
