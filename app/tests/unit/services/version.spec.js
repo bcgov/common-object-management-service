@@ -18,15 +18,31 @@ jest.mock('../../../src/db/models/tables/version', () => ({
   query: jest.fn(),
   returning: jest.fn(),
   throwIfNotFound: jest.fn(),
+  updateAndFetchById: jest.fn(),
   where: jest.fn()
 }));
 
+const validUuidv4 = '3f4da093-6399-4711-8765-36ec5f8017c2';
+
 const service = require('../../../src/services/version');
-// const { version } = require('winston');
+const objectService = require('../../../src/services/object');
+const storageService = require('../../../src/services/storage');
+
+const listAllObjectVersionsSpy = jest.spyOn(storageService, 'listAllObjectVersions');
+const objectSpy = jest.spyOn(objectService, 'read');
+
 
 beforeEach(() => {
   jest.clearAllMocks();
   resetModel(Version, versionTrx);
+
+  listAllObjectVersionsSpy.mockReset();
+  objectSpy.mockReset();
+});
+
+afterAll(() => {
+  listAllObjectVersionsSpy.mockRestore();
+  objectSpy.mockRestore();
 });
 
 describe('copy', () => {
@@ -80,7 +96,12 @@ describe('copy', () => {
 
 describe('create', () => {
   it('Saves a version of an object', async () => {
-    await service.create({ s3VersionId: S3_VERSION_ID, mimeType: 'mimeType', id: OBJECT_ID, deleteMarker: 'deleteMarker' }, SYSTEM_USER);
+    await service.create({
+      s3VersionId: S3_VERSION_ID,
+      mimeType: 'mimeType',
+      id: OBJECT_ID,
+      deleteMarker: 'deleteMarker'
+    }, SYSTEM_USER);
 
     expect(Version.startTransaction).toHaveBeenCalledTimes(1);
     expect(Version.query).toHaveBeenCalledTimes(1);
@@ -205,6 +226,37 @@ describe('update', () => {
     );
     expect(Version.first).toHaveBeenCalledTimes(1);
     expect(Version.returning).toHaveBeenCalledTimes(1);
+    expect(versionTrx.commit).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('updateIsLatest', () => {
+  it('Updates a version of an object', async () => {
+    const versionSpy = jest.spyOn(service, 'removeDuplicateLatest');
+    versionSpy.mockResolvedValue(true);
+    listAllObjectVersionsSpy.mockResolvedValue({
+      DeleteMarkers: [{}],
+      Versions: [{ IsLatest: true, VersionId: validUuidv4 }]
+    });
+    objectSpy.mockResolvedValue({
+      path: '/test',
+      bucketId: '0000-0000'
+    });
+
+    await service.updateIsLatest(OBJECT_ID);
+
+    expect(Version.startTransaction).toHaveBeenCalledTimes(1);
+    expect(Version.query).toHaveBeenCalledTimes(2);
+    expect(Version.where).toHaveBeenCalledTimes(1);
+    expect(Version.where).toHaveBeenCalledWith(
+      {
+        objectId: OBJECT_ID,
+        s3VersionId: validUuidv4
+      }
+    );
+    expect(Version.updateAndFetchById).toHaveBeenCalledTimes(1);
+    expect(Version.first).toHaveBeenCalledTimes(1);
+    expect(versionSpy).toHaveBeenCalledTimes(1);
     expect(versionTrx.commit).toHaveBeenCalledTimes(1);
   });
 });

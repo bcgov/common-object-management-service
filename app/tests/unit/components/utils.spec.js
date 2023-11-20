@@ -8,7 +8,8 @@ const Problem = require('api-problem');
 // Mock config library - @see {@link https://stackoverflow.com/a/64819698}
 jest.mock('config');
 
-const DEFAULTREGION = 'us-east-1'; // Need to specify valid AWS region or it'll explode ('us-east-1' is default, 'ca-central-1' for Canada)
+// Need to specify valid AWS region or it'll explode ('us-east-1' is default, 'ca-central-1' for Canada)
+const DEFAULTREGION = 'us-east-1';
 
 beforeEach(() => {
   jest.resetAllMocks();
@@ -246,7 +247,9 @@ describe('getCurrentSubject', () => {
     expect(getCurrentTokenClaimSpy).toHaveBeenCalledWith(currentUser, 'sub', undefined);
   });
 
-  it.each([undefined, null, '', [], {}])('should call getCurrentTokenClaim correctly given %j and defaultValue \'default\'', (currentUser) => {
+  it.each(
+    [undefined, null, '', [], {}]
+  )('should call getCurrentTokenClaim correctly given %j and defaultValue \'default\'', (currentUser) => {
     const defaultValue = 'default';
     utils.getCurrentSubject(currentUser, defaultValue);
 
@@ -472,15 +475,21 @@ describe('mixedQueryToArray', () => {
   });
 
   it('should return an array with the appropriate set when there are multiples', () => {
-    expect(utils.mixedQueryToArray('there,are,duplicates,here,yes,here,there,is,here')).toEqual(['there', 'are', 'duplicates', 'here', 'yes', 'is']);
+    expect(utils.mixedQueryToArray('there,are,duplicates,here,yes,here,there,is,here')).toEqual(
+      ['there', 'are', 'duplicates', 'here', 'yes', 'is']
+    );
   });
 
   it('should return an array with the appropriate set when there are multiples and spaces', () => {
-    expect(utils.mixedQueryToArray('there,  are, duplicates,  here ,yes ,here ,there,is,here ')).toEqual(['there', 'are', 'duplicates', 'here', 'yes', 'is']);
+    expect(utils.mixedQueryToArray('there,  are, duplicates,  here ,yes ,here ,there,is,here ')).toEqual(
+      ['there', 'are', 'duplicates', 'here', 'yes', 'is']
+    );
   });
 
   it('should return an array with the appropriate set when there are multiples and spaces', () => {
-    expect(utils.mixedQueryToArray(['there', '  are', ' duplicates', '  here ', 'yes ', 'here ', 'there', 'is', 'here '])).toEqual(['there', 'are', 'duplicates', 'here', 'yes', 'is']);
+    expect(utils.mixedQueryToArray(
+      ['there', '  are', ' duplicates', '  here ', 'yes ', 'here ', 'there', 'is', 'here ']
+    )).toEqual(['there', 'are', 'duplicates', 'here', 'yes', 'is']);
   });
 });
 
@@ -573,5 +582,37 @@ describe('toLowerKeys', () => {
     [[{ key: 'k1', value: 'V1' }, { key: 'k2', value: 'V2' }], [{ Key: 'k1', Value: 'V1' }, { Key: 'k2', Value: 'V2' }]]
   ])('should return %j given %j', (expected, value) => {
     expect(utils.toLowerKeys(value)).toEqual(expected);
+  });
+});
+
+describe('getUniqueObjects', () => {
+  const testObj1 = {key1: 'test1', val1: 'val11', val2: 'val21'};
+  const testObj2 = {key1: 'test2', val1: 'val12', val2: 'val22'};
+  const testObj3 = {key1: 'test3', val1: 'val13', val2: 'val23'};
+  const testObj4 = {key1: 'test4', val1: 'val14', val2: 'val24'};
+  const testObj5 = {key1: 'test4', val1: 'val15', val2: 'val25'};
+
+  it('return all input objects', () => {
+    expect(utils.getUniqueObjects([
+      testObj1, testObj2, testObj3, testObj4
+    ], 'key1')).toMatchObject([
+      testObj1, testObj2, testObj3, testObj4
+    ]);
+  });
+
+  it('filter for unique keys', () => {
+    expect(utils.getUniqueObjects([
+      testObj2, testObj3, testObj4, testObj5
+    ], 'key1')).toMatchObject([
+      testObj2, testObj3, testObj5
+    ]);
+  });
+
+  it('should return the last object entered with duplicate key', () => {
+    expect(utils.getUniqueObjects([
+      testObj5, testObj4,
+    ], 'key1')).toMatchObject([
+      testObj4
+    ]);
   });
 });

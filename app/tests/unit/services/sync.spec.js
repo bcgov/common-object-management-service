@@ -263,7 +263,9 @@ describe('syncJob', () => {
     expect(syncVersionsSpy).toHaveBeenCalledTimes(1);
     expect(syncVersionsSpy).toHaveBeenCalledWith(expect.any(Object), expect.any(String), expect.any(Object));
     expect(syncTagsSpy).toHaveBeenCalledTimes(1);
-    expect(syncTagsSpy).toHaveBeenCalledWith(expect.any(Object), path, bucketId, expect.any(String), expect.any(Object));
+    expect(syncTagsSpy).toHaveBeenCalledWith(
+      expect.any(Object), path, bucketId, expect.any(String), expect.any(Object)
+    );
     expect(syncMetadataSpy).toHaveBeenCalledTimes(0);
   });
 
@@ -281,9 +283,13 @@ describe('syncJob', () => {
     expect(syncVersionsSpy).toHaveBeenCalledTimes(1);
     expect(syncVersionsSpy).toHaveBeenCalledWith(expect.any(Object), expect.any(String), expect.any(Object));
     expect(syncTagsSpy).toHaveBeenCalledTimes(1);
-    expect(syncTagsSpy).toHaveBeenCalledWith(expect.any(Object), path, bucketId, expect.any(String), expect.any(Object));
+    expect(syncTagsSpy).toHaveBeenCalledWith(
+      expect.any(Object), path, bucketId, expect.any(String), expect.any(Object)
+    );
     expect(syncMetadataSpy).toHaveBeenCalledTimes(1);
-    expect(syncMetadataSpy).toHaveBeenCalledWith(expect.any(Object), path, bucketId, expect.any(String), expect.any(Object));
+    expect(syncMetadataSpy).toHaveBeenCalledWith(
+      expect.any(Object), path, bucketId, expect.any(String), expect.any(Object)
+    );
   });
 
   it('Calls everything when full mode', async () => {
@@ -300,9 +306,13 @@ describe('syncJob', () => {
     expect(syncVersionsSpy).toHaveBeenCalledTimes(1);
     expect(syncVersionsSpy).toHaveBeenCalledWith(expect.any(Object), expect.any(String), expect.any(Object));
     expect(syncTagsSpy).toHaveBeenCalledTimes(1);
-    expect(syncTagsSpy).toHaveBeenCalledWith(expect.any(Object), path, bucketId, expect.any(String), expect.any(Object));
+    expect(syncTagsSpy).toHaveBeenCalledWith(
+      expect.any(Object), path, bucketId, expect.any(String), expect.any(Object)
+    );
     expect(syncMetadataSpy).toHaveBeenCalledTimes(1);
-    expect(syncMetadataSpy).toHaveBeenCalledWith(expect.any(Object), path, bucketId, expect.any(String), expect.any(Object));
+    expect(syncMetadataSpy).toHaveBeenCalledWith(
+      expect.any(Object), path, bucketId, expect.any(String), expect.any(Object)
+    );
   });
 });
 
@@ -885,7 +895,9 @@ describe('syncTags', () => {
 
     expect(Version.startTransaction).toHaveBeenCalledTimes(1);
     expect(associateTagsSpy).toHaveBeenCalledTimes(1);
-    expect(associateTagsSpy).toHaveBeenCalledWith(comsVersion.id, expect.any(Array), expect.any(String), expect.any(Object));
+    expect(associateTagsSpy).toHaveBeenCalledWith(
+      comsVersion.id, expect.any(Array), expect.any(String), expect.any(Object)
+    );
     expect(dissociateTagsSpy).toHaveBeenCalledTimes(0);
     expect(fetchTagsForVersionSpy).toHaveBeenCalledTimes(1);
     expect(fetchTagsForVersionSpy).toHaveBeenCalledWith(expect.objectContaining({
@@ -927,7 +939,9 @@ describe('syncTags', () => {
 
     expect(Version.startTransaction).toHaveBeenCalledTimes(1);
     expect(associateTagsSpy).toHaveBeenCalledTimes(1);
-    expect(associateTagsSpy).toHaveBeenCalledWith(comsVersion.id, expect.any(Array), expect.any(String), expect.any(Object));
+    expect(associateTagsSpy).toHaveBeenCalledWith(
+      comsVersion.id, expect.any(Array), expect.any(String), expect.any(Object)
+    );
     expect(dissociateTagsSpy).toHaveBeenCalledTimes(0);
     expect(fetchTagsForVersionSpy).toHaveBeenCalledTimes(1);
     expect(fetchTagsForVersionSpy).toHaveBeenCalledWith(expect.objectContaining({
@@ -1036,7 +1050,9 @@ describe('syncTags', () => {
 
     expect(Version.startTransaction).toHaveBeenCalledTimes(1);
     expect(associateTagsSpy).toHaveBeenCalledTimes(1);
-    expect(associateTagsSpy).toHaveBeenCalledWith(comsVersion.id, expect.any(Array), expect.any(String), expect.any(Object));
+    expect(associateTagsSpy).toHaveBeenCalledWith(
+      comsVersion.id, expect.any(Array), expect.any(String), expect.any(Object)
+    );
     expect(dissociateTagsSpy).toHaveBeenCalledTimes(0);
     expect(fetchTagsForVersionSpy).toHaveBeenCalledTimes(1);
     expect(fetchTagsForVersionSpy).toHaveBeenCalledWith(expect.objectContaining({
@@ -1074,7 +1090,9 @@ describe('syncTags', () => {
 
     expect(Version.startTransaction).toHaveBeenCalledTimes(1);
     expect(associateTagsSpy).toHaveBeenCalledTimes(1);
-    expect(associateTagsSpy).toHaveBeenCalledWith(comsVersion.id, expect.any(Array), expect.any(String), expect.any(Object));
+    expect(associateTagsSpy).toHaveBeenCalledWith(
+      comsVersion.id, expect.any(Array), expect.any(String), expect.any(Object)
+    );
     expect(dissociateTagsSpy).toHaveBeenCalledTimes(0);
     expect(fetchTagsForVersionSpy).toHaveBeenCalledTimes(1);
     expect(fetchTagsForVersionSpy).toHaveBeenCalledWith(expect.objectContaining({

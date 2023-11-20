@@ -4,7 +4,14 @@ const { MAXCOPYOBJECTLENGTH, MetadataDirective, TaggingDirective } = require('..
 const utils = require('../../../src/db/models/utils');
 
 const controller = require('../../../src/controllers/object');
-const { storageService, objectService, metadataService, tagService, versionService, userService } = require('../../../src/services');
+const {
+  storageService,
+  objectService,
+  metadataService,
+  tagService,
+  versionService,
+  userService
+} = require('../../../src/services');
 
 const mockResponse = () => {
   const res = {};
