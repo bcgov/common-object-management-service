@@ -1,4 +1,4 @@
-FROM docker.io/node:18.18.2-alpine
+FROM docker.io/node:20.9.0-alpine
 
 ARG APP_ROOT=/opt/app-root/src
 ENV APP_PORT=8080 \
@@ -17,4 +17,4 @@ WORKDIR ${APP_ROOT}/app
 RUN npm ci --omit=dev
 
 EXPOSE ${APP_PORT}
-CMD ["npm", "run", "start"]
+CMD ["node", "./bin/www"]
