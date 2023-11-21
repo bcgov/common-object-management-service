@@ -4,6 +4,7 @@ const config = require('config');
 const cors = require('cors');
 const express = require('express');
 
+const { name: appName, version: appVersion } = require('./package.json');
 const { AuthMode, DEFAULTCORS } = require('./src/components/constants');
 const log = require('./src/components/log')(module.filename);
 const httpLogger = require('./src/components/log').httpLogger;
@@ -90,8 +91,8 @@ apiRouter.get('/', (_req, res) => {
       app: {
         authMode: state.authMode,
         gitRev: state.gitRev,
-        name: process.env.npm_package_name,
-        nodeVersion: process.version,
+        name: appName,
+        nodeVersion: appVersion,
         privacyMask: config.has('server.privacyMask'),
         version: process.env.npm_package_version
       },
@@ -166,8 +167,12 @@ function checkConnections() {
     dataConnection.checkConnection().then(results => {
       state.connections.data = results;
       state.ready = Object.values(state.connections).every(x => x);
-      if (!wasReady && state.ready) log.info('Application ready to accept traffic', { function: 'checkConnections' });
-      if (wasReady && !state.ready) log.warn('Application not ready to accept traffic', { function: 'checkConnections' });
+      if (!wasReady && state.ready) log.info('Application ready to accept traffic', {
+        function: 'checkConnections'
+      });
+      if (wasReady && !state.ready) log.warn('Application not ready to accept traffic', {
+        function: 'checkConnections'
+      });
       log.silly('App state', { function: 'checkConnections', state: state });
       if (!state.ready) notReadyHandler();
     });
@@ -205,7 +210,9 @@ function initializeConnections() {
       }
     })
     .catch(error => {
-      log.error(`Initialization failed: Database OK = ${state.connections.data}`, { function: 'initializeConnections' });
+      log.error(`Initialization failed: Database OK = ${state.connections.data}`, {
+        function: 'initializeConnections'
+      });
       log.error('Connection initialization failure', error.message, { function: 'initializeConnections' });
       if (!state.ready) notReadyHandler();
     })
