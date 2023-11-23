@@ -18,8 +18,10 @@ jest.mock('../../../src/db/models/tables/version', () => ({
   query: jest.fn(),
   returning: jest.fn(),
   throwIfNotFound: jest.fn(),
+  update: jest.fn(),
   updateAndFetchById: jest.fn(),
-  where: jest.fn()
+  where: jest.fn(),
+  whereNot: jest.fn()
 }));
 
 const validUuidv4 = '3f4da093-6399-4711-8765-36ec5f8017c2';
@@ -41,6 +43,7 @@ beforeEach(() => {
 });
 
 afterAll(() => {
+  jest.clearAllMocks();
   listAllObjectVersionsSpy.mockRestore();
   objectSpy.mockRestore();
 });
@@ -233,7 +236,7 @@ describe('update', () => {
 describe('updateIsLatest', () => {
   it('Updates a version of an object if it is the latest', async () => {
     const versionSpy = jest.spyOn(service, 'removeDuplicateLatest');
-    versionSpy.mockResolvedValue(true);
+    versionSpy.mockResolvedValueOnce(true);
     listAllObjectVersionsSpy.mockResolvedValue({
       DeleteMarkers: [{}],
       Versions: [{ IsLatest: true, VersionId: validUuidv4 }]
@@ -262,7 +265,7 @@ describe('updateIsLatest', () => {
 
   it('Does not update if file is not the latest', async () => {
     const versionSpy = jest.spyOn(service, 'removeDuplicateLatest');
-    versionSpy.mockResolvedValue(true);
+    versionSpy.mockResolvedValueOnce(true);
     listAllObjectVersionsSpy.mockResolvedValue({
       DeleteMarkers: [{}],
       Versions: [
@@ -291,5 +294,59 @@ describe('updateIsLatest', () => {
 
     expect(versionSpy).toHaveBeenCalledTimes(1);
     expect(versionTrx.commit).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('RemoveDuplicateLatest', () => {
+  it('sets all other versions to isLatest=false', async () => {
+    listAllObjectVersionsSpy.mockResolvedValue({
+      DeleteMarkers: [{}],
+      Versions: [{ IsLatest: true, VersionId: validUuidv4 }]
+    });
+    objectSpy.mockResolvedValue({
+      path: '/test',
+      bucketId: '0000-0000'
+    });
+    Version.where.mockResolvedValueOnce([{ isLatest: true },{ isLatest: true }]);
+
+    await service.removeDuplicateLatest(validUuidv4, OBJECT_ID);
+
+    expect(Version.startTransaction).toHaveBeenCalledTimes(1);
+    expect(Version.query).toHaveBeenCalledTimes(2);
+    expect(Version.update).toHaveBeenCalledTimes(1);
+
+    expect(Version.where).toHaveBeenCalledTimes(1);
+    expect(Version.where).toHaveBeenCalledWith('objectId', OBJECT_ID);
+
+    expect(Version.whereNot).toHaveBeenCalledTimes(1);
+    expect(Version.whereNot).toHaveBeenCalledWith({ 'id': validUuidv4 });
+
+    expect(Version.andWhere).toHaveBeenCalledTimes(2);
+    expect(Version.andWhere).toHaveBeenCalledWith('objectId', OBJECT_ID);
+    expect(Version.andWhere).toHaveBeenCalledWith({ 'isLatest':  true });
+  });
+
+  it('does not set other versions to false', async () => {
+    listAllObjectVersionsSpy.mockResolvedValue({
+      DeleteMarkers: [{}],
+      Versions: [{ IsLatest: false, VersionId: validUuidv4 }]
+    });
+    objectSpy.mockResolvedValue({
+      path: '/test',
+      bucketId: '0000-0000'
+    });
+    Version.where.mockResolvedValueOnce([{ isLatest: false },{ isLatest: false }]);
+
+    await service.removeDuplicateLatest(validUuidv4, OBJECT_ID);
+
+    expect(Version.startTransaction).toHaveBeenCalledTimes(1);
+    expect(Version.query).toHaveBeenCalledTimes(1);
+
+    expect(Version.where).toHaveBeenCalledTimes(1);
+    expect(Version.where).toHaveBeenCalledWith('objectId', OBJECT_ID);
+
+    expect(Version.update).toHaveBeenCalledTimes(0);
+    expect(Version.whereNot).toHaveBeenCalledTimes(0);
+    expect(Version.andWhere).toHaveBeenCalledTimes(0);
   });
 });
