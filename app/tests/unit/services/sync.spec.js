@@ -740,6 +740,16 @@ describe('syncVersions', () => {
       expect(Version.startTransaction).toHaveBeenCalledTimes(1);
       expect(createSpy).toHaveBeenCalledTimes(2);
       expect(Version.delete).toHaveBeenCalledTimes(1);
+      expect(Version.where).toHaveBeenCalledTimes(1);
+      expect(Version.where).toHaveBeenCalledWith('objectId', comsObject.id);
+      expect(Version.whereNotNull).toHaveBeenCalledTimes(1);
+      expect(Version.whereNotNull).toHaveBeenCalledWith('s3VersionId');
+      expect(Version.whereIn).toHaveBeenCalledTimes(1);
+      expect(Version.whereIn).toHaveBeenCalledWith('id', [
+        { s3VersionId: validUuidv4 },
+        { s3VersionId: validUuidv4 },
+        { s3VersionId: validUuidv4 }
+      ].map(cv => cv.id));
 
       expect(headObjectSpy).toHaveBeenCalledTimes(1);
       expect(headObjectSpy).toHaveBeenCalledWith(expect.objectContaining({

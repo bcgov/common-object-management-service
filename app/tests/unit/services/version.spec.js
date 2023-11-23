@@ -231,7 +231,7 @@ describe('update', () => {
 });
 
 describe('updateIsLatest', () => {
-  it('Updates a version of an object', async () => {
+  it('Updates a version of an object if it is the latest', async () => {
     const versionSpy = jest.spyOn(service, 'removeDuplicateLatest');
     versionSpy.mockResolvedValue(true);
     listAllObjectVersionsSpy.mockResolvedValue({
@@ -256,6 +256,39 @@ describe('updateIsLatest', () => {
     );
     expect(Version.updateAndFetchById).toHaveBeenCalledTimes(1);
     expect(Version.first).toHaveBeenCalledTimes(1);
+    expect(versionSpy).toHaveBeenCalledTimes(1);
+    expect(versionTrx.commit).toHaveBeenCalledTimes(1);
+  });
+
+  it('Does not update if file is not the latest', async () => {
+    const versionSpy = jest.spyOn(service, 'removeDuplicateLatest');
+    versionSpy.mockResolvedValue(true);
+    listAllObjectVersionsSpy.mockResolvedValue({
+      DeleteMarkers: [{}],
+      Versions: [
+        { IsLatest: true, VersionId: validUuidv4 },
+      ]
+    });
+    objectSpy.mockResolvedValue({
+      path: '/test',
+      bucketId: '0000-0000'
+    });
+    Version.throwIfNotFound.mockResolvedValue({ isLatest: true });
+
+    await service.updateIsLatest(OBJECT_ID);
+
+    expect(Version.startTransaction).toHaveBeenCalledTimes(1);
+    expect(Version.query).toHaveBeenCalledTimes(1);
+    expect(Version.first).toHaveBeenCalledTimes(1);
+    expect(Version.where).toHaveBeenCalledTimes(1);
+    expect(Version.where).toHaveBeenCalledWith(
+      {
+        objectId: OBJECT_ID,
+        s3VersionId: validUuidv4
+      }
+    );
+    expect(Version.updateAndFetchById).toHaveBeenCalledTimes(0);
+
     expect(versionSpy).toHaveBeenCalledTimes(1);
     expect(versionTrx.commit).toHaveBeenCalledTimes(1);
   });
