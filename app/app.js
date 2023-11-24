@@ -92,9 +92,9 @@ apiRouter.get('/', (_req, res) => {
         authMode: state.authMode,
         gitRev: state.gitRev,
         name: appName,
-        nodeVersion: appVersion,
+        nodeVersion: process.version,
         privacyMask: config.has('server.privacyMask'),
-        version: process.env.npm_package_version
+        version: appVersion
       },
       endpoints: ['/api/v1'],
       versions: [1]

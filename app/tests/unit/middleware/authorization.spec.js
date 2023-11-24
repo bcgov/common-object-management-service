@@ -1,7 +1,12 @@
 const { NIL: SYSTEM_USER } = require('uuid');
 
 const mw = require('../../../src/middleware/authorization');
-const { bucketPermissionService, objectService, objectPermissionService, userService } = require('../../../src/services');
+const {
+  bucketPermissionService,
+  objectService,
+  objectPermissionService,
+  userService
+} = require('../../../src/services');
 const { AuthMode, AuthType, Permissions } = require('../../../src/components/constants');
 const utils = require('../../../src/components/utils');
 

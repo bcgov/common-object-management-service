@@ -255,7 +255,9 @@ describe('login', () => {
 
     expect(createUserSpy).toHaveBeenCalledTimes(0);
     expect(updateUserSpy).toHaveBeenCalledTimes(1);
-    expect(updateUserSpy).toHaveBeenCalledWith('a96f2809-d6f4-4cef-a02a-3f72edff06d7', expect.objectContaining(user), expect.any(Object));
+    expect(updateUserSpy).toHaveBeenCalledWith(
+      'a96f2809-d6f4-4cef-a02a-3f72edff06d7', expect.objectContaining(user), expect.any(Object)
+    );
   });
 });
 
