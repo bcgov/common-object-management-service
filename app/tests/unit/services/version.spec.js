@@ -323,7 +323,7 @@ describe('removeDuplicateLatest', () => {
 
     expect(Version.andWhere).toHaveBeenCalledTimes(2);
     expect(Version.andWhere).toHaveBeenCalledWith('objectId', OBJECT_ID);
-    expect(Version.andWhere).toHaveBeenCalledWith({ 'isLatest':  true });
+    expect(Version.andWhere).toHaveBeenCalledWith({ 'isLatest': true });
   });
 
   it('does not set other versions to false', async () => {
@@ -335,7 +335,7 @@ describe('removeDuplicateLatest', () => {
       path: '/test',
       bucketId: '0000-0000'
     });
-    Version.where.mockResolvedValueOnce([{ isLatest: false },{ isLatest: false }]);
+    Version.where.mockResolvedValueOnce([{ isLatest: false }, { isLatest: false }]);
 
     await service.removeDuplicateLatest(validUuidv4, OBJECT_ID);
 
