@@ -297,7 +297,7 @@ describe('updateIsLatest', () => {
   });
 });
 
-describe('RemoveDuplicateLatest', () => {
+describe('removeDuplicateLatest', () => {
   it('sets all other versions to isLatest=false', async () => {
     listAllObjectVersionsSpy.mockResolvedValue({
       DeleteMarkers: [{}],
@@ -307,7 +307,7 @@ describe('RemoveDuplicateLatest', () => {
       path: '/test',
       bucketId: '0000-0000'
     });
-    Version.where.mockResolvedValueOnce([{ isLatest: true },{ isLatest: true }]);
+    Version.where.mockResolvedValueOnce([{ isLatest: true }, { isLatest: true }]);
 
     await service.removeDuplicateLatest(validUuidv4, OBJECT_ID);
 
