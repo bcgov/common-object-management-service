@@ -165,29 +165,8 @@ const service = {
     try {
       trx = etrx ? etrx : await ObjectModel.startTransaction();
 
-      const graphQlSchema2 = async() => {
-        const builder = await graphQlBuilder()
-          .allModels([ObjectModel, ObjectPermission]);
-        console.log(builder.build());
-        return builder.build();
-      };
-
-      // Execute a GraphQL query.
-      // graphql(
-      //   graphQlSchema2,
-      //   `
-      //   {
-      //     ojm(nameLike: "%a%", orderBy: id) {
-      //     name
-      //     id
-      //   }
-      //   }
-      // `,
-      // ).then((result) => {
-      //   console.log(result);
-      // });
       const response = await ObjectModel.query(trx)
-        .allowGraph('version')
+        .withGraphFetched('objectPermission')
         .modify('filterIds', params.id)
         .modify('filterBucketIds', params.bucketId)
         .modify('filterName', params.name)
@@ -202,12 +181,19 @@ const service = {
           tag: params.tag
         })
         .modify('hasPermission', params.userId, 'READ')
-        // format result
+        .page(0,3)
+        // TODO
+        // Flatten the permission data object
+        //format result
         .then(result => {
-          // just return object table records
-          const res = result.map(row => {
+        //   // just return object table records
+          const res = result.results.map(row => {
             // eslint-disable-next-line no-unused-vars
-            const { objectPermission, bucketPermission, version, ...object } = row;
+            const { objectPermission, ...object } = row;
+            object.objectPermissions = [];
+            objectPermission.map(o => {
+              object.objectPermissions.push(o.permCode);
+            });
             return object;
           });
           // remove duplicates
