@@ -15,6 +15,7 @@ router.put('/', express.json(), bucketValidator.createBucket, (req, res, next) =
   bucketController.createBucket(req, res, next);
 });
 
+
 /**
  * Returns bucket headers
  * Notes:
