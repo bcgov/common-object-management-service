@@ -2,11 +2,8 @@ const { NIL: SYSTEM_USER } = require('uuid');
 
 const objectPermissionService = require('./objectPermission');
 const { Permissions } = require('../components/constants');
-const { ObjectModel, ObjectPermission } = require('../db/models');
+const { ObjectModel } = require('../db/models');
 //const { objectPermission } = require('../db/objectPermission');
-
-const graphql = require('graphql').graphql;
-const graphQlBuilder = require('objectionjs-graphql').builder;
 
 /**
  * The Object DB Service
