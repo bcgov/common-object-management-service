@@ -20,7 +20,7 @@ router.get('/', objectValidator.searchObjects, requireSomeAuth, (req, res, next)
 });
 
 /** Search for objects */
-router.get('/list', objectValidator.searchObjects, requireSomeAuth, (req, res, next) => {
+router.get('/list', objectValidator.listObjects, requireSomeAuth, (req, res, next) => {
   objectController.listObjects(req, res, next);
 });
 

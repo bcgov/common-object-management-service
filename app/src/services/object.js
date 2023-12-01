@@ -164,6 +164,14 @@ const service = {
     let trx;
     try {
       trx = etrx ? etrx : await ObjectModel.startTransaction();
+      const sortObjects = [];
+
+      if(params.sortName){
+        sortObjects.push({ column: 'object.name', order: params.sortName });
+      }else if(params.sortId){
+        sortObjects.push({ column: 'object.id', order: params.sortId });
+      }
+
 
       const response = await ObjectModel.query(trx)
         .withGraphFetched('objectPermission')
@@ -181,14 +189,14 @@ const service = {
           tag: params.tag
         })
         .modify('hasPermission', params.userId, 'READ')
-        .page(0,3)
-        // TODO
-        // Flatten the permission data object
-        //format result
+        .page(0,5)
+        //.orderBy('object.id', 'desc')
+        //.orderBy('object.name', 'desc')
+        //.orderBy('object.name','')
+        .orderBy(sortObjects)
         .then(result => {
         //   // just return object table records
           const res = result.results.map(row => {
-            // eslint-disable-next-line no-unused-vars
             const { objectPermission, ...object } = row;
             object.objectPermissions = [];
             objectPermission.map(o => {

@@ -138,10 +138,26 @@ const schema = {
       public: type.truthy,
       active: type.truthy,
       deleteMarker: type.truthy,
-      latest: type.truthy
+      latest: type.truthy,
     })
   },
-
+  listObjects: {
+    headers: type.metadata(),
+    query: Joi.object({
+      objectId: scheme.guid,
+      bucketId: scheme.guid,
+      name: Joi.string(),
+      path: Joi.string().max(1024),
+      mimeType: Joi.string().max(255),
+      tagset: type.tagset(),
+      public: type.truthy,
+      active: type.truthy,
+      deleteMarker: type.truthy,
+      latest: type.truthy,
+      sortName: Joi.string().max(4),
+      sortId: Joi.string().max(4),
+    })
+  },
   fetchTags: {
     query: Joi.object({
       bucketId: scheme.guid,
@@ -191,6 +207,7 @@ const validator = {
   replaceMetadata: validate(schema.replaceMetadata, { statusCode: 422 }),
   replaceTags: validate(schema.replaceTags, { statusCode: 422 }),
   searchObjects: validate(schema.searchObjects, { statusCode: 422 }),
+  listObjects: validate(schema.listObjects, { statusCode: 422 }),
   syncObject: validate(schema.syncObject, { statusCode: 422 }),
   togglePublic: validate(schema.togglePublic, { statusCode: 422 }),
   updateObject: validate(schema.updateObject, { statusCode: 422 })

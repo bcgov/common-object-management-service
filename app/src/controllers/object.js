@@ -867,7 +867,7 @@ const controller = {
   },
 
   /**
-   * @function searchObjects
+   * @function listObjects
    * Search and filter for specific objects
    * @param {object} req Express request object
    * @param {object} res Express response object
@@ -893,7 +893,9 @@ const controller = {
         public: isTruthy(req.query.public),
         active: isTruthy(req.query.active),
         deleteMarker: isTruthy(req.query.deleteMarker),
-        latest: isTruthy(req.query.latest)
+        latest: isTruthy(req.query.latest),
+        sortName: req.query.sortName,
+        sortId: req.query.sortId,
       };
       // if scoping to current user permissions on objects
       if (config.has('server.privacyMask')) {
