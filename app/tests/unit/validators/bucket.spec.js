@@ -84,6 +84,11 @@ describe('createBucket', () => {
           }),
         ]));
       });
+
+      it('is strict', () => {
+        expect(key.preferences).toBeTruthy();
+        expect(key.preferences.convert).toBeFalsy();
+      });
     });
 
     it('should match the schema', () => {
@@ -98,6 +103,116 @@ describe('createBucket', () => {
         }
       };
       expect(value).toMatchSchema(schema.createBucket);
+    });
+
+
+    it('is required', () => {
+      expect(body.flags).toBeTruthy();
+      expect(body.flags).toEqual(expect.objectContaining({ presence: 'required' }));
+    });
+  });
+});
+
+describe('createBucketChild', () => {
+
+  describe('body', () => {
+    const body = schema.createBucketChild.body.describe();
+
+    describe('bucketName', () => {
+      const bucketName = body.keys.bucketName;
+
+      it('is a string', () => {
+        expect(bucketName).toBeTruthy();
+        expect(bucketName.type).toEqual('string');
+      });
+
+      it('has a max length of 255', () => {
+        expect(Array.isArray(bucketName.rules)).toBeTruthy();
+        expect(bucketName.rules).toHaveLength(1);
+        expect(bucketName.rules).toEqual(expect.arrayContaining([
+          expect.objectContaining({
+            args: {
+              limit: 255
+            },
+            name: 'max'
+          }),
+        ]));
+      });
+
+      it('is required', () => {
+        expect(bucketName.flags).toBeTruthy();
+        expect(bucketName.flags).toEqual(expect.objectContaining({
+          presence: 'required'
+        }));
+      });
+    });
+
+    describe.only('key', () => {
+      const subKey = body.keys.subKey;
+
+      it('is a string', () => {
+        expect(subKey).toBeTruthy();
+        expect(subKey.type).toEqual('string');
+      });
+
+      it('trims whitespace', () => {
+        expect(Array.isArray(subKey.rules)).toBeTruthy();
+        expect(subKey.rules).toHaveLength(3);
+        expect(subKey.rules).toEqual(expect.arrayContaining([
+          expect.objectContaining({
+            args: {
+              enabled: true
+            },
+            name: 'trim'
+          }),
+        ]));
+      });
+
+      it('has a max length of 255', () => {
+        expect(Array.isArray(subKey.rules)).toBeTruthy();
+        expect(subKey.rules).toHaveLength(3);
+        expect(subKey.rules).toEqual(expect.arrayContaining([
+          expect.objectContaining({
+            args: {
+              limit: 255
+            },
+            name: 'max'
+          }),
+        ]));
+      });
+
+      it('has a regex', () => {
+        expect(Array.isArray(subKey.rules)).toBeTruthy();
+        expect(subKey.rules).toHaveLength(3);
+        expect(subKey.rules).toEqual(expect.arrayContaining([
+          expect.objectContaining({
+            args: {
+              regex: '/^[^/]+$/'
+            },
+            name: 'pattern'
+          }),
+        ]));
+      });
+
+      it('is strict', () => {
+        expect(subKey.preferences).toBeTruthy();
+        expect(subKey.preferences.convert).toBeFalsy();
+      });
+
+      it('is required', () => {
+        expect(subKey.flags).toBeTruthy();
+        expect(subKey.flags).toEqual(expect.objectContaining({ presence: 'required' }));
+      });
+    });
+
+    it('should match the schema', () => {
+      const value = {
+        body: {
+          bucketName: 'ccc',
+          subKey: 'subKey'
+        }
+      };
+      expect(value).toMatchSchema(schema.createBucketChild);
     });
 
 
