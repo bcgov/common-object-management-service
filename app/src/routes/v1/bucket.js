@@ -17,9 +17,8 @@ router.put('/', express.json(), bucketValidator.createBucket, (req, res, next) =
 
 /**
  * Returns bucket headers
- * Notes:
- * - router.head() should appear before router.get() method using same path, otherwise router.get() will be called instead.
- * - if bucketId path param is not given, router.get('/') (the bucket search endpoint) is called instead.
+ * router.head() must be declared before router.get() - otherwise router.get() will be called instead.
+ * If bucketId path param is not given, router.get('/') (the bucket search endpoint) is called instead.
  */
 router.head('/:bucketId', bucketValidator.headBucket, hasPermission(Permissions.READ), (req, res, next) => {
   bucketController.headBucket(req, res, next);
@@ -36,14 +35,23 @@ router.get('/', bucketValidator.searchBuckets, (req, res, next) => {
 });
 
 /** Updates a bucket */
-router.patch('/:bucketId', express.json(), bucketValidator.updateBucket, hasPermission(Permissions.UPDATE), (req, res, next) => {
-  bucketController.updateBucket(req, res, next);
-});
+router.patch('/:bucketId', express.json(), bucketValidator.updateBucket, hasPermission(Permissions.UPDATE),
+  (req, res, next) => {
+    bucketController.updateBucket(req, res, next);
+  }
+);
 
 /** Deletes the bucket */
 router.delete('/:bucketId', bucketValidator.deleteBucket, hasPermission(Permissions.DELETE), (req, res, next) => {
   bucketController.deleteBucket(req, res, next);
 });
+
+/** Creates a child bucket */
+router.put('/:bucketId/child', express.json(), bucketValidator.createBucketChild, hasPermission(Permissions.MANAGE),
+  (req, res, next) => {
+    bucketController.createBucketChild(req, res, next);
+  }
+);
 
 /** Synchronizes a bucket */
 router.get('/:bucketId/sync', bucketValidator.syncBucket, hasPermission(Permissions.READ), (req, res, next) => {

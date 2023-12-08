@@ -10,11 +10,21 @@ const schema = {
       accessKeyId: Joi.string().max(255).required(),
       bucket: Joi.string().max(255).required(),
       endpoint: Joi.string().uri({ scheme: /https?/ }).max(255).required(),
-      key: Joi.string().trim().max(255),
+      key: Joi.string().max(255).trim().strict(),
       secretAccessKey: Joi.string().max(255).required(),
       region: Joi.string().max(255),
       active: type.truthy
     }).required(),
+  },
+
+  createBucketChild: {
+    body: Joi.object().keys({
+      bucketName: Joi.string().max(255).required(),
+      subKey: Joi.string().max(255).trim().strict().pattern(/^[^/]+$/).required()
+    }).required(),
+    params: Joi.object({
+      bucketId: type.uuidv4
+    })
   },
 
   deleteBucket: {
@@ -68,6 +78,7 @@ const schema = {
 
 const validator = {
   createBucket: validate(schema.createBucket),
+  createBucketChild: validate(schema.createBucketChild),
   deleteBucket: validate(schema.deleteBucket),
   headBucket: validate(schema.headBucket),
   readBucket: validate(schema.readBucket),

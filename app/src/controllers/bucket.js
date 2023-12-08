@@ -134,6 +134,69 @@ const controller = {
   },
 
   /**
+   * @function createBucketChild
+   * Creates a child bucket
+   * @param {object} req Express request object
+   * @param {object} res Express response object
+   * @param {function} next The next callback function
+   * @returns {function} Express middleware function
+   * @throws The error encountered upon failure
+   */
+  async createBucketChild(req, res, next) {
+    try {
+      // Get Parent bucket data
+      const parentBucketId = addDashesToUuid(req.params.bucketId);
+      const parentBucket = await bucketService.read(parentBucketId);
+
+      // Check new child key length
+      const childKey = joinPath(stripDelimit(parentBucket.key), stripDelimit(req.body.subKey));
+      if (childKey.length > 255) {
+        throw new Problem(422, {
+          detail: 'New derived key exceeds maximum length of 255',
+          instance: req.originalUrl,
+          key: childKey
+        });
+      }
+
+      // Check for existing bucket collision
+      const bucketCollision = await bucketService.readUnique({
+        bucket: parentBucket.bucket,
+        endpoint: parentBucket.endpoint,
+        key: childKey
+      }).catch(() => undefined);
+
+      if (bucketCollision) {
+        throw new Problem(409, {
+          bucketId: bucketCollision.bucketId,
+          detail: 'Requested bucket already exists',
+          instance: req.originalUrl,
+          key: childKey
+        });
+      }
+
+      // Check for credential accessibility/validity
+      const childBucket = {
+        bucketName: req.body.bucketName,
+        accessKeyId: parentBucket.accessKeyId,
+        bucket: parentBucket.bucket,
+        endpoint: parentBucket.endpoint,
+        key: childKey,
+        secretAccessKey: parentBucket.secretAccessKey,
+        region: parentBucket.region ?? undefined,
+        active: parentBucket.active
+      };
+      await controller._validateCredentials(childBucket);
+      childBucket.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
+
+      // Create child bucket
+      const response = await bucketService.create(childBucket);
+      res.status(201).json(redactSecrets(response, secretFields));
+    } catch (e) {
+      next(errorToProblem(SERVICE, e));
+    }
+  },
+
+  /**
    * @function deleteBucket
    * Deletes the bucket
    * @param {object} req Express request object
