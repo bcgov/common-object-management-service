@@ -182,7 +182,6 @@ const service = {
   fetchMetadataForObject: (params) => {
     return ObjectModel.query()
       .select('object.id AS objectId', 'object.bucketId as bucketId')
-      .allowGraph('version.metadata')
       .withGraphJoined('version.metadata')
       // get latest version that isn't a delete marker by default
       .modifyGraph('version', builder => {

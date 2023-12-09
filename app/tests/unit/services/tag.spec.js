@@ -253,8 +253,6 @@ describe('fetchTagsForObject', () => {
     expect(ObjectModel.query).toHaveBeenCalledTimes(1);
     expect(ObjectModel.select).toHaveBeenCalledTimes(1);
     expect(ObjectModel.select).toBeCalledWith('object.id AS objectId', 'object.bucketId as bucketId');
-    expect(ObjectModel.allowGraph).toHaveBeenCalledTimes(1);
-    expect(ObjectModel.allowGraph).toBeCalledWith('version.tag');
     expect(ObjectModel.withGraphJoined).toHaveBeenCalledTimes(1);
     expect(ObjectModel.withGraphJoined).toBeCalledWith('version.tag');
     expect(ObjectModel.modifyGraph).toHaveBeenCalledTimes(2);

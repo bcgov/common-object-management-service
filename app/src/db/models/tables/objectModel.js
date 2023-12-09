@@ -82,6 +82,7 @@ class ObjectModel extends Timestamps(Model) {
         if (value) {
           query
             .withGraphJoined('version')
+            .leftJoinRelated('version')
             .whereIn('version.id', builder => {
               builder.select('version.id')
                 .where('version.mimeType', 'ilike', `%${value}%`);
@@ -92,6 +93,7 @@ class ObjectModel extends Timestamps(Model) {
         if (value !== undefined) {
           query
             .withGraphJoined('version')
+            .leftJoinRelated('version')
             .where('version.deleteMarker', value);
         }
       },
@@ -145,6 +147,7 @@ class ObjectModel extends Timestamps(Model) {
         if (subqueries.length) {
           query
             .withGraphJoined('version')
+            .leftJoinRelated('version')
             .whereIn('version.id', builder => {
               builder.intersect(subqueries);
             });
@@ -156,6 +159,10 @@ class ObjectModel extends Timestamps(Model) {
       hasPermission(query, userId, permCode) {
         if (userId && permCode) {
           query
+            // withGraphFetched keep joining using default 'left join' operation,
+            // to fix default behavior we are adding extra joinOperation which seems to be working with
+            // corresponding JoinRelated
+            .withGraphFetched('[objectPermission, bucketPermission]', { joinOperation: 'fullOuterJoinRelated' })
             .fullOuterJoinRelated('[objectPermission, bucketPermission]')
             // wrap in WHERE to make contained clauses exclusive of root query
             .where(query => {
@@ -175,7 +182,15 @@ class ObjectModel extends Timestamps(Model) {
                     });
                 });
             });
+        } else {
+          query.withGraphFetched('objectPermission');
         }
+      },
+      pagination(query, page, limit) {
+        if (page && limit) query.page(page - 1, limit);
+      },
+      sortOrder(query, column, order = 'asc') {
+        if (column) query.orderBy(column, order);
       }
     };
   }

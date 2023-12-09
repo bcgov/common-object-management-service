@@ -3,7 +3,7 @@
     "editor.defaultFormatter": "vscode.html-language-features"
   },
   "[javascript]": {
-    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+    "editor.defaultFormatter": "vscode.typescript-language-features"
   },
   "[json]": {
     "editor.defaultFormatter": "vscode.json-language-features"
@@ -16,8 +16,10 @@
   },
   "coverage-gutters.showGutterCoverage": false,
   "coverage-gutters.showLineCoverage": true,
-  "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+  "editor.defaultFormatter": "vscode.typescript-language-features",
   "editor.formatOnSave": true,
-  "eslint.format.enable": true,
   "files.insertFinalNewline": true,
+  "[yaml]": {
+    "editor.defaultFormatter": "redhat.vscode-yaml"
+  },
 }

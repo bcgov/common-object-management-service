@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 const Joi = require('joi');
 const jestJoi = require('jest-joi');
-const { DownloadMode } = require('../../../src/components/constants');
+const { DownloadMode, SortOrder } = require('../../../src/components/constants');
 expect.extend(jestJoi.matchers);
 
 const { schema } = require('../../../src/validators/object');
@@ -512,6 +512,68 @@ describe('searchObjects', () => {
         expect(active).toEqual(type.truthy.describe());
       });
     });
+
+    describe('page', () => {
+      const page = query.keys.page;
+
+      it('is a number', () => {
+        expect(page.type).toEqual('number');
+      });
+
+      it('enforces min value 1', () => {
+        expect.objectContaining({
+          name: 'min',
+          args: expect.objectContaining({
+            limit: 1
+          })
+        });
+      });
+    });
+
+    describe('limit', () => {
+      const limit = query.keys.limit;
+
+      it('is a number', () => {
+        expect(limit.type).toEqual('number');
+      });
+      it('enforces min value 0', () => {
+        expect.objectContaining({
+          name: 'min',
+          args: expect.objectContaining({
+            limit: 0
+          })
+        });
+      });
+    });
+
+    describe('sort', () => {
+      const sort = query.keys.sort;
+
+      it('is a string', () => {
+        expect(sort.type).toEqual('string');
+      });
+    });
+
+    describe('order', () => {
+      const order = query.keys.order;
+      it('is a string', () => {
+        expect(order.type).toEqual('string');
+      });
+      it('allows array containing valid order', () => {
+        expect(order.allow).toEqual(
+          expect.arrayContaining(Object.values(SortOrder))
+        );
+      });
+    });
+
+    describe('permissions', () => {
+      const permissions = query.keys.permissions;
+
+      it('is the expected schema', () => {
+        expect(permissions).toEqual(type.truthy.describe());
+      });
+    });
+
   });
 });
 

@@ -86,5 +86,11 @@ module.exports = Object.freeze({
     DELETE: 'DELETE',
     /** Grants resource permission management */
     MANAGE: 'MANAGE'
+  },
+
+  /** Sort Order */
+  SortOrder: {
+    ASC: 'asc',
+    DESC: 'desc'
   }
 });

@@ -117,11 +117,14 @@ const service = {
    */
   searchObjects: async (params, etrx = undefined) => {
     let trx;
+    let response = [];
     try {
       trx = etrx ? etrx : await ObjectModel.startTransaction();
-
-      const response = await ObjectModel.query(trx)
-        .allowGraph('version')
+      // GroupBy() seems to be working faster with ObjectionJS Graphs
+      // when comparing with distinct()
+      response.data = await ObjectModel.query(trx)
+        .allowGraph('[objectPermission, version, bucketPermission]')
+        .groupBy('object.id')
         .modify('filterIds', params.id)
         .modify('filterBucketIds', params.bucketId)
         .modify('filterName', params.name)
@@ -136,16 +139,30 @@ const service = {
           tag: params.tag
         })
         .modify('hasPermission', params.userId, 'READ')
-        // format result
+        .modify('pagination', params.page, params.limit)
+        .modify('sortOrder', params.sort, params.order)
         .then(result => {
-          // just return object table records
-          const res = result.map(row => {
-            // eslint-disable-next-line no-unused-vars
-            const { objectPermission, bucketPermission, version, ...object } = row;
-            return object;
-          });
-          // remove duplicates
-          return [...new Map(res.map(item => [item.id, item])).values()];
+          let resultObject = [];
+          if (Object.hasOwn(result, 'results')) {
+            resultObject = result.results;
+            response.total = result.total;
+          } else {
+            resultObject = result;
+            response.total = result.length;
+          }
+          return Promise.all(
+            resultObject.map(row => {
+              // eslint-disable-next-line no-unused-vars
+              const { objectPermission, bucketPermission, version, ...object } = row;
+              if (params.permissions) {
+                object.permissions = [];
+                if (objectPermission && params.userId && params.userId !== SYSTEM_USER) {
+                  object.permissions = objectPermission.map(o => o.permCode);
+                }
+              }
+              return object;
+            })
+          );
         });
 
       if (!etrx) await trx.commit();
