@@ -512,6 +512,47 @@ describe('searchObjects', () => {
         expect(active).toEqual(type.truthy.describe());
       });
     });
+
+    describe('page', () => {
+      const page = query.keys.page;
+
+      it('is a number', () => {
+        expect(page.type).toEqual('number');
+      });
+    });
+
+    describe('limit', () => {
+      const limit = query.keys.limit;
+
+      it('is a number', () => {
+        expect(limit.type).toEqual('number');
+      });
+    });
+
+    describe('sort', () => {
+      const sort = query.keys.sort;
+
+      it('is a string', () => {
+        expect(sort.type).toEqual('string');
+      });
+    });
+
+    describe('order', () => {
+      const order = query.keys.order;
+
+      it('is a string', () => {
+        expect(order.type).toEqual('string');
+      });
+    });
+
+    describe('permissions', () => {
+      const permissions = query.keys.permissions;
+
+      it('is the expected schema', () => {
+        expect(permissions).toEqual(type.truthy.describe());
+      });
+    });
+
   });
 });
 

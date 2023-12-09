@@ -117,11 +117,14 @@ const service = {
    */
   searchObjects: async (params, etrx = undefined) => {
     let trx;
+    let response = [];
     try {
       trx = etrx ? etrx : await ObjectModel.startTransaction();
 
-      const response = await ObjectModel.query(trx)
-        .allowGraph('version')
+      response.data = await ObjectModel.query(trx)
+        .allowGraph('objectPermission', 'version')
+        .groupBy('object.id')
+        .withGraphFetched('objectPermission')
         .modify('filterIds', params.id)
         .modify('filterBucketIds', params.bucketId)
         .modify('filterName', params.name)
@@ -136,12 +139,24 @@ const service = {
           tag: params.tag
         })
         .modify('hasPermission', params.userId, 'READ')
-        // format result
+        .modify('pagination', params.page, params.limit)
+        .modify('sortOrder', params.sort, params.order).debug()
         .then(result => {
-          // just return object table records
-          const res = result.map(row => {
+          let resultObject = [];
+          if (Object.hasOwn(result, 'results')) {
+            resultObject = result.results;
+            response.total = result.total;
+          } else {
+            resultObject = result;
+            response.total = result.length;
+          }
+
+          const res = resultObject.map(row => {
             // eslint-disable-next-line no-unused-vars
             const { objectPermission, bucketPermission, version, ...object } = row;
+            if (params.permissions) {
+              object.objectPermissions = objectPermission.map(o => o.permCode);
+            }
             return object;
           });
           // remove duplicates

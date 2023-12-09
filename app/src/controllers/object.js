@@ -929,14 +929,20 @@ const controller = {
         public: isTruthy(req.query.public),
         active: isTruthy(req.query.active),
         deleteMarker: isTruthy(req.query.deleteMarker),
-        latest: isTruthy(req.query.latest)
+        latest: isTruthy(req.query.latest),
+        page: req.query.page,
+        limit: req.query.limit,
+        sort: req.query.sort,
+        order: req.query.order,
+        permissions: isTruthy(req.query.permissions)
       };
       // if scoping to current user permissions on objects
       if (config.has('server.privacyMask')) {
         params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
       }
       const response = await objectService.searchObjects(params);
-      res.status(200).json(response);
+      res.setHeader('X-Total-Rows', response.total);
+      res.status(200).json(response.data);
     } catch (error) {
       next(error);
     }

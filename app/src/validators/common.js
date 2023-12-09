@@ -82,6 +82,13 @@ const scheme = {
 
   string: oneOrMany(Joi.string().max(255)),
 
+  pagination: (sortList) => ({
+    page: Joi.number().min(1),
+    limit: Joi.number().min(0),
+    sort: Joi.string().valid(...sortList),
+    order: Joi.string().valid('asc', 'desc'),
+  }),
+
   permCode: oneOrMany(Joi.string().valid(...Object.values(Permissions)))
 };
 

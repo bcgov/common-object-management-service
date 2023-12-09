@@ -176,6 +176,12 @@ class ObjectModel extends Timestamps(Model) {
                 });
             });
         }
+      },
+      pagination(query, page, limit) {
+        if (page && limit) query.page(page - 1, limit);
+      },
+      sortOrder(query, column, order = 'asc') {
+        if (column) query.orderBy(column, order);
       }
     };
   }

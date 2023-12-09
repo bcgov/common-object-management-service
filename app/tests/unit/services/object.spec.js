@@ -134,6 +134,8 @@ describe('searchObjects', () => {
       tag: params.tag
     });
     expect(ObjectModel.modify).toHaveBeenNthCalledWith(11, 'hasPermission', params.userId, 'READ');
+    expect(ObjectModel.modify).toHaveBeenNthCalledWith(12, 'pagination', params.page, params.limit);
+    expect(ObjectModel.modify).toHaveBeenNthCalledWith(13, 'sortOrder', params.sort, params.order);
     expect(ObjectModel.then).toHaveBeenCalledTimes(1);
     expect(objectModelTrx.commit).toHaveBeenCalledTimes(1);
   });
