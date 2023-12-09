@@ -10,6 +10,7 @@ function getSpec() {
   const spec = yaml.load(rawSpec);
   spec.servers[0].url = '/api/v1';
   if (config.has('keycloak.enabled')) {
+    // eslint-disable-next-line max-len
     spec.components.securitySchemes.OpenID.openIdConnectUrl = `${config.get('keycloak.serverUrl')}/realms/${config.get('keycloak.realm')}/.well-known/openid-configuration`;
   }
   return spec;

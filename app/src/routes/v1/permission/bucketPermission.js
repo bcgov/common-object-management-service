@@ -16,18 +16,24 @@ router.get('/', bucketPermissionValidator.searchPermissions, (req, res, next) =>
 });
 
 /** Returns the bucket permissions */
-router.get('/:bucketId', bucketPermissionValidator.listPermissions, currentObject, hasPermission(Permissions.READ),  (req, res, next) => {
-  bucketPermissionController.listPermissions(req, res, next);
-});
+router.get('/:bucketId', bucketPermissionValidator.listPermissions, currentObject, hasPermission(Permissions.READ),
+  (req, res, next) => {
+    bucketPermissionController.listPermissions(req, res, next);
+  }
+);
 
 /** Grants bucket permissions to users */
-router.put('/:bucketId', express.json(), bucketPermissionValidator.addPermissions, currentObject, hasPermission(Permissions.MANAGE), (req, res, next) => {
-  bucketPermissionController.addPermissions(req, res, next);
-});
+router.put('/:bucketId', express.json(), bucketPermissionValidator.addPermissions,
+  currentObject, hasPermission(Permissions.MANAGE), (req, res, next) => {
+    bucketPermissionController.addPermissions(req, res, next);
+  }
+);
 
 /** Deletes bucket permissions for a user */
-router.delete('/:bucketId', bucketPermissionValidator.removePermissions, currentObject, hasPermission(Permissions.MANAGE), (req, res, next) => {
-  bucketPermissionController.removePermissions(req, res, next);
-});
+router.delete('/:bucketId', bucketPermissionValidator.removePermissions,
+  currentObject, hasPermission(Permissions.MANAGE), (req, res, next) => {
+    bucketPermissionController.removePermissions(req, res, next);
+  }
+);
 
 module.exports = router;

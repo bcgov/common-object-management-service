@@ -59,7 +59,9 @@ const utils = {
 
   toArray(values) {
     if (values) {
-      return Array.isArray(values) ? values.filter(p => p && p.trim().length > 0) : [values].filter(p => p && p.trim().length > 0);
+      return Array.isArray(values)
+        ? values.filter(p => p && p.trim().length > 0)
+        : [values].filter(p => p && p.trim().length > 0);
     }
     return [];
   },

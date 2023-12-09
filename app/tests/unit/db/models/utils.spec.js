@@ -84,7 +84,8 @@ describe('inArrayFilter', () => {
   it('should return the desired clause for multiple values joined with OR', () => {
     const col = 'user';
     const vals = ['1', '2', '3'];
-    expect(inArrayFilter(col, vals)).toEqual('(array_length("user", 1) > 0 and (\'1\' = ANY("user") or \'2\' = ANY("user") or \'3\' = ANY("user")))');
+    expect(inArrayFilter(col, vals))
+      .toEqual('(array_length("user", 1) > 0 and (\'1\' = ANY("user") or \'2\' = ANY("user") or \'3\' = ANY("user")))');
   });
 });
 

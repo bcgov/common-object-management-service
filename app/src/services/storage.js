@@ -275,10 +275,13 @@ const objectStorageService = {
    * @param {string} [options.filePath=undefined] Optional filePath of the objects
    * @param {string} [options.bucketId=undefined] Optional bucketId
    * @param {boolean} [options.precisePath=true] Optional boolean for filtering results based on the precise path
-   * @param {boolean} [options.filterLatest=false] Optional boolean for filtering results to only entries with IsLatest being true
+   * @param {boolean} [options.filterLatest=false] Optional boolean for filtering results to only entries
+   * with IsLatest being true
    * @returns {Promise<object>} An object containg an array of DeleteMarkers and Versions
    */
-  async listAllObjectVersions({ filePath = undefined, bucketId = undefined, precisePath = true, filterLatest = false } = {}) {
+  async listAllObjectVersions({
+    filePath = undefined, bucketId = undefined, precisePath = true, filterLatest = false
+  } = {}) {
     const key = filePath ?? (await utils.getBucket(bucketId)).key;
     const path = key !== DELIMITER ? key : '';
 
@@ -320,7 +323,9 @@ const objectStorageService = {
    * @param {string} [options.bucketId=undefined] Optional bucketId
    * @returns {Promise<object>} The response of the list objects v2 operation
    */
-  async listObjectsV2({ filePath = undefined, continuationToken = undefined, maxKeys = undefined, bucketId = undefined } = {}) {
+  async listObjectsV2({
+    filePath = undefined, continuationToken = undefined, maxKeys = undefined, bucketId = undefined
+  } = {}) {
     const data = await utils.getBucket(bucketId);
     const prefix = data.key !== DELIMITER ? data.key : '';
     const params = {
@@ -342,7 +347,9 @@ const objectStorageService = {
    * @param {string} [options.bucketId=undefined] Optional bucketId
    * @returns {Promise<object>} The response of the list object version operation
    */
-  async listObjectVersion({ filePath = undefined, keyMarker = undefined, maxKeys = undefined, bucketId = undefined } = {}) {
+  async listObjectVersion({
+    filePath = undefined, keyMarker = undefined, maxKeys = undefined, bucketId = undefined
+  } = {}) {
     const data = await utils.getBucket(bucketId);
     const prefix = data.key !== DELIMITER ? data.key : '';
     const params = {
@@ -492,7 +499,8 @@ const objectStorageService = {
    * @param {object} [options.metadata] Optional object containing key/value pairs for metadata
    * @param {object} [options.tags] Optional object containing key/value pairs for tags
    * @param {string} [options.bucketId] Optional bucketId
-   * @returns {Promise<CompleteMultipartUploadCommandOutput | AbortMultipartUploadCommandOutput>} The response of the put object operation
+   * @returns {Promise<CompleteMultipartUploadCommandOutput | AbortMultipartUploadCommandOutput>}
+   * The response of the put object operation
    */
   async upload({ stream, name, length, mimeType, metadata, tags, bucketId = undefined }) {
     const data = await utils.getBucket(bucketId);

@@ -18,9 +18,11 @@ exports.up = function (knex) {
     }))
     .then(() => knex.schema.createTable('bucket_permission', table => {
       table.uuid('id').primary();
-      table.uuid('bucketId').references('bucketId').inTable('bucket').notNullable().onUpdate('CASCADE').onDelete('CASCADE');
+      table.uuid('bucketId').references('bucketId').inTable('bucket').notNullable().onUpdate('CASCADE')
+        .onDelete('CASCADE');
       table.uuid('userId').references('userId').inTable('user').notNullable().onUpdate('CASCADE').onDelete('CASCADE');
-      table.string('permCode').references('permCode').inTable('permission').notNullable().onUpdate('CASCADE').onDelete('CASCADE');
+      table.string('permCode').references('permCode').inTable('permission').notNullable().onUpdate('CASCADE')
+        .onDelete('CASCADE');
       stamps(knex, table);
     }))
 

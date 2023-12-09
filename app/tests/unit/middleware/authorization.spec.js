@@ -55,82 +55,116 @@ describe('_checkPermission', () => {
     [false, Permissions.READ, { objectId: SYSTEM_USER }, [], []],
     [false, Permissions.READ, { objectId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], []],
     [true, Permissions.READ, { objectId: SYSTEM_USER }, [{ permCode: Permissions.READ }], []],
-    [true, Permissions.READ, { objectId: SYSTEM_USER }, [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }], []],
+    [true, Permissions.READ, { objectId: SYSTEM_USER }, [
+      { permCode: Permissions.READ }, { permCode: Permissions.UPDATE }
+    ], []],
     [false, Permissions.READ, { bucketId: SYSTEM_USER }, [], []],
     [false, Permissions.READ, { bucketId: SYSTEM_USER }, [], [{ permCode: Permissions.UPDATE }]],
     [true, Permissions.READ, { bucketId: SYSTEM_USER }, [], [{ permCode: Permissions.READ }]],
-    [true, Permissions.READ, { bucketId: SYSTEM_USER }, [], [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }]],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER }, [], [
+      { permCode: Permissions.READ }, { permCode: Permissions.UPDATE }
+    ]],
     [false, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [], []],
     [false, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], []],
     [true, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [{ permCode: Permissions.READ }], []],
-    [true, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }], []],
-    [false, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], [{ permCode: Permissions.UPDATE }]],
-    [true, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], [{ permCode: Permissions.READ }]],
-    [true, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [{ permCode: Permissions.READ }], [{ permCode: Permissions.UPDATE }]],
-    [true, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }], [{ permCode: Permissions.UPDATE }]],
-    [true, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }]],
-  ])('should return %s given a bucketless object, permission %s, params %j, objPerms %j and bucketPerms %j', async (expected, permission, params, objPerms, bucketPerms) => {
-    const req = {
-      currentObject: {},
-      currentUser: { authType: AuthType.BEARER },
-      params: params
-    };
-    getCurrentIdentitySpy.mockReturnValue(SYSTEM_USER);
-    getCurrentUserIdSpy.mockResolvedValue(SYSTEM_USER);
-    bucketSearchPermissionsSpy.mockResolvedValue(bucketPerms);
-    objSearchPermissionsSpy.mockResolvedValue(objPerms);
+    [true, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [
+      { permCode: Permissions.READ }, { permCode: Permissions.UPDATE }
+    ], []],
+    [false, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [
+      { permCode: Permissions.UPDATE }], [{ permCode: Permissions.UPDATE }
+    ]],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [
+      { permCode: Permissions.UPDATE }], [{ permCode: Permissions.READ }
+    ]],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [
+      { permCode: Permissions.READ }], [{ permCode: Permissions.UPDATE }
+    ]],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [
+      { permCode: Permissions.READ }, { permCode: Permissions.UPDATE }], [{ permCode: Permissions.UPDATE }
+    ]],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [
+      { permCode: Permissions.UPDATE }], [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }
+    ]],
+  ])('should return %s given a bucketless object, permission %s, params %j, objPerms %j and bucketPerms %j',
+    async (expected, permission, params, objPerms, bucketPerms) => {
+      const req = {
+        currentObject: {},
+        currentUser: { authType: AuthType.BEARER },
+        params: params
+      };
+      getCurrentIdentitySpy.mockReturnValue(SYSTEM_USER);
+      getCurrentUserIdSpy.mockResolvedValue(SYSTEM_USER);
+      bucketSearchPermissionsSpy.mockResolvedValue(bucketPerms);
+      objSearchPermissionsSpy.mockResolvedValue(objPerms);
 
-    const result = await mw._checkPermission(req, permission);
+      const result = await mw._checkPermission(req, permission);
 
-    expect(result).toBe(expected);
-    expect(getCurrentIdentitySpy).toHaveBeenCalledTimes(1);
-    expect(getCurrentIdentitySpy).toHaveBeenCalledWith(req.currentUser, SYSTEM_USER);
-    expect(getCurrentUserIdSpy).toHaveBeenCalledTimes(1);
-    expect(getCurrentUserIdSpy).toHaveBeenCalledWith(SYSTEM_USER);
-    expect(bucketSearchPermissionsSpy).toHaveBeenCalledTimes(params.bucketId ? 1 : 0);
-    expect(objSearchPermissionsSpy).toHaveBeenCalledTimes(params.objectId ? 1 : 0);
-  });
+      expect(result).toBe(expected);
+      expect(getCurrentIdentitySpy).toHaveBeenCalledTimes(1);
+      expect(getCurrentIdentitySpy).toHaveBeenCalledWith(req.currentUser, SYSTEM_USER);
+      expect(getCurrentUserIdSpy).toHaveBeenCalledTimes(1);
+      expect(getCurrentUserIdSpy).toHaveBeenCalledWith(SYSTEM_USER);
+      expect(bucketSearchPermissionsSpy).toHaveBeenCalledTimes(params.bucketId ? 1 : 0);
+      expect(objSearchPermissionsSpy).toHaveBeenCalledTimes(params.objectId ? 1 : 0);
+    });
 
   it.each([
     [false, Permissions.READ, {}, [], []],
     [false, Permissions.READ, { objectId: SYSTEM_USER }, [], []],
     [false, Permissions.READ, { objectId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], []],
     [true, Permissions.READ, { objectId: SYSTEM_USER }, [{ permCode: Permissions.READ }], []],
-    [true, Permissions.READ, { objectId: SYSTEM_USER }, [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }], []],
+    [true, Permissions.READ, { objectId: SYSTEM_USER }, [
+      { permCode: Permissions.READ }, { permCode: Permissions.UPDATE }
+    ], []],
     [false, Permissions.READ, { bucketId: SYSTEM_USER }, [], []],
     [false, Permissions.READ, { bucketId: SYSTEM_USER }, [], [{ permCode: Permissions.UPDATE }]],
     [true, Permissions.READ, { bucketId: SYSTEM_USER }, [], [{ permCode: Permissions.READ }]],
-    [true, Permissions.READ, { bucketId: SYSTEM_USER }, [], [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }]],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER }, [], [
+      { permCode: Permissions.READ }, { permCode: Permissions.UPDATE }
+    ]],
     [false, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [], []],
     [false, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], []],
     [true, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [{ permCode: Permissions.READ }], []],
-    [true, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }], []],
-    [false, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], [{ permCode: Permissions.UPDATE }]],
-    [true, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], [{ permCode: Permissions.READ }]],
-    [true, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [{ permCode: Permissions.READ }], [{ permCode: Permissions.UPDATE }]],
-    [true, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }], [{ permCode: Permissions.UPDATE }]],
-    [true, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }]],
-  ])('should return %s given a bucketed object, permission %s, params %j, objPerms %j and bucketPerms %j', async (expected, permission, params, objPerms, bucketPerms) => {
-    const req = {
-      currentObject: { bucketId: SYSTEM_USER },
-      currentUser: { authType: AuthType.BEARER },
-      params: params
-    };
-    getCurrentIdentitySpy.mockReturnValue(SYSTEM_USER);
-    getCurrentUserIdSpy.mockResolvedValue(SYSTEM_USER);
-    bucketSearchPermissionsSpy.mockResolvedValue(bucketPerms);
-    objSearchPermissionsSpy.mockResolvedValue(objPerms);
+    [true, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [
+      { permCode: Permissions.READ }, { permCode: Permissions.UPDATE }
+    ], []],
+    [false, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [
+      { permCode: Permissions.UPDATE }], [{ permCode: Permissions.UPDATE }
+    ]],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [
+      { permCode: Permissions.UPDATE }], [{ permCode: Permissions.READ }
+    ]],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [
+      { permCode: Permissions.READ }], [{ permCode: Permissions.UPDATE }
+    ]],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [
+      { permCode: Permissions.READ }, { permCode: Permissions.UPDATE }
+    ], [{ permCode: Permissions.UPDATE }]],
+    [true, Permissions.READ, { bucketId: SYSTEM_USER, objectId: SYSTEM_USER }, [{ permCode: Permissions.UPDATE }], [
+      { permCode: Permissions.READ }, { permCode: Permissions.UPDATE }
+    ]],
+  ])('should return %s given a bucketed object, permission %s, params %j, objPerms %j and bucketPerms %j',
+    async (expected, permission, params, objPerms, bucketPerms) => {
+      const req = {
+        currentObject: { bucketId: SYSTEM_USER },
+        currentUser: { authType: AuthType.BEARER },
+        params: params
+      };
+      getCurrentIdentitySpy.mockReturnValue(SYSTEM_USER);
+      getCurrentUserIdSpy.mockResolvedValue(SYSTEM_USER);
+      bucketSearchPermissionsSpy.mockResolvedValue(bucketPerms);
+      objSearchPermissionsSpy.mockResolvedValue(objPerms);
 
-    const result = await mw._checkPermission(req, permission);
+      const result = await mw._checkPermission(req, permission);
 
-    expect(result).toBe(expected);
-    expect(getCurrentIdentitySpy).toHaveBeenCalledTimes(1);
-    expect(getCurrentIdentitySpy).toHaveBeenCalledWith(req.currentUser, SYSTEM_USER);
-    expect(getCurrentUserIdSpy).toHaveBeenCalledTimes(1);
-    expect(getCurrentUserIdSpy).toHaveBeenCalledWith(SYSTEM_USER);
-    expect(bucketSearchPermissionsSpy).toHaveBeenCalledTimes(1);
-    expect(objSearchPermissionsSpy).toHaveBeenCalledTimes(params.objectId ? 1 : 0);
-  });
+      expect(result).toBe(expected);
+      expect(getCurrentIdentitySpy).toHaveBeenCalledTimes(1);
+      expect(getCurrentIdentitySpy).toHaveBeenCalledWith(req.currentUser, SYSTEM_USER);
+      expect(getCurrentUserIdSpy).toHaveBeenCalledTimes(1);
+      expect(getCurrentUserIdSpy).toHaveBeenCalledWith(SYSTEM_USER);
+      expect(bucketSearchPermissionsSpy).toHaveBeenCalledTimes(1);
+      expect(objSearchPermissionsSpy).toHaveBeenCalledTimes(params.objectId ? 1 : 0);
+    });
 });
 
 describe('checkAppMode', () => {
@@ -389,28 +423,29 @@ describe('hasPermission', () => {
       [0, AuthType.BEARER, SYSTEM_USER, []],
       [0, AuthType.BEARER, SYSTEM_USER, [{ permCode: Permissions.UPDATE }]],
       [1, AuthType.BEARER, SYSTEM_USER, [{ permCode: Permissions.READ }, { permCode: Permissions.UPDATE }]]
-    ])('should call next %i times when authType %s, userId %o and have permissions %j', async (nextCount, type, userId, perms) => {
-      const searchPermCount = +(type === AuthType.BEARER && !!userId);
-      getAppAuthModeSpy.mockReturnValue(AuthMode.OIDCAUTH);
-      getCurrentUserIdSpy.mockResolvedValue(userId);
-      objSearchPermissionsSpy.mockResolvedValue(perms);
-      req.currentObject.public = false;
-      req.currentUser.authType = type;
-      req.params.objectId = SYSTEM_USER;
+    ])('should call next %i times when authType %s, userId %o and have permissions %j',
+      async (nextCount, type, userId, perms) => {
+        const searchPermCount = +(type === AuthType.BEARER && !!userId);
+        getAppAuthModeSpy.mockReturnValue(AuthMode.OIDCAUTH);
+        getCurrentUserIdSpy.mockResolvedValue(userId);
+        objSearchPermissionsSpy.mockResolvedValue(perms);
+        req.currentObject.public = false;
+        req.currentUser.authType = type;
+        req.params.objectId = SYSTEM_USER;
 
-      const result = mw.hasPermission(Permissions.READ);
-      expect(result).toBeInstanceOf(Function);
-      await result(req, res, next);
+        const result = mw.hasPermission(Permissions.READ);
+        expect(result).toBeInstanceOf(Function);
+        await result(req, res, next);
 
-      expect(next).toHaveBeenCalledTimes(1);
-      if (nextCount) expect(next).toHaveBeenCalledWith();
-      else expect(next).toHaveBeenCalledWith(expect.any(Object));
+        expect(next).toHaveBeenCalledTimes(1);
+        if (nextCount) expect(next).toHaveBeenCalledWith();
+        else expect(next).toHaveBeenCalledWith(expect.any(Object));
 
-      expect(objSearchPermissionsSpy).toHaveBeenCalledTimes(searchPermCount);
-      if (searchPermCount) {
-        expect(objSearchPermissionsSpy).toHaveBeenCalledWith(expect.objectContaining({ objId: SYSTEM_USER }));
-        expect(objSearchPermissionsSpy).toHaveBeenCalledWith(expect.objectContaining({ userId: userId }));
-      }
-    });
+        expect(objSearchPermissionsSpy).toHaveBeenCalledTimes(searchPermCount);
+        if (searchPermCount) {
+          expect(objSearchPermissionsSpy).toHaveBeenCalledWith(expect.objectContaining({ objId: SYSTEM_USER }));
+          expect(objSearchPermissionsSpy).toHaveBeenCalledWith(expect.objectContaining({ userId: userId }));
+        }
+      });
   });
 });

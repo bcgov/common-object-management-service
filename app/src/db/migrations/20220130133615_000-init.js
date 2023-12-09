@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 const stamps = require('../stamps');
 const { NIL: SYSTEM_USER } = require('uuid');
 

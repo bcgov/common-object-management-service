@@ -88,7 +88,9 @@ const controller = {
   async addPermissions(req, res, next) {
     try {
       const userId = await userService.getCurrentUserId(utils.getCurrentIdentity(req.currentUser, SYSTEM_USER));
-      const response = await objectPermissionService.addPermissions(utils.addDashesToUuid(req.params.objectId), req.body, userId);
+      const response = await objectPermissionService.addPermissions(
+        utils.addDashesToUuid(req.params.objectId), req.body, userId
+      );
       res.status(201).json(response);
     } catch (e) {
       next(errorToProblem(SERVICE, e));

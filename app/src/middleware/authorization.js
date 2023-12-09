@@ -136,7 +136,10 @@ const hasPermission = (permission) => {
       }
     } catch (err) {
       log.verbose(err.message, { function: 'hasPermission' });
-      return next(new Problem(403, { detail: 'User lacks permission to complete this action', instance: req.originalUrl }));
+      return next(new Problem(403, {
+        detail: 'User lacks permission to complete this action',
+        instance: req.originalUrl
+      }));
     }
 
     next();
