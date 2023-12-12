@@ -201,6 +201,68 @@ paths:
           $ref: "#/components/responses/Forbidden"
         default:
           $ref: "#/components/responses/Error"
+  /bucket/{bucketId}/child:
+    put:
+      summary: Creates a child bucket
+      description: >-
+        Creates a child bucket record relative to the parent bucket and copies
+        the majority of the credential values. Bucket should exist in S3. This
+        endpoint will report a collision and the bucketId it collided with if
+        the desired bucket already exists. User requires `MANAGE` permission
+        on the parent bucket to proceed.
+      operationId: createBucketChild
+      tags:
+        - Bucket
+      parameters:
+        - $ref: "#/components/parameters/Path-BucketId"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Request-CreateBucketChild"
+      responses:
+        "201":
+          description: Returns inserted DB child bucket record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DB-Bucket"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          description: Conflict (Request conflicts with server state)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Response-Conflict"
+                  - type: object
+                    properties:
+                      bucketId:
+                        type: string
+                        description: The bucketId this request is in collision with
+                        example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
+                      key:
+                        type: string
+                        description: The derived bucket key
+                        example: foo/bar
+        "422":
+          description: Unprocessable Content (Derived bucket key is too long)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Response-ValidationError"
+                  - type: object
+                    properties:
+                      key:
+                        type: string
+                        description: The derived bucket key
+                        example: foo/bar
+        default:
+          $ref: "#/components/responses/Error"
   /bucket/{bucketId}/sync:
     get:
       summary: Synchronize a bucket
@@ -2147,6 +2209,26 @@ components:
               type: string
               default: /
               example: coms/env
+    Request-CreateBucketChild:
+      title: Request Create Bucket Child
+      type: object
+      required:
+        - bucketName
+        - subKey
+      allOf:
+        - type: object
+          properties:
+            bucketName:
+              type: string
+              description: A human-readable label or title
+              maxLength: 255
+              example: Geospatial Maps
+            subKey:
+              type: string
+              description: >-
+                The desired S3 child directory name. Must not include `/`.
+              maxLength: 255
+              example: child
     Request-UpdateBucket:
       title: Request Update Bucket
       type: object

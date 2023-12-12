@@ -11,7 +11,8 @@ const service = {
    * Makes the incoming list of metadata the definitive set associated with versionId
    * Dissociaate extraneous metadata and also does collision detection for null versions (non-versioned)
    * @param {string} versionId The uuid id column from version table
-   * @param {object[]} metadata Incoming array of metadata objects to add for this version (eg: [{ key: 'a', value: '1'}, {key: 'B', value: '2'}]).
+   * @param {object[]} metadata Incoming array of metadata objects to add for this version
+   * (eg: [{ key: 'a', value: '1'}, {key: 'B', value: '2'}]).
    * This will always be the definitive metadata we want on the version
    * @param {string} [currentUserId=SYSTEM_USER] The optional userId uuid actor; defaults to system user if unspecified
    * @param {object} [etrx=undefined] An optional Objection Transaction object
@@ -33,7 +34,9 @@ const service = {
           .modify('filterVersionId', versionId);
         // remove existing joins for metadata that is not in incomming set
         if (associatedMetadata.length) {
-          const dissociateMetadata = associatedMetadata.filter(({ metadataId }) => !dbMetadata.some(({ id }) => id === metadataId));
+          const dissociateMetadata = associatedMetadata.filter(({ metadataId }) => {
+            return !dbMetadata.some(({ id }) => id === metadataId);
+          });
           if (dissociateMetadata.length) {
             await VersionMetadata.query(trx)
               .whereIn('metadataId', dissociateMetadata.map(vm => vm.metadataId))
@@ -43,7 +46,9 @@ const service = {
         }
 
         // join new metadata
-        const newJoins = associatedMetadata.length ? dbMetadata.filter(({ id }) => !associatedMetadata.some(({ metadataId }) => metadataId === id)) : dbMetadata;
+        const newJoins = associatedMetadata.length
+          ? dbMetadata.filter(({ id }) => !associatedMetadata.some(({ metadataId }) => metadataId === id))
+          : dbMetadata;
 
         if (newJoins.length) {
           response = await VersionMetadata.query(trx)

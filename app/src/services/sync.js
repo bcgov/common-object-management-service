@@ -30,7 +30,8 @@ const service = {
     let objId = uuidv4();
 
     if (typeof s3Object === 'object') { // If regular S3 Object
-      const TagSet = await storageService.getObjectTagging({ filePath: path, bucketId: bucketId }).then(result => result.TagSet ?? []);
+      const TagSet = await storageService.getObjectTagging({ filePath: path, bucketId: bucketId })
+        .then(result => result.TagSet ?? []);
       const s3ObjectComsId = TagSet.find(obj => (obj.Key === 'coms-id'))?.Value;
 
       if (s3ObjectComsId && uuidValidate(s3ObjectComsId)) {

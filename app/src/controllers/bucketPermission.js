@@ -90,7 +90,9 @@ const controller = {
   async addPermissions(req, res, next) {
     try {
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
-      const response = await bucketPermissionService.addPermissions(addDashesToUuid(req.params.bucketId), req.body, userId);
+      const response = await bucketPermissionService.addPermissions(
+        addDashesToUuid(req.params.bucketId),req.body, userId
+      );
       res.status(201).json(response);
     } catch (e) {
       next(errorToProblem(SERVICE, e));

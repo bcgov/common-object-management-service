@@ -62,10 +62,14 @@ class DataConnection {
     log.verbose(`Connect OK: ${connectOk}, Schema OK: ${schemaOk}, Models OK: ${modelsOk}`, { function: 'checkAll' });
 
     if (!connectOk) {
-      log.error('Could not connect to the database, check configuration and ensure database server is running', { function: 'checkAll' });
+      log.error('Could not connect to the database, check configuration and ensure database server is running', {
+        function: 'checkAll'
+      });
     }
     if (!schemaOk) {
-      log.error('Connected to the database, could not verify the schema. Ensure proper migrations have been run.', { function: 'checkAll' });
+      log.error('Connected to the database, could not verify the schema. Ensure proper migrations have been run.', {
+        function: 'checkAll'
+      });
     }
     if (!modelsOk) {
       log.error('Connected to the database, schema is ok, could not initialize Knex Models.', { function: 'checkAll' });

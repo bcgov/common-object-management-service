@@ -97,18 +97,30 @@ class QueueManager {
 
         const objectId = await syncService.syncJob(job.path, job.bucketId, job.full, job.createdBy);
 
-        log.verbose(`Finished processing job id ${job.id}`, { function: 'processNextJob', job: job, objectId: objectId });
+        log.verbose(`Finished processing job id ${job.id}`, {
+          function: 'processNextJob',
+          job: job,
+          objectId: objectId
+        });
 
         this.isBusy = false;
         // If job is completed, check if there are more jobs
         if (!this.toClose) this.checkQueue();
       }
     } catch (err) {
-      log.error(`Error encountered on job id ${job.id}: ${err.message}`, { function: 'processNextJob', job: job, error: err });
+      log.error(`Error encountered on job id ${job.id}: ${err.message}`, {
+        function: 'processNextJob',
+        job: job,
+        error: err
+      });
 
       const maxRetries = parseInt(config.get('server.maxRetries'));
       if (job.retries + 1 > maxRetries) {
-        log.warn(`Job has exceeded the ${maxRetries} maximum retries permitted`, { function: 'processNextJob', job: job, maxRetries: maxRetries });
+        log.warn(`Job has exceeded the ${maxRetries} maximum retries permitted`, {
+          function: 'processNextJob',
+          job: job,
+          maxRetries: maxRetries
+        });
       } else {
         objectQueueService.enqueue({
           jobs: [{ bucketId: job.bucketId, path: job.path }],
