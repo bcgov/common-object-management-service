@@ -86,6 +86,7 @@ describe('_deriveObjectId', () => {
       getObjectTaggingSpy.mockResolvedValue({
         TagSet: [{ Key: 'coms-id', Value: 'garbage' }]
       });
+      putObjectTaggingSpy.mockResolvedValue(true);
 
       const result = await service._deriveObjectId({}, path, bucketId);
 
@@ -106,8 +107,33 @@ describe('_deriveObjectId', () => {
       }));
     });
 
+
     it('Returns a new uuid if unavailable and pushes tags when less than 10 present', async () => {
       getObjectTaggingSpy.mockResolvedValue({ TagSet: [] });
+      putObjectTaggingSpy.mockResolvedValue(true);
+
+      const result = await service._deriveObjectId({}, path, bucketId);
+
+      expect(result).toBeTruthy();
+      expect(typeof result).toBe('string');
+      expect(result).toMatch(uuidv4Regex);
+      expect(getObjectTaggingSpy).toHaveBeenCalledTimes(1);
+      expect(getObjectTaggingSpy).toHaveBeenCalledWith(expect.objectContaining({
+        filePath: path,
+        bucketId: bucketId
+      }));
+      expect(listAllObjectVersionsSpy).toHaveBeenCalledTimes(0);
+      expect(putObjectTaggingSpy).toHaveBeenCalledTimes(1);
+      expect(putObjectTaggingSpy).toHaveBeenCalledWith(expect.objectContaining({
+        filePath: path,
+        bucketId: bucketId,
+        tags: expect.any(Array)
+      }));
+    });
+
+    it('Returns a new uuid if unavailable and continues when unable to write to S3', async () => {
+      getObjectTaggingSpy.mockResolvedValue({ TagSet: [] });
+      putObjectTaggingSpy.mockRejectedValue({ message: 'nope' });
 
       const result = await service._deriveObjectId({}, path, bucketId);
 
@@ -1021,6 +1047,43 @@ describe('syncTags', () => {
 
     expect(Version.startTransaction).toHaveBeenCalledTimes(1);
     expect(associateTagsSpy).toHaveBeenCalledTimes(1);
+    expect(dissociateTagsSpy).toHaveBeenCalledTimes(0);
+    expect(fetchTagsForVersionSpy).toHaveBeenCalledTimes(1);
+    expect(fetchTagsForVersionSpy).toHaveBeenCalledWith(expect.objectContaining({
+      versionIds: comsVersion.id
+    }), expect.any(Object));
+    expect(getObjectTaggingSpy).toHaveBeenCalledTimes(1);
+    expect(getObjectTaggingSpy).toHaveBeenCalledWith(expect.objectContaining({
+      filePath: path,
+      s3VersionId: comsVersion.s3VersionId,
+      bucketId: bucketId
+    }));
+    expect(getSpy).toHaveBeenCalledTimes(0);
+    expect(putObjectTaggingSpy).toHaveBeenCalledTimes(1);
+    expect(putObjectTaggingSpy).toHaveBeenCalledWith(expect.objectContaining({
+      filePath: path,
+      tags: expect.arrayContaining([{
+        Key: 'coms-id',
+        Value: comsVersion.objectId
+      }]),
+      bucketId: bucketId,
+    }));
+    expect(versionTrx.commit).toHaveBeenCalledTimes(1);
+  });
+
+  it('should not write coms-id tag when coms version is latest and continues when unable to write to S3', async () => {
+    fetchTagsForVersionSpy.mockResolvedValue([{}]);
+    getObjectTaggingSpy.mockResolvedValue({});
+    putObjectTaggingSpy.mockRejectedValue({ message: 'nope' });
+
+    const result = await service.syncTags(comsVersion, path, bucketId);
+
+    expect(result).toBeTruthy();
+    expect(Array.isArray(result)).toBeTruthy();
+    expect(result).toHaveLength(0);
+
+    expect(Version.startTransaction).toHaveBeenCalledTimes(1);
+    expect(associateTagsSpy).toHaveBeenCalledTimes(0);
     expect(dissociateTagsSpy).toHaveBeenCalledTimes(0);
     expect(fetchTagsForVersionSpy).toHaveBeenCalledTimes(1);
     expect(fetchTagsForVersionSpy).toHaveBeenCalledWith(expect.objectContaining({
