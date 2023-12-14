@@ -42,6 +42,8 @@ const service = {
             filePath: path,
             bucketId: bucketId,
             tags: TagSet.concat([{ Key: 'coms-id', Value: objId }])
+          }).catch((err) => {
+            log.warn(`Unable to add coms-id tag: ${err.message}`, { function: '_deriveObjectId' });
           });
         }
       }
@@ -354,17 +356,21 @@ const service = {
          * NOTE: adding tags to a specified version (passing a `VersionId` parameter) will affect `Last Modified`
          * attribute of multiple versions on some s3 storage providors including Dell ECS
          */
-        await storageService.putObjectTagging({
-          filePath: path,
-          tags: (s3TagsForVersion?.TagSet ?? []).concat([{
-            Key: 'coms-id',
-            Value: comsVersion.objectId
-          }]),
-          bucketId: bucketId,
-          // s3VersionId: comsVersion.s3VersionId,
-        });
-        // add to our arrays for comaprison
-        s3Tags.push({ key: 'coms-id', value: comsVersion.objectId });
+        try {
+          await storageService.putObjectTagging({
+            filePath: path,
+            tags: (s3TagsForVersion?.TagSet ?? []).concat([{
+              Key: 'coms-id',
+              Value: comsVersion.objectId
+            }]),
+            bucketId: bucketId,
+            // s3VersionId: comsVersion.s3VersionId,
+          });
+          // add to our arrays for comaprison
+          s3Tags.push({ key: 'coms-id', value: comsVersion.objectId });
+        } catch (err) {
+          log.warn(`Unable to add coms-id tag: ${err.message}`, { function: 'syncTags' });
+        }
       }
 
       // Dissociate Tags not in S3
