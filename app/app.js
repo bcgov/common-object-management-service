@@ -3,6 +3,7 @@ const compression = require('compression');
 const config = require('config');
 const cors = require('cors');
 const express = require('express');
+const helmet = require('helmet');
 
 const { name: appName, version: appVersion } = require('./package.json');
 const { AuthMode, DEFAULTCORS } = require('./src/components/constants');
@@ -33,6 +34,18 @@ const app = express();
 app.use(compression());
 app.use(cors(DEFAULTCORS));
 app.use(express.urlencoded({ extended: true }));
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        'default-src': [
+          "'self'", // eslint-disable-line
+          new URL(config.get('keycloak.serverUrl')).origin
+        ]
+      }
+    }
+  })
+);
 
 // Skip if running tests
 if (process.env.NODE_ENV !== 'test') {
