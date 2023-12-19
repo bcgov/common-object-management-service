@@ -41,6 +41,14 @@ app.use(
         'default-src': [
           "'self'", // eslint-disable-line
           new URL(config.get('keycloak.serverUrl')).origin
+        ],
+        'img-src': [
+          'data:',
+          'https://cdn.redoc.ly'
+        ],
+        'script-src': [
+          'blob:',
+          'https://cdn.jsdelivr.net'
         ]
       }
     }
