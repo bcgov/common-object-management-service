@@ -1,6 +1,7 @@
 const { NIL: SYSTEM_USER } = require('uuid');
 const { ObjectModel, Metadata, VersionMetadata, Version } = require('../db/models');
 const { getObjectsByKeyValue } = require('../components/utils');
+const config = require('config');
 
 /**
  * The Metadata DB Service
@@ -206,7 +207,12 @@ const service = {
       // match on bucketIds parameter
       .modify('filterBucketIds', params.bucketIds)
       // scope to objects that user(s) has READ permission at object or bucket-level
-      .modify('hasPermission', params.userId, 'READ')
+      .modify((query) => {
+        if (config.has('server.privacyMask')) {
+          query.modify('hasPermission', params.userId, 'READ');
+        }
+      })
+
       // re-structure result like: [{ objectId: abc, metadata: [{ key: a, value: b }] }]
       .then(result => result.map(row => {
         return {
@@ -246,7 +252,7 @@ const service = {
         .modify('filterId', params.versionIds)
         // filter by objects that user(s) has READ permission at object or bucket-level
         .modify((query) => {
-          if (params.userId) {
+          if (config.has('server.privacyMask') && params.userId) {
             query
               .allowGraph('object')
               .withGraphJoined('object')

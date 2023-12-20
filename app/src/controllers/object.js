@@ -1,5 +1,4 @@
 const Problem = require('api-problem');
-const config = require('config');
 const cors = require('cors');
 const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 
@@ -612,12 +611,9 @@ const controller = {
       const params = {
         bucketIds: bucketIds ? bucketIds.map(id => addDashesToUuid(id)) : bucketIds,
         objId: objIds ? objIds.map(id => addDashesToUuid(id)) : objIds,
-        metadata: metadata && Object.keys(metadata).length ? metadata : undefined
+        metadata: metadata && Object.keys(metadata).length ? metadata : undefined,
+        userId: await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER))
       };
-      // if scoping to current user permissions on objects
-      if (config.has('server.privacyMask')) {
-        params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
-      }
       const response = await metadataService.fetchMetadataForObject(params);
       res.status(200).json(response);
     } catch (error) {
@@ -642,11 +638,8 @@ const controller = {
         bucketIds: bucketIds ? bucketIds.map(id => addDashesToUuid(id)) : bucketIds,
         objectIds: objIds ? objIds.map(id => addDashesToUuid(id)) : objIds,
         tagset: tagset && Object.keys(tagset).length ? tagset : undefined,
+        userId: await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER))
       };
-      // if scoping to current user permissions on objects
-      if (config.has('server.privacyMask')) {
-        params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
-      }
       const response = await tagService.fetchTagsForObject(params);
       res.status(200).json(response);
     } catch (error) {
@@ -934,12 +927,9 @@ const controller = {
         limit: req.query.limit,
         sort: req.query.sort,
         order: req.query.order,
-        permissions: isTruthy(req.query.permissions)
+        permissions: isTruthy(req.query.permissions),
+        userId: await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER))
       };
-      // if scoping to current user permissions on objects
-      if (config.has('server.privacyMask')) {
-        params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
-      }
       const response = await objectService.searchObjects(params);
       res.setHeader('X-Total-Rows', response.total);
       res.status(200).json(response.data);

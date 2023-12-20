@@ -3,6 +3,7 @@ const { NIL: SYSTEM_USER } = require('uuid');
 const objectPermissionService = require('./objectPermission');
 const { Permissions } = require('../components/constants');
 const { ObjectModel } = require('../db/models');
+const config = require('config');
 
 /**
  * The Object DB Service
@@ -122,9 +123,25 @@ const service = {
       trx = etrx ? etrx : await ObjectModel.startTransaction();
 
       response.data = await ObjectModel.query(trx)
-        .allowGraph('objectPermission', 'version')
-        .groupBy('object.id')
-        .withGraphFetched('objectPermission')
+        // .allowGraph('[objectPermission, version]') // must allowGraph both of these
+        .allowGraph('[version]')
+        // .groupBy('object.id') // doesnt work when you join on other tables
+        // .withGraphFetched('objectPermission')
+
+        .modify((query) => {
+          if (config.has('server.privacyMask')) {
+            // filter result on user's object and bucket READ permissions
+            query.modify('hasPermission', params.userId, 'READ');
+          }
+
+          if (params.permissions && params.userId) {
+            console.log('O', params.userId);
+            query
+              .allowGraph('[objectPermission]')
+              .withGraphFetched('objectPermission');
+          }
+        })
+
         .modify('filterIds', params.id)
         .modify('filterBucketIds', params.bucketId)
         .modify('filterName', params.name)
@@ -138,7 +155,9 @@ const service = {
           metadata: params.metadata,
           tag: params.tag
         })
-        .modify('hasPermission', params.userId, 'READ')
+
+
+        // .modify('hasPermission', params.userId, 'READ')
         .modify('pagination', params.page, params.limit)
         .modify('sortOrder', params.sort, params.order).debug()
         .then(result => {
@@ -154,7 +173,7 @@ const service = {
           const res = resultObject.map(row => {
             // eslint-disable-next-line no-unused-vars
             const { objectPermission, bucketPermission, version, ...object } = row;
-            if (params.permissions) {
+            if (params.permissions && params.userId) {
               object.objectPermissions = objectPermission.map(o => o.permCode);
             }
             return object;

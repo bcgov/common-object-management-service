@@ -156,22 +156,27 @@ class ObjectModel extends Timestamps(Model) {
       hasPermission(query, userId, permCode) {
         if (userId && permCode) {
           query
-            .fullOuterJoinRelated('[objectPermission, bucketPermission]')
+            .fullOuterJoinRelated('[objectPermission, bucketPermission]', {
+              aliases: {
+                objectPermission: 'op',
+                bucketPermission: 'bp'
+              }
+            })
             // wrap in WHERE to make contained clauses exclusive of root query
             .where(query => {
               query
                 .where(query => {
                   query
                     .where({
-                      'objectPermission.permCode': permCode,
-                      'objectPermission.userId': userId
+                      'op.permCode': permCode,
+                      'op.userId': userId
                     });
                 })
                 .orWhere(query => {
                   query
                     .where({
-                      'bucketPermission.permCode': permCode,
-                      'bucketPermission.userId': userId
+                      'bp.permCode': permCode,
+                      'bp.userId': userId
                     });
                 });
             });
