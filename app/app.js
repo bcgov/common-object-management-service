@@ -34,18 +34,7 @@ const app = express();
 app.use(compression());
 app.use(cors(DEFAULTCORS));
 app.use(express.urlencoded({ extended: true }));
-app.use(
-  helmet({
-    contentSecurityPolicy: {
-      directives: {
-        'default-src': [
-          "'self'", // eslint-disable-line
-          new URL(config.get('keycloak.serverUrl')).origin
-        ]
-      }
-    }
-  })
-);
+app.use(helmet());
 
 // Skip if running tests
 if (process.env.NODE_ENV !== 'test') {

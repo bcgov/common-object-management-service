@@ -1,6 +1,7 @@
 const config = require('config');
 const router = require('express').Router();
 const { readFileSync } = require('fs');
+const helmet = require('helmet');
 const yaml = require('js-yaml');
 const { join } = require('path');
 
@@ -15,6 +16,17 @@ function getSpec() {
   }
   return spec;
 }
+
+router.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        'img-src': ['data:', 'https://cdn.redoc.ly'],
+        'script-src': ['blob:', 'https://cdn.redoc.ly']
+      }
+    }
+  })
+);
 
 /** OpenAPI Docs */
 router.get('/', (_req, res) => {
