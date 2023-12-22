@@ -4,12 +4,14 @@ const {
   DeleteObjectTaggingCommand,
   GetBucketEncryptionCommand,
   GetBucketVersioningCommand,
+  GetObjectAclCommand,
   GetObjectCommand,
   GetObjectTaggingCommand,
   HeadBucketCommand,
   HeadObjectCommand,
   ListObjectsV2Command,
   ListObjectVersionsCommand,
+  PutObjectAclCommand,
   PutBucketEncryptionCommand,
   PutObjectCommand,
   PutObjectTaggingCommand,
@@ -338,6 +340,41 @@ describe('getBucketVersioning', () => {
     expect(s3ClientMock).toHaveReceivedCommandTimes(GetBucketVersioningCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(GetBucketVersioningCommand, {
       Bucket: bucket
+    });
+  });
+});
+
+describe('getObjectAcl', () => {
+  beforeEach(() => {
+    s3ClientMock.on(GetObjectAclCommand).resolves({});
+  });
+
+  it('should send a get object acl command', async () => {
+    const filePath = 'filePath';
+    const result = await service.getObjectAcl({ filePath });
+
+    expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
+    expect(s3ClientMock).toHaveReceivedCommandTimes(GetObjectAclCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(GetObjectAclCommand, {
+      Bucket: bucket,
+      Key: filePath,
+      VersionId: undefined
+    });
+  });
+
+  it('should send a put object acl command for a specific version', async () => {
+    const filePath = 'filePath';
+    const s3VersionId = '1234';
+    const result = await service.getObjectAcl({ filePath, s3VersionId });
+
+    expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
+    expect(s3ClientMock).toHaveReceivedCommandTimes(GetObjectAclCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(GetObjectAclCommand, {
+      Bucket: bucket,
+      Key: filePath,
+      VersionId: s3VersionId
     });
   });
 });
@@ -892,6 +929,45 @@ describe('putObject', () => {
       Key: keyPath,
       Body: stream,
       Tagging: 'foo=foo&bar=bar'
+    });
+  });
+});
+
+describe('putObjectAcl', () => {
+  beforeEach(() => {
+    s3ClientMock.on(PutObjectAclCommand).resolves({});
+  });
+
+  it('should send a put object acl command', async () => {
+    const acl = 'public-read';
+    const filePath = 'filePath';
+    const result = await service.putObjectAcl({ acl, filePath });
+
+    expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
+    expect(s3ClientMock).toHaveReceivedCommandTimes(PutObjectAclCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(PutObjectAclCommand, {
+      ACL: acl,
+      Bucket: bucket,
+      Key: filePath,
+      VersionId: undefined
+    });
+  });
+
+  it('should send a put object acl for a specific version', async () => {
+    const acl = 'public-read';
+    const filePath = 'filePath';
+    const s3VersionId = '1234';
+    const result = await service.putObjectAcl({ acl, filePath, s3VersionId });
+
+    expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
+    expect(s3ClientMock).toHaveReceivedCommandTimes(PutObjectAclCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(PutObjectAclCommand, {
+      ACL: acl,
+      Bucket: bucket,
+      Key: filePath,
+      VersionId: s3VersionId
     });
   });
 });
