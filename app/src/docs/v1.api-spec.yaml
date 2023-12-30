@@ -646,8 +646,8 @@ paths:
     patch:
       summary: Sets the public flag of an object
       description: >-
-        Toggles the public property for an object. Sets public to false if
-        public query parameter is not specified.
+        Toggles the public property for an object and broadcasts to S3 ACL.
+        Sets public to false if public query parameter is not specified.
       operationId: togglePublic
       tags:
         - Object

@@ -957,13 +957,26 @@ const controller = {
    */
   async togglePublic(req, res, next) {
     try {
+      const objId = addDashesToUuid(req.params.objectId);
+      const publicFlag = isTruthy(req.query.public) ?? false;
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER), SYSTEM_USER);
+
       const data = {
-        id: addDashesToUuid(req.params.objectId),
-        public: isTruthy(req.query.public) ?? false,
-        userId: userId
+        id: objId,
+        bucketId: req.currentObject?.bucketId,
+        filePath: req.currentObject?.path,
+        public: publicFlag,
+        userId: userId,
+        // TODO: Implement if/when we proceed with version-scoped public permission management
+        // s3VersionId: await getS3VersionId(
+        //   req.query.s3VersionId, addDashesToUuid(req.query.versionId), objId
+        // )
       };
 
+      storageService.putObjectPublic(data).catch(() => {
+        // Gracefully continue even when S3 ACL management operation fails
+        log.warn('Failed to apply ACL permission changes to S3', { function: 'togglePublic', ...data });
+      });
       const response = await objectService.update(data);
 
       res.status(200).json(response);

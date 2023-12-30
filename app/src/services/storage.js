@@ -487,13 +487,13 @@ const objectStorageService = {
    * @function putObjectPublic
    * Puts the public/private status for an object
    * @param {string} options.filePath The filePath of the object
-   * @param {boolean=false} [options.publicFlag] Optional boolean on whether to make the object public
+   * @param {boolean=false} [options.public] Optional boolean on whether to make the object public
    * @param {string} [options.s3VersionId] Optional version ID used to reference a speciific version of the object
    * @param {string} [options.bucketId] Optional bucketId
    * @returns {Promise<PutObjectAclOutput>} The response of the put object acl operation
    * @throws If object is not found
    */
-  async putObjectPublic({ filePath, publicFlag = false, s3VersionId = undefined, bucketId = undefined }) {
+  async putObjectPublic({ filePath, public: publicFlag = false, s3VersionId = undefined, bucketId = undefined }) {
     const acl = publicFlag ? 'public-read' : 'private';
     return this.putObjectAcl({ acl, filePath, s3VersionId, bucketId });
   },
