@@ -147,6 +147,9 @@ const controller = {
       const s3Response = await storageService.copyObject(data);
 
       await utils.trxWrapper(async (trx) => {
+        // set public flag to false
+        await objectService.update({ id: objId, userId: userId, path: objPath, public: false });
+
         // create or update version in DB (if a non-versioned object)
         const version = s3Response.VersionId ?
           await versionService.copy(
@@ -834,6 +837,9 @@ const controller = {
       const s3Response = await storageService.copyObject(data);
 
       await utils.trxWrapper(async (trx) => {
+        // set public flag to false
+        await objectService.update({ id: objId, userId: userId, path: objPath, public: false });
+
         // create or update version (if a non-versioned object)
         const version = s3Response.VersionId ?
           await versionService.copy(
@@ -1010,6 +1016,7 @@ const controller = {
         name: filename,
         mimeType: req.currentUpload.mimeType,
         metadata: getMetadata(req.headers),
+        public: false, // New uploads always default to private ACL status
         tags: {
           ...req.query.tagset,
           'coms-id': objId // Enforce `coms-id:<objectId>` tag

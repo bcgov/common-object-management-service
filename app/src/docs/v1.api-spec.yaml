@@ -318,12 +318,12 @@ paths:
       summary: Creates an object
       description: >-
         Creates an object in the bucket specified with bucketId parameter or
-        default bucket configured. If COMS is running in either 'OIDC' or 'Full'
-        mode, any objects created with OIDC user authentication will have all
-        object permissions assigned to them by default. This endpoint will do a
-        best attempt effort to create the object as requested as long as it does
-        not already exist in the destination bucket and path. Existing objects
-        should be managed with the updateObject endpoint instead.
+        default bucket configured. The object will be toggled to private after
+        this operation. If COMS is running in either 'OIDC' or 'Full' mode, any
+        objects created with OIDC user authentication will have all object
+        permissions assigned to them by default. This endpoint will do a best
+        attempt effort to create the object as requested as long as it does not
+        already exist in the destination bucket and path. Existing objects should be managed with the updateObject endpoint instead.
       operationId: createObject
       tags:
         - Object
@@ -673,7 +673,8 @@ paths:
       description: >-
         Creates a copy and new version of the object with the given metadata
         added to the object. Multiple Key/Value pairs can be provided in the
-        header for the metadata.
+        header for the metadata. The object will be toggled to private after
+        this operation.
       operationId: addMetadata
       tags:
         - Metadata
@@ -698,7 +699,8 @@ paths:
       description: >-
         Creates a copy and new version of the object with the given metadata
         replacing the existing. Multiple Key/Value pairs can be provided in the
-        header for the metadata.
+        header for the metadata. The object will be toggled to private after
+        this operation.
       operationId: replaceMetadata
       tags:
         - Metadata
