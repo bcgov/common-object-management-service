@@ -323,7 +323,8 @@ paths:
         objects created with OIDC user authentication will have all object
         permissions assigned to them by default. This endpoint will do a best
         attempt effort to create the object as requested as long as it does not
-        already exist in the destination bucket and path. Existing objects should be managed with the updateObject endpoint instead.
+        already exist in the destination bucket and path. Existing objects
+        should be managed with the updateObject endpoint instead.
       operationId: createObject
       tags:
         - Object

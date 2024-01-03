@@ -145,33 +145,56 @@ const service = {
           })
       ]).then(settled => settled.map(promise => Array.isArray(promise.value) ? promise.value[0] : promise.value));
 
-      // Case: already synced - record object only
-      if (comsObject && s3Object) response = comsObject;
+      if (s3Object) {
+        // Determine S3 Public status
+        let s3Public;
+        try {
+          s3Public = await storageService.getObjectPublic({ filePath: path, bucketId: bucketId });
+        } catch (e) {
+          // Gracefully continue even when S3 ACL management operation fails
+          log.warn(`Failed to read ACL permissions from S3: ${e.message}`, {
+            function: 'syncObject', filePath: path, bucketId: bucketId
+          });
+        }
 
-      // Case: not in COMS - insert new COMS object
-      else if (!comsObject && s3Object) {
-        const objId = await service._deriveObjectId(s3Object, path, bucketId);
+        // Case: already synced - record & update public status as needed
+        if (comsObject) {
+          if (s3Public === undefined || s3Public === comsObject.public) {
+            response = comsObject;
+          } else {
+            response = await objectService.update({
+              id: comsObject.id, userId: userId, path: comsObject.path, public: s3Public
+            });
+            modified = true;
+          }
+        }
 
-        response = await objectService.create({
-          id: objId,
-          name: path.match(/(?!.*\/)(.*)$/)[0], // get `name` column
-          path: path,
-          bucketId: bucketId,
-          userId: userId
-        }, trx);
+        // Case: not in COMS - insert new COMS object
+        else {
+          const objId = await service._deriveObjectId(s3Object, path, bucketId);
 
-        modified = true;
-      }
+          response = await objectService.create({
+            id: objId,
+            name: path.match(/(?!.*\/)(.*)$/)[0], // get `name` column
+            path: path,
+            public: s3Public,
+            bucketId: bucketId,
+            userId: userId
+          }, trx);
 
-      // Case: missing in S3 - drop COMS object
-      else if (comsObject && !s3Object) {
-        // Delete COMS Object and cascade all child records from COMS
-        await objectService.delete(comsObject.id, trx);
+          modified = true;
+        }
+      } else {
+        // Case: missing in S3 - drop COMS object
+        if (comsObject) {
+          // Delete COMS Object and cascade all child records from COMS
+          await objectService.delete(comsObject.id, trx);
 
-        // TODO: Relatively slow operations - determine if this can be optimized
-        // Prune metadata and tag records
-        await metadataService.pruneOrphanedMetadata(trx);
-        await tagService.pruneOrphanedTags(trx);
+          // TODO: Relatively slow operations - determine if this can be optimized
+          // Prune metadata and tag records
+          await metadataService.pruneOrphanedMetadata(trx);
+          await tagService.pruneOrphanedTags(trx);
+        }
       }
 
       if (!etrx) await trx.commit();
@@ -222,7 +245,7 @@ const service = {
         return notInS3 || isDuplicate;
       });
 
-      if(cVsToDelete.length){
+      if (cVsToDelete.length) {
         await Version.query(trx)
           .delete()
           .where('objectId', comsObject.id)

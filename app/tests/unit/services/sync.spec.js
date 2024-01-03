@@ -346,32 +346,39 @@ describe('syncObject', () => {
   const _deriveObjectIdSpy = jest.spyOn(service, '_deriveObjectId');
   const createSpy = jest.spyOn(objectService, 'create');
   const deleteSpy = jest.spyOn(objectService, 'delete');
+  const getObjectPublicSpy = jest.spyOn(storageService, 'getObjectPublic');
   const pruneOrphanedMetadataSpy = jest.spyOn(metadataService, 'pruneOrphanedMetadata');
   const pruneOrphanedTagsSpy = jest.spyOn(tagService, 'pruneOrphanedTags');
   const searchObjectsSpy = jest.spyOn(objectService, 'searchObjects');
+  const updateSpy = jest.spyOn(objectService, 'update');
 
   beforeEach(() => {
     _deriveObjectIdSpy.mockReset();
     createSpy.mockReset();
     deleteSpy.mockReset();
+    getObjectPublicSpy.mockReset();
     pruneOrphanedMetadataSpy.mockReset();
     pruneOrphanedTagsSpy.mockReset();
     searchObjectsSpy.mockReset();
+    updateSpy.mockReset();
   });
 
   afterAll(() => {
     _deriveObjectIdSpy.mockRestore();
     createSpy.mockRestore();
     deleteSpy.mockRestore();
+    getObjectPublicSpy.mockRestore();
     pruneOrphanedMetadataSpy.mockRestore();
     pruneOrphanedTagsSpy.mockRestore();
     searchObjectsSpy.mockRestore();
+    updateSpy.mockReset();
   });
 
   it('should return object when already synced', async () => {
-    const comsObject = { id: validUuidv4 };
+    const comsObject = { id: validUuidv4, path: path, public: true };
     headObjectSpy.mockResolvedValue({});
     searchObjectsSpy.mockResolvedValue([comsObject]);
+    getObjectPublicSpy.mockResolvedValue(true);
 
     const result = await service.syncObject(path, bucketId);
 
@@ -383,6 +390,10 @@ describe('syncObject', () => {
     expect(_deriveObjectIdSpy).toHaveBeenCalledTimes(0);
     expect(createSpy).toHaveBeenCalledTimes(0);
     expect(deleteSpy).toHaveBeenCalledTimes(0);
+    expect(getObjectPublicSpy).toHaveBeenCalledTimes(1);
+    expect(getObjectPublicSpy).toHaveBeenCalledWith(expect.objectContaining({
+      filePath: path, bucketId: bucketId
+    }));
     expect(headObjectSpy).toHaveBeenCalledTimes(1);
     expect(headObjectSpy).toHaveBeenCalledWith(expect.objectContaining({
       filePath: path, bucketId: bucketId
@@ -394,6 +405,79 @@ describe('syncObject', () => {
       path: path, bucketId: bucketId
     }), expect.any(Object));
     expect(objectModelTrx.commit).toHaveBeenCalledTimes(1);
+    expect(updateSpy).toHaveBeenCalledTimes(0);
+  });
+
+  it('should return object when already synced but public mismatch', async () => {
+    const comsObject = { id: validUuidv4, path: path, public: true };
+    headObjectSpy.mockResolvedValue({});
+    searchObjectsSpy.mockResolvedValue([comsObject]);
+    getObjectPublicSpy.mockResolvedValue(false);
+    updateSpy.mockResolvedValue(comsObject);
+
+    const result = await service.syncObject(path, bucketId);
+
+    expect(result).toBeTruthy();
+    expect(result.modified).toBeTruthy();
+    expect(result.object).toEqual(comsObject);
+
+    expect(ObjectModel.startTransaction).toHaveBeenCalledTimes(1);
+    expect(_deriveObjectIdSpy).toHaveBeenCalledTimes(0);
+    expect(createSpy).toHaveBeenCalledTimes(0);
+    expect(deleteSpy).toHaveBeenCalledTimes(0);
+    expect(getObjectPublicSpy).toHaveBeenCalledTimes(1);
+    expect(getObjectPublicSpy).toHaveBeenCalledWith(expect.objectContaining({
+      filePath: path, bucketId: bucketId
+    }));
+    expect(headObjectSpy).toHaveBeenCalledTimes(1);
+    expect(headObjectSpy).toHaveBeenCalledWith(expect.objectContaining({
+      filePath: path, bucketId: bucketId
+    }));
+    expect(pruneOrphanedMetadataSpy).toHaveBeenCalledTimes(0);
+    expect(pruneOrphanedTagsSpy).toHaveBeenCalledTimes(0);
+    expect(searchObjectsSpy).toHaveBeenCalledTimes(1);
+    expect(searchObjectsSpy).toHaveBeenCalledWith(expect.objectContaining({
+      path: path, bucketId: bucketId
+    }), expect.any(Object));
+    expect(objectModelTrx.commit).toHaveBeenCalledTimes(1);
+    expect(updateSpy).toHaveBeenCalledTimes(1);
+    expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({
+      id: validUuidv4, path: path, public: false
+    }));
+  });
+
+  it('should return object when already synced but S3 ACL errors out', async () => {
+    const comsObject = { id: validUuidv4, path: path, public: true };
+    headObjectSpy.mockResolvedValue({});
+    searchObjectsSpy.mockResolvedValue([comsObject]);
+    getObjectPublicSpy.mockImplementation(() => { throw new Error(); });
+
+    const result = await service.syncObject(path, bucketId);
+
+    expect(result).toBeTruthy();
+    expect(result.modified).toBeFalsy();
+    expect(result.object).toEqual(comsObject);
+
+    expect(ObjectModel.startTransaction).toHaveBeenCalledTimes(1);
+    expect(_deriveObjectIdSpy).toHaveBeenCalledTimes(0);
+    expect(createSpy).toHaveBeenCalledTimes(0);
+    expect(deleteSpy).toHaveBeenCalledTimes(0);
+    expect(getObjectPublicSpy).toHaveBeenCalledTimes(1);
+    expect(getObjectPublicSpy).toHaveBeenCalledWith(expect.objectContaining({
+      filePath: path, bucketId: bucketId
+    }));
+    expect(headObjectSpy).toHaveBeenCalledTimes(1);
+    expect(headObjectSpy).toHaveBeenCalledWith(expect.objectContaining({
+      filePath: path, bucketId: bucketId
+    }));
+    expect(pruneOrphanedMetadataSpy).toHaveBeenCalledTimes(0);
+    expect(pruneOrphanedTagsSpy).toHaveBeenCalledTimes(0);
+    expect(searchObjectsSpy).toHaveBeenCalledTimes(1);
+    expect(searchObjectsSpy).toHaveBeenCalledWith(expect.objectContaining({
+      path: path, bucketId: bucketId
+    }), expect.any(Object));
+    expect(objectModelTrx.commit).toHaveBeenCalledTimes(1);
+    expect(updateSpy).toHaveBeenCalledTimes(0);
   });
 
   it('should insert new object when not in COMS', async () => {
@@ -402,6 +486,7 @@ describe('syncObject', () => {
     createSpy.mockResolvedValue(comsObject);
     headObjectSpy.mockResolvedValue({});
     searchObjectsSpy.mockResolvedValue(undefined);
+    getObjectPublicSpy.mockResolvedValue(true);
 
     const result = await service.syncObject(path, bucketId);
 
@@ -417,10 +502,59 @@ describe('syncObject', () => {
       id: validUuidv4,
       name: path.match(/(?!.*\/)(.*)$/)[0],
       path: path,
+      public: true,
       bucketId: bucketId,
       userId: expect.any(String)
     }), expect.any(Object));
     expect(deleteSpy).toHaveBeenCalledTimes(0);
+    expect(getObjectPublicSpy).toHaveBeenCalledTimes(1);
+    expect(getObjectPublicSpy).toHaveBeenCalledWith(expect.objectContaining({
+      filePath: path, bucketId: bucketId
+    }));
+    expect(headObjectSpy).toHaveBeenCalledTimes(1);
+    expect(headObjectSpy).toHaveBeenCalledWith(expect.objectContaining({
+      filePath: path, bucketId: bucketId
+    }));
+    expect(pruneOrphanedMetadataSpy).toHaveBeenCalledTimes(0);
+    expect(pruneOrphanedTagsSpy).toHaveBeenCalledTimes(0);
+    expect(searchObjectsSpy).toHaveBeenCalledTimes(1);
+    expect(searchObjectsSpy).toHaveBeenCalledWith(expect.objectContaining({
+      path: path, bucketId: bucketId
+    }), expect.any(Object));
+    expect(objectModelTrx.commit).toHaveBeenCalledTimes(1);
+  });
+
+  it('should insert new object when not in COMS when S3 ACL errors out', async () => {
+    const comsObject = {};
+    _deriveObjectIdSpy.mockResolvedValue(validUuidv4);
+    createSpy.mockResolvedValue(comsObject);
+    headObjectSpy.mockResolvedValue({});
+    searchObjectsSpy.mockResolvedValue(undefined);
+    getObjectPublicSpy.mockImplementation(() => { throw new Error(); });
+
+    const result = await service.syncObject(path, bucketId);
+
+    expect(result).toBeTruthy();
+    expect(result.modified).toBeTruthy();
+    expect(result.object).toEqual(comsObject);
+
+    expect(ObjectModel.startTransaction).toHaveBeenCalledTimes(1);
+    expect(_deriveObjectIdSpy).toHaveBeenCalledTimes(1);
+    expect(_deriveObjectIdSpy).toHaveBeenCalledWith(expect.any(Object), path, bucketId);
+    expect(createSpy).toHaveBeenCalledTimes(1);
+    expect(createSpy).toHaveBeenCalledWith(expect.objectContaining({
+      id: validUuidv4,
+      name: path.match(/(?!.*\/)(.*)$/)[0],
+      path: path,
+      public: undefined,
+      bucketId: bucketId,
+      userId: expect.any(String)
+    }), expect.any(Object));
+    expect(deleteSpy).toHaveBeenCalledTimes(0);
+    expect(getObjectPublicSpy).toHaveBeenCalledTimes(1);
+    expect(getObjectPublicSpy).toHaveBeenCalledWith(expect.objectContaining({
+      filePath: path, bucketId: bucketId
+    }));
     expect(headObjectSpy).toHaveBeenCalledTimes(1);
     expect(headObjectSpy).toHaveBeenCalledWith(expect.objectContaining({
       filePath: path, bucketId: bucketId
@@ -453,6 +587,7 @@ describe('syncObject', () => {
     expect(createSpy).toHaveBeenCalledTimes(0);
     expect(deleteSpy).toHaveBeenCalledTimes(1);
     expect(deleteSpy).toHaveBeenCalledWith(validUuidv4, expect.any(Object));
+    expect(getObjectPublicSpy).toHaveBeenCalledTimes(0);
     expect(headObjectSpy).toHaveBeenCalledTimes(1);
     expect(headObjectSpy).toHaveBeenCalledWith(expect.objectContaining({
       filePath: path, bucketId: bucketId
