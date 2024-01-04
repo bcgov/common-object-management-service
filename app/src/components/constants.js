@@ -1,4 +1,7 @@
 module.exports = Object.freeze({
+  /** S3 All Users Predefined group URI */
+  ALLUSERS: 'http://acs.amazonaws.com/groups/global/AllUsers',
+
   /** Application authentication mode */
   AuthMode: {
     /** Only Basic Authentication */

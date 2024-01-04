@@ -4,12 +4,14 @@ const {
   DeleteObjectTaggingCommand,
   GetBucketEncryptionCommand,
   GetBucketVersioningCommand,
+  GetObjectAclCommand,
   GetObjectCommand,
   GetObjectTaggingCommand,
   HeadBucketCommand,
   HeadObjectCommand,
   ListObjectsV2Command,
   ListObjectVersionsCommand,
+  PutObjectAclCommand,
   PutBucketEncryptionCommand,
   PutObjectCommand,
   PutObjectTaggingCommand,
@@ -339,6 +341,100 @@ describe('getBucketVersioning', () => {
     expect(s3ClientMock).toHaveReceivedCommandWith(GetBucketVersioningCommand, {
       Bucket: bucket
     });
+  });
+});
+
+describe('getObjectAcl', () => {
+  beforeEach(() => {
+    s3ClientMock.on(GetObjectAclCommand).resolves({});
+  });
+
+  it('should send a get object acl command', async () => {
+    const filePath = 'filePath';
+    const result = await service.getObjectAcl({ filePath });
+
+    expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
+    expect(s3ClientMock).toHaveReceivedCommandTimes(GetObjectAclCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(GetObjectAclCommand, {
+      Bucket: bucket,
+      Key: filePath,
+      VersionId: undefined
+    });
+  });
+
+  it('should send a put object acl command for a specific version', async () => {
+    const filePath = 'filePath';
+    const s3VersionId = '1234';
+    const result = await service.getObjectAcl({ filePath, s3VersionId });
+
+    expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
+    expect(s3ClientMock).toHaveReceivedCommandTimes(GetObjectAclCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(GetObjectAclCommand, {
+      Bucket: bucket,
+      Key: filePath,
+      VersionId: s3VersionId
+    });
+  });
+});
+
+describe('getObjectPublic', () => {
+  const getObjectAclMock = jest.spyOn(service, 'getObjectAcl');
+
+  beforeEach(() => {
+    getObjectAclMock.mockReset();
+  });
+
+  afterAll(() => {
+    getObjectAclMock.mockRestore();
+  });
+
+  it('should return true', async () => {
+    const filePath = 'filePath';
+    getObjectAclMock.mockResolvedValue({ Grants: [
+      {
+        'Grantee': {
+          'DisplayName': 'name',
+          'ID': 'id',
+          'Type': 'CanonicalUser'
+        },
+        'Permission': 'FULL_CONTROL'
+      },
+      {
+        'Grantee': {
+          'URI': 'http://acs.amazonaws.com/groups/global/AllUsers',
+          'Type': 'Group'
+        },
+        'Permission': 'READ'
+      }
+    ]});
+
+    const result = await service.getObjectPublic({ filePath });
+
+    expect(result).toBeTruthy();
+    expect(getObjectAclMock).toHaveBeenCalledTimes(1);
+    expect(getObjectAclMock).toHaveBeenCalledWith(expect.objectContaining({ filePath }));
+  });
+
+  it('should return false', async () => {
+    const filePath = 'filePath';
+    getObjectAclMock.mockResolvedValue({ Grants: [
+      {
+        'Grantee': {
+          'DisplayName': 'name',
+          'ID': 'id',
+          'Type': 'CanonicalUser'
+        },
+        'Permission': 'FULL_CONTROL'
+      }
+    ]});
+
+    const result = await service.getObjectPublic({ filePath });
+
+    expect(result).toBeFalsy();
+    expect(getObjectAclMock).toHaveBeenCalledTimes(1);
+    expect(getObjectAclMock).toHaveBeenCalledWith(expect.objectContaining({ filePath }));
   });
 });
 
@@ -893,6 +989,85 @@ describe('putObject', () => {
       Body: stream,
       Tagging: 'foo=foo&bar=bar'
     });
+  });
+});
+
+describe('putObjectAcl', () => {
+  beforeEach(() => {
+    s3ClientMock.on(PutObjectAclCommand).resolves({});
+  });
+
+  it('should send a put object acl command', async () => {
+    const acl = 'public-read';
+    const filePath = 'filePath';
+    const result = await service.putObjectAcl({ acl, filePath });
+
+    expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
+    expect(s3ClientMock).toHaveReceivedCommandTimes(PutObjectAclCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(PutObjectAclCommand, {
+      ACL: acl,
+      Bucket: bucket,
+      Key: filePath,
+      VersionId: undefined
+    });
+  });
+
+  it('should send a put object acl for a specific version', async () => {
+    const acl = 'public-read';
+    const filePath = 'filePath';
+    const s3VersionId = '1234';
+    const result = await service.putObjectAcl({ acl, filePath, s3VersionId });
+
+    expect(result).toBeTruthy();
+    expect(utils.getBucket).toHaveBeenCalledTimes(1);
+    expect(s3ClientMock).toHaveReceivedCommandTimes(PutObjectAclCommand, 1);
+    expect(s3ClientMock).toHaveReceivedCommandWith(PutObjectAclCommand, {
+      ACL: acl,
+      Bucket: bucket,
+      Key: filePath,
+      VersionId: s3VersionId
+    });
+  });
+});
+
+describe('putObjectPublic', () => {
+  const putObjectAclMock = jest.spyOn(service, 'putObjectAcl');
+
+  beforeEach(() => {
+    putObjectAclMock.mockReset();
+  });
+
+  afterAll(() => {
+    putObjectAclMock.mockRestore();
+  });
+
+  it('should set to public', async () => {
+    const filePath = 'filePath';
+    putObjectAclMock.mockResolvedValue({});
+
+    const result = await service.putObjectPublic({ filePath, public: true });
+
+    expect(result).toBeTruthy();
+    expect(putObjectAclMock).toHaveBeenCalledTimes(1);
+    expect(putObjectAclMock).toHaveBeenCalledWith(expect.objectContaining({
+      acl: 'public-read',
+      filePath: filePath
+    }));
+  });
+
+  it('should set to non-public', async () => {
+    const filePath = 'filePath';
+    putObjectAclMock.mockResolvedValue({});
+
+    const result = await service.putObjectPublic({ filePath });
+
+    expect(result).toBeTruthy();
+    expect(putObjectAclMock).toHaveBeenCalledTimes(1);
+    expect(putObjectAclMock).toHaveBeenCalledWith(expect.objectContaining({
+      acl: 'private',
+      filePath: filePath
+    }));
   });
 });
 

@@ -41,6 +41,7 @@ describe('addMetadata', () => {
   const metadataAssociateMetadataSpy = jest.spyOn(metadataService, 'associateMetadata');
   const tagAssociateTagsSpy = jest.spyOn(tagService, 'associateTags');
   const trxWrapperSpy = jest.spyOn(utils, 'trxWrapper');
+  const updateSpy = jest.spyOn(objectService, 'update');
   const setHeadersSpy = jest.spyOn(controller, '_processS3Headers');
 
   const next = jest.fn();
@@ -80,6 +81,7 @@ describe('addMetadata', () => {
     storageGetObjectTaggingSpy.mockResolvedValue({ TagSet: [] });
     storageCopyObjectSpy.mockResolvedValue(GoodResponse);
     trxWrapperSpy.mockImplementation(callback => callback({}));
+    updateSpy.mockResolvedValue({});
     versionCopySpy.mockResolvedValue({ id: '5dad1ec9-d3c0-4b0f-8ead-cb4d9fa98987' });
     metadataAssociateMetadataSpy.mockResolvedValue({});
     setHeadersSpy.mockImplementation(x => x);
@@ -102,6 +104,8 @@ describe('addMetadata', () => {
     });
 
     expect(trxWrapperSpy).toHaveBeenCalledTimes(1);
+    expect(updateSpy).toHaveBeenCalledTimes(1);
+    expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({ public: false }));
     expect(versionCopySpy).toHaveBeenCalledTimes(1);
     expect(metadataAssociateMetadataSpy).toHaveBeenCalledTimes(1);
     expect(tagAssociateTagsSpy).toHaveBeenCalledTimes(1);
@@ -507,6 +511,11 @@ describe('replaceMetadata', () => {
   const storageGetObjectTaggingSpy = jest.spyOn(storageService, 'getObjectTagging');
   const storageHeadObjectSpy = jest.spyOn(storageService, 'headObject');
   const storageCopyObjectSpy = jest.spyOn(storageService, 'copyObject');
+  const trxWrapperSpy = jest.spyOn(utils, 'trxWrapper');
+  const updateSpy = jest.spyOn(objectService, 'update');
+  const versionCopySpy = jest.spyOn(versionService, 'copy');
+  const metadataAssociateMetadataSpy = jest.spyOn(metadataService, 'associateMetadata');
+  const tagAssociateTagsSpy = jest.spyOn(tagService, 'associateTags');
 
   const next = jest.fn();
 
@@ -539,7 +548,11 @@ describe('replaceMetadata', () => {
 
     storageHeadObjectSpy.mockReturnValue(GoodResponse);
     storageGetObjectTaggingSpy.mockResolvedValue({ TagSet: [] });
-    storageCopyObjectSpy.mockReturnValue({});
+    storageCopyObjectSpy.mockResolvedValue({ VersionId: 'versionId' });
+    trxWrapperSpy.mockImplementation(callback => callback({}));
+    updateSpy.mockResolvedValue({});
+    versionCopySpy.mockResolvedValue({ id: '5dad1ec9-d3c0-4b0f-8ead-cb4d9fa98987' });
+    metadataAssociateMetadataSpy.mockResolvedValue({});
 
     await controller.replaceMetadata(req, res, next);
 
@@ -554,6 +567,14 @@ describe('replaceMetadata', () => {
       tags: { 'coms-id': 'xyz-789' },
       s3VersionId: undefined
     });
+
+    expect(trxWrapperSpy).toHaveBeenCalledTimes(1);
+    expect(updateSpy).toHaveBeenCalledTimes(1);
+    expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({ public: false }));
+    expect(versionCopySpy).toHaveBeenCalledTimes(1);
+    expect(metadataAssociateMetadataSpy).toHaveBeenCalledTimes(1);
+    expect(tagAssociateTagsSpy).toHaveBeenCalledTimes(1);
+    expect(res.status).toHaveBeenCalledWith(204);
   });
 
   it('should replace replace the name', async () => {

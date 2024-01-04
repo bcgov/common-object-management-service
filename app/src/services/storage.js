@@ -4,12 +4,14 @@ const {
   DeleteObjectTaggingCommand,
   GetBucketEncryptionCommand,
   GetBucketVersioningCommand,
+  GetObjectAclCommand,
   GetObjectCommand,
   GetObjectTaggingCommand,
   HeadBucketCommand,
   HeadObjectCommand,
   ListObjectsV2Command,
   ListObjectVersionsCommand,
+  PutObjectAclCommand,
   PutObjectCommand,
   PutBucketEncryptionCommand,
   PutObjectTaggingCommand,
@@ -19,7 +21,7 @@ const { Upload } = require('@aws-sdk/lib-storage');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const config = require('config');
 
-const { MetadataDirective, TaggingDirective } = require('../components/constants');
+const { ALLUSERS, MetadataDirective, TaggingDirective } = require('../components/constants');
 const log = require('../components/log')(module.filename);
 const utils = require('../components/utils');
 
@@ -170,6 +172,40 @@ const objectStorageService = {
     };
     const response = await this._getS3Client(data).send(new GetBucketVersioningCommand(params));
     return Promise.resolve(response.Status === 'Enabled');
+  },
+
+  /**
+   * @function getObjectAcl
+   * Gets the access control list for an object
+   * @param {string} options.filePath The filePath of the object
+   * @param {string} [options.s3VersionId] Optional version ID used to reference a speciific version of the object
+   * @param {string} [options.bucketId] Optional bucketId
+   * @returns {Promise<GetObjectAclOutput>} The response of the get object acl operation
+   * @throws If object is not found
+   */
+  async getObjectAcl({ filePath, s3VersionId = undefined, bucketId = undefined }) {
+    const data = await utils.getBucket(bucketId);
+    const params = {
+      Bucket: data.bucket,
+      Key: filePath,
+      VersionId: s3VersionId
+    };
+    return this._getS3Client(data).send(new GetObjectAclCommand(params));
+  },
+
+  /**
+   * @function getObjectPublic
+   * Gets the public status for an object
+   * @param {string} options.filePath The filePath of the object
+   * @param {string} [options.s3VersionId] Optional version ID used to reference a speciific version of the object
+   * @param {string} [options.bucketId] Optional bucketId
+   * @returns {Promise<boolean>} True if read permission exists on AllUsers group, false otherwise
+   * @throws If object is not found
+   */
+  async getObjectPublic({ filePath, s3VersionId = undefined, bucketId = undefined }) {
+    const response = await this.getObjectAcl({ filePath, s3VersionId, bucketId });
+    return response.Grants
+      .some(grant => grant.Grantee?.URI === ALLUSERS && grant.Permission === 'READ');
   },
 
   /**
@@ -424,6 +460,42 @@ const objectStorageService = {
     };
 
     return this._getS3Client(data).send(new PutObjectCommand(params));
+  },
+
+  /**
+   * @function putObjectAcl
+   * Puts the canned access control list for an object
+   * @param {ObjectCannedACL} options.acl The acl to apply to an object
+   * @param {string} options.filePath The filePath of the object
+   * @param {string} [options.s3VersionId] Optional version ID used to reference a speciific version of the object
+   * @param {string} [options.bucketId] Optional bucketId
+   * @returns {Promise<PutObjectAclOutput>} The response of the put object acl operation
+   * @throws If object is not found
+   */
+  async putObjectAcl({ acl, filePath, s3VersionId = undefined, bucketId = undefined }) {
+    const data = await utils.getBucket(bucketId);
+    const params = {
+      ACL: acl,
+      Bucket: data.bucket,
+      Key: filePath,
+      VersionId: s3VersionId
+    };
+    return this._getS3Client(data).send(new PutObjectAclCommand(params));
+  },
+
+  /**
+   * @function putObjectPublic
+   * Puts the public/private status for an object
+   * @param {string} options.filePath The filePath of the object
+   * @param {boolean=false} [options.public] Optional boolean on whether to make the object public
+   * @param {string} [options.s3VersionId] Optional version ID used to reference a speciific version of the object
+   * @param {string} [options.bucketId] Optional bucketId
+   * @returns {Promise<PutObjectAclOutput>} The response of the put object acl operation
+   * @throws If object is not found
+   */
+  async putObjectPublic({ filePath, public: publicFlag = false, s3VersionId = undefined, bucketId = undefined }) {
+    const acl = publicFlag ? 'public-read' : 'private';
+    return this.putObjectAcl({ acl, filePath, s3VersionId, bucketId });
   },
 
   /**
