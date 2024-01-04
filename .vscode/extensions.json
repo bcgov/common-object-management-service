@@ -1,5 +1,6 @@
 {
   "recommendations": [
+    "42crunch.vscode-openapi",
     "bierner.markdown-preview-github-styles",
     "davidanson.vscode-markdownlint",
     "dbaeumer.vscode-eslint",

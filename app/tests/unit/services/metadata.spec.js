@@ -178,8 +178,6 @@ describe('fetchMetadataForObject', () => {
     expect(ObjectModel.query).toHaveBeenCalledTimes(1);
     expect(ObjectModel.select).toHaveBeenCalledTimes(1);
     expect(ObjectModel.select).toHaveBeenCalledWith('object.id AS objectId', 'object.bucketId as bucketId');
-    expect(ObjectModel.allowGraph).toHaveBeenCalledTimes(1);
-    expect(ObjectModel.allowGraph).toHaveBeenCalledWith('version.metadata');
     expect(ObjectModel.withGraphJoined).toHaveBeenCalledTimes(1);
     expect(ObjectModel.withGraphJoined).toHaveBeenCalledWith('version.metadata');
     expect(ObjectModel.modifyGraph).toHaveBeenCalledTimes(2);

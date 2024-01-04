@@ -137,7 +137,11 @@ const schema = {
       public: type.truthy,
       active: type.truthy,
       deleteMarker: type.truthy,
-      latest: type.truthy
+      latest: type.truthy,
+      permissions: type.truthy,
+      ...scheme.pagination(
+        ['id', 'path', 'public', 'active', 'createdBy', 'updatedBy', 'updatedAt', 'bucketId', 'name']
+      ),
     })
   },
 

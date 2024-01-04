@@ -9,6 +9,7 @@ jest.mock('../../../src/db/models/tables/objectModel', () => ({
   then: jest.fn(),
 
   allowGraph: jest.fn(),
+  groupBy: jest.fn(),
   deleteById: jest.fn(),
   findById: jest.fn(),
   first: jest.fn(),
@@ -119,7 +120,8 @@ describe('searchObjects', () => {
     expect(ObjectModel.query).toHaveBeenCalledTimes(1);
     expect(ObjectModel.query).toHaveBeenCalledWith(expect.anything());
     expect(ObjectModel.allowGraph).toHaveBeenCalledTimes(1);
-    expect(ObjectModel.modify).toHaveBeenCalledTimes(11);
+    expect(ObjectModel.groupBy).toHaveBeenCalledTimes(1);
+    expect(ObjectModel.modify).toHaveBeenCalledTimes(13);
     expect(ObjectModel.modify).toHaveBeenNthCalledWith(1, 'filterIds', params.id);
     expect(ObjectModel.modify).toHaveBeenNthCalledWith(2, 'filterBucketIds', params.bucketId);
     expect(ObjectModel.modify).toHaveBeenNthCalledWith(3, 'filterName', params.name);
@@ -134,6 +136,8 @@ describe('searchObjects', () => {
       tag: params.tag
     });
     expect(ObjectModel.modify).toHaveBeenNthCalledWith(11, 'hasPermission', params.userId, 'READ');
+    expect(ObjectModel.modify).toHaveBeenNthCalledWith(12, 'pagination', params.page, params.limit);
+    expect(ObjectModel.modify).toHaveBeenNthCalledWith(13, 'sortOrder', params.sort, params.order);
     expect(ObjectModel.then).toHaveBeenCalledTimes(1);
     expect(objectModelTrx.commit).toHaveBeenCalledTimes(1);
   });

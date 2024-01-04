@@ -1,6 +1,6 @@
 const baseJoi = require('joi');
 
-const { EMAILREGEX, Permissions } = require('../components/constants');
+const { EMAILREGEX, Permissions, SortOrder } = require('../components/constants');
 
 /**
  * @constant Joi
@@ -81,6 +81,13 @@ const scheme = {
   guid: oneOrMany(type.uuidv4),
 
   string: oneOrMany(Joi.string().max(255)),
+
+  pagination: (sortList) => ({
+    page: Joi.number().min(1),
+    limit: Joi.number().min(0),
+    sort: Joi.string().valid(...sortList),
+    order: Joi.string().valid(...Object.values(SortOrder)),
+  }),
 
   permCode: oneOrMany(Joi.string().valid(...Object.values(Permissions)))
 };
