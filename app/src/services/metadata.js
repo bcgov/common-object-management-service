@@ -210,7 +210,7 @@ const service = {
       .then(result => result.map(row => {
         return {
           objectId: row.objectId,
-          metadata: row.version[0].metadata
+          metadata: row.version && row.version.length ? row.version[0].metadata : []
         };
       }));
   },
