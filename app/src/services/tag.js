@@ -261,7 +261,7 @@ const service = {
       .then(result => result.map(row => {
         return {
           objectId: row.objectId,
-          tagset: row.version[0].tag
+          tagset: row.version && row.version.length ? row.version[0].tag : []
         };
       }));
   },
