@@ -517,7 +517,8 @@ describe('searchObjects', () => {
       const page = query.keys.page;
 
       it('is a number', () => {
-        expect(page.type).toEqual('number');
+        expect(page.type).toEqual('alternatives');
+        expect(page.matches).toBeTruthy();
       });
 
       it('enforces min value 1', () => {
@@ -534,8 +535,10 @@ describe('searchObjects', () => {
       const limit = query.keys.limit;
 
       it('is a number', () => {
-        expect(limit.type).toEqual('number');
+        expect(limit.type).toEqual('alternatives');
+        expect(limit.matches).toBeTruthy();
       });
+
       it('enforces min value 0', () => {
         expect.objectContaining({
           name: 'min',
@@ -544,13 +547,28 @@ describe('searchObjects', () => {
           })
         });
       });
+
+      it('limit is provided and greater then or equal to 0', () => {
+        const limitObject = schema.searchObjects.query;
+        const result = limitObject.validate({
+          limit: 0
+        });
+        expect(result.value.limit).toBeGreaterThanOrEqual(0);
+      });
     });
 
     describe('sort', () => {
       const sort = query.keys.sort;
+      const sortName = ['id', 'path', 'public', 'active', 'createdBy', 'updatedBy', 'updatedAt', 'bucketId', 'name'];
 
       it('is a string', () => {
         expect(sort.type).toEqual('string');
+      });
+
+      it('must be one of ' + sortName, () => {
+        expect(sort.allow).toEqual(
+          expect.arrayContaining(sortName)
+        );
       });
     });
 
