@@ -37,7 +37,7 @@ describe('syncBucket', () => {
       DeleteMarkers: [{ Key: path }],
       Versions: [{ Key: path }]
     });
-    searchObjectsSpy.mockResolvedValue([{ path: path }]);
+    searchObjectsSpy.mockResolvedValue({ total: 1, data: [{ path: path }] });
 
     await controller.syncBucket(req, res, next);
 

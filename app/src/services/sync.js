@@ -143,7 +143,7 @@ const service = {
           .catch((e) => { // return boolean true if object is soft-deleted in S3
             return !!e.$response.headers['x-amz-delete-marker'];
           })
-      ]).then(settled => settled.map(promise => Array.isArray(promise.value) ? promise.value[0] : promise.value));
+      ]).then(([comsPromise, s3Promise]) => ([comsPromise.value?.data[0], s3Promise.value]));
 
       if (s3Object) {
         // Determine S3 Public status

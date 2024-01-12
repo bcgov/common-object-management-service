@@ -147,7 +147,7 @@ describe('createBucketChild', () => {
       });
     });
 
-    describe.only('key', () => {
+    describe('key', () => {
       const subKey = body.keys.subKey;
 
       it('is a string', () => {

@@ -29,7 +29,7 @@ const controller = {
 
       // Aggregate and dedupe all file paths to consider
       const jobs = [...new Set([
-        ...dbResponse.map(object => object.path),
+        ...dbResponse.data.map(object => object.path),
         ...s3Response.DeleteMarkers.map(object => object.Key),
         ...s3Response.Versions.map(object => object.Key)
       ])].map(path => ({ path: path, bucketId: bucketId }));

@@ -377,7 +377,7 @@ describe('syncObject', () => {
   it('should return object when already synced', async () => {
     const comsObject = { id: validUuidv4, path: path, public: true };
     headObjectSpy.mockResolvedValue({});
-    searchObjectsSpy.mockResolvedValue([comsObject]);
+    searchObjectsSpy.mockResolvedValue({ total: 1, data: [comsObject] });
     getObjectPublicSpy.mockResolvedValue(true);
 
     const result = await service.syncObject(path, bucketId);
@@ -411,7 +411,7 @@ describe('syncObject', () => {
   it('should return object when already synced but public mismatch', async () => {
     const comsObject = { id: validUuidv4, path: path, public: true };
     headObjectSpy.mockResolvedValue({});
-    searchObjectsSpy.mockResolvedValue([comsObject]);
+    searchObjectsSpy.mockResolvedValue({ total: 1, data: [comsObject] });
     getObjectPublicSpy.mockResolvedValue(false);
     updateSpy.mockResolvedValue(comsObject);
 
@@ -449,7 +449,7 @@ describe('syncObject', () => {
   it('should return object when already synced but S3 ACL errors out', async () => {
     const comsObject = { id: validUuidv4, path: path, public: true };
     headObjectSpy.mockResolvedValue({});
-    searchObjectsSpy.mockResolvedValue([comsObject]);
+    searchObjectsSpy.mockResolvedValue({ total: 1, data: [comsObject] });
     getObjectPublicSpy.mockImplementation(() => { throw new Error(); });
 
     const result = await service.syncObject(path, bucketId);
@@ -485,7 +485,7 @@ describe('syncObject', () => {
     _deriveObjectIdSpy.mockResolvedValue(validUuidv4);
     createSpy.mockResolvedValue(comsObject);
     headObjectSpy.mockResolvedValue({});
-    searchObjectsSpy.mockResolvedValue(undefined);
+    searchObjectsSpy.mockResolvedValue({ total: 0, data: [] });
     getObjectPublicSpy.mockResolvedValue(true);
 
     const result = await service.syncObject(path, bucketId);
@@ -529,7 +529,7 @@ describe('syncObject', () => {
     _deriveObjectIdSpy.mockResolvedValue(validUuidv4);
     createSpy.mockResolvedValue(comsObject);
     headObjectSpy.mockResolvedValue({});
-    searchObjectsSpy.mockResolvedValue(undefined);
+    searchObjectsSpy.mockResolvedValue({ total: 0, data: [] });
     getObjectPublicSpy.mockImplementation(() => { throw new Error(); });
 
     const result = await service.syncObject(path, bucketId);
@@ -574,7 +574,7 @@ describe('syncObject', () => {
     headObjectSpy.mockRejectedValue({});
     pruneOrphanedMetadataSpy.mockResolvedValue(0);
     pruneOrphanedTagsSpy.mockResolvedValue(0);
-    searchObjectsSpy.mockResolvedValue([comsObject]);
+    searchObjectsSpy.mockResolvedValue({ total: 1, data: [comsObject] });
 
     const result = await service.syncObject(path, bucketId);
 
