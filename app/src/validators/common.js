@@ -83,8 +83,30 @@ const scheme = {
   string: oneOrMany(Joi.string().max(255)),
 
   pagination: (sortList) => ({
-    page: Joi.number().min(1),
-    limit: Joi.number().min(0),
+    page: Joi.alternatives()
+      .conditional('limit', {
+        not: true,
+        then: Joi
+          .number()
+          .min(1)
+          .required()
+          .messages({
+            'any.required': '`Must specify page number`',
+          }),
+        otherwise: Joi.number().min(1)
+      }),
+    limit: Joi.alternatives()
+      .conditional('page', {
+        not: true,
+        then: Joi
+          .number()
+          .min(1)
+          .required()
+          .messages({
+            'any.required': '`Must specify page limit`',
+          }),
+        otherwise: Joi.number().min(1)
+      }),
     sort: Joi.string().valid(...sortList),
     order: Joi.string().valid(...Object.values(SortOrder)),
   }),
