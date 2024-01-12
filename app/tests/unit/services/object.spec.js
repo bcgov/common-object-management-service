@@ -104,22 +104,37 @@ describe('getBucketKey', () => {
 });
 
 describe('searchObjects', () => {
-  it('Search and filter for specific object records', async () => {
-    ObjectModel.then.mockImplementation(() => { });
+  // TODO: Add in other untested multiplicity cases
+  it('Search and filter for specific object records with permissions and without pagination', async () => {
     const params = {
       bucketId: BUCKET_ID,
       bucketName: 'bucketName',
       active: 'true',
       key: 'key',
-      userId: SYSTEM_USER
+      userId: 'ae8a58f6-62bc-4dd1-acef-79f123609d48',
+      permissions: true
     };
 
-    await service.searchObjects(params);
+    // We only care about mocking the final 13th chained modify result
+    for (let i = 0; i < 12; i++) ObjectModel.modify.mockReturnValueOnce(ObjectModel);
+    ObjectModel.modify.mockResolvedValueOnce([{
+      objectPermission: [{ permCode: 'READ' }], ...params
+    }]);
+
+    const result = await service.searchObjects(params);
+
+    expect(result).toBeTruthy();
+    expect(result).toHaveProperty('total');
+    expect(result).toHaveProperty('data');
+    expect(Array.isArray(result.data)).toBeTruthy();
+    expect(result.data[0]).toHaveProperty('permissions');
+    expect(result.data[0].permissions).toEqual(expect.arrayContaining(['READ']));
 
     expect(ObjectModel.startTransaction).toHaveBeenCalledTimes(1);
     expect(ObjectModel.query).toHaveBeenCalledTimes(1);
     expect(ObjectModel.query).toHaveBeenCalledWith(expect.anything());
     expect(ObjectModel.allowGraph).toHaveBeenCalledTimes(1);
+    expect(ObjectModel.allowGraph).toHaveBeenCalledWith('[bucketPermission, objectPermission, version]');
     expect(ObjectModel.groupBy).toHaveBeenCalledTimes(1);
     expect(ObjectModel.modify).toHaveBeenCalledTimes(13);
     expect(ObjectModel.modify).toHaveBeenNthCalledWith(1, 'filterIds', params.id);
@@ -138,7 +153,53 @@ describe('searchObjects', () => {
     expect(ObjectModel.modify).toHaveBeenNthCalledWith(11, 'hasPermission', params.userId, 'READ');
     expect(ObjectModel.modify).toHaveBeenNthCalledWith(12, 'pagination', params.page, params.limit);
     expect(ObjectModel.modify).toHaveBeenNthCalledWith(13, 'sortOrder', params.sort, params.order);
-    expect(ObjectModel.then).toHaveBeenCalledTimes(1);
+    expect(objectModelTrx.commit).toHaveBeenCalledTimes(1);
+  });
+
+  it('Search and filter for specific object records with pagination', async () => {
+    // We only care about mocking the final 13th chained modify result
+    for (let i = 0; i < 12; i++) ObjectModel.modify.mockReturnValueOnce(ObjectModel);
+    ObjectModel.modify.mockResolvedValueOnce({ total: 0, results: [] });
+
+    const params = {
+      bucketId: BUCKET_ID,
+      bucketName: 'bucketName',
+      active: 'true',
+      key: 'key',
+      userId: SYSTEM_USER,
+      permissions: false
+    };
+
+    const result = await service.searchObjects(params);
+
+    expect(result).toBeTruthy();
+    expect(result).toHaveProperty('total');
+    expect(result).toHaveProperty('data');
+    expect(Array.isArray(result.data)).toBeTruthy();
+
+    expect(ObjectModel.startTransaction).toHaveBeenCalledTimes(1);
+    expect(ObjectModel.query).toHaveBeenCalledTimes(1);
+    expect(ObjectModel.query).toHaveBeenCalledWith(expect.anything());
+    expect(ObjectModel.allowGraph).toHaveBeenCalledTimes(1);
+    expect(ObjectModel.allowGraph).toHaveBeenCalledWith('[bucketPermission, objectPermission, version]');
+    expect(ObjectModel.groupBy).toHaveBeenCalledTimes(1);
+    expect(ObjectModel.modify).toHaveBeenCalledTimes(13);
+    expect(ObjectModel.modify).toHaveBeenNthCalledWith(1, 'filterIds', params.id);
+    expect(ObjectModel.modify).toHaveBeenNthCalledWith(2, 'filterBucketIds', params.bucketId);
+    expect(ObjectModel.modify).toHaveBeenNthCalledWith(3, 'filterName', params.name);
+    expect(ObjectModel.modify).toHaveBeenNthCalledWith(4, 'filterPath', params.path);
+    expect(ObjectModel.modify).toHaveBeenNthCalledWith(5, 'filterPublic', params.public);
+    expect(ObjectModel.modify).toHaveBeenNthCalledWith(6, 'filterActive', params.active);
+    expect(ObjectModel.modify).toHaveBeenNthCalledWith(7, 'filterMimeType', params.mimeType);
+    expect(ObjectModel.modify).toHaveBeenNthCalledWith(8, 'filterDeleteMarker', params.deleteMarker);
+    expect(ObjectModel.modify).toHaveBeenNthCalledWith(9, 'filterLatest', params.latest);
+    expect(ObjectModel.modify).toHaveBeenNthCalledWith(10, 'filterMetadataTag', {
+      metadata: params.metadata,
+      tag: params.tag
+    });
+    expect(ObjectModel.modify).toHaveBeenNthCalledWith(11, 'hasPermission', params.userId, 'READ');
+    expect(ObjectModel.modify).toHaveBeenNthCalledWith(12, 'pagination', params.page, params.limit);
+    expect(ObjectModel.modify).toHaveBeenNthCalledWith(13, 'sortOrder', params.sort, params.order);
     expect(objectModelTrx.commit).toHaveBeenCalledTimes(1);
   });
 });

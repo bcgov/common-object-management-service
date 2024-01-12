@@ -112,18 +112,23 @@ const service = {
    * @param {string} [params.name] Optional metadata name string to match on
    * @param {object} [params.metadata] Optional object of metadata key/value pairs
    * @param {object} [params.tag] Optional object of tag key/value pairs
+   * @param {object} [params.limit] Optional number of records to limit by
+   * @param {object} [params.order] Optional column attribute to order by
+   * @param {object} [params.page] Optional page set to return
+   * @param {object} [params.sort] Optional `asc` or `desc` sort ordering
    * @param {object} [etrx=undefined] An optional Objection Transaction object
-   * @returns {Promise<object[]>} The result of running the find operation
+   * @returns {Promise<{total: number, data: object[]}>} The find operation result containing the `total` length of
+   * the search query, and the relevant array of COMS objects.
    */
   searchObjects: async (params, etrx = undefined) => {
     let trx;
-    let response = [];
+    let response = {};
     try {
       trx = etrx ? etrx : await ObjectModel.startTransaction();
       // GroupBy() seems to be working faster with ObjectionJS Graphs
       // when comparing with distinct()
       response.data = await ObjectModel.query(trx)
-        .allowGraph('[objectPermission, version, bucketPermission]')
+        .allowGraph('[bucketPermission, objectPermission, version]')
         .groupBy('object.id')
         .modify('filterIds', params.id)
         .modify('filterBucketIds', params.bucketId)
@@ -142,16 +147,16 @@ const service = {
         .modify('pagination', params.page, params.limit)
         .modify('sortOrder', params.sort, params.order)
         .then(result => {
-          let resultObject = [];
+          let results = [];
           if (Object.hasOwn(result, 'results')) {
-            resultObject = result.results;
+            results = result.results;
             response.total = result.total;
           } else {
-            resultObject = result;
+            results = result;
             response.total = result.length;
           }
           return Promise.all(
-            resultObject.map(row => {
+            results.map(row => {
               // eslint-disable-next-line no-unused-vars
               const { objectPermission, bucketPermission, version, ...object } = row;
               if (params.permissions) {

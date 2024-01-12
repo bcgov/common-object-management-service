@@ -233,6 +233,7 @@ const service = {
   fetchTagsForObject: (params) => {
     return ObjectModel.query()
       .select('object.id AS objectId', 'object.bucketId as bucketId')
+      .allowGraph('[bucketPermission, objectPermission, version.tag]')
       .withGraphJoined('version.tag')
       // get latest version that isn't a delete marker by default
       .modifyGraph('version', builder => {
