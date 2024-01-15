@@ -136,9 +136,7 @@ const service = {
         .modify('filterPath', params.path)
         .modify('filterPublic', params.public)
         .modify('filterActive', params.active)
-        .modify('filterMimeType', params.mimeType)
-        .modify('filterDeleteMarker', params.deleteMarker)
-        .modify('filterLatest', params.latest)
+        .modify('filterVersionAttributes', params.mimeType, params.deleteMarker, params.latest)
         .modify('filterMetadataTag', {
           metadata: params.metadata,
           tag: params.tag

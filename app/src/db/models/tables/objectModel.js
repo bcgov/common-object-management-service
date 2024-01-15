@@ -78,6 +78,29 @@ class ObjectModel extends Timestamps(Model) {
       filterActive(query, value) {
         if (value !== undefined) query.where('object.active', value);
       },
+      filterVersionAttributes(query, mimeType, deleteMarker, isLatest) {
+        query.modify(query => {
+          query
+            .withGraphJoined('version')
+            .leftJoinRelated('version')
+            .whereIn('version.id', query => {
+              query.select('version.id')
+                .modify(query => {
+                  if (mimeType) {
+                    query.where('version.mimeType', 'ilike', `%${mimeType}%`);
+                  }
+                  if (deleteMarker !== undefined) {
+                    query.where('version.deleteMarker', deleteMarker);
+                  }
+                  if (isLatest !== undefined) {
+                    query.where('version.isLatest', isLatest);
+                  }
+                });
+            });
+          return query;
+        });
+
+      },
       filterMimeType(query, value) {
         if (value) {
           query
