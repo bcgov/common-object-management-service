@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const helmet = require('helmet');
 
 const { Permissions } = require('../../components/constants');
 const { objectController, syncController } = require('../../controllers');
@@ -37,7 +38,8 @@ router.head('/:objectId', objectValidator.headObject, currentObject, hasPermissi
 );
 
 /** Returns the object */
-router.get('/:objectId', objectValidator.readObject, currentObject, hasPermission(Permissions.READ),
+router.get('/:objectId', helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }),
+  objectValidator.readObject, currentObject, hasPermission(Permissions.READ),
   (req, res, next) => {
   // TODO: Add validation to reject unexpected query parameters
     objectController.readObject(req, res, next);
