@@ -130,20 +130,27 @@ const service = {
       response.data = await ObjectModel.query(trx)
         .allowGraph('[bucketPermission, objectPermission, version]')
         .groupBy('object.id')
+        // object
         .modify('filterIds', params.id)
         .modify('filterBucketIds', params.bucketId)
         .modify('filterName', params.name)
         .modify('filterPath', params.path)
         .modify('filterPublic', params.public)
         .modify('filterActive', params.active)
+        // version
         .modify('filterVersionAttributes', params.mimeType, params.deleteMarker, params.latest)
+        // meta/tag
         .modify('filterMetadataTag', {
           metadata: params.metadata,
           tag: params.tag
         })
+        // permissions
         .modify('hasPermission', params.userId, 'READ')
+        // pagination
         .modify('pagination', params.page, params.limit)
+        // sort results
         .modify('sortOrder', params.sort, params.order)
+        // format response
         .then(result => {
           let results = [];
           if (Object.hasOwn(result, 'results')) {
