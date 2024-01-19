@@ -78,46 +78,21 @@ class ObjectModel extends Timestamps(Model) {
       filterActive(query, value) {
         if (value !== undefined) query.where('object.active', value);
       },
-      filterMimeType(query, value) {
-        if (value) {
-          query
-            .withGraphJoined('version')
-            .leftJoinRelated('version')
-            .whereIn('version.id', builder => {
-              builder.select('version.id')
-                .where('version.mimeType', 'ilike', `%${value}%`);
-            });
-        }
-      },
-      filterDeleteMarker(query, value) {
-        if (value !== undefined) {
-          query
-            .withGraphJoined('version')
-            .leftJoinRelated('version')
-            .where('version.deleteMarker', value);
-        }
-      },
-      filterLatest(query, value) {
-        if (value !== undefined) {
-
-          query.withGraphJoined('version');
-          if (value) {
-            // join on version where isLatest = true
-            query.modifyGraph('version', builder => {
-              builder
-                .select('version.*')
-                .where('version.isLatest', true);
-            });
-          } else {
-            // join on ALL versions where isLatest = false
-            const subquery = Version.query()
-              .select('version.id')
-              .where('version.isLatest', false);
-            query.whereIn('version.id', builder => {
-              builder.intersect(subquery);
-            });
-          }
-        }
+      filterVersionAttributes(query, mimeType, deleteMarker, isLatest) {
+        query
+          .withGraphJoined('version')
+          .leftJoinRelated('version')
+          .modify(query => {
+            if (mimeType) {
+              query.where('version.mimeType', 'ilike', `%${mimeType}%`);
+            }
+            if (deleteMarker !== undefined) {
+              query.where('version.deleteMarker', deleteMarker);
+            }
+            if (isLatest !== undefined) {
+              query.where('version.isLatest', isLatest);
+            }
+          });
       },
       filterMetadataTag(query, value) {
         const subqueries = [];
