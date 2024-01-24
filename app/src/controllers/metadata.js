@@ -1,6 +1,5 @@
-const config = require('config');
 const errorToProblem = require('../components/errorToProblem');
-const { getMetadata } = require('../components/utils');
+const { getConfigBoolean, getMetadata } = require('../components/utils');
 const { metadataService } = require('../services');
 
 const SERVICE = 'MetadataService';
@@ -22,7 +21,7 @@ const controller = {
       const metadata = getMetadata(req.headers);
       const params = {
         metadata: metadata && Object.keys(metadata).length ? metadata : undefined,
-        privacyMask : req.currentUser.authType !== 'BASIC' ? config.has('server.privacyMask') : false
+        privacyMask: req.currentUser.authType !== 'BASIC' ? getConfigBoolean('server.privacyMask') : false
       };
 
       const response = await metadataService.searchMetadata(params);

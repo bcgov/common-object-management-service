@@ -4,6 +4,7 @@ const basicAuth = require('express-basic-auth');
 const jwt = require('jsonwebtoken');
 
 const { AuthType } = require('../components/constants');
+const { getConfigBoolean } = require('../components/utils');
 const { userService } = require('../services');
 
 /**
@@ -54,12 +55,12 @@ const currentUser = async (req, res, next) => {
 
   if (authorization) {
     // Basic Authorization
-    if (config.has('basicAuth.enabled') && authorization.toLowerCase().startsWith('basic ')) {
+    if (getConfigBoolean('basicAuth.enabled') && authorization.toLowerCase().startsWith('basic ')) {
       currentUser.authType = AuthType.BASIC;
     }
 
     // OIDC JWT Authorization
-    else if (config.has('keycloak.enabled') && authorization.toLowerCase().startsWith('bearer ')) {
+    else if (getConfigBoolean('keycloak.enabled') && authorization.toLowerCase().startsWith('bearer ')) {
       currentUser.authType = AuthType.BEARER;
 
       try {
