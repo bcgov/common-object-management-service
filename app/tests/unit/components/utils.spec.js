@@ -84,14 +84,14 @@ describe('getAppAuthMode', () => {
     [AuthMode.OIDCAUTH, false, true],
     [AuthMode.FULLAUTH, true, true]
   ])('should return %s when basicAuth.enabled %s and keycloak.enabled %s', (expected, basicAuth, keycloak) => {
-    config.has
+    utils.getConfigBoolean
       .mockReturnValueOnce(basicAuth) // basicAuth.enabled
       .mockReturnValueOnce(keycloak); // keycloak.enabled
 
     const result = utils.getAppAuthMode();
 
     expect(result).toEqual(expected);
-    expect(config.has).toHaveBeenCalledTimes(2);
+    expect(utils.getConfigBoolean).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -113,9 +113,10 @@ describe('getBucket', () => {
     secretAccessKey: 'soo'
   };
   const readBucketSpy = jest.spyOn(bucketService, 'read');
+  const getConfigBooleanSpy = jest.spyOn(utils, 'getConfigBoolean');
 
   it('should return config data when it exists, given no bucketId', async () => {
-    config.has.mockReturnValue(true);
+    getConfigBooleanSpy.mockReturnValueOnce(true);
     config.get
       .mockReturnValueOnce(cdata.accessKeyId) // objectStorage.accessKeyId
       .mockReturnValueOnce(cdata.bucket) // objectStorage.bucket
@@ -586,11 +587,11 @@ describe('toLowerKeys', () => {
 });
 
 describe('getUniqueObjects', () => {
-  const testObj1 = {key1: 'test1', val1: 'val11', val2: 'val21'};
-  const testObj2 = {key1: 'test2', val1: 'val12', val2: 'val22'};
-  const testObj3 = {key1: 'test3', val1: 'val13', val2: 'val23'};
-  const testObj4 = {key1: 'test4', val1: 'val14', val2: 'val24'};
-  const testObj5 = {key1: 'test4', val1: 'val15', val2: 'val25'};
+  const testObj1 = { key1: 'test1', val1: 'val11', val2: 'val21' };
+  const testObj2 = { key1: 'test2', val1: 'val12', val2: 'val22' };
+  const testObj3 = { key1: 'test3', val1: 'val13', val2: 'val23' };
+  const testObj4 = { key1: 'test4', val1: 'val14', val2: 'val24' };
+  const testObj5 = { key1: 'test4', val1: 'val15', val2: 'val25' };
 
   it('return all input objects', () => {
     expect(utils.getUniqueObjects([
