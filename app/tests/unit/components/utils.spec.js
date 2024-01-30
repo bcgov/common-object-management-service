@@ -174,6 +174,24 @@ describe('getBucket', () => {
   });
 });
 
+describe('getConfigBoolean', () => {
+  it.each([
+    [true, true],
+    [false, false],
+    [false, null],
+    [false, undefined],
+    [false, Error()],
+  ])('should return %s when config.get() returns %s', (expected, getConfigOutput) => {
+
+    config.get.mockReturnValueOnce(getConfigOutput);
+    utils.isTruthy.mockReturnValueOnce(getConfigOutput);
+
+    const output = utils.getConfigBoolean('some.key');
+
+    expect(output).toEqual(expected);
+  });
+});
+
 describe('getCurrentIdentity', () => {
   const getCurrentTokenClaimSpy = jest.spyOn(utils, 'getCurrentTokenClaim');
   const parseIdentityKeyClaimsSpy = jest.spyOn(utils, 'parseIdentityKeyClaims');
