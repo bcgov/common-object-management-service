@@ -133,7 +133,9 @@ const utils = {
    */
   getConfigBoolean(key) {
     try {
-      return utils.isTruthy(config.get(key));
+      const getConfig = config.get(key);
+      if (getConfig === undefined || getConfig === null) return false;
+      else return utils.isTruthy(getConfig);
     }
     catch {
       return false;
