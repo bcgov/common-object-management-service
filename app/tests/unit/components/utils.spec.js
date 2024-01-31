@@ -176,7 +176,9 @@ describe('getBucket', () => {
 });
 
 describe('getConfigBoolean', () => {
-  const getConfigBooleanSpy = jest.spyOn(utils, 'getConfigBoolean');
+  beforeAll(() => {
+    utils.getConfigBoolean.mockRestore();
+  });
   const isTruthySpy = jest.spyOn(utils, 'isTruthy');
 
   it.each([
@@ -190,7 +192,7 @@ describe('getConfigBoolean', () => {
     // if (getConfigOutput instanceof Error)
     //   getConfigBooleanSpy.mockRejectedValue(getConfigOutput);
     // else
-    getConfigBooleanSpy.mockReturnValueOnce(getConfigOutput);
+    config.get.mockReturnValueOnce(getConfigOutput);
     isTruthySpy.mockReturnValueOnce(getConfigOutput);
 
     const output = utils.getConfigBoolean('some.key');
@@ -443,7 +445,9 @@ describe('isAtPath', () => {
 
 describe('isTruthy', () => {
 
-  utils.isTruthy.mockRestore();
+  beforeAll(() => {
+    utils.isTruthy.mockRestore();
+  });
 
   it('should return undefined given undefined', () => {
     expect(utils.isTruthy(undefined)).toBeUndefined();
