@@ -134,6 +134,9 @@ const utils = {
   getConfigBoolean(key) {
     try {
       const getConfig = config.get(key);
+
+      // isTruthy() can't handle undefined / null, so we have to do that here
+      // @see {@link https://github.com/node-config/node-config/wiki/Common-Usage#using-config-values}
       if (getConfig === undefined || getConfig === null) return false;
       else return utils.isTruthy(getConfig);
     }

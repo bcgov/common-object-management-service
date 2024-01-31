@@ -185,14 +185,15 @@ describe('getConfigBoolean', () => {
     [true, true],
     [false, false],
     [false, null],
-    [false, undefined]
-    // [false, new Error('key does not exist!')],
+    [false, undefined],
+    [false, 'exception']
   ])('should return %s when config.get() returns %s', (expected, getConfigOutput) => {
 
-    // if (getConfigOutput instanceof Error)
-    //   getConfigBooleanSpy.mockRejectedValue(getConfigOutput);
-    // else
-    config.get.mockReturnValueOnce(getConfigOutput);
+    // config.get() throws exception if the requested key doesn't exist
+    if (getConfigOutput === 'exception')
+      config.get.mockImplementation(() => { throw Error('key does not exist!'); });
+    else
+      config.get.mockReturnValueOnce(getConfigOutput);
     isTruthySpy.mockReturnValueOnce(getConfigOutput);
 
     const output = utils.getConfigBoolean('some.key');
