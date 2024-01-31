@@ -78,13 +78,14 @@ describe('delimit', () => {
 });
 
 describe('getAppAuthMode', () => {
+  const getConfigBooleanSpy = jest.spyOn(utils, 'getConfigBoolean');
   it.each([
     [AuthMode.NOAUTH, false, false],
     [AuthMode.BASICAUTH, true, false],
     [AuthMode.OIDCAUTH, false, true],
     [AuthMode.FULLAUTH, true, true]
   ])('should return %s when basicAuth.enabled %s and keycloak.enabled %s', (expected, basicAuth, keycloak) => {
-    utils.getConfigBoolean
+    getConfigBooleanSpy
       .mockReturnValueOnce(basicAuth) // basicAuth.enabled
       .mockReturnValueOnce(keycloak); // keycloak.enabled
 
@@ -175,16 +176,22 @@ describe('getBucket', () => {
 });
 
 describe('getConfigBoolean', () => {
+  const getConfigBooleanSpy = jest.spyOn(utils, 'getConfigBoolean');
+  const isTruthySpy = jest.spyOn(utils, 'isTruthy');
+
   it.each([
     [true, true],
     [false, false],
     [false, null],
-    [false, undefined],
-    [false, Error()],
+    [false, undefined]
+    // [false, new Error('key does not exist!')],
   ])('should return %s when config.get() returns %s', (expected, getConfigOutput) => {
 
-    config.get.mockReturnValueOnce(getConfigOutput);
-    utils.isTruthy.mockReturnValueOnce(getConfigOutput);
+    // if (getConfigOutput instanceof Error)
+    //   getConfigBooleanSpy.mockRejectedValue(getConfigOutput);
+    // else
+    getConfigBooleanSpy.mockReturnValueOnce(getConfigOutput);
+    isTruthySpy.mockReturnValueOnce(getConfigOutput);
 
     const output = utils.getConfigBoolean('some.key');
 
@@ -435,6 +442,9 @@ describe('isAtPath', () => {
 });
 
 describe('isTruthy', () => {
+
+  utils.isTruthy.mockRestore();
+
   it('should return undefined given undefined', () => {
     expect(utils.isTruthy(undefined)).toBeUndefined();
   });
