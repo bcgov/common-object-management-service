@@ -49,7 +49,8 @@ describe('searchTags', () => {
     await controller.searchTags(req, res, next);
 
     expect(tagSearchTagsSpy).toHaveBeenCalledWith({
-      tags: undefined,
+      tag: undefined,
+      privacyMask: false
     });
 
     expect(res.json).toHaveBeenCalledWith(GoodResponse);
@@ -79,6 +80,7 @@ describe('searchTags', () => {
 
     expect(tagSearchTagsSpy).toHaveBeenCalledWith({
       tag: { foo: '' },
+      privacyMask: false
     });
     expect(res.json).toHaveBeenCalledWith(GoodResponse);
     expect(res.status).toHaveBeenCalledWith(200);

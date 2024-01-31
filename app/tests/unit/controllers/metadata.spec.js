@@ -47,6 +47,7 @@ describe('searchMetadata', () => {
 
     expect(metadataSearchMetadataSpy).toHaveBeenCalledWith({
       metadata: undefined,
+      privacyMask: false
     });
 
     expect(res.json).toHaveBeenCalledWith(GoodResponse);
@@ -71,6 +72,7 @@ describe('searchMetadata', () => {
 
     expect(metadataSearchMetadataSpy).toHaveBeenCalledWith({
       metadata: { foo: '' },
+      privacyMask: false
     });
     expect(res.json).toHaveBeenCalledWith(GoodResponse);
     expect(res.status).toHaveBeenCalledWith(200);
