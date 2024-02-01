@@ -1,6 +1,6 @@
-const config = require('config');
 const errorToProblem = require('../components/errorToProblem');
 const { tagService } = require('../services');
+const { getConfigBoolean } = require('../components/utils');
 
 const SERVICE = 'TagService';
 
@@ -22,7 +22,7 @@ const controller = {
       const tagging = req.query.tagset;
       const params = {
         tag: tagging && Object.keys(tagging).length ? tagging : undefined,
-        privacyMask : req.currentUser.authType !== 'BASIC' ? config.has('server.privacyMask') : false
+        privacyMask: req.currentUser.authType !== 'BASIC' ? getConfigBoolean('server.privacyMask') : false
       };
 
       const response = await tagService.searchTags(params);

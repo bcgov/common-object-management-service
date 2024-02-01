@@ -51,8 +51,8 @@ const utils = {
    * @returns {string} The application AuthMode
    */
   getAppAuthMode() {
-    const basicAuth = config.has('basicAuth.enabled');
-    const oidcAuth = config.has('keycloak.enabled');
+    const basicAuth = utils.getConfigBoolean('basicAuth.enabled');
+    const oidcAuth = utils.getConfigBoolean('keycloak.enabled');
 
     if (!basicAuth && !oidcAuth) return AuthMode.NOAUTH;
     else if (basicAuth && !oidcAuth) return AuthMode.BASICAUTH;
@@ -83,7 +83,7 @@ const utils = {
         data.key = bucketData.key;
         data.secretAccessKey = bucketData.secretAccessKey;
         if (bucketData.region) data.region = bucketData.region;
-      } else if (config.has('objectStorage') && config.has('objectStorage.enabled')) {
+      } else if (utils.getConfigBoolean('objectStorage.enabled')) {
         data.accessKeyId = config.get('objectStorage.accessKeyId');
         data.bucket = config.get('objectStorage.bucket');
         data.endpoint = config.get('objectStorage.endpoint');
@@ -120,6 +120,29 @@ const utils = {
       });
     }
     return bucketId;
+  },
+
+  /**
+   * @function getConfigBoolean
+   * Gets the value of a boolean node-config key.
+   * Keys that don't exist in the config are automatically converted to `false`,
+   * thus avoiding the need to either call `config.has()` first, or wrap `config.get()`
+   * inside a try-catch block every time.
+   * @param {string} key the configuration value to look up. Must be either true, false, or not exist in the config.
+   * @returns {boolean} `true` if key exists in config and is true, `false` otherwise
+   */
+  getConfigBoolean(key) {
+    try {
+      const getConfig = config.get(key);
+
+      // isTruthy() can't handle undefined / null, so we have to do that here
+      // @see {@link https://github.com/node-config/node-config/wiki/Common-Usage#using-config-values}
+      if (getConfig === undefined || getConfig === null) return false;
+      else return utils.isTruthy(getConfig);
+    }
+    catch {
+      return false;
+    }
   },
 
   /**

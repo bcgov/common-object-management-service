@@ -10,7 +10,7 @@ const { AuthMode, DEFAULTCORS } = require('./src/components/constants');
 const log = require('./src/components/log')(module.filename);
 const httpLogger = require('./src/components/log').httpLogger;
 const QueueManager = require('./src/components/queueManager');
-const { getAppAuthMode, getGitRevision } = require('./src/components/utils');
+const { getAppAuthMode, getConfigBoolean, getGitRevision } = require('./src/components/utils');
 const DataConnection = require('./src/db/dataConnection');
 const v1Router = require('./src/routes/v1');
 const { readUnique } = require('./src/services/bucket');
@@ -67,7 +67,7 @@ if (state.authMode === AuthMode.OIDCAUTH || state.authMode === AuthMode.FULLAUTH
 }
 
 // Application privacy Mode mode
-if (config.has('server.privacyMask')) {
+if (getConfigBoolean('server.privacyMask')) {
   log.info('Running COMS with strict content privacy masking');
 } else {
   log.info('Running COMS with permissive content privacy masking');
@@ -95,7 +95,7 @@ apiRouter.get('/', (_req, res) => {
         gitRev: state.gitRev,
         name: appName,
         nodeVersion: process.version,
-        privacyMask: config.has('server.privacyMask'),
+        privacyMask: getConfigBoolean('server.privacyMask'),
         version: appVersion
       },
       endpoints: ['/api/v1'],
@@ -204,7 +204,7 @@ function initializeConnections() {
       if (state.connections.data) {
         log.info('DataConnection Reachable', { function: 'initializeConnections' });
       }
-      if (config.has('objectStorage.enabled')) {
+      if (getConfigBoolean('objectStorage.enabled')) {
         readUnique(config.get('objectStorage')).then(() => {
           log.error('Default bucket cannot also exist in database', { function: 'initializeConnections' });
           fatalErrorHandler();

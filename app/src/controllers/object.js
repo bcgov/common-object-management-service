@@ -1,5 +1,4 @@
 const Problem = require('api-problem');
-const config = require('config');
 const cors = require('cors');
 const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 
@@ -16,6 +15,7 @@ const log = require('../components/log')(module.filename);
 const {
   addDashesToUuid,
   getBucketId,
+  getConfigBoolean,
   getCurrentIdentity,
   getKeyValue,
   getMetadata,
@@ -618,7 +618,7 @@ const controller = {
         metadata: metadata && Object.keys(metadata).length ? metadata : undefined
       };
       // if scoping to current user permissions on objects
-      if (config.has('server.privacyMask')) {
+      if (getConfigBoolean('server.privacyMask')) {
         params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
       }
       const response = await metadataService.fetchMetadataForObject(params);
@@ -647,7 +647,7 @@ const controller = {
         tagset: tagset && Object.keys(tagset).length ? tagset : undefined,
       };
       // if scoping to current user permissions on objects
-      if (config.has('server.privacyMask')) {
+      if (getConfigBoolean('server.privacyMask')) {
         params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
       }
       const response = await tagService.fetchTagsForObject(params);
@@ -943,7 +943,7 @@ const controller = {
         order: req.query.order,
       };
       // if scoping to current user permissions on objects
-      if (config.has('server.privacyMask')) {
+      if (getConfigBoolean('server.privacyMask')) {
         params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
       }
       const response = await objectService.searchObjects(params);

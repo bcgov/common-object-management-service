@@ -4,13 +4,14 @@ const { readFileSync } = require('fs');
 const helmet = require('helmet');
 const yaml = require('js-yaml');
 const { join } = require('path');
+const { getConfigBoolean } = require('../../components/utils');
 
 /** Gets the OpenAPI specification */
 function getSpec() {
   const rawSpec = readFileSync(join(__dirname, '../../docs/v1.api-spec.yaml'), 'utf8');
   const spec = yaml.load(rawSpec);
   spec.servers[0].url = '/api/v1';
-  if (config.has('keycloak.enabled')) {
+  if (getConfigBoolean('keycloak.enabled')) {
     // eslint-disable-next-line max-len
     spec.components.securitySchemes.OpenID.openIdConnectUrl = `${config.get('keycloak.serverUrl')}/realms/${config.get('keycloak.realm')}/.well-known/openid-configuration`;
   }
