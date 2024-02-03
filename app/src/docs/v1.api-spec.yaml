@@ -1936,6 +1936,13 @@ components:
               type: string
               example: coms/env
               maxLength: 255
+            lastSyncRequestedDate:
+              description: >-
+                Time when a sync request was last submitted for the bucket
+              type: string
+              format: date-time
+              example: "2022-03-11T23:19:16.343Z"
+              default: null
             region:
               type: string
               description: >-
@@ -2070,6 +2077,13 @@ components:
               description: An array of explicit permCodes the current user has. Empty array if authenticated via Basic auth or if user lacks explicit permissions for the object. Attribute only appears if request contains permissions query parameter
               example:
                 - READ
+            lastSyncedDate:
+              type: string
+              format: date-time
+              description: >-
+                Time when the object was last synced with the S3 bucket
+              example: "2022-03-11T23:19:16.343Z"
+              default: null
         - $ref: "#/components/schemas/DB-TimestampUserData"
     DB-ObjectPermission:
       title: DB Object Permission
@@ -2245,6 +2259,14 @@ components:
                 An entity tag (ETag) is an opaque identifier assigned by a web
                 server to a specific version of a resource found at a URL
               example: '"9d1aaa54b84e1d6ccc6e0477c5717fe3"'
+            lastModifiedDate:
+              type: string
+              format: date-time
+              description: >-
+                The object creation date or the last modified date (as exposed by S3's
+                `Last-Modified` header), whichever is the latest.
+              example: "2022-03-11T23:19:16.343Z"
+              default: null
         - $ref: "#/components/schemas/DB-TimestampUserData"
     DownloadMode:
       title: Download Mode

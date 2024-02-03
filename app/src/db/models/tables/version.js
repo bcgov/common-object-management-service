@@ -90,6 +90,7 @@ class Version extends Timestamps(Model) {
         deleteMarker: { type: 'boolean' },
         etag: { type: 'string', maxLength: 65536 },
         isLatest: { type: 'boolean' },
+        lastModifiedDate: { type: ['string', 'null'] },
         ...stamps
       },
       additionalProperties: false
