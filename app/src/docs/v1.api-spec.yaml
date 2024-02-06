@@ -2070,13 +2070,6 @@ components:
               type: string
               description: The filename of the original file uploaded
               example: foobar.txt
-            permissions:
-              type: array
-              items:
-                type: string
-              description: An array of explicit permCodes the current user has. Empty array if authenticated via Basic auth or if user lacks explicit permissions for the object. Attribute only appears if request contains permissions query parameter
-              example:
-                - READ
             lastSyncedDate:
               type: string
               format: date-time
