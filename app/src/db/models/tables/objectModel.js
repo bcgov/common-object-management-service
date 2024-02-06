@@ -181,6 +181,7 @@ class ObjectModel extends Timestamps(Model) {
         active: { type: 'boolean' },
         bucketId: { type: 'string', maxLength: 255, nullable: true },
         name: { type: 'string', maxLength: 1024 },
+        lastSyncedDate: { type: ['string', 'null'] },
         ...stamps
       },
       additionalProperties: false

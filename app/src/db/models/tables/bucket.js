@@ -88,6 +88,7 @@ class Bucket extends mixin(Model, [
         secretAccessKey: { type: 'string', minLength: 1, maxLength: 255 },
         region: { type: 'string', maxLength: 255 },
         active: { type: 'boolean' },
+        lastSyncRequestedDate: { type: ['string', 'null'] },
         ...stamps
       },
       additionalProperties: false
