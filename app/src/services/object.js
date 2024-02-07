@@ -34,7 +34,8 @@ const service = {
         public: data.public,
         active: data.active,
         bucketId: data.bucketId,
-        createdBy: data.userId ?? SYSTEM_USER
+        createdBy: data.userId ?? SYSTEM_USER,
+        lastSyncedDate: new Date()
       };
       const response = await ObjectModel.query(trx).insert(obj).returning('*');
 
@@ -232,7 +233,8 @@ const service = {
         path: data.path,
         public: data.public,
         active: data.active,
-        updatedBy: data.userId ?? SYSTEM_USER
+        updatedBy: data.userId ?? SYSTEM_USER,
+        lastSyncedDate: new Date()
       });
 
       if (!etrx) await trx.commit();

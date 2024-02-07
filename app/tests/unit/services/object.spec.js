@@ -43,6 +43,7 @@ beforeEach(() => {
 
 describe('create', () => {
   const addPermissionsSpy = jest.spyOn(objectPermissionService, 'addPermissions');
+  const dateSpy = jest.spyOn(global, 'Date');
 
   beforeEach(() => {
     addPermissionsSpy.mockReset();
@@ -58,6 +59,7 @@ describe('create', () => {
     await service.create({ ...data, userId: SYSTEM_USER });
 
     expect(ObjectModel.startTransaction).toHaveBeenCalledTimes(1);
+    expect(dateSpy).toHaveBeenCalledTimes(1);
     expect(ObjectModel.query).toHaveBeenCalledTimes(1);
     expect(ObjectModel.query).toHaveBeenCalledWith(expect.anything());
     expect(ObjectModel.insert).toHaveBeenCalledTimes(1);
@@ -227,6 +229,12 @@ describe('read', () => {
 
 describe('update', () => {
   it('Update an object DB record', async () => {
+
+    // Mocking the system time allows us to perform an assert/expect on lastSyncedDate.
+    // If not, then it's impossible to compare without resorting to string manipulation (ugly!)
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2024-01-01T00:00:00'));
+
     await service.update({ ...data });
 
     expect(ObjectModel.startTransaction).toHaveBeenCalledTimes(1);
@@ -236,8 +244,11 @@ describe('update', () => {
       path: data.path,
       public: data.public,
       active: data.active,
-      updatedBy: data.userId
+      updatedBy: data.userId,
+      lastSyncedDate: new Date()
     });
     expect(objectModelTrx.commit).toHaveBeenCalledTimes(1);
+
+    jest.useRealTimers();
   });
 });
