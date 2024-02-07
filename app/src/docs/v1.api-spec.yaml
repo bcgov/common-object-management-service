@@ -778,6 +778,8 @@ paths:
         This endpoint does not guarantee immediately synchronized results.
         Synchronization latency will be affected by the remaining number of
         objects awaiting synchronization.
+        The `lastSyncedDate` attribute will be asynchronously updated when it
+        performs a successful synchronization with the S3 bucket
       tags:
         - Sync
       operationId: syncObject
