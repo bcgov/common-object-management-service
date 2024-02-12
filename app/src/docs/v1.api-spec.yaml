@@ -416,7 +416,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/DB-Object"
+                  $ref: "#/components/schemas/DB-Object+Permissions"
           headers:
             X-Total-Rows:
               schema:
@@ -2106,6 +2106,58 @@ components:
               example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
             permCode:
               $ref: "#/components/schemas/PermCode"
+        - $ref: "#/components/schemas/DB-TimestampUserData"
+    DB-Object+Permissions:
+      title: DB Object and Permissions
+      type: object
+      allOf:
+        - type: object
+          required:
+            - id
+            - path
+            - public
+            - active
+          properties:
+            id:
+              type: string
+              description: The primary identifier for this object
+              format: uuid
+              example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
+            path:
+              type: string
+              description: The canonical S3 path string of the object
+              example: coms/env/foobar.txt
+            public:
+              type: boolean
+              description: Determines whether this object is publicly accessible
+              default: false
+              example: false
+            active:
+              type: boolean
+              description: Determines whether this object is considered active
+              default: true
+              example: true
+            bucketId:
+              type: string
+              description: The primary identifier for the bucket
+              format: uuid
+              example: c05c7650-5f48-4e51-bf17-762e8fc121a1
+            name:
+              type: string
+              description: The filename of the original file uploaded
+              example: foobar.txt
+            lastSyncedDate:
+              type: string
+              format: date-time
+              description: >-
+                Time when the object was last synced with the S3 bucket
+              example: "2022-03-11T23:19:16.343Z"
+              default: null
+            permissions:
+              type: array
+              description: An array of object permissions for the current user. Empty if authenticated via Basic auth. Attribute only returned if `permissions=true` on request.
+              items:
+                $ref: "#/components/schemas/DB-ObjectPermission"
         - $ref: "#/components/schemas/DB-TimestampUserData"
     DB-TagKeyValue:
       title: DB Tag Key Value
