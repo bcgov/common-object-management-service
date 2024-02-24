@@ -33,7 +33,8 @@ const data = {
   public: 'true',
   active: 'true',
   createdBy: SYSTEM_USER,
-  userId: SYSTEM_USER
+  userId: SYSTEM_USER,
+  lastSyncedDate: undefined
 };
 
 beforeEach(() => {
@@ -43,7 +44,6 @@ beforeEach(() => {
 
 describe('create', () => {
   const addPermissionsSpy = jest.spyOn(objectPermissionService, 'addPermissions');
-  const dateSpy = jest.spyOn(global, 'Date');
 
   beforeEach(() => {
     addPermissionsSpy.mockReset();
@@ -59,7 +59,6 @@ describe('create', () => {
     await service.create({ ...data, userId: SYSTEM_USER });
 
     expect(ObjectModel.startTransaction).toHaveBeenCalledTimes(1);
-    expect(dateSpy).toHaveBeenCalledTimes(1);
     expect(ObjectModel.query).toHaveBeenCalledTimes(1);
     expect(ObjectModel.query).toHaveBeenCalledWith(expect.anything());
     expect(ObjectModel.insert).toHaveBeenCalledTimes(1);
@@ -230,11 +229,6 @@ describe('read', () => {
 describe('update', () => {
   it('Update an object DB record', async () => {
 
-    // Mocking the system time allows us to perform an assert/expect on lastSyncedDate.
-    // If not, then it's impossible to compare without resorting to string manipulation (ugly!)
-    jest.useFakeTimers();
-    jest.setSystemTime(new Date('2024-01-01T00:00:00'));
-
     await service.update({ ...data });
 
     expect(ObjectModel.startTransaction).toHaveBeenCalledTimes(1);
@@ -245,10 +239,27 @@ describe('update', () => {
       public: data.public,
       active: data.active,
       updatedBy: data.userId,
-      lastSyncedDate: new Date()
+      lastSyncedDate: undefined
     });
     expect(objectModelTrx.commit).toHaveBeenCalledTimes(1);
+  });
 
-    jest.useRealTimers();
+  it('Update an object DB record as part of a sync operation', async () => {
+
+    const testDateString = new Date('2024-01-01T00:00:00').toISOString();
+
+    await service.update({ ...data, lastSyncedDate: testDateString });
+
+    expect(ObjectModel.startTransaction).toHaveBeenCalledTimes(1);
+    expect(ObjectModel.query).toHaveBeenCalledTimes(1);
+    expect(ObjectModel.patchAndFetchById).toHaveBeenCalledTimes(1);
+    expect(ObjectModel.patchAndFetchById).toBeCalledWith(data.id, {
+      path: data.path,
+      public: data.public,
+      active: data.active,
+      updatedBy: data.userId,
+      lastSyncedDate: testDateString
+    });
+    expect(objectModelTrx.commit).toHaveBeenCalledTimes(1);
   });
 });

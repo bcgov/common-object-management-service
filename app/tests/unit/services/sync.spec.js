@@ -1,3 +1,5 @@
+const { NIL: SYSTEM_USER } = require('uuid');
+
 const { resetModel, trxBuilder } = require('../../common/helper');
 const utils = require('../../../src/db/models/utils');
 const ObjectModel = require('../../../src/db/models/tables/objectModel');
@@ -371,7 +373,7 @@ describe('syncObject', () => {
     pruneOrphanedMetadataSpy.mockRestore();
     pruneOrphanedTagsSpy.mockRestore();
     searchObjectsSpy.mockRestore();
-    updateSpy.mockReset();
+    updateSpy.mockRestore();
   });
 
   it('should return object when already synced', async () => {
@@ -379,6 +381,7 @@ describe('syncObject', () => {
     headObjectSpy.mockResolvedValue({});
     searchObjectsSpy.mockResolvedValue({ total: 1, data: [comsObject] });
     getObjectPublicSpy.mockResolvedValue(true);
+    updateSpy.mockResolvedValue(comsObject);
 
     const result = await service.syncObject(path, bucketId);
 
@@ -405,7 +408,10 @@ describe('syncObject', () => {
       path: path, bucketId: bucketId
     }), expect.any(Object));
     expect(objectModelTrx.commit).toHaveBeenCalledTimes(1);
-    expect(updateSpy).toHaveBeenCalledTimes(0);
+    expect(updateSpy).toHaveBeenCalledTimes(1);
+    expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({
+      id: comsObject.id, lastSyncedDate: expect.anything()
+    }), expect.any(Object));
   });
 
   it('should return object when already synced but public mismatch', async () => {
@@ -442,8 +448,8 @@ describe('syncObject', () => {
     expect(objectModelTrx.commit).toHaveBeenCalledTimes(1);
     expect(updateSpy).toHaveBeenCalledTimes(1);
     expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({
-      id: validUuidv4, path: path, public: false
-    }));
+      id: validUuidv4, path: path, public: false, lastSyncedDate: expect.anything(), userId: SYSTEM_USER
+    }), expect.any(Object));
   });
 
   it('should return object when already synced but S3 ACL errors out', async () => {
@@ -451,6 +457,7 @@ describe('syncObject', () => {
     headObjectSpy.mockResolvedValue({});
     searchObjectsSpy.mockResolvedValue({ total: 1, data: [comsObject] });
     getObjectPublicSpy.mockImplementation(() => { throw new Error(); });
+    updateSpy.mockResolvedValue(comsObject);
 
     const result = await service.syncObject(path, bucketId);
 
@@ -477,7 +484,7 @@ describe('syncObject', () => {
       path: path, bucketId: bucketId
     }), expect.any(Object));
     expect(objectModelTrx.commit).toHaveBeenCalledTimes(1);
-    expect(updateSpy).toHaveBeenCalledTimes(0);
+    expect(updateSpy).toHaveBeenCalledTimes(1);
   });
 
   it('should insert new object when not in COMS', async () => {
