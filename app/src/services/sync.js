@@ -274,18 +274,25 @@ const service = {
               mimeType: mimeType,
               id: comsObject.id,
               etag: s3Version.ETag,
-              isLatest: true
+              isLatest: true,
+              lastModifiedDate: s3Version.LastModified ? new Date(s3Version.LastModified).toISOString() : undefined
             }, userId, trx);
             return { modified: true, version: newVersion };
           }
 
           // Latest version has different values
-          else if (existingVersion.mimeType !== mimeType || existingVersion.etag !== s3Version.ETag) {
+          else if (
+            existingVersion.mimeType !== mimeType ||
+            existingVersion.etag != s3Version.ETag ||
+            existingVersion.lastModifiedDate != (s3Version.LastModified ?
+              new Date(s3Version.LastModified).toISOString() : undefined)
+          ) {
             const updatedVersion = await versionService.update({
               mimeType: mimeType,
               id: comsObject.id,
               etag: s3Version.ETag,
-              isLatest: true
+              isLatest: true,
+              lastModifiedDate: s3Version.LastModified ? new Date(s3Version.LastModified).toISOString() : undefined
             }, userId, trx);
             return { modified: true, version: updatedVersion };
           }
@@ -298,12 +305,30 @@ const service = {
           const comsVersion = comsVersionsToKeep.find(cv => cv.s3VersionId === s3Version.VersionId);
 
           if (comsVersion) { // Version is in COMS
-            if (s3Version.IsLatest) { // Patch isLatest flags if changed
-              const updated = await versionService.updateIsLatest(comsObject.id, trx);
-              return { modified: true, version: updated };
-            } else { // Version record not modified
-              return { version: comsVersion };
+            let modified, updated;
+
+            // Recorded version has different values
+            if (
+              comsVersion.etag != s3Version.ETag ||
+              comsVersion.lastModifiedDate != (s3Version.LastModified ?
+                new Date(s3Version.LastModified).toISOString() : undefined)
+            ) {
+              modified = true;
+              updated = await versionService.update({
+                id: comsObject.id,
+                s3VersionId: s3Version.VersionId,
+                etag: s3Version.ETag,
+                lastModifiedDate: s3Version.LastModified ? new Date(s3Version.LastModified).toISOString() : undefined
+              }, userId, trx);
             }
+
+            // Patch isLatest flags if changed
+            if (s3Version.IsLatest) {
+              modified = true;
+              updated = await versionService.updateIsLatest(comsObject.id, trx);
+            }
+
+            return { modified: modified, version: updated ?? comsVersion };
           } else { // Version is not in COMS
             const mimeType = s3Version.DeleteMarker
               ? undefined // Will default to 'application/octet-stream'
@@ -319,7 +344,8 @@ const service = {
               id: comsObject.id,
               deleteMarker: s3Version.DeleteMarker,
               etag: s3Version.ETag,
-              isLatest: s3Version.IsLatest
+              isLatest: s3Version.IsLatest,
+              lastModifiedDate: s3Version.LastModified ? new Date(s3Version.LastModified).toISOString() : undefined
             }, userId, trx);
             // add to response with `newVersion` attribute, required for sync tags/meta logic
             return { modified: true, version: newVersion };

@@ -153,13 +153,16 @@ const controller = {
         // create or update version in DB (if a non-versioned object)
         const version = s3Response.VersionId ?
           await versionService.copy(
-            sourceS3VersionId, s3Response.VersionId, objId, s3Response.CopyObjectResult?.ETag, userId, trx
+            sourceS3VersionId, s3Response.VersionId, objId, s3Response.CopyObjectResult?.ETag,
+            s3Response.CopyObjectResult?.LastModified, userId, trx
           ) :
           await versionService.update({
             ...data,
             id: objId,
             etag: s3Response.CopyObjectResult?.ETag,
-            isLatest: true
+            isLatest: true,
+            lastModifiedDate: s3Response.CopyObjectResult?.LastModified
+              ? new Date(s3Response.CopyObjectResult?.LastModified).toISOString() : undefined
           }, userId, trx);
 
         // add metadata for version in DB
@@ -344,6 +347,11 @@ const controller = {
         }
       }
 
+      const s3Head = await storageService.headObject({
+        filePath: joinPath(bucketKey, req.currentUpload.filename),
+        bucketId: bucketId
+      }).catch(() => ({}));
+
       const dbResponse = await utils.trxWrapper(async (trx) => {
         // Create Object
         const object = await objectService.create({
@@ -358,7 +366,8 @@ const controller = {
           ...data,
           etag: s3Response.ETag,
           s3VersionId: s3VersionId,
-          isLatest: true
+          isLatest: true,
+          lastModifiedDate: s3Head.LastModified ? new Date(s3Head.LastModified).toISOString() : undefined
         }, userId, trx);
         object.versionId = version.id;
 
@@ -451,13 +460,16 @@ const controller = {
         // create or update version in DB(if a non-versioned object)
         const version = s3Response.VersionId ?
           await versionService.copy(
-            sourceS3VersionId, s3Response.VersionId, objId, s3Response.CopyObjectResult?.ETag, userId, trx
+            sourceS3VersionId, s3Response.VersionId, objId, s3Response.CopyObjectResult?.ETag,
+            s3Response.CopyObjectResult?.LastModified, userId, trx
           ) :
           await versionService.update({
             ...data,
             id: objId,
             etag: s3Response.CopyObjectResult?.ETag,
-            isLatest: true
+            isLatest: true,
+            lastModifiedDate: s3Response.CopyObjectResult?.LastModified
+              ? new Date(s3Response.CopyObjectResult?.LastModified).toISOString() : undefined
           }, userId, trx);
         // add metadata to version in DB
         await metadataService.associateMetadata(version.id, getKeyValue(data.metadata), userId, trx);
@@ -513,13 +525,12 @@ const controller = {
         // if versioning enabled s3Response will contain DeleteMarker: true
         if (s3Response.DeleteMarker) {
           // create DeleteMarker version in DB
-          const deleteMarker = {
+          await versionService.create({
             id: objId,
             deleteMarker: true,
             s3VersionId: s3Response.VersionId,
             isLatest: true
-          };
-          await versionService.create(deleteMarker, userId);
+          }, userId);
         } else { // else object in bucket is not versioned
           // delete object record from DB
           await objectService.delete(objId);
@@ -843,13 +854,16 @@ const controller = {
         // create or update version (if a non-versioned object)
         const version = s3Response.VersionId ?
           await versionService.copy(
-            sourceS3VersionId, s3Response.VersionId, objId, s3Response.CopyObjectResult?.ETag, userId, trx
+            sourceS3VersionId, s3Response.VersionId, objId, s3Response.CopyObjectResult?.ETag,
+            s3Response.CopyObjectResult?.LastModified, userId, trx
           ) :
           await versionService.update({
             ...data,
             id: objId,
             etag: s3Response.CopyObjectResult?.ETag,
-            isLatest: true
+            isLatest: true,
+            lastModifiedDate: s3Response.CopyObjectResult?.LastModified
+              ? new Date(s3Response.CopyObjectResult?.LastModified).toISOString() : undefined
           }, userId, trx);
 
         // add metadata
@@ -1086,6 +1100,11 @@ const controller = {
         }
       }
 
+      const s3Head = await storageService.headObject({
+        filePath: joinPath(bucketKey, req.currentUpload.filename),
+        bucketId: bucketId
+      }).catch(() => ({}));
+
       const dbResponse = await utils.trxWrapper(async (trx) => {
         // Update Object
         const object = await objectService.update({
@@ -1102,13 +1121,15 @@ const controller = {
             ...data,
             etag: s3Response.ETag,
             s3VersionId: s3VersionId,
-            isLatest: true
+            isLatest: true,
+            lastModifiedDate: s3Head.LastModified ? new Date(s3Head.LastModified).toISOString() : undefined
           }, userId, trx);
         } else { // Update existing version when bucket versioning not enabled
           version = await versionService.update({
             ...data,
+            etag: s3Response.ETag,
             s3VersionId: null,
-            etag: s3Response.ETag
+            lastModifiedDate: s3Head.LastModified ? new Date(s3Head.LastModified).toISOString() : undefined
           }, userId, trx);
         }
         object.versionId = version.id;

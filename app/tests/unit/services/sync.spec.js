@@ -930,6 +930,47 @@ describe('syncVersions', () => {
       expect(versionTrx.commit).toHaveBeenCalledTimes(1);
     });
 
+    it('should update existing values when S3 reports different values', async () => {
+      createSpy.mockResolvedValue({});
+      headObjectSpy.mockResolvedValue({});
+      listSpy.mockResolvedValue([{ id: validUuidv4, s3VersionId: validUuidv4 }]);
+      listAllObjectVersionsSpy.mockResolvedValue({
+        DeleteMarkers: [{}],
+        Versions: [{ ETag: 'different', IsLatest: true, VersionId: validUuidv4 }]
+      });
+      updateIsLatestSpy.mockResolvedValue([{}]);
+
+      const result = await service.syncVersions(comsObject);
+
+      expect(result).toBeTruthy();
+      expect(Array.isArray(result)).toBeTruthy();
+      expect(result).toHaveLength(2);
+      expect(result).toEqual(expect.arrayContaining([expect.objectContaining({
+        modified: true,
+        version: expect.any(Object)
+      })]));
+
+      expect(Version.startTransaction).toHaveBeenCalledTimes(1);
+      expect(createSpy).toHaveBeenCalledTimes(1);
+      expect(Version.delete).toHaveBeenCalledTimes(0);
+      expect(headObjectSpy).toHaveBeenCalledTimes(0);
+      expect(listSpy).toHaveBeenCalledTimes(1);
+      expect(listSpy).toHaveBeenCalledWith(validUuidv4, expect.any(Object));
+      expect(listAllObjectVersionsSpy).toHaveBeenCalledTimes(1);
+      expect(listAllObjectVersionsSpy).toHaveBeenCalledWith(expect.objectContaining({
+        filePath: comsObject.path,
+        bucketId: comsObject.bucketId
+      }));
+      expect(readSpy).toHaveBeenCalledTimes(0);
+      expect(updateSpy).toHaveBeenCalledTimes(1);
+      expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({
+        etag: 'different'
+      }), expect.any(String), expect.anything());
+      expect(updateIsLatestSpy).toHaveBeenCalledTimes(1);
+      expect(updateIsLatestSpy).toHaveBeenCalledWith(validUuidv4, expect.any(Object));
+      expect(versionTrx.commit).toHaveBeenCalledTimes(1);
+    });
+
     it('should update isLatest values when evaluated S3 version IsLatest', async () => {
       createSpy.mockResolvedValue({});
       headObjectSpy.mockResolvedValue({});

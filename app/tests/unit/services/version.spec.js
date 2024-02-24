@@ -30,31 +30,34 @@ const service = require('../../../src/services/version');
 const objectService = require('../../../src/services/object');
 const storageService = require('../../../src/services/storage');
 
-const listAllObjectVersionsSpy = jest.spyOn(storageService, 'listAllObjectVersions');
-const objectSpy = jest.spyOn(objectService, 'read');
-
-
 beforeEach(() => {
   jest.clearAllMocks();
   resetModel(Version, versionTrx);
-
-  listAllObjectVersionsSpy.mockReset();
-  objectSpy.mockReset();
 });
 
 afterAll(() => {
   jest.clearAllMocks();
-  listAllObjectVersionsSpy.mockRestore();
-  objectSpy.mockRestore();
 });
 
 describe('copy', () => {
-  // skipping these because we don't currently mock the reponse form a query
-  it.skip('Creates a new version db record from an existing record', async () => {
-    await service.copy(VERSION_ID, S3_VERSION_ID, OBJECT_ID, ETAG, SYSTEM_USER);
+  const LAST_MODIFIED = new Date().toString();
+  const removeDuplicateLatestSpy = jest.spyOn(service, 'removeDuplicateLatest');
+
+  beforeEach(() => {
+    removeDuplicateLatestSpy.mockReset();
+  });
+
+  afterAll(() => {
+    removeDuplicateLatestSpy.mockRestore();
+  });
+
+  it('Creates a new version db record from an existing record', async () => {
+    removeDuplicateLatestSpy.mockResolvedValue([]);
+
+    await service.copy(VERSION_ID, S3_VERSION_ID, OBJECT_ID, ETAG, LAST_MODIFIED, SYSTEM_USER);
 
     expect(Version.startTransaction).toHaveBeenCalledTimes(1);
-    expect(Version.query).toHaveBeenCalledTimes(3);
+    expect(Version.query).toHaveBeenCalledTimes(2);
     expect(Version.query).toHaveBeenCalledWith(expect.anything());
     expect(Version.where).toHaveBeenCalledTimes(1);
     expect(Version.where).toBeCalledWith(
@@ -71,15 +74,21 @@ describe('copy', () => {
         objectId: OBJECT_ID,
         mimeType: undefined,
         deleteMarker: undefined,
-        createdBy: SYSTEM_USER
+        createdBy: SYSTEM_USER,
+        lastModifiedDate: new Date(LAST_MODIFIED).toISOString()
       })
     );
     expect(Version.insert).toHaveBeenCalledTimes(1);
+    expect(Version.returning).toHaveBeenCalledTimes(1);
+    expect(Version.returning).toHaveBeenCalledWith('*');
     expect(versionTrx.commit).toHaveBeenCalledTimes(1);
+    expect(removeDuplicateLatestSpy).toHaveBeenCalledTimes(1);
   });
 
-  it.skip('Creates a new version db record from an existing record - no sourceVersionId provided', async () => {
-    await service.copy(undefined, S3_VERSION_ID, OBJECT_ID, ETAG, SYSTEM_USER);
+  it('Creates a new version db record from an existing record - no sourceVersionId provided', async () => {
+    removeDuplicateLatestSpy.mockResolvedValue([]);
+
+    await service.copy(undefined, S3_VERSION_ID, OBJECT_ID, ETAG, LAST_MODIFIED, SYSTEM_USER);
 
     expect(Version.startTransaction).toHaveBeenCalledTimes(1);
     expect(Version.query).toHaveBeenCalledTimes(2);
@@ -91,9 +100,16 @@ describe('copy', () => {
       })
     );
     expect(Version.orderBy).toHaveBeenCalledTimes(1);
+    expect(Version.orderBy).toHaveBeenCalledWith(expect.arrayContaining([
+      { column: 'createdAt', order: 'desc' },
+      { column: 'updatedAt', order: 'desc', nulls: 'last' }
+    ]));
     expect(Version.first).toHaveBeenCalledTimes(1);
     expect(Version.insert).toHaveBeenCalledTimes(1);
+    expect(Version.returning).toHaveBeenCalledTimes(1);
+    expect(Version.returning).toHaveBeenCalledWith('*');
     expect(versionTrx.commit).toHaveBeenCalledTimes(1);
+    expect(removeDuplicateLatestSpy).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -234,6 +250,19 @@ describe('update', () => {
 });
 
 describe('updateIsLatest', () => {
+  const listAllObjectVersionsSpy = jest.spyOn(storageService, 'listAllObjectVersions');
+  const objectSpy = jest.spyOn(objectService, 'read');
+
+  beforeEach(() => {
+    listAllObjectVersionsSpy.mockReset();
+    objectSpy.mockReset();
+  });
+
+  afterAll(() => {
+    listAllObjectVersionsSpy.mockRestore();
+    objectSpy.mockRestore();
+  });
+
   it('Updates a version of an object if it is the latest', async () => {
     const versionSpy = jest.spyOn(service, 'removeDuplicateLatest');
     versionSpy.mockResolvedValueOnce(true);
@@ -298,6 +327,19 @@ describe('updateIsLatest', () => {
 });
 
 describe('removeDuplicateLatest', () => {
+  const listAllObjectVersionsSpy = jest.spyOn(storageService, 'listAllObjectVersions');
+  const objectSpy = jest.spyOn(objectService, 'read');
+
+  beforeEach(() => {
+    listAllObjectVersionsSpy.mockReset();
+    objectSpy.mockReset();
+  });
+
+  afterAll(() => {
+    listAllObjectVersionsSpy.mockRestore();
+    objectSpy.mockRestore();
+  });
+
   it('sets all other versions to isLatest=false', async () => {
     listAllObjectVersionsSpy.mockResolvedValue({
       DeleteMarkers: [{}],
