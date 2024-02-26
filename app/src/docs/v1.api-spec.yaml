@@ -208,8 +208,8 @@ paths:
         Creates a child bucket record relative to the parent bucket and copies
         the majority of the credential values. Bucket should exist in S3. This
         endpoint will report a collision and the bucketId it collided with if
-        the desired bucket already exists. User requires `MANAGE` permission
-        on the parent bucket to proceed.
+        the desired bucket already exists. User requires `MANAGE` permission on
+        the parent bucket to proceed.
       operationId: createBucketChild
       tags:
         - Bucket
@@ -416,12 +416,29 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/DB-Object"
+                  type: object
+                  allOf:
+                    - $ref: "#/components/schemas/DB-Object"
+                    - type: object
+                      properties:
+                        permissions:
+                          type: array
+                          description: >-
+                            An array of object permissions in the context of the
+                            current user. Yields an empty array if authenticated
+                            via Basic Auth. Property only present if queryparam
+                            `permissions=true` is in request.
+                          items:
+                            type: string
+                            description: An object permission
+                            example: READ
           headers:
             X-Total-Rows:
               schema:
                 type: integer
-              description: Total number of objects matching the search query independent of pagination scope
+              description: >-
+                Total number of objects matching the search query independent of
+                pagination scope
               required: true
         "401":
           $ref: "#/components/responses/Unauthorized"
@@ -653,8 +670,8 @@ paths:
     patch:
       summary: Sets the public flag of an object
       description: >-
-        Toggles the public property for an object and broadcasts to S3 ACL.
-        Sets public to false if public query parameter is not specified.
+        Toggles the public property for an object and broadcasts to S3 ACL. Sets
+        public to false if public query parameter is not specified.
       operationId: togglePublic
       tags:
         - Object
@@ -1717,8 +1734,8 @@ components:
       in: query
       name: limit
       description: >-
-        The page size, number of objects in a page.
-        Must specify page number when defined.
+        The page size, number of objects in a page. Must specify page number
+        when defined.
       schema:
         type: number
         example: 10
@@ -1764,8 +1781,7 @@ components:
     Query-Order:
       in: query
       name: order
-      description: >-
-        Order in ascending or descending. Default to ascending order.
+      description: Order in ascending or descending. Default to ascending order.
       schema:
         type: string
         enum:
@@ -1799,8 +1815,7 @@ components:
     Query-Permissions:
       in: query
       name: permissions
-      description: >-
-        Boolean representing whether or not to include matching permissions
+      description: Boolean representing whether or not to include matching permissions
       schema:
         type: boolean
         example: true
@@ -1808,16 +1823,15 @@ components:
       in: query
       name: page
       description: >-
-        The index of the page to return. The index of first page is 1.
-        Must specify limit when defined.
+        The index of the page to return. The index of first page is 1. Must
+        specify limit when defined.
       schema:
         type: number
         example: 1
     Query-Sort:
       in: query
       name: sort
-      description: >-
-        Any possible object Column.
+      description: Any possible object Column.
       schema:
         type: string
         enum:
@@ -1937,8 +1951,7 @@ components:
               example: coms/env
               maxLength: 255
             lastSyncRequestedDate:
-              description: >-
-                Time when a sync request was last submitted for the bucket
+              description: Time when a sync request was last submitted for the bucket
               type: string
               format: date-time
               example: "2022-03-11T23:19:16.343Z"
@@ -2073,8 +2086,7 @@ components:
             lastSyncedDate:
               type: string
               format: date-time
-              description: >-
-                Time when the object was last synced with the S3 bucket
+              description: Time when the object was last synced with the S3 bucket
               example: "2022-03-11T23:19:16.343Z"
               default: null
         - $ref: "#/components/schemas/DB-TimestampUserData"
@@ -2256,8 +2268,8 @@ components:
               type: string
               format: date-time
               description: >-
-                The object creation date or the last modified date (as exposed by S3's
-                `Last-Modified` header), whichever is the latest.
+                The object creation date or the last modified date (as exposed
+                by S3's `Last-Modified` header), whichever is the latest.
               example: "2022-03-11T23:19:16.343Z"
               default: null
         - $ref: "#/components/schemas/DB-TimestampUserData"
@@ -2316,8 +2328,7 @@ components:
               example: Geospatial Maps
             subKey:
               type: string
-              description: >-
-                The desired S3 child directory name. Must not include `/`.
+              description: The desired S3 child directory name. Must not include `/`.
               maxLength: 255
               example: child
     Request-UpdateBucket:

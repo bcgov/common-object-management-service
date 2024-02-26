@@ -107,6 +107,7 @@ describe('searchObjects', () => {
   // TODO: Add in other untested multiplicity cases
   it('Search and filter for specific object records with permissions and without pagination', async () => {
     const params = {
+      id: OBJECT_ID,
       bucketId: BUCKET_ID,
       active: 'true',
       key: 'key',
@@ -117,7 +118,13 @@ describe('searchObjects', () => {
     // We only care about mocking the final 13th chained modify result
     for (let i = 0; i < 10; i++) ObjectModel.modify.mockReturnValueOnce(ObjectModel);
     ObjectModel.modify.mockResolvedValueOnce([{
-      objectPermission: [{ permCode: 'READ' }], ...params
+      objectPermission: [{
+        permCode: 'READ',
+        userId: 'ae8a58f6-62bc-4dd1-acef-79f123609d48'
+      },{
+        permCode: 'UPDATE',
+        userId: 'afcbad71-d2d5-4551-bd8b-18634fd8370e'
+      }], ...params
     }]);
 
     const result = await service.searchObjects(params);
@@ -161,6 +168,7 @@ describe('searchObjects', () => {
     ObjectModel.modify.mockResolvedValueOnce({ total: 0, results: [] });
 
     const params = {
+      id: OBJECT_ID,
       bucketId: BUCKET_ID,
       active: 'true',
       key: 'key',
