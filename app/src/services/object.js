@@ -164,17 +164,14 @@ const service = {
             results.map(row => {
               // eslint-disable-next-line no-unused-vars
               const { objectPermission, bucketPermission, version, ...object } = row;
-
-              if (row.id) {
-                if (params.permissions) {
-                  object.permissions = [];
-                  if (objectPermission && params.userId) {
-                    object.permissions = objectPermission.filter(p => p.userId === params.userId);
-                  }
+              if (params.permissions) {
+                object.permissions = [];
+                if (objectPermission && params.userId && params.userId !== SYSTEM_USER) {
+                  object.permissions = objectPermission.map(o => o.permCode);
                 }
-                return object;
               }
-            }).filter(x => x)
+              return object;
+            })
           );
         });
 

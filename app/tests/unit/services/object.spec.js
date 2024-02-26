@@ -107,7 +107,6 @@ describe('searchObjects', () => {
   // TODO: Add in other untested multiplicity cases
   it('Search and filter for specific object records with permissions and without pagination', async () => {
     const params = {
-      id: '123',
       bucketId: BUCKET_ID,
       active: 'true',
       key: 'key',
@@ -128,7 +127,7 @@ describe('searchObjects', () => {
     expect(result).toHaveProperty('data');
     expect(Array.isArray(result.data)).toBeTruthy();
     expect(result.data[0]).toHaveProperty('permissions');
-    expect(result.data[0].permissions).toEqual([]);
+    expect(result.data[0].permissions).toEqual(expect.arrayContaining(['READ']));
 
     expect(ObjectModel.startTransaction).toHaveBeenCalledTimes(1);
     expect(ObjectModel.query).toHaveBeenCalledTimes(1);
