@@ -15,12 +15,14 @@ const service = {
    * @param {string} targetVersionId S3 VersionId of new version
    * @param {string} objectId uuid of the object
    * @param {string} targetEtag ETag of the new version
+   * @param {string} targetLastModified LastModified of the new version
    * @param {string} userId uuid of the current user
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<object>} The Version created in database
    * @throws The error encountered upon db transaction failure
    */
-  copy: async (sourceVersionId, targetVersionId, objectId, targetEtag, userId = SYSTEM_USER, etrx = undefined) => {
+  copy: async (sourceVersionId, targetVersionId, objectId, targetEtag, targetLastModified,
+    userId = SYSTEM_USER, etrx = undefined) => {
     let trx;
     try {
       trx = etrx ? etrx : await Version.startTransaction();
@@ -53,7 +55,8 @@ const service = {
           mimeType: sourceVersion.mimeType,
           deleteMarker: sourceVersion.deleteMarker,
           isLatest: true,
-          createdBy: userId
+          createdBy: userId,
+          lastModifiedDate: targetLastModified ? new Date(targetLastModified).toISOString() : undefined
         })
         .returning('*');
 
@@ -90,7 +93,8 @@ const service = {
           createdBy: userId,
           deleteMarker: data.deleteMarker,
           etag: data.etag,
-          isLatest: data.isLatest
+          isLatest: data.isLatest,
+          lastModifiedDate: data.lastModifiedDate
         })
         .returning('*');
 
@@ -212,7 +216,7 @@ const service = {
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<Array<object>>} Array of versions that were updated
    */
-  removeDuplicateLatest: async(versionId, objectId, etrx = undefined) => {
+  removeDuplicateLatest: async (versionId, objectId, etrx = undefined) => {
     let trx;
     try {
       trx = etrx ? etrx : await Version.startTransaction();
@@ -226,7 +230,7 @@ const service = {
         updated = await Version.query(trx)
           .update({ isLatest: false })
           .whereNot({ 'id': versionId })
-          .andWhere('objectId',  objectId)
+          .andWhere('objectId', objectId)
           .andWhere({ isLatest: true });
       }
 
@@ -262,7 +266,8 @@ const service = {
           updatedBy: userId,
           mimeType: data.mimeType,
           etag: data.etag,
-          isLatest: data.isLatest
+          isLatest: data.isLatest,
+          lastModifiedDate: data.lastModifiedDate
         })
         .first()
         .returning('*');
