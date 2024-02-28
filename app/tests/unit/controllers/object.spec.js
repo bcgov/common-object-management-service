@@ -119,7 +119,6 @@ describe('addTags', () => {
   const storagePutObjectTaggingSpy = jest.spyOn(storageService, 'putObjectTagging');
   const getCurrentUserIdSpy = jest.spyOn(userService, 'getCurrentUserId');
 
-
   const next = jest.fn();
 
   it('should add the new tags', async () => {
@@ -154,8 +153,7 @@ describe('addTags', () => {
     });
   });
 
-  // TODO: enable this test after a re-factor error reporting
-  it.skip('responds 409 when total tags is greater than 10', async () => {
+  it('responds 409 when total tags is greater than 10', async () => {
     // response from S3
     const getObjectTaggingResponse = {
       TagSet: [
@@ -170,12 +168,12 @@ describe('addTags', () => {
         tagset: { a: '1', b: '2', c: '3', d: '4', e: '5', f: '6', g: '7', h: '8', i: '9', j: '10'}
       }
     };
-
+    getCurrentUserIdSpy.mockReturnValue('user-123');
     storageGetObjectTaggingSpy.mockResolvedValue(getObjectTaggingResponse);
 
     await controller.addTags(req, res, next);
 
-    // expect(next).toHaveReturned(new Problem(422, 'User-defined Tag count limit is 9'));
+    expect(next).toHaveBeenCalledWith(new Problem(409));
   });
 
   it('should concatenate the new tags', async () => {

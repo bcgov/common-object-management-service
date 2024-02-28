@@ -272,6 +272,8 @@ paths:
         preexisting files through the COMS API. This endpoint does not guarantee
         immediately synchronized results. Synchronization latency will be
         affected by the remaining number of objects awaiting synchronization.
+        This endpoint updates the last known successful synchronization request
+        date when invoked.
       tags:
         - Sync
       operationId: syncBucket
@@ -1231,7 +1233,8 @@ paths:
         need to re-upload preexisting files through the COMS API. This endpoint
         does not guarantee immediately synchronized results. Synchronization
         latency will be affected by the remaining number of objects awaiting
-        synchronization.
+        synchronization. This endpoint updates the last known successful
+        synchronization request date when invoked.
       operationId: syncDefault
       tags:
         - Sync

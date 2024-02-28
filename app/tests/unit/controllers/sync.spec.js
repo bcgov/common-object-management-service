@@ -1,5 +1,13 @@
 const controller = require('../../../src/controllers/sync');
-const { objectService, objectQueueService, storageService } = require('../../../src/services');
+const {
+  bucketService,
+  objectService,
+  objectQueueService,
+  storageService,
+  userService
+} = require('../../../src/services');
+const utils = require('../../../src/components/utils');
+const dbutils = require('../../../src/db/models/utils');
 
 const mockResponse = () => {
   const res = {};
@@ -24,26 +32,38 @@ afterEach(() => {
 
 describe('syncBucket', () => {
   const enqueueSpy = jest.spyOn(objectQueueService, 'enqueue');
+  const getCurrentIdentitySpy = jest.spyOn(utils, 'getCurrentIdentity');
+  const getCurrentUserIdSpy = jest.spyOn(userService, 'getCurrentUserId');
   const listAllObjectVersionsSpy = jest.spyOn(storageService, 'listAllObjectVersions');
   const searchObjectsSpy = jest.spyOn(objectService, 'searchObjects');
+  const trxWrapperSpy = jest.spyOn(dbutils, 'trxWrapper');
+  const updateSpy = jest.spyOn(bucketService, 'update');
   const next = jest.fn();
 
   it('should enqueue all objects in a bucket', async () => {
+    const USR_IDENTITY = 'xxxy';
+    const USR_ID = 'abc-123';
     const req = {
       params: bucketId
     };
+
     enqueueSpy.mockResolvedValue(1);
+    getCurrentIdentitySpy.mockReturnValue(USR_IDENTITY);
+    getCurrentUserIdSpy.mockReturnValue(USR_ID);
     listAllObjectVersionsSpy.mockResolvedValue({
       DeleteMarkers: [{ Key: path }],
       Versions: [{ Key: path }]
     });
     searchObjectsSpy.mockResolvedValue({ total: 1, data: [{ path: path }] });
+    trxWrapperSpy.mockImplementation(callback => callback({}));
+    updateSpy.mockResolvedValue({});
 
     await controller.syncBucket(req, res, next);
 
     expect(enqueueSpy).toHaveBeenCalledTimes(1);
     expect(listAllObjectVersionsSpy).toHaveBeenCalledTimes(1);
     expect(searchObjectsSpy).toHaveBeenCalledTimes(1);
+    expect(updateSpy).toHaveBeenCalledTimes(1);
     expect(res.json).toHaveBeenCalledWith(1);
     expect(res.status).toHaveBeenCalledWith(202);
     expect(next).toHaveBeenCalledTimes(0);
