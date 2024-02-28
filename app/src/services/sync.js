@@ -160,11 +160,19 @@ const service = {
         // Case: already synced - record & update public status as needed
         if (comsObject) {
           if (s3Public === undefined || s3Public === comsObject.public) {
-            response = comsObject;
+            response = await objectService.update({
+              id: comsObject.id,
+              userId: userId,
+              lastSyncedDate: new Date().toISOString()
+            }, trx);
           } else {
             response = await objectService.update({
-              id: comsObject.id, userId: userId, path: comsObject.path, public: s3Public
-            });
+              id: comsObject.id,
+              userId: userId,
+              path: comsObject.path,
+              public: s3Public,
+              lastSyncedDate: new Date().toISOString()
+            }, trx);
             modified = true;
           }
         }
@@ -179,7 +187,8 @@ const service = {
             path: path,
             public: s3Public,
             bucketId: bucketId,
-            userId: userId
+            userId: userId,
+            lastSyncedDate: new Date().toISOString()
           }, trx);
 
           modified = true;

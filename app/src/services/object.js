@@ -218,6 +218,8 @@ const service = {
    * @param {string} data.path The relative S3 key/path of the object
    * @param {boolean} [data.public] The optional public flag - defaults to true if undefined
    * @param {boolean} [data.active] The optional active flag - defaults to true if undefined
+   * @param {string} [data.lastSyncedDate] The last time a sync request was made for the object.
+   * Should be left undefined if not part of a sync operation
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<object>} The result of running the patch operation
    * @throws The error encountered upon db transaction failure
@@ -232,7 +234,8 @@ const service = {
         path: data.path,
         public: data.public,
         active: data.active,
-        updatedBy: data.userId ?? SYSTEM_USER
+        updatedBy: data.userId ?? SYSTEM_USER,
+        lastSyncedDate: data.lastSyncedDate
       });
 
       if (!etrx) await trx.commit();

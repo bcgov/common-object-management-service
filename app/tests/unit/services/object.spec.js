@@ -33,7 +33,8 @@ const data = {
   public: 'true',
   active: 'true',
   createdBy: SYSTEM_USER,
-  userId: SYSTEM_USER
+  userId: SYSTEM_USER,
+  lastSyncedDate: undefined
 };
 
 beforeEach(() => {
@@ -227,6 +228,7 @@ describe('read', () => {
 
 describe('update', () => {
   it('Update an object DB record', async () => {
+
     await service.update({ ...data });
 
     expect(ObjectModel.startTransaction).toHaveBeenCalledTimes(1);
@@ -236,7 +238,27 @@ describe('update', () => {
       path: data.path,
       public: data.public,
       active: data.active,
-      updatedBy: data.userId
+      updatedBy: data.userId,
+      lastSyncedDate: undefined
+    });
+    expect(objectModelTrx.commit).toHaveBeenCalledTimes(1);
+  });
+
+  it('Update an object DB record as part of a sync operation', async () => {
+
+    const testDateString = new Date('2024-01-01T00:00:00').toISOString();
+
+    await service.update({ ...data, lastSyncedDate: testDateString });
+
+    expect(ObjectModel.startTransaction).toHaveBeenCalledTimes(1);
+    expect(ObjectModel.query).toHaveBeenCalledTimes(1);
+    expect(ObjectModel.patchAndFetchById).toHaveBeenCalledTimes(1);
+    expect(ObjectModel.patchAndFetchById).toBeCalledWith(data.id, {
+      path: data.path,
+      public: data.public,
+      active: data.active,
+      updatedBy: data.userId,
+      lastSyncedDate: testDateString
     });
     expect(objectModelTrx.commit).toHaveBeenCalledTimes(1);
   });
