@@ -164,17 +164,16 @@ const service = {
             results.map(row => {
               // eslint-disable-next-line no-unused-vars
               const { objectPermission, bucketPermission, version, ...object } = row;
-
-              if (row.id) {
-                if (params.permissions) {
-                  object.permissions = [];
-                  if (objectPermission && params.userId) {
-                    object.permissions = objectPermission.filter(p => p.userId === params.userId);
-                  }
+              if (row.id && params.permissions) {
+                object.permissions = [];
+                if (objectPermission && params.userId && params.userId !== SYSTEM_USER) {
+                  object.permissions = objectPermission
+                    .filter(p => p.userId === params.userId) // Filter down to only current user
+                    .map(o => o.permCode);
                 }
-                return object;
               }
-            }).filter(x => x)
+              return object;
+            }).filter(x => x) // Drop empty row results from the array set
           );
         });
 
