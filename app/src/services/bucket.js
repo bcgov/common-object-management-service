@@ -205,6 +205,7 @@ const service = {
    * @param {string} [data.secretAccessKey] The optional S3 bucket secret access key
    * @param {string} [data.region] The optional S3 bucket region
    * @param {boolean} [data.active] The optional active flag - defaults to true if undefined
+   * @param {string} [data.lastSyncRequestedDate] The optional ISO string formatted date when a sync was last requested
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<object>} The result of running the patch operation
    * @throws The error encountered upon db transaction failure
@@ -223,7 +224,8 @@ const service = {
         secretAccessKey: data.secretAccessKey,
         region: data.region,
         active: data.active,
-        updatedBy: data.userId
+        updatedBy: data.userId,
+        lastSyncRequestedDate: data.lastSyncRequestedDate
       });
 
       if (!etrx) await trx.commit();

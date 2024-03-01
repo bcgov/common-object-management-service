@@ -142,7 +142,19 @@ describe('create', () => {
 });
 
 describe('delete', () => {
-  it.skip('Delete a version record of an object', async () => {
+  const updateIsLatestSpy = jest.spyOn(service, 'updateIsLatest');
+
+  beforeEach(() => {
+    updateIsLatestSpy.mockReset();
+  });
+
+  afterAll(() => {
+    updateIsLatestSpy.mockRestore();
+  });
+
+  it('Delete a version record of an object', async () => {
+    updateIsLatestSpy.mockResolvedValue({});
+
     await service.delete(OBJECT_ID, VERSION_ID);
 
     expect(Version.startTransaction).toHaveBeenCalledTimes(1);
@@ -156,6 +168,8 @@ describe('delete', () => {
     expect(Version.returning).toBeCalledWith('*');
     expect(Version.throwIfNotFound).toHaveBeenCalledTimes(1);
     expect(versionTrx.commit).toHaveBeenCalledTimes(1);
+    expect(updateIsLatestSpy).toHaveBeenCalledTimes(1);
+    expect(updateIsLatestSpy).toHaveBeenCalledWith(OBJECT_ID, expect.anything());
   });
 });
 
