@@ -58,7 +58,8 @@ module.exports = {
     // This shouldn't be here: https://github.com/knex/knex/issues/3455#issuecomment-535554401
     // propagateCreateError: false
   },
-  searchPath: ['public', 'queue'], // Define postgres schemas to match on
+  // Migrations will explode if `public` is not the first element in the array
+  searchPath: ['public', 'invite', 'queue'], // Define postgres schemas to match on
   seeds: {
     directory: __dirname + '/src/db/seeds'
   }
