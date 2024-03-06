@@ -93,6 +93,14 @@ module.exports = Object.freeze({
     MANAGE: 'MANAGE'
   },
 
+  /** Resource types */
+  ResourceType: {
+    /** Bucket Type */
+    BUCKET: 'bucketId',
+    /** Object Type */
+    OBJECT: 'objectId'
+  },
+
   /** Sort Order */
   SortOrder: {
     ASC: 'asc',
