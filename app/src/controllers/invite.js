@@ -1,10 +1,17 @@
 const Problem = require('api-problem');
 const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 
-const { ResourceType } = require('../components/constants');
+const { AuthType, Permissions, ResourceType } = require('../components/constants');
 const errorToProblem = require('../components/errorToProblem');
 const { addDashesToUuid, getCurrentIdentity } = require('../components/utils');
-const { bucketService, inviteService, objectService, userService } = require('../services');
+const {
+  bucketPermissionService,
+  bucketService,
+  inviteService,
+  objectPermissionService,
+  objectService,
+  userService
+} = require('../services');
 
 const SERVICE = 'InviteService';
 
@@ -29,11 +36,58 @@ const controller = {
       if (req.body.objectId) {
         resource = addDashesToUuid(req.body.objectId);
         type = ResourceType.OBJECT;
-        await objectService.read(resource);
+
+        // Check for object existence
+        const object = await objectService.read(resource);
+
+        // Check for manage permission
+        if (req.currentUser.AuthType === AuthType.BEARER) {
+          let bucketPermissions = [];
+          const objectPermissions = await objectPermissionService.searchPermissions({
+            userId: userId,
+            objId: resource,
+            permCode: Permissions.MANAGE
+          });
+          
+          if (!objectPermissions.length && object.bucketId) {
+            bucketPermissions = await bucketPermissionService.searchPermissions({
+              userId: userId,
+              bucketId: object.bucketId,
+              permCode: Permissions.MANAGE
+            });
+          }
+
+          if (!objectPermissions.length && !bucketPermissions.length) {
+            throw new Problem(403, {
+              detail: `User lacks ${Permissions.MANAGE} permission for the object`,
+              instance: req.originalUrl,
+              objectId: resource
+            });
+          }
+        }
       } else if (req.body.bucketId) {
         resource = addDashesToUuid(req.body.bucketId);
         type = ResourceType.BUCKET;
+
+        // Check for bucket existence
         await bucketService.read(resource);
+
+        // Check for manage permission
+        if (req.currentUser.AuthType === AuthType.BEARER) {
+          const bucketPermissions = await bucketPermissionService.searchPermissions({
+            userId: userId,
+            bucketId: resource,
+            permCode: Permissions.MANAGE
+          });
+
+          if (!bucketPermissions.length) {
+            throw new Problem(403, {
+              detail: `User lacks ${Permissions.MANAGE} permission for the bucket`,
+              instance: req.originalUrl,
+              bucketId: resource
+            });
+          }
+        }
       }
 
       const response = await inviteService.create({
