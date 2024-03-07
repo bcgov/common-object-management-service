@@ -48,7 +48,7 @@ const controller = {
             objId: resource,
             permCode: Permissions.MANAGE
           });
-          
+
           if (!objectPermissions.length && object.bucketId) {
             bucketPermissions = await bucketPermissionService.searchPermissions({
               userId: userId,
@@ -98,7 +98,7 @@ const controller = {
         expiresAt: req.body.expiresAt ? new Date(req.body.expiresAt * 1000).toISOString() : undefined,
         userId: userId
       });
-      res.status(200).json(response.token);
+      res.status(201).json(response.token);
     } catch (e) {
       if (e.statusCode === 404) {
         next(errorToProblem(SERVICE, new Problem(409, {
@@ -121,17 +121,75 @@ const controller = {
    * @returns {function} Express middleware function
    */
   async useInvite(req, res, next) {
-    try {
-      const token = addDashesToUuid(req.params.token);
+    const token = addDashesToUuid(req.params.token);
 
-      const response = await inviteService.read(token); // Check if the invite exists
-      // TODO: Put in actual permission business logic
-      res.status(201).json({
-        response: response.resource,
-        type: response.type
-      });
+    try {
+      const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
+      const invite = await inviteService.read(token); // Check if the invite exists
+
+      // Check if invitation is still valid
+      if (invite.expiresAt < new Date().toISOString()) {
+        inviteService.delete(token);
+        throw new Problem(410, {
+          detail: 'Invitation has expired',
+          instance: req.originalUrl,
+          token: token
+        });
+      }
+
+      // Check for email match if the invitation specifies for it
+      if (invite.email && invite.email !== req.currentUser?.tokenPayload?.email) {
+        throw new Problem(403, {
+          detail: 'User does not match intended recipient',
+          instance: req.originalUrl
+        });
+      }
+
+      if (invite.type === ResourceType.OBJECT) {
+        // Check for object existence
+        await objectService.read(invite.resource).catch(() => {
+          inviteService.delete(token);
+          throw new Problem(409, {
+            detail: `Object '${invite.resource}' not found`,
+            instance: req.originalUrl,
+            objectId: invite.resource
+          });
+        });
+
+        // Grant invitation permission and cleanup
+        await objectPermissionService.addPermissions(invite.resource, [
+          { userId: userId, permCode: Permissions.READ }
+        ], invite.createdBy);
+      } else if (invite.type === ResourceType.BUCKET) {
+        // Check for object existence
+        await bucketService.read(invite.resource).catch(() => {
+          inviteService.delete(token);
+          throw new Problem(409, {
+            detail: `Bucket '${invite.resource}' not found`,
+            instance: req.originalUrl,
+            bucketId: invite.resource
+          });
+        });
+
+        // Grant invitation permission and cleanup
+        await bucketPermissionService.addPermissions(invite.resource, [
+          { userId: userId, permCode: Permissions.READ }
+        ], invite.createdBy);
+      }
+
+      // Cleanup invite on success
+      inviteService.delete(token);
+      res.status(200).json({ resource: invite.resource, type: invite.type });
     } catch (e) {
-      next(errorToProblem(SERVICE, e));
+      if (e.statusCode === 404) {
+        next(errorToProblem(SERVICE, new Problem(404, {
+          detail: 'Invitation not found',
+          instance: req.originalUrl,
+          token: token
+        })));
+      } else {
+        next(errorToProblem(SERVICE, e));
+      }
     }
   }
 };
