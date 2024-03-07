@@ -31,6 +31,30 @@ const controller = {
     let resource, type;
 
     try {
+      // Reject if expiresAt is more than 7 days away
+      const maxExpiresAt = Math.floor(Date.now() / 1000) + 691199;
+      if (req.body.expiresAt && req.body.expiresAt > maxExpiresAt) {
+        const limit = new Date(maxExpiresAt * 1000).toISOString();
+        const msg = `"expiresAt" must be less than "${limit}"`;
+        throw new Problem(422, {
+          detail: msg,
+          instance: req.originalUrl,
+          errors: {
+            body: [{
+              message: msg,
+              path: ['expiresAt'],
+              type: 'date.less',
+              context: {
+                limit: limit,
+                value: new Date(req.body.expiresAt * 1000).toISOString(),
+                label: 'expiresAt',
+                key: 'expiresAt'
+              }
+            }]
+          }
+        });
+      }
+
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER), SYSTEM_USER);
 
       if (req.body.objectId) {
