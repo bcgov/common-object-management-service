@@ -62,10 +62,10 @@ const controller = {
         type = ResourceType.OBJECT;
 
         // Check for object existence
-        const object = await objectService.read(resource);
+        const { bucketId } = await objectService.read(resource);
 
         // Check for manage permission
-        if (req.currentUser.AuthType === AuthType.BEARER) {
+        if (req.currentUser?.AuthType === AuthType.BEARER) {
           let bucketPermissions = [];
           const objectPermissions = await objectPermissionService.searchPermissions({
             userId: userId,
@@ -73,10 +73,10 @@ const controller = {
             permCode: Permissions.MANAGE
           });
 
-          if (!objectPermissions.length && object.bucketId) {
+          if (!objectPermissions.length && bucketId) {
             bucketPermissions = await bucketPermissionService.searchPermissions({
               userId: userId,
-              bucketId: object.bucketId,
+              bucketId: bucketId,
               permCode: Permissions.MANAGE
             });
           }
@@ -97,7 +97,7 @@ const controller = {
         await bucketService.read(resource);
 
         // Check for manage permission
-        if (req.currentUser.AuthType === AuthType.BEARER) {
+        if (req.currentUser?.AuthType === AuthType.BEARER) {
           const bucketPermissions = await bucketPermissionService.searchPermissions({
             userId: userId,
             bucketId: resource,
