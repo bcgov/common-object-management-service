@@ -21,6 +21,7 @@
     "reinstall": "npm run purge && npm install",
     "migrate": "npm run migrate:latest",
     "migrate:down": "knex migrate:down",
+    "migrate:list": "knex migrate:list",
     "migrate:latest": "knex migrate:latest",
     "migrate:make": "knex migrate:make",
     "migrate:rollback": "knex migrate:rollback",
