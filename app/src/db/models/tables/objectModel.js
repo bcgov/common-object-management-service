@@ -175,13 +175,13 @@ class ObjectModel extends Timestamps(Model) {
       type: 'object',
       required: ['id', 'path'],
       properties: {
-        id: { type: 'string', minLength: 1, maxLength: 255 },
+        id: { type: 'string', format: 'uuid' },
         path: { type: 'string', minLength: 1, maxLength: 1024 },
         public: { type: 'boolean' },
         active: { type: 'boolean' },
-        bucketId: { type: 'string', maxLength: 255, nullable: true },
+        bucketId: { type: 'string', format: 'uuid', nullable: true },
         name: { type: 'string', maxLength: 1024 },
-        lastSyncedDate: { type: ['string', 'null'] },
+        lastSyncedDate: { type: ['string', 'null'], format: 'date-time' },
         ...stamps
       },
       additionalProperties: false

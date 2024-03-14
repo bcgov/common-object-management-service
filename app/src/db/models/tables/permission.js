@@ -1,5 +1,6 @@
 const { Model } = require('objection');
 
+const { Permissions } = require('../../../components/constants');
 const { stamps } = require('../jsonSchema');
 const { Timestamps } = require('../mixins');
 
@@ -43,7 +44,7 @@ class Permission extends Timestamps(Model) {
       type: 'object',
       required: ['permCode'],
       properties: {
-        permCode: { type: 'string', minLength: 1, maxLength: 255 },
+        permCode: { type: 'string', enum: Object.values(Permissions) },
         active: { type: 'boolean' },
         ...stamps
       },

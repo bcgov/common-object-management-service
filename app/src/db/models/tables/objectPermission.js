@@ -1,5 +1,6 @@
 const { Model } = require('objection');
 
+const { Permissions } = require('../../../components/constants');
 const { stamps } = require('../jsonSchema');
 const { Timestamps } = require('../mixins');
 const { filterOneOrMany } = require('../utils');
@@ -69,10 +70,10 @@ class ObjectPermission extends Timestamps(Model) {
       type: 'object',
       required: ['id', 'userId', 'objectId', 'permCode'],
       properties: {
-        id: { type: 'string', maxLength: 255 },
-        userId: { type: 'string', maxLength: 255 },
-        objectId: { type: 'string', maxLength: 255 },
-        permCode: { type: 'string', maxLength: 255 },
+        id: { type: 'string', format: 'uuid' },
+        userId: { type: 'string', format: 'uuid' },
+        objectId: { type: 'string', format: 'uuid' },
+        permCode: { type: 'string', enum: Object.values(Permissions) },
         ...stamps
       },
       additionalProperties: false
