@@ -5,9 +5,11 @@
 replicaCount: 2
 
 image:
+  # -- Default image repository
   repository: docker.io/bcgovimages
+  # -- Default image pull policy
   pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
+  # -- Overrides the image tag whose default is the chart appVersion.
   tag: ~
 
 # -- Specify docker-registry secret names as an array
@@ -23,9 +25,11 @@ failurePolicy: Retry
 # -- Annotations for coms pods
 podAnnotations: {}
 
+# -- Privilege and access control settings
 podSecurityContext: {}
   # fsGroup: 2000
 
+# -- Privilege and access control settings
 securityContext: {}
   # capabilities:
   #   drop:
@@ -73,8 +77,11 @@ networkPolicy:
   enabled: true
 
 service:
+  # -- Service type
   type: ClusterIP
+  # -- Service port
   port: 3000
+  # -- Service port name
   portName: http
 
 route:
@@ -97,10 +104,14 @@ resources:
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
   limits:
+    # -- Limit Peak CPU (in millicores ex. 1000m)
     cpu: 200m
+    # -- Limit Peak Memory (in gigabytes Gi or megabytes Mi ex. 2Gi)
     memory: 512Mi
   requests:
+    # -- Requested CPU (in millicores ex. 500m)
     cpu: 50m
+    # -- Requested Memory (in gigabytes Gi or megabytes Mi ex. 500Mi)
     memory: 128Mi
 
 features:
@@ -112,7 +123,7 @@ features:
   oidcAuth: false
 
 config:
-  # Set to true if you want to let Helm manage and overwrite your configmaps.
+  # -- Set to true if you want to let Helm manage and overwrite your configmaps.
   enabled: false
 
   # -- This should be set to true if and only if you require configmaps and secrets to be release
@@ -154,21 +165,29 @@ config:
 
 # Modify the following variables if you need to acquire secret values from a custom-named resource
 basicAuthSecretOverride:
+  # -- Basic authentication username
   username: ~
+  # -- Basic authentication password
   password: ~
 dbSecretOverride:
+  # -- Database username
   username: ~
+  # -- Database password
   password: ~
 keycloakSecretOverride:
+  # -- Keycloak username
   username: ~
+  # -- Keycloak password
   password: ~
 objectStorageSecretOverride:
+  # -- Object storage username
   username: ~
+  # -- Object storage password
   password: ~
 
 # Patroni subchart configuration overrides
 patroni:
-  # Controls whether to enable managing a Patroni db dependency as a part of the helm release
+  # -- Controls whether to enable managing a Patroni db dependency as a part of the helm release
   enabled: false
 
   # replicaCount: 3

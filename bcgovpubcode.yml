@@ -30,7 +30,7 @@ product_information:
 product_technology_information:
   backend_frameworks:
     - name: Express
-      version: 4.18.2
+      version: 4.18.3
     - name: Other
       version: Knex
     - name: Other
