@@ -54,7 +54,7 @@ class VersionTag extends Timestamps(Model) {
       required: ['tagId', 'versionId'],
       properties: {
         tagId: { type: 'integer' },
-        versionId: { type: 'string', minLength: 1, maxLength: 255 },
+        versionId: { type: 'string', format: 'uuid' },
         ...stamps
       },
       additionalProperties: false

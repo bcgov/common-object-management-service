@@ -54,7 +54,7 @@ class VersionMetadata extends Timestamps(Model) {
       required: ['metadataId', 'versionId'],
       properties: {
         metadataId: { type: 'integer' },
-        versionId: { type: 'string', minLength: 1, maxLength: 255 },
+        versionId: { type: 'string', format: 'uuid' },
         ...stamps
       },
       additionalProperties: false

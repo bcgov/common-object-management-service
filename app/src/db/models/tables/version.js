@@ -83,14 +83,14 @@ class Version extends Timestamps(Model) {
       type: 'object',
       // required: ['objectId'],
       properties: {
-        id: { type: 'string', minLength: 1, maxLength: 255 },
+        id: { type: 'string', format: 'uuid' },
         s3VersionId: { type: ['string', 'null'], maxLength: 1024 },
-        objectId: { type: 'string', minLength: 1, maxLength: 255 },
+        objectId: { type: 'string', format: 'uuid' },
         mimeType: { type: 'string', maxLength: 255 },
         deleteMarker: { type: 'boolean' },
         etag: { type: 'string', maxLength: 65536 },
         isLatest: { type: 'boolean' },
-        lastModifiedDate: { type: ['string', 'null'] },
+        lastModifiedDate: { type: ['string', 'null'], format: 'date-time' },
         ...stamps
       },
       additionalProperties: false

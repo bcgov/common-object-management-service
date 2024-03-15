@@ -88,14 +88,14 @@ class User extends Timestamps(Model) {
       type: 'object',
       required: ['userId', 'username'],
       properties: {
-        userId: { type: 'string', maxLength: 255 },
+        userId: { type: 'string', format: 'uuid' },
         identityId: { type: 'string', maxLength: 255 },
         idp: { type: 'string' },
         firstName: { type: 'string', maxLength: 255 },
         fullName: { type: 'string', maxLength: 255 },
         lastName: { type: 'string', maxLength: 255 },
         username: { type: 'string', maxLength: 255 },
-        email: { type: 'string', maxLength: 255 },
+        email: { type: 'string', format: 'email', maxLength: 255 },
         active: { type: 'boolean' },
         ...stamps
       },

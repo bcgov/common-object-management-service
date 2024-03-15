@@ -79,7 +79,7 @@ class Bucket extends mixin(Model, [
         'secretAccessKey'
       ],
       properties: {
-        bucketId: { type: 'string', minLength: 1, maxLength: 255 },
+        bucketId: { type: 'string', format: 'uuid' },
         bucketName: { type: 'string', minLength: 1, maxLength: 255 },
         accessKeyId: { type: 'string', minLength: 1, maxLength: 255 },
         bucket: { type: 'string', minLength: 1, maxLength: 255 },
@@ -88,7 +88,7 @@ class Bucket extends mixin(Model, [
         secretAccessKey: { type: 'string', minLength: 1, maxLength: 255 },
         region: { type: 'string', maxLength: 255 },
         active: { type: 'boolean' },
-        lastSyncRequestedDate: { type: ['string', 'null'] },
+        lastSyncRequestedDate: { type: ['string', 'null'], format: 'date-time' },
         ...stamps
       },
       additionalProperties: false
