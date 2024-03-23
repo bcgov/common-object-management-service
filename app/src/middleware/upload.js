@@ -44,7 +44,7 @@ const currentUpload = (strict = false) => {
     }
 
     // Check Content-Type Header
-    const mimeType = req.get('Content-Type') ?? 'application/octet-stream';
+    const mimeType = req.get('Content-Type') || 'application/octet-stream';
 
     req.currentUpload = Object.freeze({
       contentLength: contentLength,
