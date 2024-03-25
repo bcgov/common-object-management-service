@@ -39,6 +39,9 @@ describe('currentUpload', () => {
       contentLength: 539, filename: 'foo.txt', mimeType: 'application/octet-stream'
     }, false, 539, 'attachment; filename="foo.txt"', undefined],
     [1, {
+      contentLength: 539, filename: 'foo.txt', mimeType: 'application/octet-stream'
+    }, false, 539, 'attachment; filename="foo.txt"', ''],
+    [1, {
       contentLength: 539, filename: 'foo.txt', mimeType: 'text/plain'
     }, false, 539, 'attachment; filename="foo.txt"', 'text/plain'],
     [1, {
