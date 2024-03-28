@@ -2,5 +2,43 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "local>bcgov/renovate-config"
-  ]
+  ],
+  "automerge": false,
+  "dependencyDashboard": true,
+  "lockFileMaintenance": {
+    "enabled": false
+  },
+  "packageRules": [
+    {
+      "groupName": "Node.js",
+      "excludePackageNames": [
+        "calico/node",
+        "docker.io/calico/node",
+        "kindest/node"
+      ],
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchDepNames": [
+        "node"
+      ],
+      "matchPackagePatterns": [
+        "/node$"
+      ]
+    },
+    {
+      "groupName": "all dependencies",
+      "groupSlug": "all",
+      "matchPackagePatterns": [
+        "*"
+      ],
+      "separateMajorMinor": true
+    }
+  ],
+  "prConcurrentLimit": 2,
+  "pruneStaleBranches": false,
+  "schedule": [
+    "before 4am on the first day of the month"
+  ],
+  "timezone": "America/Los_Angeles"
 }
