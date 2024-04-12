@@ -13,6 +13,7 @@ const service = {
    * @param {string} [data.email] The optional email address of the intended recipient
    * @param {string} data.resource The uuid of the target resource
    * @param {(bucketId|objectId)} data.type The type of resource. Must either be `bucketId` or `objectId`.
+   * @param {string} [data.permCode] Permission level for the invite.
    * @param {string} [data.expiresAt] The optional time this token will expire at.
    * Defaults to 24 hours from now if unspecified.
    * @param {string} [data.userId] The optional userId that requested this generation
@@ -24,12 +25,12 @@ const service = {
     let trx;
     try {
       trx = etrx ? etrx : await Invite.startTransaction();
-
       const response = await Invite.query(trx).insert({
         token: data.token,
         email: data.email,
         resource: data.resource,
         type: data.type,
+        permCodes: data.permCodes ?? ['READ'],
         expiresAt: data.expiresAt,
         createdBy: data.userId ?? SYSTEM_USER
       });

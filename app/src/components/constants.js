@@ -93,6 +93,24 @@ module.exports = Object.freeze({
     MANAGE: 'MANAGE'
   },
 
+  /** Only permissions allowed for bucket invite */
+  InviteBucketAllowedPermissions: {
+    /** Grants resource creation permission */
+    CREATE: 'CREATE',
+    // /** Grants resource read permission */
+    READ: 'READ',
+    /** Grants resource update permission */
+    UPDATE: 'UPDATE',
+  },
+
+  /** Only permissions allowed for object invite */
+  InviteObjectAllowedPermissions: {
+    /** Grants resource creation permission */
+    CREATE: 'UPDATE',
+    /** Grants resource read permission */
+    READ: 'READ',
+  },
+
   /** Resource types */
   ResourceType: {
     /** Bucket Type */
