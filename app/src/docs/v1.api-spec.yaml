@@ -2446,6 +2446,13 @@ components:
             `objectId` must be specified.
           format: uuid
           example: 48a65990-2e48-46b2-94eb-7f4fe13468ea
+        permissionsCode:
+          title: Permission Code
+          type: array
+          items:
+            type: string
+          description: Optional array of permCode. Defaults to 'READ', if unspecified. Accepts any of `"READ", "CREATE", "UPDATE"` for bucket or  `"READ", "UPDATE"` for objects
+          example: ["READ", "CREATE", "UPDATE"]
     Request-UpdateBucket:
       title: Request Update Bucket
       type: object
