@@ -171,41 +171,35 @@ const controller = {
 
       // if permCodes in db is `null` then just assign READ
       const permCodes = !invite.permCodes ? [Permissions.READ] : invite.permCodes;
-
-      // Assign array of permCode to the bucket or object
-      permCodes.forEach(async permCode => {
-        if (invite.type === ResourceType.OBJECT) {
-          // Check for object existence
-          await objectService.read(invite.resource).catch(() => {
-            inviteService.delete(token);
-            throw new Problem(409, {
-              detail: `Object '${invite.resource}' not found`,
-              instance: req.originalUrl,
-              objectId: invite.resource
-            });
+      if (invite.type === ResourceType.OBJECT) {
+        // Check for object existence
+        await objectService.read(invite.resource).catch(() => {
+          inviteService.delete(token);
+          throw new Problem(409, {
+            detail: `Object '${invite.resource}' not found`,
+            instance: req.originalUrl,
+            objectId: invite.resource
           });
+        });
 
-          // Grant invitation permission and cleanup
-          await objectPermissionService.addPermissions(invite.resource, [
-            { userId: userId, permCode: permCode }
-          ], invite.createdBy);
-        } else if (invite.type === ResourceType.BUCKET) {
-          // Check for object existence
-          await bucketService.read(invite.resource).catch(() => {
-            inviteService.delete(token);
-            throw new Problem(409, {
-              detail: `Bucket '${invite.resource}' not found`,
-              instance: req.originalUrl,
-              bucketId: invite.resource
-            });
+        // Grant invitation permission and cleanup
+        await objectPermissionService.addPermissions(invite.resource,
+          permCodes.map(permCode => ({ userId, permCode })), invite.createdBy);
+      } else if (invite.type === ResourceType.BUCKET) {
+        // Check for object existence
+        await bucketService.read(invite.resource).catch(() => {
+          inviteService.delete(token);
+          throw new Problem(409, {
+            detail: `Bucket '${invite.resource}' not found`,
+            instance: req.originalUrl,
+            bucketId: invite.resource
           });
+        });
 
-          // Grant invitation permission and cleanup
-          await bucketPermissionService.addPermissions(invite.resource, [
-            { userId: userId, permCode: permCode }
-          ], invite.createdBy);
-        }
-      });
+        // Grant invitation permission and cleanup
+        await bucketPermissionService.addPermissions(invite.resource,
+          permCodes.map(permCode => ({ userId, permCode })), invite.createdBy);
+      }
 
       // Cleanup invite on success
       inviteService.delete(token);

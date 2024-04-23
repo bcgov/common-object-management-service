@@ -446,7 +446,6 @@ describe('useInvite', () => {
       params: { token: TOKEN }
     };
 
-    inviteReadSpy.mockResolvedValue({ email: email, resource: RESOURCE, type: ResourceType.OBJECT });
     objectReadSpy.mockRejectedValue({});
 
     await controller.useInvite(req, res, next);
@@ -480,7 +479,7 @@ describe('useInvite', () => {
     expect(inviteDeleteSpy).toHaveBeenCalledWith(TOKEN);
     expect(inviteReadSpy).toHaveBeenCalledTimes(1);
     expect(inviteReadSpy).toHaveBeenCalledWith(TOKEN);
-    expect(objectAddPermissionsSpy).toHaveBeenCalledTimes(0);
+    expect(objectAddPermissionsSpy).toHaveBeenCalledTimes(1);
     expect(objectReadSpy).toHaveBeenCalledTimes(1);
     expect(objectReadSpy).toHaveBeenCalledWith(RESOURCE);
     expect(next).toHaveBeenCalledTimes(0);
@@ -495,7 +494,6 @@ describe('useInvite', () => {
       params: { token: TOKEN }
     };
 
-    inviteReadSpy.mockResolvedValue({ email: email, resource: RESOURCE, type: ResourceType.BUCKET });
     bucketReadSpy.mockRejectedValue({});
 
     await controller.useInvite(req, res, next);
@@ -505,7 +503,9 @@ describe('useInvite', () => {
     expect(inviteDeleteSpy).toHaveBeenCalledTimes(0);
     expect(inviteReadSpy).toHaveBeenCalledTimes(1);
     expect(inviteReadSpy).toHaveBeenCalledWith(TOKEN);
-    expect(bucketAddPermissionsSpy).toHaveBeenCalledTimes(0);
+    expect(objectAddPermissionsSpy).toHaveBeenCalledTimes(0);
+    expect(objectReadSpy).toHaveBeenCalledTimes(0);
+    expect(next).toHaveBeenCalledTimes(1);
   });
 
   it('should 200 when bucket grant successful', async () => {
@@ -523,13 +523,13 @@ describe('useInvite', () => {
 
     await controller.useInvite(req, res, next);
 
-    expect(bucketAddPermissionsSpy).toHaveBeenCalledTimes(0);
+    expect(bucketAddPermissionsSpy).toHaveBeenCalledTimes(1);
     expect(bucketReadSpy).toHaveBeenCalledTimes(1);
     expect(inviteDeleteSpy).toHaveBeenCalledTimes(1);
     expect(inviteDeleteSpy).toHaveBeenCalledWith(TOKEN);
     expect(inviteReadSpy).toHaveBeenCalledTimes(1);
     expect(inviteReadSpy).toHaveBeenCalledWith(TOKEN);
-    expect(bucketAddPermissionsSpy).toHaveBeenCalledTimes(0);
+    expect(bucketAddPermissionsSpy).toHaveBeenCalledTimes(1);
     expect(bucketReadSpy).toHaveBeenCalledTimes(1);
     expect(next).toHaveBeenCalledTimes(0);
     expect(res.json).toHaveBeenCalledWith({ resource: RESOURCE, type: ResourceType.BUCKET });
