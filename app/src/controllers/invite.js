@@ -169,14 +169,11 @@ const controller = {
         });
       }
 
-      if (!invite.permCodes) {
-        throw new Problem(403, {
-          detail: 'User does not have permissions',
-          instance: req.originalUrl
-        });
-      }
+      // if permCodes in db is `null` then just assign READ
+      const permCodes = !invite.permCodes ? [Permissions.READ] : invite.permCodes;
+
       // Assign array of permCode to the bucket or object
-      invite.permCodes.forEach(async permCode => {
+      permCodes.forEach(async permCode => {
         if (invite.type === ResourceType.OBJECT) {
           // Check for object existence
           await objectService.read(invite.resource).catch(() => {

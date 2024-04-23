@@ -13,9 +13,9 @@ const schema = {
       objectId: type.uuidv4,
       permCodes: Joi.alternatives()
         .conditional('bucketId', {
-          not: Joi.string().valid(''),
-          then: Joi.array().items(...Object.values(InviteBucketAllowedPermissions)),
-          otherwise: Joi.array().items(...Object.values(InviteObjectAllowedPermissions))
+          not: false,
+          then: Joi.array().items(...Object.values(InviteBucketAllowedPermissions)).min(1),
+          otherwise: Joi.array().items(...Object.values(InviteObjectAllowedPermissions)).min(1)
         }),
 
     }).xor('bucketId', 'objectId')

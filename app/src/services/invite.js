@@ -30,7 +30,8 @@ const service = {
         email: data.email,
         resource: data.resource,
         type: data.type,
-        permCodes: data.permCodes ?? ['READ'],
+        // if permCodes provided set as unique permCodes otherwise just ['READ']
+        permCodes: data.permCodes ? Array.from(new Set(data.permCodes)) : ['READ'],
         expiresAt: data.expiresAt,
         createdBy: data.userId ?? SYSTEM_USER
       });
