@@ -1,6 +1,6 @@
 
 const Joi = require('joi');
-
+const { InviteObjectAllowedPermissions, InviteBucketAllowedPermissions } = require('../components/constants');
 const { type } = require('./common');
 const { validate } = require('../middleware/validation');
 
@@ -11,6 +11,13 @@ const schema = {
       email: type.email,
       expiresAt: Joi.date().timestamp('unix').greater('now'),
       objectId: type.uuidv4,
+      permCodes: Joi.alternatives()
+        .conditional('bucketId', {
+          not: false,
+          then: Joi.array().items(...Object.values(InviteBucketAllowedPermissions)).min(1),
+          otherwise: Joi.array().items(...Object.values(InviteObjectAllowedPermissions)).min(1)
+        }),
+
     }).xor('bucketId', 'objectId')
   },
 

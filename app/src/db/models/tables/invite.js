@@ -22,6 +22,7 @@ class ObjectModel extends Timestamps(Model) {
         resource: { type: 'string', format: 'uuid' },
         type: { type: 'string', enum: ['bucketId', 'objectId'] },
         expiresAt: { type: 'string', format: 'date-time' },
+        permCodes: { type: 'array', items: { type: 'string' } },
         ...stamps
       },
       additionalProperties: false

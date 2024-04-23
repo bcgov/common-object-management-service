@@ -35,7 +35,7 @@ router.get('/', bucketValidator.searchBuckets, (req, res, next) => {
 });
 
 /** Updates a bucket */
-router.patch('/:bucketId', express.json(), bucketValidator.updateBucket, hasPermission(Permissions.UPDATE),
+router.patch('/:bucketId', express.json(), bucketValidator.updateBucket, hasPermission(Permissions.MANAGE),
   (req, res, next) => {
     bucketController.updateBucket(req, res, next);
   }

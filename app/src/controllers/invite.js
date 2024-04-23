@@ -113,14 +113,14 @@ const controller = {
           }
         }
       }
-
       const response = await inviteService.create({
         token: uuidv4(),
         email: req.body.email,
         resource: resource,
         type: type,
         expiresAt: req.body.expiresAt ? new Date(req.body.expiresAt * 1000).toISOString() : undefined,
-        userId: userId
+        userId: userId,
+        permCodes: req.body.permCodes
       });
       res.status(201).json(response.token);
     } catch (e) {
@@ -169,6 +169,8 @@ const controller = {
         });
       }
 
+      // if permCodes in db is `null` then just assign READ
+      const permCodes = !invite.permCodes ? [Permissions.READ] : invite.permCodes;
       if (invite.type === ResourceType.OBJECT) {
         // Check for object existence
         await objectService.read(invite.resource).catch(() => {
@@ -181,9 +183,8 @@ const controller = {
         });
 
         // Grant invitation permission and cleanup
-        await objectPermissionService.addPermissions(invite.resource, [
-          { userId: userId, permCode: Permissions.READ }
-        ], invite.createdBy);
+        await objectPermissionService.addPermissions(invite.resource,
+          permCodes.map(permCode => ({ userId, permCode })), invite.createdBy);
       } else if (invite.type === ResourceType.BUCKET) {
         // Check for object existence
         await bucketService.read(invite.resource).catch(() => {
@@ -196,9 +197,8 @@ const controller = {
         });
 
         // Grant invitation permission and cleanup
-        await bucketPermissionService.addPermissions(invite.resource, [
-          { userId: userId, permCode: Permissions.READ }
-        ], invite.createdBy);
+        await bucketPermissionService.addPermissions(invite.resource,
+          permCodes.map(permCode => ({ userId, permCode })), invite.createdBy);
       }
 
       // Cleanup invite on success
