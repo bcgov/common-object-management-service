@@ -13,6 +13,8 @@ const {
 const utils = require('../../../src/components/utils');
 const { Permissions, ResourceType, AuthType } = require('../../../src/components/constants');
 
+// Mock out utils library and use a spy to observe behavior
+jest.mock('../../../src/components/utils');
 const SYSTEM_TIME = new Date('2024-03-08T19:00:00.000Z');
 const mockResponse = () => {
   const res = {};
@@ -47,6 +49,7 @@ describe('createInvite', () => {
   const bucketSearchPermissionSpy = jest.spyOn(bucketPermissionService, 'searchPermissions');
   const getCurrentIdentitySpy = jest.spyOn(utils, 'getCurrentIdentity');
   const getCurrentUserIdSpy = jest.spyOn(userService, 'getCurrentUserId');
+  const addDashesToUuidSpy = jest.spyOn(utils, 'addDashesToUuid');
   const inviteCreateSpy = jest.spyOn(inviteService, 'create');
   const objectReadSpy = jest.spyOn(objectService, 'read');
   const objectSearchPermissionSpy = jest.spyOn(objectPermissionService, 'searchPermissions');
@@ -58,6 +61,7 @@ describe('createInvite', () => {
   beforeEach(() => {
     getCurrentIdentitySpy.mockReturnValue(USR_IDENTITY);
     getCurrentUserIdSpy.mockResolvedValue(USR_ID);
+    addDashesToUuidSpy.mockReturnValue(RESOURCE);
   });
 
   it('should 422 when expiresAt is more than 7 days away', async () => {
@@ -113,7 +117,7 @@ describe('createInvite', () => {
     it('should 403 when no object manage permission found', async () => {
       const req = {
         body: { objectId: RESOURCE },
-        currentUser: { AuthType: AuthType.BEARER }
+        currentUser: { authType: AuthType.BEARER }
       };
 
       objectReadSpy.mockResolvedValue({});
@@ -137,7 +141,7 @@ describe('createInvite', () => {
     it('should 403 when no object nor bucket manage permission found', async () => {
       const req = {
         body: { objectId: RESOURCE },
-        currentUser: { AuthType: AuthType.BEARER }
+        currentUser: { authType: AuthType.BEARER }
       };
 
       bucketSearchPermissionSpy.mockResolvedValue([]);
@@ -165,7 +169,7 @@ describe('createInvite', () => {
     it('should 201 when object manage permission found', async () => {
       const req = {
         body: { objectId: RESOURCE },
-        currentUser: { AuthType: AuthType.BEARER }
+        currentUser: { authType: AuthType.BEARER }
       };
 
       inviteCreateSpy.mockResolvedValue({ token: TOKEN });
@@ -195,7 +199,7 @@ describe('createInvite', () => {
       const email = 'expected@foo.bar';
       const req = {
         body: { objectId: RESOURCE, email: email },
-        currentUser: { AuthType: AuthType.BEARER }
+        currentUser: { authType: AuthType.BEARER }
       };
 
       bucketSearchPermissionSpy.mockResolvedValue([{}]);
@@ -229,7 +233,7 @@ describe('createInvite', () => {
       const expiresAt = Math.floor(new Date('2024-03-09T19:00:00.000Z') / 1000);
       const req = {
         body: { objectId: RESOURCE, expiresAt: expiresAt },
-        currentUser: { AuthType: AuthType.BASIC }
+        currentUser: { authType: AuthType.BASIC }
       };
 
       inviteCreateSpy.mockResolvedValue({ token: TOKEN });
@@ -277,7 +281,7 @@ describe('createInvite', () => {
     it('should 403 when no bucket manage permission found', async () => {
       const req = {
         body: { bucketId: RESOURCE },
-        currentUser: { AuthType: AuthType.BEARER }
+        currentUser: { authType: AuthType.BEARER }
       };
 
       bucketReadSpy.mockResolvedValue({});
@@ -302,7 +306,7 @@ describe('createInvite', () => {
       const email = 'expected@foo.bar';
       const req = {
         body: { bucketId: RESOURCE, email: email },
-        currentUser: { AuthType: AuthType.BEARER }
+        currentUser: { authType: AuthType.BEARER }
       };
 
       bucketReadSpy.mockResolvedValue({});
@@ -332,7 +336,7 @@ describe('createInvite', () => {
       const expiresAt = Math.floor(new Date('2024-03-09T19:00:00.000Z') / 1000);
       const req = {
         body: { bucketId: RESOURCE, expiresAt: expiresAt },
-        currentUser: { AuthType: AuthType.BASIC }
+        currentUser: { authType: AuthType.BASIC }
       };
 
       bucketReadSpy.mockResolvedValue({ bucketId: RESOURCE });
@@ -365,6 +369,7 @@ describe('useInvite', () => {
   const bucketReadSpy = jest.spyOn(bucketService, 'read');
   const getCurrentIdentitySpy = jest.spyOn(utils, 'getCurrentIdentity');
   const getCurrentUserIdSpy = jest.spyOn(userService, 'getCurrentUserId');
+  const addDashesToUuidSpy = jest.spyOn(utils, 'addDashesToUuid');
   const inviteDeleteSpy = jest.spyOn(inviteService, 'delete');
   const inviteReadSpy = jest.spyOn(inviteService, 'read');
   const objectAddPermissionsSpy = jest.spyOn(objectPermissionService, 'addPermissions');
@@ -377,6 +382,7 @@ describe('useInvite', () => {
   beforeEach(() => {
     getCurrentIdentitySpy.mockReturnValue(USR_IDENTITY);
     getCurrentUserIdSpy.mockResolvedValue(USR_ID);
+    addDashesToUuidSpy.mockReturnValue(TOKEN);
   });
 
 

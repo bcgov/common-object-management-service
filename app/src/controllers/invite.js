@@ -65,7 +65,7 @@ const controller = {
         const { bucketId } = await objectService.read(resource);
 
         // Check for manage permission
-        if (req.currentUser?.AuthType === AuthType.BEARER) {
+        if (req.currentUser?.authType === AuthType.BEARER) {
           let bucketPermissions = [];
           const objectPermissions = await objectPermissionService.searchPermissions({
             userId: userId,
@@ -97,7 +97,7 @@ const controller = {
         await bucketService.read(resource);
 
         // Check for manage permission
-        if (req.currentUser?.AuthType === AuthType.BEARER) {
+        if (req.currentUser?.authType === AuthType.BEARER) {
           const bucketPermissions = await bucketPermissionService.searchPermissions({
             userId: userId,
             bucketId: resource,
