@@ -159,22 +159,18 @@ const service = {
 
         // Case: already synced - record & update public status as needed
         if (comsObject) {
-          if (s3Public === undefined || s3Public === comsObject.public) {
-            response = await objectService.update({
-              id: comsObject.id,
-              userId: userId,
-              lastSyncedDate: new Date().toISOString()
-            }, trx);
-          } else {
-            response = await objectService.update({
-              id: comsObject.id,
-              userId: userId,
-              path: comsObject.path,
-              public: s3Public,
-              lastSyncedDate: new Date().toISOString()
-            }, trx);
-            modified = true;
-          }
+
+          response = await objectService.update({
+            id: comsObject.id,
+            userId: userId,
+            path: comsObject.path,
+            // update if public in s3
+            public: s3Public ? s3Public : comsObject.public,
+            lastSyncedDate: new Date().toISOString()
+          }, trx);
+
+          // if public flag changed mark as modified
+          if (s3Public && !comsObject.public) modified = true;
         }
 
         // Case: not in COMS - insert new COMS object
