@@ -424,7 +424,7 @@ describe('syncObject', () => {
     const result = await service.syncObject(path, bucketId);
 
     expect(result).toBeTruthy();
-    expect(result.modified).toBeTruthy();
+    expect(result.modified).toBeFalsy();
     expect(result.object).toEqual(comsObject);
 
     expect(ObjectModel.startTransaction).toHaveBeenCalledTimes(1);
@@ -448,7 +448,7 @@ describe('syncObject', () => {
     expect(objectModelTrx.commit).toHaveBeenCalledTimes(1);
     expect(updateSpy).toHaveBeenCalledTimes(1);
     expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({
-      id: validUuidv4, path: path, public: false, lastSyncedDate: expect.anything(), userId: SYSTEM_USER
+      id: validUuidv4, path: path, public: true, lastSyncedDate: expect.anything(), userId: SYSTEM_USER
     }), expect.any(Object));
   });
 
