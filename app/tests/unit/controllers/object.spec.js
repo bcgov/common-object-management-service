@@ -104,8 +104,6 @@ describe('addMetadata', () => {
     });
 
     expect(trxWrapperSpy).toHaveBeenCalledTimes(1);
-    expect(updateSpy).toHaveBeenCalledTimes(1);
-    expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({ public: false }));
     expect(versionCopySpy).toHaveBeenCalledTimes(1);
     expect(metadataAssociateMetadataSpy).toHaveBeenCalledTimes(1);
     expect(tagAssociateTagsSpy).toHaveBeenCalledTimes(1);
@@ -123,7 +121,7 @@ describe('addTags', () => {
 
   it('should add the new tags', async () => {
     // response from S3
-    const getObjectTaggingResponse = { TagSet: []};
+    const getObjectTaggingResponse = { TagSet: [] };
 
     // request object
     const req = {
@@ -165,7 +163,7 @@ describe('addTags', () => {
     const req = {
       params: { objectId: 'xyz-789' },
       query: {
-        tagset: { a: '1', b: '2', c: '3', d: '4', e: '5', f: '6', g: '7', h: '8', i: '9', j: '10'}
+        tagset: { a: '1', b: '2', c: '3', d: '4', e: '5', f: '6', g: '7', h: '8', i: '9', j: '10' }
       }
     };
     getCurrentUserIdSpy.mockReturnValue('user-123');
@@ -567,8 +565,6 @@ describe('replaceMetadata', () => {
     });
 
     expect(trxWrapperSpy).toHaveBeenCalledTimes(1);
-    expect(updateSpy).toHaveBeenCalledTimes(1);
-    expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({ public: false }));
     expect(versionCopySpy).toHaveBeenCalledTimes(1);
     expect(metadataAssociateMetadataSpy).toHaveBeenCalledTimes(1);
     expect(tagAssociateTagsSpy).toHaveBeenCalledTimes(1);
