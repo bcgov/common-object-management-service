@@ -20,7 +20,7 @@ const schema = {
   createBucketChild: {
     body: Joi.object().keys({
       bucketName: Joi.string().max(255).required(),
-      subKey: Joi.string().max(255).trim().strict().pattern(/^[^/]+$/).required()
+      subKey: Joi.string().max(255).trim().strict().required()
     }).required(),
     params: Joi.object({
       bucketId: type.uuidv4
