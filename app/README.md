@@ -54,6 +54,7 @@ The following variables configure the use of a backend database to support user-
 
 | Config Var | Env Var | Default | Notes |
 | --- | --- | --- | --- |
+| `connectionString` | `DB_CONNECTION_STRING` | coms | COMS database connection string, This setting has the highest priority to use. If not specified then connection details will be determined using the individual connection fields |
 | `database` | `DB_DATABASE` | coms | COMS database name |
 | `host` | `DB_HOST` | localhost | Database conection hostname |
 | `username` | `DB_USERNAME` | app | Database account username |
