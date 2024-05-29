@@ -157,7 +157,7 @@ describe('createBucketChild', () => {
 
       it('trims whitespace', () => {
         expect(Array.isArray(subKey.rules)).toBeTruthy();
-        expect(subKey.rules).toHaveLength(3);
+        expect(subKey.rules).toHaveLength(2);
         expect(subKey.rules).toEqual(expect.arrayContaining([
           expect.objectContaining({
             args: {
@@ -170,26 +170,13 @@ describe('createBucketChild', () => {
 
       it('has a max length of 255', () => {
         expect(Array.isArray(subKey.rules)).toBeTruthy();
-        expect(subKey.rules).toHaveLength(3);
+        expect(subKey.rules).toHaveLength(2);
         expect(subKey.rules).toEqual(expect.arrayContaining([
           expect.objectContaining({
             args: {
               limit: 255
             },
             name: 'max'
-          }),
-        ]));
-      });
-
-      it('has a regex', () => {
-        expect(Array.isArray(subKey.rules)).toBeTruthy();
-        expect(subKey.rules).toHaveLength(3);
-        expect(subKey.rules).toEqual(expect.arrayContaining([
-          expect.objectContaining({
-            args: {
-              regex: '/^[^/]+$/'
-            },
-            name: 'pattern'
           }),
         ]));
       });

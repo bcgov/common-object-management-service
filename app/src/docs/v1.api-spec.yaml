@@ -2411,9 +2411,9 @@ components:
               example: Geospatial Maps
             subKey:
               type: string
-              description: The desired S3 child directory name. Must not include `/`.
+              description: a path relative to the parent bucket to the 'directory' you are mounting
               maxLength: 255
-              example: child
+              example: canada/bc/maps
     Request-CreateInvite:
       title: Request Create Invite
       type: object
@@ -2437,7 +2437,7 @@ components:
           type: integer
           description: >-
             Optional desired unix epoch time for when this invitation should
-            expire. Defaults to 24 hours from now if unspecified.
+            expire. Defaults to 24 hours from now if unspecified. Maximum of 30 days from now.
           example: 1710000000
         objectId:
           type: string

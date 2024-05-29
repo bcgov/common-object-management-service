@@ -31,8 +31,8 @@ const controller = {
     let resource, type;
 
     try {
-      // Reject if expiresAt is more than 7 days away
-      const maxExpiresAt = Math.floor(Date.now() / 1000) + 691199;
+      // Reject if expiresAt is more than 30 days away
+      const maxExpiresAt = Math.floor(Date.now() / 1000) + 2592000;
       if (req.body.expiresAt && req.body.expiresAt > maxExpiresAt) {
         const limit = new Date(maxExpiresAt * 1000).toISOString();
         const msg = `"expiresAt" must be less than "${limit}"`;
