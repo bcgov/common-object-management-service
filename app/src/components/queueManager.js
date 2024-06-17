@@ -95,7 +95,7 @@ class QueueManager {
 
         log.verbose(`Started processing job id ${job.id}`, { function: 'processNextJob', job: job });
 
-        const objectId = await syncService.syncJob(job.path, job.bucketId, job.full, job.createdBy);
+        const objectId = await syncService.syncJob(job.path, job.bucketId, job.full, job.createdBy, job.notify);
 
         log.verbose(`Finished processing job id ${job.id}`, {
           function: 'processNextJob',
@@ -124,6 +124,7 @@ class QueueManager {
       } else {
         objectQueueService.enqueue({
           jobs: [{ bucketId: job.bucketId, path: job.path }],
+          notify: job.notify,
           full: job.full,
           retries: job.retries + 1,
           createdBy: job.createdBy

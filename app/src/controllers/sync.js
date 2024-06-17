@@ -44,7 +44,7 @@ const controller = {
           userId: userId,
           lastSyncRequestedDate: new Date().toISOString()
         }, trx);
-        return await objectQueueService.enqueue({ jobs: jobs }, trx);
+        return await objectQueueService.enqueue({ jobs: jobs, notify: req.params.notify }, trx);
       });
       res.status(202).json(response);
     } catch (e) {

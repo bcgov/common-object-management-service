@@ -43,7 +43,7 @@ const service = {
    * @param {object} [etrx=undefined] Optional Objection Transaction object
    * @returns {Promise<integer>} Number of records added to the queue
    */
-  async enqueue({ jobs = [], full = false, retries = 0, createdBy = SYSTEM_USER } = {}, etrx = undefined) {
+  async enqueue({ jobs = [], notify = false, full = false, retries = 0, createdBy = SYSTEM_USER } = {}, etrx = undefined) {
     let trx;
     try {
       trx = etrx ? etrx : await ObjectQueue.startTransaction();
@@ -58,6 +58,8 @@ const service = {
 
       // Short circuit when nothing to add or there are missing paths
       if (!jobsArray.length || !jobsArray.every(job => !!job.path)) return Promise.resolve(0);
+      // add notify to last job
+      else jobs[jobs.length - 1].notify = notify;
 
       // Only insert jobs in if it does not already exist
       const response = await ObjectQueue.query(trx).insert(jobsArray).onConflict().ignore();

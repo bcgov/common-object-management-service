@@ -79,7 +79,7 @@ const service = {
    * @returns {Promise<string | undefined>} Resolves to object uuid or undefined when sync is completed
    * @throws If the synchronization job encountered an error
    */
-  syncJob: async (path, bucketId, full = false, userId = SYSTEM_USER) => {
+  syncJob: async (path, bucketId, full = false, userId = SYSTEM_USER, notify = false) => {
     try {
       if (!path) throw new Error('Path must be defined');
 
@@ -106,6 +106,8 @@ const service = {
 
           await Promise.all(tasks);
         }
+
+        if (notify); // call notify service;
 
         return Promise.resolve(object?.id);
       });
