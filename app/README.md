@@ -42,66 +42,66 @@ COMS supports a large array of environment variables to configure how it will be
 
 The following variables enable and enforce the use of Basic Authentication for requests to COMS
 
-| Config Var | Env Var | Default | Notes |
-| --- | --- | --- | --- |
-| `enabled` | `BASICAUTH_ENABLED` | | Whether to run COMS in Basic Auth mode |
-| `username` | `BASICAUTH_USERNAME` | | An arbitrary Username provided in a Basic Auth header of requests from your COMS client application |
-| `password` | `BASICAUTH_PASSWORD` | | An arbitrary Password provided in a Basic Auth header of requests from your COMS client application |
+| Config Var | Env Var              | Default | Notes                                                                                               |
+| ---------- | -------------------- | ------- | --------------------------------------------------------------------------------------------------- |
+| `enabled`  | `BASICAUTH_ENABLED`  |         | Whether to run COMS in Basic Auth mode                                                              |
+| `username` | `BASICAUTH_USERNAME` |         | An arbitrary Username provided in a Basic Auth header of requests from your COMS client application |
+| `password` | `BASICAUTH_PASSWORD` |         | An arbitrary Password provided in a Basic Auth header of requests from your COMS client application |
 
 ### Database Variables
 
 The following variables configure the use of a backend database to support user-based access control, tagging and other advanced features
 
-| Config Var | Env Var | Default | Notes |
-| --- | --- | --- | --- |
-| `database` | `DB_DATABASE` | coms | COMS database name |
-| `host` | `DB_HOST` | localhost | Database conection hostname |
-| `username` | `DB_USERNAME` | app | Database account username |
-| `password` | `DB_PASSWORD` | | Database account password |
-| `port` | `DB_PORT` | 5432 | Database connection port |
-| `poolMin` | `DB_POOL_MIN` | 2 | avalable connections |
-| `poolMax` | `DB_POOL_MAX` | 10 | available connections |
+| Config Var | Env Var       | Default   | Notes                       |
+| ---------- | ------------- | --------- | --------------------------- |
+| `database` | `DB_DATABASE` | coms      | COMS database name          |
+| `host`     | `DB_HOST`     | localhost | Database conection hostname |
+| `username` | `DB_USERNAME` | app       | Database account username   |
+| `password` | `DB_PASSWORD` |           | Database account password   |
+| `port`     | `DB_PORT`     | 5432      | Database connection port    |
+| `poolMin`  | `DB_POOL_MIN` | 2         | avalable connections        |
+| `poolMax`  | `DB_POOL_MAX` | 10        | available connections       |
 
 ### Keycloak Variables
 
 The following variables enable and enforce the use of OIDC Bearer Authentication for requests to COMS
 
-| Config Var | Env Var | Default | Notes |
-| --- | --- | --- | --- |
-| `enabled` | `KC_ENABLED` | | Whether to run COMS in OIDC mode, required for user-based access controls and integration with OIDC users |
-| `clientId` | `KC_CLIENTID` | | Keycloak service client ID for COMS  |
-| `clientSecret` | `KC_CLIENTSECRET` | | Keycloak service client secret |
-| `identityKey` | `KC_IDENTITYKEY` | | Specify using alternative JWT claims for user identification instead of the standard jwt.sub. Multiple claim attributes may be specified via a comma-separated list. COMS will attempt to search for the custom claim ordered based on how it is specified in this variable before falling back to jwt.sub if none are found. |
-| `publicKey` | `KC_PUBLICKEY` | | If specified, verify all incoming JWT signatures off of the provided public key |
-| `realm` | `KC_REALM` | | Keycloak realm ID for COMS |
-| `serverUrl` | `KC_SERVERURL` | | Keycloak server url for COMS authentication |
+| Config Var     | Env Var           | Default | Notes                                                                                                                                                                                                                                                                                                                         |
+| -------------- | ----------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enabled`      | `KC_ENABLED`      |         | Whether to run COMS in OIDC mode, required for user-based access controls and integration with OIDC users                                                                                                                                                                                                                     |
+| `clientId`     | `KC_CLIENTID`     |         | Keycloak service client ID for COMS                                                                                                                                                                                                                                                                                           |
+| `clientSecret` | `KC_CLIENTSECRET` |         | Keycloak service client secret for COMS                                                                                                                                                                                                                                                                                       |
+| `identityKey`  | `KC_IDENTITYKEY`  |         | Specify using alternative JWT claims for user identification instead of the standard jwt.sub. Multiple claim attributes may be specified via a comma-separated list. COMS will attempt to search for the custom claim ordered based on how it is specified in this variable before falling back to jwt.sub if none are found. |
+| `publicKey`    | `KC_PUBLICKEY`    |         | If specified, verify all incoming JWT signatures off of the provided public key                                                                                                                                                                                                                                               |
+| `realm`        | `KC_REALM`        |         | Keycloak realm ID for COMS                                                                                                                                                                                                                                                                                                    |
+| `serverUrl`    | `KC_SERVERURL`    |         | Keycloak server url for COMS authentication                                                                                                                                                                                                                                                                                   |
 
 ### Object Storage Variables
 
 The following variables enable and enforce the use of OIDC Bearer Authentication for requests to COMS
 
-| Config Var | Env Var | Default | Notes |
-| --- | --- | --- | --- |
-| `enabled` | `OBJECTSTORAGE_ENABLED` | | Whether to run COMS with a default bucket |
-| `accessKeyId` | `OBJECTSTORAGE_ACCESSKEYID` | | The Access Key for your S3 compatible object storage account  |
-| `bucket` | `OBJECTSTORAGE_BUCKET` | | The object storage bucket name |
-| `endpoint` | `OBJECTSTORAGE_ENDPOINT` | | Object store URL. eg: `https://nrs.objectstore.gov.bc.ca` |
-| `key` | `OBJECTSTORAGE_KEY` | | The base path for storage location |
-| `secretAccessKey` | `OBJECTSTORAGE_SECRETACCESSKEY` | | The Secret Access Key for your S3 compatible object storage account |
+| Config Var        | Env Var                         | Default | Notes                                                               |
+| ----------------- | ------------------------------- | ------- | ------------------------------------------------------------------- |
+| `enabled`         | `OBJECTSTORAGE_ENABLED`         |         | Whether to run COMS with a default bucket                           |
+| `accessKeyId`     | `OBJECTSTORAGE_ACCESSKEYID`     |         | The Access Key for your S3 compatible object storage account        |
+| `bucket`          | `OBJECTSTORAGE_BUCKET`          |         | The object storage bucket name                                      |
+| `endpoint`        | `OBJECTSTORAGE_ENDPOINT`        |         | Object store URL. eg: `https://nrs.objectstore.gov.bc.ca`           |
+| `key`             | `OBJECTSTORAGE_KEY`             |         | The base path for storage location                                  |
+| `secretAccessKey` | `OBJECTSTORAGE_SECRETACCESSKEY` |         | The Secret Access Key for your S3 compatible object storage account |
 
 ### Server Variables
 
 The following variables alter the general Express application behavior. For most situations, the defaults should be sufficient.
 
-| Config Var | Env Var | Default | Notes |
-| --- | --- | --- | --- |
-| `bodyLimit` | `SERVER_BODYLIMIT` | 30mb | Maximum body size accepted for parsing to JSON body |
-| `defaultTempExpiresIn` | `SERVER_TEMP_EXPIRESIN` | 300 | The expiry time for pre-signed S3 URLs to objects in seconds  |
-| `logFile` | `SERVER_LOGFILE` | | Writes logs to the following file only if defined |
-| `logLevel` | `SERVER_LOGLEVEL` | http | The logging level of COMS |
-| `passphrase` | `SERVER_PASSPHRASE` | | A key to encrypt/decrypt bucket secretAccessKey's saved to the database |
-| `port` | `SERVER_PORT` | 3000 | The port that COMS application will bind to |
-| `privacyMask` | `SERVER_PRIVACY_MASK` | | Strict content privacy controls |
+| Config Var             | Env Var                 | Default | Notes                                                                   |
+| ---------------------- | ----------------------- | ------- | ----------------------------------------------------------------------- |
+| `bodyLimit`            | `SERVER_BODYLIMIT`      | 30mb    | Maximum body size accepted for parsing to JSON body                     |
+| `defaultTempExpiresIn` | `SERVER_TEMP_EXPIRESIN` | 300     | The expiry time for pre-signed S3 URLs to objects in seconds            |
+| `logFile`              | `SERVER_LOGFILE`        |         | Writes logs to the following file only if defined                       |
+| `logLevel`             | `SERVER_LOGLEVEL`       | http    | The logging level of COMS                                               |
+| `passphrase`           | `SERVER_PASSPHRASE`     |         | A key to encrypt/decrypt bucket secretAccessKey's saved to the database |
+| `port`                 | `SERVER_PORT`           | 3000    | The port that COMS application will bind to                             |
+| `privacyMask`          | `SERVER_PRIVACY_MASK`   |         | Strict content privacy controls                                         |
 
 ## Quick Start
 
@@ -115,13 +115,13 @@ Note: change the `latest` tag to specific version if needed. Avoid using the lat
 
 Get COMS image:
 
-``` sh
+```sh
 docker pull docker.io/bcgovimages/common-object-management-service:latest
 ```
 
 Run COMS in **Unauthenticated mode** (replace environment values as necessary)
 
-``` sh
+```sh
 docker run -it --rm -p 3000:3000 \
   -e OBJECTSTORAGE_ENABLED=true \
   -e OBJECTSTORAGE_ACCESSKEYID=<Access Key ID for your S3 account> \
@@ -134,7 +134,7 @@ docker run -it --rm -p 3000:3000 \
 
 Run COMS in **Basic Auth mode** (replace environment values as necessary)
 
-``` sh
+```sh
 docker run -it --rm -p 3000:3000 \
   -e OBJECTSTORAGE_ENABLED=true \
   -e OBJECTSTORAGE_ACCESSKEYID=<Access Key ID for your S3 account> \
@@ -152,14 +152,14 @@ docker run -it --rm -p 3000:3000 \
 
 Before running the application, you must make sure that your database is up to date with the latest schema migration. Run the following first before starting up the COMS app as a maintenance task:
 
-``` sh
+```sh
 docker run -it --rm --entrypoint '/bin/sh' -c 'npm run migrate' \
   docker.io/bcgovimages/common-object-management-service:latest
 ```
 
 Run COMS in **OIDC Auth Mode** (replace environment values as necessary)
 
-``` sh
+```sh
 docker run -it --rm -p 3000:3000 \
   -e OBJECTSTORAGE_ENABLED=true \
   -e OBJECTSTORAGE_ACCESSKEYID=<Access Key ID for your S3 account> \
@@ -180,7 +180,7 @@ docker run -it --rm -p 3000:3000 \
 
 Run COMS in **Full Auth Mode** (replace environment values as necessary)
 
-``` sh
+```sh
 docker run -it --rm -p 3000:3000 \
   -e OBJECTSTORAGE_ENABLED=true \
   -e OBJECTSTORAGE_ACCESSKEYID=<Access Key ID for your S3 account> \
@@ -218,7 +218,7 @@ For more information on how the config library loads and searches for environmen
 At a minimum (when running COMS in 'Unauthenticated mode'), you are required to have configuration values for your Object Storage.
 To run COMS in Full Auth mode you will want your `local.json` to have the following values defined, with your own values as needed:
 
-``` json
+```json
 {
   "basicAuth": {
     "enabled": true,
@@ -255,7 +255,7 @@ To run COMS in Full Auth mode you will want your `local.json` to have the follow
 
 Before starting up the COMS app, run the following command to ensure your database is up to date with the latest database schema migration:
 
-``` sh
+```sh
 npm run migrate
 ```
 
@@ -265,31 +265,31 @@ Install node dependencies with `npm ci`. You may use `npm install` if you are up
 
 Run the server with hot-reloading for development
 
-``` sh
+```sh
 npm run serve
 ```
 
 Run the server
 
-``` sh
+```sh
 npm run start
 ```
 
 Migrate Database
 
-``` sh
+```sh
 npm run migrate
 ```
 
 Lint the codebase
 
-``` sh
+```sh
 npm run lint
 ```
 
 Run your tests
 
-``` sh
+```sh
 npm run test
 ```
 
