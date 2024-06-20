@@ -67,8 +67,9 @@ paths:
       description: >-
         Creates a bucket record. Bucket should exist in S3. If the set of
         `bucket`, `endpoint` and `key` match an existing record, the user will
-        be added to that existing bucket with full permissions instead of
-        generating a new bucket record.
+        be added to that existing bucket with the provided permissions instead of
+        generating a new bucket record. This endpoint can be used to grant the current user
+        permission to upload to a new or existing bucket.
       operationId: createBucket
       tags:
         - Bucket
@@ -2395,6 +2396,15 @@ components:
               type: string
               default: /
               example: coms/env
+            permCodes:
+              type: array
+              items:
+                type: string
+              description: >-
+                Optional array of permCodes for each permission being given to the current user.
+                Accepts any of `"READ", "CREATE", "UPDATE", "DELETE", "MANAGE"`.
+                Defaults to all permCodes if unspecified.
+              example: ["READ", "CREATE", "UPDATE"]
     Request-CreateBucketChild:
       title: Request Create Bucket Child
       type: object

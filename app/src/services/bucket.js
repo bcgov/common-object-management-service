@@ -1,7 +1,6 @@
 const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 
 const bucketPermissionService = require('./bucketPermission');
-const { Permissions } = require('../components/constants');
 const { Bucket } = require('../db/models');
 
 /**
@@ -10,12 +9,13 @@ const { Bucket } = require('../db/models');
 const service = {
   /**
    * @function checkGrantPermissions
-   * Grants a user full permissions to the bucket if the data precisely matches
+   * Grants a user provided permissions to the bucket if the data precisely matches
    * accessKeyId and secretAccessKey values.
    * @param {string} data.accessKeyId The S3 bucket access key id
    * @param {string} data.bucket The S3 bucket identifier
    * @param {string} data.endpoint The S3 bucket endpoint
    * @param {string} data.key The relative S3 key/subpath managed by this bucket
+   * @param {string} data.permCodes Permissions to give to current user for the bucket
    * @param {string} data.secretAccessKey The S3 bucket secret access key
    * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<object>} The result of running the insert operation
@@ -37,9 +37,9 @@ const service = {
         bucket.accessKeyId === data.accessKeyId &&
         bucket.secretAccessKey === data.secretAccessKey
       ) {
-        // Add all permission codes for the uploader
-        if (data.userId && data.userId !== SYSTEM_USER) {
-          const perms = Object.values(Permissions).map((p) => ({
+        // Add permissions
+        if (data.permCodes.length && data.userId && data.userId !== SYSTEM_USER) {
+          const perms = data.permCodes.map((p) => ({
             userId: data.userId,
             permCode: p
           }));
@@ -59,12 +59,13 @@ const service = {
 
   /**
    * @function create
-   * Create a bucket record and give the uploader (if authed) permissions
+   * Create a bucket record and give the current user the provided permissions
    * @param {string} data.bucketName The user-defined bucket name identifier
    * @param {string} data.accessKeyId The S3 bucket access key id
    * @param {string} data.bucket The S3 bucket identifier
    * @param {string} data.endpoint The S3 bucket endpoint
    * @param {string} data.key The relative S3 key/subpath managed by this bucket
+   * @param {string} data.permCodes Permissions to give to current user for the bucket
    * @param {string} data.secretAccessKey The S3 bucket secret access key
    * @param {string} [data.region] The optional S3 bucket region
    * @param {boolean} [data.active] The optional active flag - defaults to true if undefined
@@ -93,9 +94,9 @@ const service = {
 
       const response = await Bucket.query(trx).insert(obj).returning('*');
 
-      // Add all permission codes for the uploader
-      if (data.userId && data.userId !== SYSTEM_USER) {
-        const perms = Object.values(Permissions).map((p) => ({
+      // Add permissions for a current oidc user
+      if (data.permCodes.length && data.userId && data.userId !== SYSTEM_USER) {
+        const perms = data.permCodes.map((p) => ({
           userId: data.userId,
           permCode: p
         }));

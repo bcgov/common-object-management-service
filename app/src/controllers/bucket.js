@@ -2,7 +2,7 @@ const Problem = require('api-problem');
 const { UniqueViolationError } = require('objection');
 const { NIL: SYSTEM_USER } = require('uuid');
 
-const { DEFAULTREGION } = require('../components/constants');
+const { DEFAULTREGION, Permissions } = require('../components/constants');
 const errorToProblem = require('../components/errorToProblem');
 const log = require('../components/log')(module.filename);
 const {
@@ -117,11 +117,15 @@ const controller = {
       await controller._validateCredentials(data);
       data.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
+      // if permCodes array (eg: ['READ', 'UPDATE'] or []) was provided use that (de-duped),
+      // otherwise assign all permissions
+      data.permCodes = req.body.permCodes ? Array.from(new Set(req.body.permCodes)) : Object.values(Permissions);
+
       response = await bucketService.create(data);
     } catch (e) {
       // If bucket exists, check if credentials precisely match
       if (e instanceof UniqueViolationError) {
-        // Grant all permissions if credentials precisely match
+        // Grant permissions if credentials precisely match
         response = await bucketService.checkGrantPermissions(data).catch(permErr => {
           next(new Problem(403, { detail: permErr.message, instance: req.originalUrl }));
         });

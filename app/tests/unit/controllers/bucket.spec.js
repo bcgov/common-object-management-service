@@ -9,6 +9,7 @@ const {
   userService,
 } = require('../../../src/services');
 const utils = require('../../../src/components/utils');
+const { Permissions } = require('../../../src/components/constants');
 
 const mockResponse = () => {
   const res = {};
@@ -74,7 +75,7 @@ describe('createBucket', () => {
     expect(getCurrentUserIdSpy).toHaveBeenCalledTimes(1);
     expect(getCurrentUserIdSpy).toHaveBeenCalledWith(USR_IDENTITY);
     expect(createSpy).toHaveBeenCalledTimes(1);
-    expect(createSpy).toHaveBeenCalledWith({ ...req.body, userId: USR_ID });
+    expect(createSpy).toHaveBeenCalledWith({ ...req.body, userId: USR_ID, permCodes: Object.values(Permissions) });
 
     expect(res.status).toHaveBeenCalledWith(201);
   });
@@ -168,7 +169,7 @@ describe('createBucket', () => {
     expect(getCurrentUserIdSpy).toHaveBeenCalledTimes(1);
     expect(getCurrentUserIdSpy).toHaveBeenCalledWith(USR_IDENTITY);
     expect(createSpy).toHaveBeenCalledTimes(1);
-    expect(createSpy).toHaveBeenCalledWith({ ...req.body, userId: USR_ID });
+    expect(createSpy).toHaveBeenCalledWith({ ...req.body, userId: USR_ID, permCodes: Object.values(Permissions) });
 
     expect(next).toHaveBeenCalledTimes(1);
     expect(next).toHaveBeenCalledWith(new Problem(500, 'Internal Server Error'));
