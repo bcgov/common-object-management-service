@@ -2,6 +2,7 @@ const Joi = require('joi');
 
 const { scheme, type } = require('./common');
 const { validate } = require('../middleware/validation');
+const { Permissions } = require('../components/constants');
 
 const schema = {
   createBucket: {
@@ -13,7 +14,8 @@ const schema = {
       key: Joi.string().max(255).trim().strict(),
       secretAccessKey: Joi.string().max(255).required(),
       region: Joi.string().max(255),
-      active: type.truthy
+      active: type.truthy,
+      permCodes: Joi.array().items(...Object.values(Permissions))
     }).required(),
   },
 

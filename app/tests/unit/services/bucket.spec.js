@@ -34,6 +34,7 @@ const data = {
   secretAccessKey: 'secretaccesskey',
   region: 'region',
   active: 'true',
+  permCodes: ['READ'],
   createdBy: SYSTEM_USER,
   userId: SYSTEM_USER,
   lastSyncRequestedDate: new Date().toISOString()
