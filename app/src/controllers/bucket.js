@@ -192,6 +192,9 @@ const controller = {
       await controller._validateCredentials(childBucket);
       childBucket.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
+      // assign all permissions
+      childBucket.permCodes = Object.values(Permissions);
+
       // Create child bucket
       const response = await bucketService.create(childBucket);
       res.status(201).json(redactSecrets(response, secretFields));
