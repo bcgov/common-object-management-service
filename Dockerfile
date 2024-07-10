@@ -1,4 +1,4 @@
-FROM docker.io/node:20.11.1-alpine
+FROM docker.io/node:lts-alpine3.20
 
 ARG APP_ROOT=/opt/app-root/src
 ENV APP_PORT=8080 \
