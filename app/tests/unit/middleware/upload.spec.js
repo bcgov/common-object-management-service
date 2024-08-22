@@ -63,6 +63,9 @@ describe('currentUpload', () => {
       contentLength: 539, filename: 'foo.txt', mimeType: 'text/plain'
     }, true, 539, 'attachment; filename="foo.txt"', 'text/plain'],
     [1, {
+      contentLength: 539, filename: 'foo.txt', mimeType: 'text/plain'
+    }, true, 539, 'xattachment; filename="foo.txt"', 'text/plain'],
+    [1, {
       contentLength: 539, filename: 'föo.txt', mimeType: 'text/plain'
     }, true, 539, 'attachment; filename=foo.txt; filename*=UTF-8\'\'f%C3%B6o.txt', 'text/plain'],
     [1, {

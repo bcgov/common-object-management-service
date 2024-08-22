@@ -25,8 +25,7 @@ const currentUpload = (strict = false) => {
     const disposition = req.get('Content-Disposition');
     if (disposition) {
       try {
-        const { type, parameters } = contentDisposition.parse(disposition);
-        if (strict && !type || type !== 'attachment') throw new Error('Disposition type is not \'attachment\'');
+        const parameters = contentDisposition.parse(disposition).parameters;
         if (strict && !parameters?.filename) throw new Error('Disposition missing \'filename\' parameter');
         filename = parameters?.filename;
       } catch (e) {

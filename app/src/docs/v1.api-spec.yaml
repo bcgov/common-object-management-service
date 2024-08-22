@@ -1613,7 +1613,7 @@ components:
       schema:
         type: string
         description: >-
-          A valid RFC 6266 header. Must be of type `attachment` with either a
+          A valid RFC 6266 header. Must include a type with either a
           `filename` or `filename*` parameter using the encoding defined in RFC
           8187 (normally UTF-8). For example, `skwc’әnjíłc.txt` must be
           represented as a url-encoded string
