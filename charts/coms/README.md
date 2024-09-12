@@ -55,7 +55,7 @@ Kubernetes: `>= 1.13.0`
 | networkPolicy.enabled | bool | `true` | Specifies whether a network policy should be created |
 | objectStorageSecretOverride.password | string | `nil` | Object storage password |
 | objectStorageSecretOverride.username | string | `nil` | Object storage username |
-| patroni.enabled | bool | `false` | Controls whether to enable managing a Patroni db dependency as a part of the helm release |
+| postgres.enabled | bool | `false` | Controls whether to enable managing a Postgres db dependency as a part of the helm release |
 | podAnnotations | object | `{}` | Annotations for coms pods |
 | podSecurityContext | object | `{}` | Privilege and access control settings |
 | replicaCount | int | `2` |  |

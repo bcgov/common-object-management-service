@@ -26,11 +26,13 @@ failurePolicy: Retry
 podAnnotations: {}
 
 # -- Privilege and access control settings
-podSecurityContext: {}
+podSecurityContext:
+  {}
   # fsGroup: 2000
 
 # -- Privilege and access control settings
-securityContext: {}
+securityContext:
+  {}
   # capabilities:
   #   drop:
   #   - ALL
@@ -88,7 +90,8 @@ route:
   # -- Specifies whether a route should be created
   enabled: true
   # -- Annotations to add to the route
-  annotations: {}
+  annotations:
+    {}
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
   host: chart-example.local
@@ -185,13 +188,62 @@ objectStorageSecretOverride:
   # -- Object storage password
   password: ~
 
-# Patroni subchart configuration overrides
-patroni:
-  # -- Controls whether to enable managing a Patroni db dependency as a part of the helm release
-  enabled: false
+# crunchy-postgres subchart configuration overrides
+postgres:
+  enabled: true
 
-  # replicaCount: 3
-  # resources: {}
+  # --------------------------------
+  # --------crunchydb config: ------
+  # --------------------------------
 
-  # persistentVolume:
-  #   enabled: false
+  # note: override methodology:
+  # - defaults exist in subchart postgres
+  # - overrides that apply to all coms environments are defined in this values.yaml file
+  # - overrides specific to a single environment are defined in values.<environment>.yaml
+
+  # name of the cluster.
+  # in COMS pipeline we pass this in Helm deploy command in github action
+  # eg: --set postgres.name=postgres-master
+  # name: postgres-master
+
+  postgresVersion: 16
+
+  # ------- postgres user/db configuration ----------
+  users:
+    - name: app
+      databases:
+        - app
+  # databaseInitSQL references a ConfigMap that contains a SQL file that should be
+  databaseInitSQL:
+    name: bootstrap-sql
+    key: bootstrap.sql
+    sql: |
+      \c app;
+      ALTER DATABASE app OWNER TO app;
+      ALTER SCHEMA public OWNER TO app;
+      REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+      CREATE SCHEMA invite;
+      ALTER SCHEMA invite OWNER TO app;
+      CREATE SCHEMA audit;
+      ALTER SCHEMA audit OWNER TO app;
+      CREATE SCHEMA queue;
+      ALTER SCHEMA queue OWNER TO app;
+
+  # ----- pgBouncer (network pooling) ------
+  pgBouncerConfig:
+    image: # it's not necessary to specify an image as the images specified in the Crunchy Postgres Operator will be pulled by default
+    replicas: 2
+    config:
+      global:
+        client_tls_sslmode: disable
+
+  # -------- monitoring ----------
+  monitoring: true
+  monitoringConfig:
+    resources:
+      requests:
+        cpu: 1m
+        memory: 64Mi
+      limits:
+        cpu: 50m
+        memory: 128Mi
