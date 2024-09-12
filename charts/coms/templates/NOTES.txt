@@ -20,5 +20,5 @@ Get the application URL by running these commands:
 {{- end }}
 {{- if not $configMap }}
 
-Make sure that ConfigMap "{{ $configMapName }}" is defined in the namespace; the deployment will fail to run without it!
+..Make sure that ConfigMap "{{ $configMapName }}" is defined in the namespace; the deployment will fail to run without it!
 {{- end }}
