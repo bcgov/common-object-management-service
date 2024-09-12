@@ -1,0 +1,15 @@
+{{- /*
+create configmap containing sql commands to run during posgtgres initialization
+*/}}
+{{- if .Values.databaseInitSQL }}
+{{- $sqlConfigMap := (lookup "v1" "ConfigMap" .Release.Namespace .Values.databaseInitSQL.name  ) }}
+{{- if not $sqlConfigMap }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.databaseInitSQL.name }}
+data:
+  bootstrap.sql: {{ .Values.databaseInitSQL.sql }}
+{{- end }}
+{{- end }}

@@ -1,14 +1,11 @@
-{{ $dbHostName := .Values.config.configMap.DB_HOST }}
-{{ $dbSecretName := printf "%s-%s" (include "coms.fullname" .) "passphrase" }}
-{{- if .Values.patroni.enabled }}
-{{ $dbHostName = include "patroni.fullname" .Subcharts.patroni }}
-{{ $dbSecretName = include "patroni.fullname" .Subcharts.patroni }}
-{{- end }}
+{{- $postgresClusterName := printf "%s-%s" .Values.postgres.nameOverride .Release.Name -}}
+{{- $dbHostName := printf "%s-%s" $postgresClusterName "pgbouncer" -}}
+{{- $dbSecretName := printf "%s-%s-%s" $postgresClusterName "pguser" (first .Values.postgres.users).name -}}
 
 {{- define "coms.connectsTo" -}}
 apiVersion: apps/v1
 kind: StatefulSet
-name: {{ include "patroni.fullname" .Subcharts.patroni }}
+name: {{ printf "%s-%s" .Values.postgres.nameOverride .Release.Name }}
 {{- end }}
 ---
 apiVersion: apps.openshift.io/v1
@@ -17,7 +14,7 @@ metadata:
   name: {{ include "coms.fullname" . }}
   labels:
     {{- include "coms.labels" . | nindent 4 }}
-  {{- if .Values.patroni.enabled }}
+  {{- if .Values.postgres.enabled }}
   annotations:
     app.openshift.io/connects-to: '[{{ include "coms.connectsTo" . | fromYaml | toJson }}]'
   {{- end }}
@@ -31,7 +28,7 @@ spec:
       {{- toYaml .Values.resources | nindent 6 }}
     rollingParams:
       timeoutSeconds: 600
-      {{- if or .Values.patroni.enabled .Values.config.configMap.DB_ENABLED }}
+      {{- if or .Values.postgres.enabled .Values.config.configMap.DB_ENABLED }}
       pre:
         failurePolicy: {{ .Values.failurePolicy }}
         execNewPod:
@@ -46,19 +43,19 @@ spec:
             - name: DB_DATABASE
               valueFrom:
                 secretKeyRef:
-                  key: app-db-name
+                  key: dbname
                   name: {{ $dbSecretName }}
             - name: DB_HOST
               value: {{ $dbHostName }}
             - name: DB_USERNAME
               valueFrom:
                 secretKeyRef:
-                  key: app-db-username
+                  key: user
                   name: {{ $dbSecretName }}
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  key: app-db-password
+                  key: password
                   name: {{ $dbSecretName }}
       {{- end }}
     type: Rolling
@@ -117,23 +114,23 @@ spec:
                   key: password
                   name: {{ include "coms.fullname" . }}-basicauth
             {{- end }}
-            {{- if or .Values.patroni.enabled .Values.config.configMap.DB_ENABLED }}
+            {{- if or .Values.postgres.enabled .Values.config.configMap.DB_ENABLED }}
             - name: DB_DATABASE
               valueFrom:
                 secretKeyRef:
-                  key: app-db-name
+                  key: dbname
                   name: {{ $dbSecretName }}
             - name: DB_HOST
               value: {{ $dbHostName }}
             - name: DB_USERNAME
               valueFrom:
                 secretKeyRef:
-                  key: app-db-username
+                  key: user
                   name: {{ $dbSecretName }}
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  key: app-db-password
+                  key: password
                   name: {{ $dbSecretName }}
             {{- end }}
             {{- if or .Values.features.oidcAuth .Values.config.configMap.KC_ENABLED }}

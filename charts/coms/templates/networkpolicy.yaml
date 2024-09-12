@@ -17,32 +17,19 @@ spec:
           protocol: TCP
   podSelector:
     matchLabels: {{- include "coms.selectorLabels" . | nindent 6 }}
-{{- if .Values.patroni.enabled }}
+{{- if .Values.postgres.enabled }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: allow-{{ include "coms.fullname" . }}-app-to-{{ include "patroni.fullname" .Subcharts.patroni }}-cluster
-  labels: {{ include "patroni.labels" . | nindent 4 }}
+  name: allow-{{ include "coms.fullname" . }}-app-to-{{ include "crunchy-postgres.fullname" .Subcharts.postgres }}-cluster
+  labels:
+    {{- include "crunchy-postgres.selectorLabels" .Subcharts.postgres | nindent 4 }}
 spec:
   ingress:
     - from:
         - podSelector:
             matchLabels: {{ include "coms.selectorLabels" . | nindent 14 }}
-      ports:
-        - port: {{ default "5432" .Values.config.configMap.DB_PORT | atoi }}
-          protocol: TCP
-  podSelector:
-    matchLabels: {{ include "patroni.selectorLabels" .Subcharts.patroni | nindent 6 }}
----
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: allow-pre-hook-to-{{ include "patroni.fullname" .Subcharts.patroni }}-cluster
-  labels: {{ include "patroni.labels" . | nindent 4 }}
-spec:
-  ingress:
-    - from:
         - podSelector:
             matchLabels:
               openshift.io/deployer-pod.type: hook-pre
@@ -50,6 +37,6 @@ spec:
         - port: {{ default "5432" .Values.config.configMap.DB_PORT | atoi }}
           protocol: TCP
   podSelector:
-    matchLabels: {{ include "patroni.selectorLabels" .Subcharts.patroni | nindent 6 }}
+    matchLabels: {{ include "crunchy-postgres.selectorLabels" .Subcharts.postgres | nindent 6 }}
 {{- end }}
 {{- end }}

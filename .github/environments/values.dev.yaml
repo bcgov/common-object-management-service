@@ -25,5 +25,30 @@ config:
     SERVER_PRIVACY_MASK: "true"
     SERVER_TEMP_EXPIRESIN: "300"
 
-patroni:
+postgres:
   enabled: true
+  # crunchydb config:
+  pgBackRest:
+    s3:
+      enabled: false
+  proxy:
+    pgBouncer:
+      replicas: 2
+  instances:
+    replicas: 2
+    dataVolumeClaimSpec:
+      storage: 1Gi
+      storageClassName: netapp-block-standard
+    requests:
+      cpu: 1m
+      memory: 256Mi
+    limits:
+      cpu: 200m
+      memory: 512Mi
+    replicaCertCopy:
+      requests:
+        cpu: 1m
+        memory: 32Mi
+      limits:
+        cpu: 50m
+        memory: 64Mi
