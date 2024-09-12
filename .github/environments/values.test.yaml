@@ -25,5 +25,28 @@ config:
     SERVER_PRIVACY_MASK: "true"
     SERVER_TEMP_EXPIRESIN: "300"
 
-patroni:
+postgres:
   enabled: true
+
+  # --------------------------------
+  # --------crunchydb config: ------
+  # --------------------------------
+
+  # --- cluster resource allocation ----
+  instances:
+    - name: db # do not change this name after initial install, pvc (data) and stateful sets will be deleted
+      replicas: 2
+      dataVolumeClaimSpec:
+        accessModes:
+          - "ReadWriteOnce"
+        resources:
+          requests:
+            storage: 5Gi
+        storageClassName: "netapp-block-standard"
+      resources:
+        requests:
+          cpu: 1m
+          memory: 256Mi
+        limits:
+          cpu: 100m
+          memory: 512Mi

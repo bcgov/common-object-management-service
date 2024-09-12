@@ -3,7 +3,7 @@ name: common-object-management-service
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 0.0.26
+version: 0.1.0
 kubeVersion: ">= 1.13.0"
 description: A microservice for managing access control to S3 Objects
 # A chart can be either an 'application' or a 'library' chart.
@@ -27,14 +27,11 @@ home: https://bcgov.github.io/common-object-management-service
 sources:
   - https://github.com/bcgov/common-object-management-service
 dependencies:
-  - name: patroni
-    version: ~0.0.4
-    repository: https://bcgov.github.io/nr-patroni-chart
-    condition: patroni.enabled
-    tags:
-      - patroni
-    # by default, the object created will be named <your-app>-patroni. You can use an alias to override the -patroni suffix
-    # alias: postgres
+  - name: postgrescluster
+    version: 0.1.0
+    repository: "file://../postgres"
+    condition: postgres.enabled
+    alias: postgres
 maintainers:
   - name: NR Common Service Showcase Team
     email: NR.CommonServiceShowcase@gov.bc.ca

@@ -4,15 +4,28 @@ features:
   oidcAuth: true
   defaultBucket: false
 
-patroni:
+postgres:
   enabled: true
-  replicaCount: 2
-  resources:
-    limits:
-      cpu: 250m
-      memory: 384Mi
-    requests:
-      cpu: 20m
-      memory: 192Mi
-  persistentVolume:
-    enabled: false
+
+  # --------------------------------
+  # --------crunchydb config: ------
+  # --------------------------------
+
+  # --- cluster resource allocation ----
+  instances:
+    - name: db # do not change this name after initial install, pvc (data) and stateful sets will be deleted
+      replicas: 2
+      dataVolumeClaimSpec:
+        accessModes:
+          - "ReadWriteOnce"
+        resources:
+          requests:
+            storage: 2Gi
+        storageClassName: "netapp-block-standard"
+      resources:
+        requests:
+          cpu: 1m
+          memory: 256Mi
+        limits:
+          cpu: 100m
+          memory: 512Mi
