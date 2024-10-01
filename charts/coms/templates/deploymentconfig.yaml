@@ -4,12 +4,6 @@
 {{ $dbHostName = "crunchy-postgres-pgbouncer" }}
 {{ $dbSecretName = "crunchy-postgres-pguser-app" }}
 {{- end }}
-
-{{- define "coms.connectsTo" -}}
-apiVersion: apps/v1
-kind: StatefulSet
-name: {{ include "crunchy-postgres.fullname" .Subcharts.patroni }}
-{{- end }}
 ---
 apiVersion: apps.openshift.io/v1
 kind: DeploymentConfig
@@ -17,10 +11,6 @@ metadata:
   name: {{ include "coms.fullname" . }}
   labels:
     {{- include "coms.labels" . | nindent 4 }}
-  {{- if .Values.patroni.enabled }}
-  annotations:
-    app.openshift.io/connects-to: '[{{ include "coms.connectsTo" . | fromYaml | toJson }}]'
-  {{- end }}
 spec:
   replicas: {{ .Values.replicaCount }}
   revisionHistoryLimit: 10

@@ -49,7 +49,7 @@ runs:
         --values ./.github/environments/values.${{ inputs.environment }}.yaml
         --set image.repository=ghcr.io/${{ github.repository_owner }}
         --set image.tag=sha-$(git rev-parse --short HEAD)
-        --set route.host=${{ inputs.acronym }}-${{ inputs.namespace_environment }}-${{ inputs.job_name }}.apps.silver.devops.gov.bc.ca
+        --set route.host=${{ inputs.acronym }}test-${{ inputs.namespace_environment }}-${{ inputs.job_name }}.apps.silver.devops.gov.bc.ca
         --timeout 10m
         --wait
 

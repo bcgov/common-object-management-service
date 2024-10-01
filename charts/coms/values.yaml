@@ -26,11 +26,13 @@ failurePolicy: Retry
 podAnnotations: {}
 
 # -- Privilege and access control settings
-podSecurityContext: {}
+podSecurityContext:
+  {}
   # fsGroup: 2000
 
 # -- Privilege and access control settings
-securityContext: {}
+securityContext:
+  {}
   # capabilities:
   #   drop:
   #   - ALL
@@ -88,7 +90,8 @@ route:
   # -- Specifies whether a route should be created
   enabled: true
   # -- Annotations to add to the route
-  annotations: {}
+  annotations:
+    {}
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
   host: chart-example.local
@@ -188,7 +191,7 @@ objectStorageSecretOverride:
 # Patroni subchart configuration overrides
 patroni:
   # -- Controls whether to enable managing a Patroni db dependency as a part of the helm release
-  enabled: false
+  enabled: true
 
   # replicaCount: 3
   # resources: {}
