@@ -31,8 +31,8 @@ dependencies:
     version: ~0.0.3
     repository: https://timcsaky.github.io/nr-patroni-chart
     condition: patroni.enabled
-    # tags:
-    #   - patroni
+    tags:
+      - crunchy-postgres
     # by default, the object created will be named <your-app>-patroni. You can use an alias to override the -patroni suffix
     # alias: postgres
 maintainers:
