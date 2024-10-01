@@ -3,7 +3,7 @@ name: Pull Request Closed
 env:
   ACRONYM: coms
   APP_NAME: common-object-management-service
-  NAMESPACE_PREFIX: bb17f9
+  NAMESPACE_PREFIX: 1dca6b
 
 on:
   pull_request:
