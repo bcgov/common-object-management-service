@@ -188,10 +188,17 @@ objectStorageSecretOverride:
   # -- Object storage password
   password: ~
 
-# Patroni subchart configuration overrides
-patroni:
-  # -- Controls whether to enable managing a Patroni db dependency as a part of the helm release
+# crunchy-postgres subchart configuration overrides
+crunchy-postgres:
+  # -- Controls whether to enable managing a crunchy-postgres db dependency as a part of the helm release
   enabled: true
+  # nameOverride: patroni
+  # fullnameOverride: patroni
+  users:
+    - name: app
+      databases:
+        - app
+      options: "CREATEROLE"
 
   # replicaCount: 3
   # resources: {}

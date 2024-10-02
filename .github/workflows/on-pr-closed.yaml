@@ -1,7 +1,7 @@
 name: Pull Request Closed
 
 env:
-  ACRONYM: coms
+  ACRONYM: migrate
   APP_NAME: common-object-management-service
   NAMESPACE_PREFIX: 1dca6b
 
