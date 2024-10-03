@@ -4,15 +4,31 @@ features:
   oidcAuth: true
   defaultBucket: false
 
-patroni:
+postgres:
   enabled: true
-  replicaCount: 2
-  resources:
-    limits:
-      cpu: 250m
-      memory: 384Mi
+  # crunchy config:
+  pgBackRest:
+    s3:
+      enabled: false
+  proxy:
+    pgBouncer:
+      image: # it's not necessary to specify an image as the images specified in the Crunchy Postgres Operator will be pulled by default
+      replicas: 2
+  instances:
+    replicas: 2
+    dataVolumeClaimSpec:
+      storage: 480Mi
+      storageClassName: netapp-block-standard
     requests:
-      cpu: 20m
-      memory: 192Mi
-  persistentVolume:
-    enabled: false
+      cpu: 1m
+      memory: 256Mi
+    limits:
+      cpu: 100m
+      memory: 512Mi
+    replicaCertCopy:
+      requests:
+        cpu: 1m
+        memory: 32Mi
+      limits:
+        cpu: 50m
+        memory: 64Mi

@@ -189,19 +189,18 @@ objectStorageSecretOverride:
   password: ~
 
 # crunchy-postgres subchart configuration overrides
-crunchy-postgres:
-  # -- Controls whether to enable managing a crunchy-postgres db dependency as a part of the helm release
+postgres:
   enabled: true
-  # nameOverride: patroni
-  # fullnameOverride: patroni
+  # crunchy config:
+  nameOverride: postgres
+  fullnameOverride: postgres
   users:
     - name: app
       databases:
         - app
       options: "CREATEROLE"
-
-  # replicaCount: 3
-  # resources: {}
-
-  # persistentVolume:
-  #   enabled: false
+  # databaseInitSQL references a ConfigMap that contains a SQL file that should be
+  databaseInitSQL:
+    name: bootstrap-sql
+    key: bootstrap.sql
+    sql: ALTER DATABASE app OWNER TO app;

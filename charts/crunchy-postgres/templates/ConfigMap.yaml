@@ -1,0 +1,9 @@
+{{- if .Values.databaseInitSQL }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.databaseInitSQL.name }}
+data:
+  bootstrap.sql: {{ .Values.databaseInitSQL.sql }}
+{{- end }}
