@@ -3,7 +3,7 @@ name: common-object-management-service
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 0.4.5
+version: 0.4.6
 kubeVersion: ">= 1.13.0"
 description: A microservice for managing access control to S3 Objects
 # A chart can be either an 'application' or a 'library' chart.
@@ -28,7 +28,7 @@ sources:
   - https://github.com/bcgov/common-object-management-service
 dependencies:
   - name: crunchy-postgres
-    version: 0.0.45
+    version: 0.0.46
     # repository: https://timcsaky.github.io/nr-patroni-chart
     repository: "file://../crunchy-postgres"
     condition: postgres.enabled
