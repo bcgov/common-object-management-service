@@ -114,13 +114,10 @@ patroni:
 
 # users sets any custom Postgres users and databases that they have  access to
 # as well as any permissions associated with the user account.
-# users:
-#   - name: app
-#     databases:
-#       - app
-#     options: "CREATEROLE"
 users: {}
 
+# databaseInitSQL references a ConfigMap that contains a SQL file that should be
+# run a cluster bootstrap.
 databaseInitSQL: {}
 
 proxy:

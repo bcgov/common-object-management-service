@@ -1,10 +1,10 @@
-{{- $postgresClusterName := include "crunchy-postgres.fullname" .Subcharts.postgres -}}
+{{- $postgresClusterName := printf "%s-%s" .Values.postgres.nameOverride .Release.Name -}}
 {{- $dbHostName := printf "%s-%s" $postgresClusterName "pgbouncer" -}}
 {{- $dbSecretName := printf "%s-%s-%s" $postgresClusterName "pguser" (first .Values.postgres.users).name -}}
 {{- define "coms.connectsTo" -}}
 apiVersion: apps/v1
 kind: StatefulSet
-name: {{ include "crunchy-postgres.fullname" .Subcharts.postgres }}
+name: {{ printf "%s-%s" .Values.postgres.nameOverride .Release.Name }}
 {{- end }}
 ---
 apiVersion: apps.openshift.io/v1
