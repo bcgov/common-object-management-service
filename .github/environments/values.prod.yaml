@@ -30,7 +30,7 @@ postgres:
   # crunchy config:
   pgBackRest:
     s3:
-      enabled: false
+      enabled: true
   proxy:
     pgBouncer:
       image: # it's not necessary to specify an image as the images specified in the Crunchy Postgres Operator will be pulled by default
@@ -38,13 +38,13 @@ postgres:
   instances:
     replicas: 3
     dataVolumeClaimSpec:
-      storage: 480Mi
+      storage: 2Gi
       storageClassName: netapp-block-standard
     requests:
-      cpu: 1m
+      cpu: 10m
       memory: 256Mi
     limits:
-      cpu: 100m
+      cpu: 500m
       memory: 512Mi
     replicaCertCopy:
       requests:

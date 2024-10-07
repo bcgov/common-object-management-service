@@ -38,13 +38,13 @@ postgres:
   instances:
     replicas: 2
     dataVolumeClaimSpec:
-      storage: 480Mi
+      storage: 1Gi
       storageClassName: netapp-block-standard
     requests:
       cpu: 1m
       memory: 256Mi
     limits:
-      cpu: 100m
+      cpu: 200m
       memory: 512Mi
     replicaCertCopy:
       requests:
