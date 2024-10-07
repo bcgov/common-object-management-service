@@ -72,6 +72,11 @@ spec:
                       {{ template "crunchy-postgres.fullname" . }}
                     postgres-operator.crunchydata.com/instance-set: {{ .Values.instances.name }}-ha
   
+  {{- /*
+  create custom postgres users/databases
+  define them in the `users` object in your values
+  ref: https://access.crunchydata.com/documentation/postgres-operator/latest/tutorials/day-two/customize-cluster#database-initialization-sql
+  */}}
   users:
     - name: postgres
       databases:
@@ -79,7 +84,7 @@ spec:
   {{- if .Values.users }}
 {{ toYaml .Values.users | indent 4 }}
   {{- end }}
-  # refL https://access.crunchydata.com/documentation/postgres-operator/latest/tutorials/day-two/customize-cluster#database-initialization-sql
+  
   {{- if .Values.databaseInitSQL }}
   databaseInitSQL:
     name: {{ .Values.databaseInitSQL.name }}

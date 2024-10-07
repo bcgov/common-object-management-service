@@ -192,8 +192,8 @@ objectStorageSecretOverride:
 postgres:
   enabled: true
   # crunchy config:
+  fullnameOverride: ~
   nameOverride: postgres
-  fullnameOverride: postgres
   users:
     - name: app
       databases:
