@@ -27,14 +27,12 @@ config:
 
 postgres:
   enabled: true
-  # crunchy config:
-  pgBackRest:
-    s3:
-      enabled: true
-  proxy:
-    pgBouncer:
-      image: # it's not necessary to specify an image as the images specified in the Crunchy Postgres Operator will be pulled by default
-      replicas: 2
+
+  # --------------------------------
+  # --------crunchydb config: ------
+  # --------------------------------
+
+  # --- cluster resource allocation ----
   instances:
     replicas: 3
     dataVolumeClaimSpec:
@@ -46,10 +44,39 @@ postgres:
     limits:
       cpu: 500m
       memory: 512Mi
-    replicaCertCopy:
-      requests:
-        cpu: 1m
-        memory: 32Mi
-      limits:
-        cpu: 50m
-        memory: 64Mi
+
+  # -------- backups ---------
+  pgBackRest:
+    # 'backups to "volume" are hard-coded (enabled) in the PostgresCluster template (see: repo1)
+    retention: "2"
+    retentionFullType: count
+    repos:
+      schedules:
+        full: 0 8 * * *
+        incremental: 0 0,4,12,16,20 * * *
+      volume:
+        # enable backups to volume (pvc)
+        enabled: true
+        accessModes: "ReadWriteOnce"
+        storage: 64Mi
+        storageClassName: netapp-file-backup
+    # backups to S3 are also hard-coded in postgresCluster template (see repo2)
+    s3:
+      # enable backups to s3
+      enabled: true
+      createS3Secret: true
+      s3Secret: s3-pgbackrest
+      s3Path: "/habackup"
+      s3UriStyle: path
+      bucket: "bucketName"
+      endpoint: "endpointName"
+      region: "ca-central-1"
+      key: "s3keyValue"
+      keySecret: "s3SecretValue"
+      fullSchedule: "0 9 * * *"
+      incrementalSchedule: "0 1,5,13,17,21 * * *"
+
+  # ------ pgBouncer-------
+  proxy:
+    pgBouncer:
+      replicas: 3

@@ -48,6 +48,7 @@ dataSource:
     stanza: db
 
 pgBackRest:
+  # 'backups to "volume" are hard-coded (enabled) in the PostgresCluster template (see: repo1)
   image: # it's not necessary to specify an image as the images specified in the Crunchy Postgres Operator will be pulled by default
   retention: "2" # Ideally a larger number such as 30 backups/days
   # If retention-full-type set to 'count' then the oldest backups will expire when the number of backups reach the number defined in retention
@@ -58,6 +59,8 @@ pgBackRest:
       full: 0 8 * * *
       incremental: 0 0,4,12,16,20 * * *
     volume:
+      # enable backups to volume (pvc)
+      enabled: true
       accessModes: "ReadWriteOnce"
       storage: 64Mi
       storageClassName: netapp-file-backup
@@ -75,7 +78,9 @@ pgBackRest:
     limits:
       cpu: 50m
       memory: 128Mi
+  # backups to S3 are also hard-coded in postgresCluster template (see repo2)
   s3:
+    # enable backups to s3
     enabled: false
     createS3Secret: true
     # the s3 secret name

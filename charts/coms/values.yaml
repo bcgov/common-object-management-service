@@ -191,16 +191,44 @@ objectStorageSecretOverride:
 # crunchy-postgres subchart configuration overrides
 postgres:
   enabled: true
-  # crunchy config:
+
+  # --------------------------------
+  # --------crunchydb config: ------
+  # --------------------------------
+
+  # note: override methodology:
+  # - defaults exist in subchart crunchy-postgres
+  # - overrides that apply to all coms environments are defined in this values.yaml file
+  # - overrides specific to a single environment are defined in values.<environment>.yaml
+
   fullnameOverride: ~
   nameOverride: postgres
+
+  # ------- postgres user/db configuration ----------
   users:
     - name: app
       databases:
         - app
-      options: "CREATEROLE"
   # databaseInitSQL references a ConfigMap that contains a SQL file that should be
   databaseInitSQL:
     name: bootstrap-sql
     key: bootstrap.sql
-    sql: ALTER DATABASE app OWNER TO app;
+    sql: |
+      \c app;
+      ALTER DATABASE app OWNER TO app;
+      ALTER SCHEMA public OWNER TO app;
+      REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+      CREATE SCHEMA invite;
+      ALTER SCHEMA invite OWNER TO app;
+      CREATE SCHEMA audit;
+      ALTER SCHEMA audit OWNER TO app;
+      CREATE SCHEMA queue;
+      ALTER SCHEMA queue OWNER TO app;
+
+  # -------- backups ---------
+  pgBackRest:
+    repos:
+      volume:
+        enabled: false
+    s3:
+      enabled: false

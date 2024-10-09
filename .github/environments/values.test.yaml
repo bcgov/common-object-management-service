@@ -27,29 +27,33 @@ config:
 
 postgres:
   enabled: true
-  # crunchy config:
-  pgBackRest:
-    s3:
-      enabled: false
-  proxy:
-    pgBouncer:
-      image: # it's not necessary to specify an image as the images specified in the Crunchy Postgres Operator will be pulled by default
-      replicas: 2
+
+  # --------------------------------
+  # --------crunchydb config: ------
+  # --------------------------------
+
+  # --- cluster resource allocation ----
   instances:
-    replicas: 2
+    replicas: 5
     dataVolumeClaimSpec:
-      storage: 1Gi
+      storage: 4Gi
       storageClassName: netapp-block-standard
     requests:
-      cpu: 1m
+      cpu: 10m
       memory: 256Mi
     limits:
-      cpu: 200m
+      cpu: 500m
       memory: 512Mi
-    replicaCertCopy:
-      requests:
-        cpu: 1m
-        memory: 32Mi
-      limits:
-        cpu: 50m
-        memory: 64Mi
+
+  # -------- backups ---------
+  pgBackRest:
+    repos:
+      volume:
+        enabled: false
+    s3:
+      enabled: false
+
+  # ------ pgBouncer-------
+  proxy:
+    pgBouncer:
+      replicas: 2
