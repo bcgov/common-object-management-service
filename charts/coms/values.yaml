@@ -197,12 +197,11 @@ postgres:
   # --------------------------------
 
   # note: override methodology:
-  # - defaults exist in subchart crunchy-postgres
+  # - defaults exist in subchart postgres
   # - overrides that apply to all coms environments are defined in this values.yaml file
   # - overrides specific to a single environment are defined in values.<environment>.yaml
 
-  fullnameOverride: ~
-  nameOverride: postgres
+  postgresVersion: 15
 
   # ------- postgres user/db configuration ----------
   users:
@@ -225,10 +224,13 @@ postgres:
       CREATE SCHEMA queue;
       ALTER SCHEMA queue OWNER TO app;
 
-  # -------- backups ---------
-  pgBackRest:
-    repos:
-      volume:
-        enabled: false
-    s3:
-      enabled: false
+  # -------- monitoring ----------
+  monitoring: true
+  monitoringConfig:
+    resources:
+      requests:
+        cpu: 1m
+        memory: 64Mi
+      limits:
+        cpu: 50m
+        memory: 128Mi

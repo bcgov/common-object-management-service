@@ -34,26 +34,19 @@ postgres:
 
   # --- cluster resource allocation ----
   instances:
-    replicas: 5
-    dataVolumeClaimSpec:
-      storage: 4Gi
-      storageClassName: netapp-block-standard
-    requests:
-      cpu: 10m
-      memory: 256Mi
-    limits:
-      cpu: 500m
-      memory: 512Mi
-
-  # -------- backups ---------
-  pgBackRest:
-    repos:
-      volume:
-        enabled: false
-    s3:
-      enabled: false
-
-  # ------ pgBouncer-------
-  proxy:
-    pgBouncer:
+    - name: db # do not change this name after initial install, pvc (data) and stateful sets will be deleted
       replicas: 2
+      dataVolumeClaimSpec:
+        accessModes:
+          - "ReadWriteOnce"
+        resources:
+          requests:
+            storage: 1Gi
+        storageClassName: "netapp-block-standard"
+      resources:
+        requests:
+          cpu: 1m
+          memory: 256Mi
+        limits:
+          cpu: 100m
+          memory: 512Mi

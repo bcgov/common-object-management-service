@@ -1,10 +1,10 @@
-{{- $postgresClusterName := printf "%s-%s" .Values.postgres.nameOverride .Release.Name -}}
+{{- $postgresClusterName := printf "%s-%s" "postgres" .Release.Name -}}
 {{- $dbHostName := printf "%s-%s" $postgresClusterName "pgbouncer" -}}
 {{- $dbSecretName := printf "%s-%s-%s" $postgresClusterName "pguser" (first .Values.postgres.users).name -}}
 {{- define "coms.connectsTo" -}}
 apiVersion: apps/v1
 kind: StatefulSet
-name: {{ printf "%s-%s" .Values.postgres.nameOverride .Release.Name }}
+name: {{ printf "%s-%s" "postgres" .Release.Name }}
 {{- end }}
 ---
 apiVersion: apps.openshift.io/v1
