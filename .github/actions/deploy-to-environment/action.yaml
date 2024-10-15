@@ -57,6 +57,7 @@ runs:
         --set image.repository=ghcr.io/$OWNER_LC
         --set image.tag=sha-$(git rev-parse --short HEAD)
         --set route.host=${{ inputs.acronym }}-${{ inputs.namespace_environment }}-${{ inputs.job_name }}.apps.silver.devops.gov.bc.ca
+        --set postgres.name=postgres-${{ inputs.job_name }}
         --timeout 10m
         --wait
 

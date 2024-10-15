@@ -201,6 +201,11 @@ postgres:
   # - overrides that apply to all coms environments are defined in this values.yaml file
   # - overrides specific to a single environment are defined in values.<environment>.yaml
 
+  # name of the cluster.
+  # in COMS pipeline we pass this in Helm deploy command in github action
+  # eg: --set postgres.name=postgres-master
+  # name: postgres-master
+
   postgresVersion: 15
 
   # ------- postgres user/db configuration ----------
@@ -223,6 +228,9 @@ postgres:
       ALTER SCHEMA audit OWNER TO app;
       CREATE SCHEMA queue;
       ALTER SCHEMA queue OWNER TO app;
+
+  # ----- pgBouncer (network pooling) ------
+  pgBouncerReplicas: 2
 
   # -------- monitoring ----------
   monitoring: true
