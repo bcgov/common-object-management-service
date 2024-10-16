@@ -10,7 +10,7 @@
 [![pulls](https://img.shields.io/docker/pulls/bcgovimages/common-object-management-service.svg)](https://hub.docker.com/r/bcgovimages/common-object-management-service)
 [![size](https://img.shields.io/docker/image-size/bcgovimages/common-object-management-service.svg)](https://hub.docker.com/r/bcgovimages/common-object-management-service)
 
-A microservice for managing access control to S3 Objects
+..A microservice for managing access control to S3 Objects
 
 To learn more about the **Common Services** available visit the [Common Services Showcase](https://bcgov.github.io/common-service-showcase/) page.
 
