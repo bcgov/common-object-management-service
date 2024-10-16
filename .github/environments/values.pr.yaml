@@ -6,29 +6,26 @@ features:
 
 postgres:
   enabled: true
-  # crunchy config:
-  pgBackRest:
-    s3:
-      enabled: false
-  proxy:
-    pgBouncer:
-      image: # it's not necessary to specify an image as the images specified in the Crunchy Postgres Operator will be pulled by default
-      replicas: 1
+
+  # --------------------------------
+  # --------crunchydb config: ------
+  # --------------------------------
+
+  # --- cluster resource allocation ----
   instances:
-    replicas: 1
-    dataVolumeClaimSpec:
-      storage: 480Mi
-      storageClassName: netapp-block-standard
-    requests:
-      cpu: 1m
-      memory: 256Mi
-    limits:
-      cpu: 100m
-      memory: 512Mi
-    replicaCertCopy:
-      requests:
-        cpu: 1m
-        memory: 32Mi
-      limits:
-        cpu: 50m
-        memory: 64Mi
+    - name: db # do not change this name after initial install, pvc (data) and stateful sets will be deleted
+      replicas: 2
+      dataVolumeClaimSpec:
+        accessModes:
+          - "ReadWriteOnce"
+        resources:
+          requests:
+            storage: 2Gi
+        storageClassName: "netapp-block-standard"
+      resources:
+        requests:
+          cpu: 1m
+          memory: 256Mi
+        limits:
+          cpu: 100m
+          memory: 512Mi

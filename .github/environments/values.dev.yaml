@@ -41,7 +41,7 @@ postgres:
           - "ReadWriteOnce"
         resources:
           requests:
-            storage: 1Gi
+            storage: 5Gi
         storageClassName: "netapp-block-standard"
       resources:
         requests:
@@ -92,13 +92,8 @@ postgres:
     repos:
       - name: repo1
         schedules:
-          # Full backup weekly on Sunday at 1am or 2am (9am UTC) and
-          # Differential backups daily at 1am or 2am (9am UTC) on every day except Sunday,
-          # Incremental backups every hour except for 9am UTC
-          # be sure to configure these not to run at the same time
-          full: "0 9 * * 0"
-          differential: "0 9 * * 1-6"
-          incremental: "0 0-8,10-23 * * *"
+          full: "0 7 * * *"
+          differential: "0 */2 * * *"
         volume:
           volumeClaimSpec:
             accessModes:
@@ -107,6 +102,18 @@ postgres:
               requests:
                 storage: 2Gi
             storageClassName: "netapp-file-backup"
+      # - name: repo2
+      #   schedules:
+      #     full: "0 5 * * *"
+      #   s3:
+      #     createS3Secret: true
+      #     s3Secret: s3-pgbackrest
+      #     s3Path: "/habackup"
+      #     s3UriStyle: path
+      #     bucket: a
+      #     endpoint: b
+      #     region: c
+
     # this stuff is for the "pgbackrest" container (the only non-init container) in the "postgres-crunchy-repo-host" pod
     repoHost:
       resources:

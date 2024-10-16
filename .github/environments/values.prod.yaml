@@ -34,49 +34,54 @@ postgres:
 
   # --- cluster resource allocation ----
   instances:
-    replicas: 3
-    dataVolumeClaimSpec:
-      storage: 2Gi
-      storageClassName: netapp-block-standard
-    requests:
-      cpu: 10m
-      memory: 256Mi
-    limits:
-      cpu: 500m
-      memory: 512Mi
-
-  # -------- backups ---------
-  pgBackRest:
-    # 'backups to "volume" are hard-coded (enabled) in the PostgresCluster template (see: repo1)
-    retention: "2"
-    retentionFullType: count
-    repos:
-      schedules:
-        full: 0 8 * * *
-        incremental: 0 0,4,12,16,20 * * *
-      volume:
-        # enable backups to volume (pvc)
-        enabled: true
-        accessModes: "ReadWriteOnce"
-        storage: 64Mi
-        storageClassName: netapp-file-backup
-    # backups to S3 are also hard-coded in postgresCluster template (see repo2)
-    s3:
-      # enable backups to s3
-      enabled: true
-      createS3Secret: true
-      s3Secret: s3-pgbackrest
-      s3Path: "/habackup"
-      s3UriStyle: path
-      bucket: "bucketName"
-      endpoint: "endpointName"
-      region: "ca-central-1"
-      key: "s3keyValue"
-      keySecret: "s3SecretValue"
-      fullSchedule: "0 9 * * *"
-      incrementalSchedule: "0 1,5,13,17,21 * * *"
-
-  # ------ pgBouncer-------
-  proxy:
-    pgBouncer:
+    - name: db # do not change this name after initial install, pvc (data) and stateful sets will be deleted
       replicas: 3
+      dataVolumeClaimSpec:
+        accessModes:
+          - "ReadWriteOnce"
+        resources:
+          requests:
+            storage: 5Gi
+        storageClassName: "netapp-block-standard"
+      resources:
+        requests:
+          cpu: 1m
+          memory: 256Mi
+        limits:
+          cpu: 100m
+          memory: 512Mi
+
+  # # -------- backups ---------
+  # pgBackRest:
+  #   # 'backups to "volume" are hard-coded (enabled) in the PostgresCluster template (see: repo1)
+  #   retention: "2"
+  #   retentionFullType: count
+  #   repos:
+  #     schedules:
+  #       full: 0 8 * * *
+  #       incremental: 0 0,4,12,16,20 * * *
+  #     volume:
+  #       # enable backups to volume (pvc)
+  #       enabled: true
+  #       accessModes: "ReadWriteOnce"
+  #       storage: 64Mi
+  #       storageClassName: netapp-file-backup
+  #   # backups to S3 are also hard-coded in postgresCluster template (see repo2)
+  #   s3:
+  #     # enable backups to s3
+  #     enabled: true
+  #     createS3Secret: true
+  #     s3Secret: s3-pgbackrest
+  #     s3Path: "/habackup"
+  #     s3UriStyle: path
+  #     bucket: "bucketName"
+  #     endpoint: "endpointName"
+  #     region: "ca-central-1"
+  #     key: "s3keyValue"
+  #     keySecret: "s3SecretValue"
+  #     fullSchedule: "0 9 * * *"
+  #     incrementalSchedule: "0 1,5,13,17,21 * * *"
+
+  # ----- pgBouncer (network pooling) ------
+  pgBouncerConfig:
+    replicas: 3

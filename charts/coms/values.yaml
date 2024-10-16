@@ -206,7 +206,7 @@ postgres:
   # eg: --set postgres.name=postgres-master
   # name: postgres-master
 
-  postgresVersion: 15
+  postgresVersion: 16
 
   # ------- postgres user/db configuration ----------
   users:
@@ -230,7 +230,12 @@ postgres:
       ALTER SCHEMA queue OWNER TO app;
 
   # ----- pgBouncer (network pooling) ------
-  pgBouncerReplicas: 2
+  pgBouncerConfig:
+    image: # it's not necessary to specify an image as the images specified in the Crunchy Postgres Operator will be pulled by default
+    replicas: 2
+    config:
+      global:
+        client_tls_sslmode: disable
 
   # -------- monitoring ----------
   monitoring: true
