@@ -58,7 +58,7 @@ runs:
         --set image.tag=sha-$(git rev-parse --short HEAD)
         --set route.host=${{ inputs.acronym }}-${{ inputs.namespace_environment }}-${{ inputs.job_name }}.apps.silver.devops.gov.bc.ca
         --set postgres.name=postgres-${{ inputs.job_name }}
-        --timeout 10m
+        --timeout 15m
         --wait
 
     - name: Wait on Deployment
