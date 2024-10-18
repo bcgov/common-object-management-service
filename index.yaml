@@ -37,6 +37,40 @@ entries:
     version: 1.0.0
   - apiVersion: v2
     appVersion: 0.8.0
+    created: "2024-10-18T21:00:16.740741715Z"
+    dependencies:
+    - alias: postgres
+      condition: postgres.enabled
+      name: postgrescluster
+      repository: file://../postgres
+      version: 0.1.2
+    description: A microservice for managing access control to S3 Objects
+    digest: 2c2f9a0e232ef94a8a28c49c948e57858590f48698e2596ba8a054c721762128
+    home: https://bcgov.github.io/common-object-management-service
+    keywords:
+    - nodejs
+    - javascript
+    - docker
+    - microservice
+    - s3
+    - document-management
+    - access-control
+    - object-storage
+    - domo
+    kubeVersion: '>= 1.13.0'
+    maintainers:
+    - email: NR.CommonServiceShowcase@gov.bc.ca
+      name: NR Common Service Showcase Team
+      url: https://bcgov.github.io/common-service-showcase/team.html
+    name: common-object-management-service
+    sources:
+    - https://github.com/bcgov/common-object-management-service
+    type: application
+    urls:
+    - https://github.com/bcgov/common-object-management-service/releases/download/common-object-management-service-0.1.2/common-object-management-service-0.1.2.tgz
+    version: 0.1.2
+  - apiVersion: v2
+    appVersion: 0.8.0
     created: "2024-09-17T23:28:51.400345983Z"
     dependencies:
     - condition: patroni.enabled
@@ -956,4 +990,14 @@ entries:
     urls:
     - https://github.com/bcgov/common-object-management-service/releases/download/postgrescluster-1.0.0/postgrescluster-1.0.0.tgz
     version: 1.0.0
-generated: "2024-10-18T20:40:01.799221045Z"
+  - apiVersion: v2
+    appVersion: 5.6.0
+    created: "2024-10-18T21:00:16.896216066Z"
+    description: A Helm chart for Kubernetes
+    digest: 2678576bca96d96d6671c1d618f7aa4e9e082bc7e29432bc00249593b78341bc
+    name: postgrescluster
+    type: application
+    urls:
+    - https://github.com/bcgov/common-object-management-service/releases/download/postgrescluster-0.1.2/postgrescluster-0.1.2.tgz
+    version: 0.1.2
+generated: "2024-10-18T21:00:16.896461302Z"
