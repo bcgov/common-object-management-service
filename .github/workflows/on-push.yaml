@@ -1,9 +1,9 @@
 name: Push
 
 env:
-  ACRONYM: migrate
+  ACRONYM: coms
   APP_NAME: common-object-management-service
-  NAMESPACE_PREFIX: 1dca6b
+  NAMESPACE_PREFIX: bb17f9
 
 on:
   push:

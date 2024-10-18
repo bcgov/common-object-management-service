@@ -52,7 +52,7 @@ runs:
       run: >-
         helm upgrade --install --debug --atomic ${{ inputs.job_name }} ${{ inputs.app_name }}
         --namespace ${{ inputs.namespace_prefix }}-${{ inputs.namespace_environment }}
-        --repo https://timcsaky.github.io/common-object-management-service
+        --repo https://bcgov.github.io/common-object-management-service
         --values ./.github/environments/values.${{ inputs.environment }}.yaml
         --set image.repository=ghcr.io/$OWNER_LC
         --set image.tag=sha-$(git rev-parse --short HEAD)
