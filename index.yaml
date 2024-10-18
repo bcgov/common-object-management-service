@@ -37,6 +37,40 @@ entries:
     version: 1.0.0
   - apiVersion: v2
     appVersion: 0.8.0
+    created: "2024-10-18T21:39:29.339787302Z"
+    dependencies:
+    - alias: postgres
+      condition: postgres.enabled
+      name: postgrescluster
+      repository: file://../postgres
+      version: 0.1.6
+    description: A microservice for managing access control to S3 Objects
+    digest: 5c96b8632b57bf7fb91edb0f4a0cee1cc6853d5c9c7b0cda61fc5fffeaf9578a
+    home: https://bcgov.github.io/common-object-management-service
+    keywords:
+    - nodejs
+    - javascript
+    - docker
+    - microservice
+    - s3
+    - document-management
+    - access-control
+    - object-storage
+    - domo
+    kubeVersion: '>= 1.13.0'
+    maintainers:
+    - email: NR.CommonServiceShowcase@gov.bc.ca
+      name: NR Common Service Showcase Team
+      url: https://bcgov.github.io/common-service-showcase/team.html
+    name: common-object-management-service
+    sources:
+    - https://github.com/bcgov/common-object-management-service
+    type: application
+    urls:
+    - https://github.com/bcgov/common-object-management-service/releases/download/common-object-management-service-0.1.6/common-object-management-service-0.1.6.tgz
+    version: 0.1.6
+  - apiVersion: v2
+    appVersion: 0.8.0
     created: "2024-10-18T21:31:19.319691572Z"
     dependencies:
     - alias: postgres
@@ -1094,6 +1128,16 @@ entries:
     version: 1.0.0
   - apiVersion: v2
     appVersion: 5.6.0
+    created: "2024-10-18T21:39:29.456151975Z"
+    description: A Helm chart for Kubernetes
+    digest: 798ee8d0ec71850cdd05a7c39f84dbf069073f913d8f97af5cf693c1d1591cab
+    name: postgrescluster
+    type: application
+    urls:
+    - https://github.com/bcgov/common-object-management-service/releases/download/postgrescluster-0.1.6/postgrescluster-0.1.6.tgz
+    version: 0.1.6
+  - apiVersion: v2
+    appVersion: 5.6.0
     created: "2024-10-18T21:31:19.410971227Z"
     description: A Helm chart for Kubernetes
     digest: 5e888658ab4aa7d6e011c5d4baad98f2db190fd53beee47dd435116a364294c8
@@ -1132,4 +1176,4 @@ entries:
     urls:
     - https://github.com/bcgov/common-object-management-service/releases/download/postgrescluster-0.1.2/postgrescluster-0.1.2.tgz
     version: 0.1.2
-generated: "2024-10-18T21:31:19.411298345Z"
+generated: "2024-10-18T21:39:29.456511181Z"
