@@ -46,7 +46,65 @@ postgres:
       resources:
         requests:
           cpu: 1m
-          memory: 256Mi
+          memory: 128Mi
         limits:
           cpu: 100m
-          memory: 512Mi
+          memory: 256Mi
+
+  # -------- backups ---------
+  pgBackRestConfig:
+    # allow one-off backups
+    manual:
+      repoName: repo1
+      options:
+        - --type=full
+    configuration:
+      # secret for saving backups to S3
+      - secret:
+          name: pgbackrest-s3
+    global:
+      # log-level-console: debug
+      # --- pvc
+      repo1-retention-full: "3"
+      repo1-retention-diff: "12"
+      # --- s3
+      repo2-path: /backups/common-object-management-service/postgres/test
+      repo2-retention-full: "30"
+      repo2-s3-uri-style: path
+    repos:
+      - name: repo1
+        schedules:
+          full: "0 7 * * *" # full backup every day at 7am
+          differential: "0 */2 * * *" # differential every 2 hours
+        volume:
+          volumeClaimSpec:
+            accessModes:
+              - "ReadWriteOnce"
+            resources:
+              requests:
+                storage: 2Gi
+            storageClassName: "netapp-file-backup"
+      - name: repo2
+        schedules:
+          full: "0 2 * * *" # full backup every day at 2am
+        s3:
+          bucket: csstops
+          endpoint: https://nrs.objectstore.gov.bc.ca
+          region: us-east-1
+    repoHost:
+      resources:
+        requests:
+          cpu: 1m
+          memory: 64Mi
+        limits:
+          cpu: 50m
+          memory: 128Mi
+    sidecars:
+      pgbackrest:
+        resources:
+          requests:
+            cpu: 1m
+            memory: 64Mi
+          limits:
+            cpu: 50m
+            memory: 128Mi

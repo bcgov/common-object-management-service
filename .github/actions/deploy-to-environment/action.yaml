@@ -50,7 +50,7 @@ runs:
     - name: Helm Deploy
       shell: bash
       run: >-
-        helm upgrade --install --debug --atomic ${{ inputs.job_name }} ${{ inputs.app_name }}
+        helm upgrade --install --atomic ${{ inputs.job_name }} ${{ inputs.app_name }}
         --namespace ${{ inputs.namespace_prefix }}-${{ inputs.namespace_environment }}
         --repo https://bcgov.github.io/common-object-management-service
         --values ./.github/environments/values.${{ inputs.environment }}.yaml
