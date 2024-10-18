@@ -50,3 +50,7 @@ postgres:
         limits:
           cpu: 100m
           memory: 512Mi
+
+  # -------- backups ---------
+  pgBackRestConfig:
+    repos: ~

@@ -250,4 +250,4 @@ postgres:
 
   # -------- backups ---------
   pgBackRestConfig:
-    repos: {}
+    repos: ~
