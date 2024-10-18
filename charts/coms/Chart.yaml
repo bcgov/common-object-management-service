@@ -3,7 +3,7 @@ name: common-object-management-service
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 0.8.2
+version: 1.0.0
 kubeVersion: ">= 1.13.0"
 description: A microservice for managing access control to S3 Objects
 # A chart can be either an 'application' or a 'library' chart.
@@ -28,7 +28,7 @@ sources:
   - https://github.com/bcgov/common-object-management-service
 dependencies:
   - name: postgrescluster
-    version: 5.8.2
+    version: 1.0.0
     repository: "file://../postgres"
     condition: postgres.enabled
     alias: postgres
