@@ -53,7 +53,7 @@ postgres:
 
   # ----- pgBouncer (network pooling) ------
   pgBouncerConfig:
-    replicas: 3
+    replicas: 2
 
   # -------- backups ---------
   pgBackRestConfig:

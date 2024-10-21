@@ -41,7 +41,7 @@ postgres:
           - "ReadWriteOnce"
         resources:
           requests:
-            storage: 5Gi
+            storage: 2Gi
         storageClassName: "netapp-block-standard"
       resources:
         requests:
@@ -51,6 +51,9 @@ postgres:
           cpu: 100m
           memory: 256Mi
 
+  # ----- pgBouncer (network pooling) ------
+  pgBouncerConfig:
+    replicas: 3
   # -------- backups ---------
   pgBackRestConfig:
     # allow one-off backups
