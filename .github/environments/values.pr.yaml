@@ -11,21 +11,24 @@ postgres:
   # --------crunchydb config: ------
   # --------------------------------
 
-  # --- cluster resource allocation ----
+  # --- resource allocation ----
   instances:
     - name: db # do not change this name after initial install, pvc (data) and stateful sets will be deleted
-      replicas: 2
+      replicas: 1
       dataVolumeClaimSpec:
         accessModes:
           - "ReadWriteOnce"
+        storageClassName: "netapp-block-standard"
         resources:
           requests:
-            storage: 2Gi
-        storageClassName: "netapp-block-standard"
+            storage: 1Gi
       resources:
         requests:
           cpu: 1m
-          memory: 256Mi
+          memory: 128Mi
         limits:
-          cpu: 100m
-          memory: 512Mi
+          cpu: 50m
+          memory: 256Mi
+
+  # -------- backups ---------
+  pgBackRestConfig: {}

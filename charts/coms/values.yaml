@@ -208,6 +208,25 @@ postgres:
 
   postgresVersion: 16
 
+  # --- resource allocation ----
+  instances:
+    - name: db # do not change this name after initial install, pvc (data) and stateful sets will be deleted
+      replicas: 2
+      dataVolumeClaimSpec:
+        accessModes:
+          - "ReadWriteOnce"
+        resources:
+          requests:
+            storage: 2Gi
+        storageClassName: "netapp-block-standard"
+      resources:
+        requests:
+          cpu: 1m
+          memory: 256Mi
+        limits:
+          cpu: 100m
+          memory: 512Mi
+
   # ------- postgres user/db configuration ----------
   users:
     - name: app
@@ -229,15 +248,40 @@ postgres:
       CREATE SCHEMA queue;
       ALTER SCHEMA queue OWNER TO app;
 
+  # -------- backups ---------
+  pgBackRestConfig:
+    # allow one-off backups
+    manual:
+      repoName: repo1
+      options:
+        - --type=full
+    repoHost:
+      resources:
+        requests:
+          cpu: 1m
+          memory: 64Mi
+        limits:
+          cpu: 50m
+          memory: 128Mi
+    sidecars:
+      pgbackrest:
+        resources:
+          requests:
+            cpu: 1m
+            memory: 64Mi
+          limits:
+            cpu: 50m
+            memory: 128Mi
+
   # ----- pgBouncer (network pooling) ------
   pgBouncerConfig:
-    replicas: 2
+    replicas: 1
     config:
       global:
         client_tls_sslmode: disable
 
   # -------- monitoring ----------
-  monitoring: true
+  monitoring: false
   monitoringConfig:
     resources:
       requests:

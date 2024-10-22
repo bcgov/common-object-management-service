@@ -51,17 +51,8 @@ postgres:
           cpu: 100m
           memory: 512Mi
 
-  # ----- pgBouncer (network pooling) ------
-  pgBouncerConfig:
-    replicas: 2
-
   # -------- backups ---------
   pgBackRestConfig:
-    # allow one-off backups
-    manual:
-      repoName: repo1
-      options:
-        - --type=full
     configuration:
       # secret for saving backups to S3
       - secret:
@@ -95,20 +86,10 @@ postgres:
           bucket: csstops
           endpoint: https://nrs.objectstore.gov.bc.ca
           region: us-east-1
-    repoHost:
-      resources:
-        requests:
-          cpu: 1m
-          memory: 64Mi
-        limits:
-          cpu: 50m
-          memory: 128Mi
-    sidecars:
-      pgbackrest:
-        resources:
-          requests:
-            cpu: 1m
-            memory: 64Mi
-          limits:
-            cpu: 50m
-            memory: 128Mi
+
+  # ----- pgBouncer (network pooling) ------
+  pgBouncerConfig:
+    replicas: 2
+
+  # -------- monitoring ---------
+  monitoring: true
