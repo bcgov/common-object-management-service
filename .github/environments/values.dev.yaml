@@ -35,14 +35,14 @@ postgres:
   # --- resource allocation ----
   instances:
     - name: db # do not change this name after initial install, pvc (data) and stateful sets will be deleted
-      replicas: 2
+      replicas: 3
       dataVolumeClaimSpec:
         accessModes:
           - "ReadWriteOnce"
+        storageClassName: "netapp-block-standard"
         resources:
           requests:
-            storage: 5Gi
-        storageClassName: "netapp-block-standard"
+            storage: 3Gi
       resources:
         requests:
           cpu: 1m
@@ -50,3 +50,24 @@ postgres:
         limits:
           cpu: 100m
           memory: 512Mi
+
+  # -------- backups ---------
+  pgBackRestConfig:
+    global:
+      # log-level-console: debug
+      # --- pvc
+      repo1-retention-full: "2"
+      repo1-retention-diff: "3"
+    repos:
+      - name: repo1
+        schedules:
+          full: "0 7 * * *" # full backup every day at 7am
+          differential: "0 */2 * * *" # differential every 2 hours
+        volume:
+          volumeClaimSpec:
+            accessModes:
+              - "ReadWriteOnce"
+            resources:
+              requests:
+                storage: 2Gi
+            storageClassName: "netapp-file-backup"
