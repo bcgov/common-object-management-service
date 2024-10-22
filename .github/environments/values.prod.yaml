@@ -87,9 +87,17 @@ postgres:
           endpoint: https://nrs.objectstore.gov.bc.ca
           region: us-east-1
 
-  # ----- pgBouncer (network pooling) ------
-  pgBouncerConfig:
-    replicas: 2
+  # # ----- pgBouncer (network pooling) ------
+  # pgBouncerConfig:
+  #   replicas: 2
 
   # -------- monitoring ---------
   monitoring: true
+  monitoringConfig:
+  resources:
+    requests:
+      cpu: 1m
+      memory: 16Mi
+    limits:
+      cpu: 35m
+      memory: 32Mi

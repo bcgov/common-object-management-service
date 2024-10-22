@@ -36,20 +36,20 @@ postgres:
   instances:
     - name: db # do not change this name after initial install, pvc (data) and stateful sets will be deleted
       replicas: 3
-      dataVolumeClaimSpec:
-        accessModes:
-          - "ReadWriteOnce"
-        storageClassName: "netapp-block-standard"
-        resources:
-          requests:
-            storage: 3Gi
-      resources:
-        requests:
-          cpu: 1m
-          memory: 256Mi
-        limits:
-          cpu: 100m
-          memory: 512Mi
+      # dataVolumeClaimSpec:
+      #   accessModes:
+      #     - "ReadWriteOnce"
+      #   storageClassName: "netapp-block-standard"
+      #   resources:
+      #     requests:
+      #       storage: 1Gi
+      # resources:
+      #   requests:
+      #     cpu: 50m
+      #     memory: 128Mi
+      #   limits:
+      #     cpu: 100m
+      #     memory: 256Mi
 
   # -------- backups ---------
   pgBackRestConfig:

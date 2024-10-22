@@ -110,7 +110,7 @@ resources:
     # -- Limit Peak CPU (in millicores ex. 1000m)
     cpu: 200m
     # -- Limit Peak Memory (in gigabytes Gi or megabytes Mi ex. 2Gi)
-    memory: 512Mi
+    memory: 256Mi
   requests:
     # -- Requested CPU (in millicores ex. 500m)
     cpu: 50m
@@ -217,15 +217,24 @@ postgres:
           - "ReadWriteOnce"
         resources:
           requests:
-            storage: 2Gi
+            storage: 0.5Gi
         storageClassName: "netapp-block-standard"
       resources:
         requests:
-          cpu: 1m
-          memory: 256Mi
+          cpu: 50m
+          memory: 128Mi
         limits:
           cpu: 100m
-          memory: 512Mi
+          memory: 256Mi
+      sidecars:
+        replicaCertCopy:
+          resources:
+            requests:
+              cpu: 1m
+              memory: 32Mi
+            limits:
+              cpu: 50m
+              memory: 64Mi
 
   # ------- postgres user/db configuration ----------
   users:
@@ -258,35 +267,42 @@ postgres:
     repoHost:
       resources:
         requests:
-          cpu: 1m
-          memory: 64Mi
+          cpu: 20m
+          memory: 128Mi
         limits:
           cpu: 50m
-          memory: 128Mi
+          memory: 256Mi
     sidecars:
       pgbackrest:
         resources:
           requests:
-            cpu: 1m
-            memory: 64Mi
+            cpu: 5m
+            memory: 16Mi
           limits:
-            cpu: 50m
-            memory: 128Mi
+            cpu: 20m
+            memory: 64Mi
+    jobs:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 64Mi
+        limits:
+          cpu: 50m
+          memory: 128Mi
 
   # ----- pgBouncer (network pooling) ------
   pgBouncerConfig:
-    replicas: 1
+    replicas: 2
     config:
       global:
         client_tls_sslmode: disable
+    resources:
+      requests:
+        cpu: 5m
+        memory: 32Mi
+      limits:
+        cpu: 20m
+        memory: 64Mi
 
   # -------- monitoring ----------
   monitoring: false
-  monitoringConfig:
-    resources:
-      requests:
-        cpu: 1m
-        memory: 64Mi
-      limits:
-        cpu: 50m
-        memory: 128Mi
