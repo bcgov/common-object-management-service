@@ -32,7 +32,6 @@ postgres:
   # --------crunchydb config: ------
   # --------------------------------
 
-  # --- cluster resource allocation ----
   instances:
     - name: db # do not change this name after initial install, pvc (data) and stateful sets will be deleted
       replicas: 3
@@ -41,18 +40,56 @@ postgres:
           - "ReadWriteOnce"
         resources:
           requests:
-            storage: 5Gi
+            storage: 2Gi
         storageClassName: "netapp-block-standard"
       resources:
         requests:
-          cpu: 1m
-          memory: 256Mi
+          cpu: 50m
+          memory: 128Mi
         limits:
           cpu: 100m
-          memory: 512Mi
+          memory: 256Mi
+      sidecars:
+        replicaCertCopy:
+          resources:
+            requests:
+              cpu: 1m
+              memory: 32Mi
+            limits:
+              cpu: 50m
+              memory: 64Mi
 
   # -------- backups ---------
   pgBackRestConfig:
+    manual:
+      repoName: repo1
+      options:
+        - --type=full
+    repoHost:
+      resources:
+        requests:
+          cpu: 20m
+          memory: 128Mi
+        limits:
+          cpu: 50m
+          memory: 256Mi
+    sidecars:
+      pgbackrest:
+        resources:
+          requests:
+            cpu: 5m
+            memory: 16Mi
+          limits:
+            cpu: 20m
+            memory: 64Mi
+    jobs:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 64Mi
+        limits:
+          cpu: 50m
+          memory: 128Mi
     configuration:
       # secret for saving backups to S3
       - secret:
@@ -86,10 +123,6 @@ postgres:
           bucket: csstops
           endpoint: https://nrs.objectstore.gov.bc.ca
           region: us-east-1
-
-  # # ----- pgBouncer (network pooling) ------
-  # pgBouncerConfig:
-  #   replicas: 2
 
   # -------- monitoring ---------
   monitoring: true
