@@ -217,7 +217,7 @@ postgres:
           - "ReadWriteOnce"
         resources:
           requests:
-            storage: 0.5Gi
+            storage: 1Gi
         storageClassName: "netapp-block-standard"
       resources:
         requests:
@@ -278,6 +278,14 @@ postgres:
           requests:
             cpu: 5m
             memory: 16Mi
+          limits:
+            cpu: 20m
+            memory: 64Mi
+      pgbackrestConfig:
+        resources:
+          requests:
+            cpu: 5m
+            memory: 32Mi
           limits:
             cpu: 20m
             memory: 64Mi
