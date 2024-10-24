@@ -99,6 +99,10 @@ postgres:
         limits:
           cpu: 50m
           memory: 128Mi
+    configuration:
+      # secret for saving backups to S3
+      - secret:
+          name: pgbackrest-s3
     global:
       # log-level-console: debug
       # --- pvc
