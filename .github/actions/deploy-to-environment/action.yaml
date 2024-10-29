@@ -25,6 +25,9 @@ inputs:
   openshift_token:
     description: Openshift Service Account Token
     required: true
+  deploy_postgres:
+    description: Should Postgres database be installed for this release
+    default: "true"
 
 runs:
   using: composite
@@ -58,6 +61,7 @@ runs:
         --set image.tag=sha-$(git rev-parse --short HEAD)
         --set route.host=${{ inputs.acronym }}-${{ inputs.namespace_environment }}-${{ inputs.job_name }}.apps.silver.devops.gov.bc.ca
         --set postgres.name=postgres-${{ inputs.job_name }}
+        --set postgres.enabled=${{ inputs.deploy_postgres }}
         --timeout 15m
         --wait
 
