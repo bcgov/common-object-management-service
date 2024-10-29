@@ -42,8 +42,48 @@ jobs:
       url: https://${{ env.ACRONYM }}-dev-pr-${{ github.event.number }}.apps.silver.devops.gov.bc.ca
     runs-on: ubuntu-latest
     needs: build
-    timeout-minutes: 12
+    timeout-minutes: 12 # increase for crunchyDB ?
     steps:
+      # TODO: does pr-123 user need to own database pr-123 in order to connect run knex migrations?
+      - name: Login to OpenShift Cluster
+        uses: redhat-actions/oc-login@v1
+        with:
+          openshift_server_url: ${{ secrets.OPENSHIFT_SERVER }}
+          openshift_token: ${{ secrets.OPENSHIFT_TOKEN }}
+          insecure_skip_tls_verify: true
+          namespace: ${{ env.NAMESPACE_PREFIX }}-dev
+      - name: Add PR specific user to Crunchy DB
+        shell: bash
+        run: |
+          echo 'Adding PR specific user to Crunchy DB'
+          NEW_USER='{"databases":["pr-${{ github.event.number }}"],"name":"pr-${{ github.event.number }}"}'
+          CURRENT_USERS=$(oc get PostgresCluster/postgres-master -o json | jq '.spec.users')
+          echo "${CURRENT_USERS}"
+          # check if current_users already contains the new_user
+          if echo "${CURRENT_USERS}" | jq -e ".[] | select(.name == \"pr-${{ github.event.number }}\")" > /dev/null; then
+            echo "User already exists"
+            exit 0
+          fi
+          UPDATED_USERS=$(echo "${CURRENT_USERS}" | jq --argjson NEW_USER "${NEW_USER}" '. + [$NEW_USER]')
+          PATCH_JSON=$(jq -n --argjson users "${UPDATED_USERS}" '{"spec": {"users": $users}}')
+
+          # patch echo 'Make PR user owner of PR database'
+          CRUNCHY_PG_PRIMARY_POD_NAME=$(oc get pods -l postgres-operator.crunchydata.com/role=master -o json | jq -r '.items[0].metadata.name')
+          oc exec "${CRUNCHY_PG_PRIMARY_POD_NAME}" -- psql -c "ALTER DATABASE \"pr-${{ github.event.number }}\" OWNER TO \"pr-${{ github.event.number }}\""
+          # oc exec "${CRUNCHY_PG_PRIMARY_POD_NAME}" -- psql -c "ALTER SCHEMA public OWNER TO \"pr-${{ github.event.number }}\""
+          # oc exec "${CRUNCHY_PG_PRIMARY_POD_NAME}" -- psql -c "ALTER SCHEMA public OWNER TO \"pr-${{ github.event.number }}\""
+
+          oc patch PostgresCluster/postgres-master --type=merge -p "${PATCH_JSON}"
+          # wait for sometime as it takes time to create the user, query the secret and check if it is created, otherwise wait in a loop for 5 rounds
+          for i in {1..5}; do
+          if oc get secret postgres-master-pguser-pr-${{ github.event.number }} -o jsonpath='{.metadata.name}' > /dev/null; then
+              echo "Secret created"
+              break
+          else
+              echo "Secret not created, waiting for 60 seconds"
+              sleep 60
+          fi
+          done
       - name: Checkout
         uses: actions/checkout@v4
       - name: Deploy to Dev
@@ -52,6 +92,7 @@ jobs:
           app_name: ${{ env.APP_NAME }}
           acronym: ${{ env.ACRONYM }}
           environment: pr
+          deploy_postgres: false
           job_name: pr-${{ github.event.number }}
           namespace_prefix: ${{ env.NAMESPACE_PREFIX }}
           namespace_environment: dev

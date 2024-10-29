@@ -1,10 +1,14 @@
-{{- $postgresClusterName := printf "%s-%s" "postgres" .Release.Name -}}
-{{- $dbHostName := printf "%s-%s" $postgresClusterName "pgbouncer" -}}
-{{- $dbSecretName := printf "%s-%s-%s" $postgresClusterName "pguser" (first .Values.postgres.users).name -}}
+{{- $prRelease := "false" -}}
+{{- $dbSecretName := "postgres-master-pguser-app" -}}
+{{ if ne .Release.Name "master" }}
+{{- $prRelease = "true" -}}
+{{- $dbSecretName = printf "%s-%s" "postgres-master-pguser" .Release.Name -}}
+{{ end }}
+{{- $dbHostName := "postgres-master-pgbouncer" -}}
 {{- define "coms.connectsTo" -}}
 apiVersion: apps/v1
 kind: StatefulSet
-name: {{ printf "%s-%s" "postgres" .Release.Name }}
+name: {{ printf "%s-%s" "postgres-master" }}
 {{- end }}
 ---
 apiVersion: apps.openshift.io/v1
@@ -27,7 +31,7 @@ spec:
       {{- toYaml .Values.resources | nindent 6 }}
     rollingParams:
       timeoutSeconds: 600
-      {{- if or .Values.postgres.enabled .Values.config.configMap.DB_ENABLED }}
+      {{- if or .Values.postgres.enabled $prRelease .Values.config.configMap.DB_ENABLED }}
       pre:
         failurePolicy: {{ .Values.failurePolicy }}
         execNewPod:
@@ -113,7 +117,7 @@ spec:
                   key: password
                   name: {{ include "coms.fullname" . }}-basicauth
             {{- end }}
-            {{- if or .Values.postgres.enabled .Values.config.configMap.DB_ENABLED }}
+            {{- if or .Values.postgres.enabled $prRelease .Values.config.configMap.DB_ENABLED }}
             - name: DB_DATABASE
               valueFrom:
                 secretKeyRef:
