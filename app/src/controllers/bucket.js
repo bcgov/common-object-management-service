@@ -162,6 +162,7 @@ const controller = {
         });
       }
 
+      // TODO: give current user MANAGE perm on existing bucket (sub-folder) instead
       // Check for existing bucket collision
       const bucketCollision = await bucketService.readUnique({
         bucket: parentBucket.bucket,
