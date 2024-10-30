@@ -67,12 +67,6 @@ jobs:
           UPDATED_USERS=$(echo "${CURRENT_USERS}" | jq --argjson NEW_USER "${NEW_USER}" '. + [$NEW_USER]')
           PATCH_JSON=$(jq -n --argjson users "${UPDATED_USERS}" '{"spec": {"users": $users}}')
 
-          # patch echo 'Make PR user owner of PR database'
-          CRUNCHY_PG_PRIMARY_POD_NAME=$(oc get pods -l postgres-operator.crunchydata.com/role=master -o json | jq -r '.items[0].metadata.name')
-          oc exec "${CRUNCHY_PG_PRIMARY_POD_NAME}" -- psql -c "ALTER DATABASE \"pr-${{ github.event.number }}\" OWNER TO \"pr-${{ github.event.number }}\""
-          # oc exec "${CRUNCHY_PG_PRIMARY_POD_NAME}" -- psql -c "ALTER SCHEMA public OWNER TO \"pr-${{ github.event.number }}\""
-          # oc exec "${CRUNCHY_PG_PRIMARY_POD_NAME}" -- psql -c "ALTER SCHEMA public OWNER TO \"pr-${{ github.event.number }}\""
-
           oc patch PostgresCluster/postgres-master --type=merge -p "${PATCH_JSON}"
           # wait for sometime as it takes time to create the user, query the secret and check if it is created, otherwise wait in a loop for 5 rounds
           for i in {1..5}; do
@@ -84,6 +78,12 @@ jobs:
               sleep 60
           fi
           done
+
+          # when secret is created in previous step, postgres should be ready
+          # patch echo 'Make PR user owner of PR database'
+          CRUNCHY_PG_PRIMARY_POD_NAME=$(oc get pods -l postgres-operator.crunchydata.com/role=master -o json | jq -r '.items[0].metadata.name')
+          oc exec "${CRUNCHY_PG_PRIMARY_POD_NAME}" -- psql -c "ALTER DATABASE \"pr-${{ github.event.number }}\" OWNER TO \"pr-${{ github.event.number }}\""
+
       - name: Checkout
         uses: actions/checkout@v4
       - name: Deploy to Dev

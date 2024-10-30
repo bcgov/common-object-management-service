@@ -162,6 +162,7 @@ const controller = {
         });
       }
 
+      // Future task: give user MANAGE permission on existing sub-folder (bucket) instead (see above)
       // Check for existing bucket collision
       const bucketCollision = await bucketService.readUnique({
         bucket: parentBucket.bucket,
