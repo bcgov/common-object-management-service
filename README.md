@@ -18,7 +18,7 @@ To learn more about the **Common Services** available visit the [Common Services
 ## Directory Structure
 
 ```txt
-.github/                   - PR and Issue templates
+.github/                   - GitHub Actions, Environments
 app/                       - Application Root
 ├── src/                   - Node.js web application
 │   ├── components/        - Components Layer
@@ -29,7 +29,7 @@ app/                       - Application Root
 │   ├── routes/            - API Route Layer
 │   └── services/          - Services Layer
 └── tests/                 - Node.js web application tests
-openshift/                 - OpenShift-deployment and shared pipeline files
+charts/                    - Helm charts for COMS and Postgres deployment to OpenShift
 CODE-OF-CONDUCT.md         - Code of Conduct
 COMPLIANCE.yaml            - BCGov PIA/STRA compliance status
 CONTRIBUTING.md            - Contributing Guidelines
@@ -39,9 +39,9 @@ SECURITY.md                - Security Policy and Reporting
 
 ## Documentation
 
-* [Application Readme](app/README.md)
-* [API Specification](app/README.md#openapi-specification)
-* [Openshift Readme](openshift/README.md)
+* [Application Readme](https://github.com/bcgov/common-object-management-service/tree/master/app)
+* [API Specification](https://github.com/bcgov/common-object-management-service/tree/master/app#openapi-specification)
+* [Helm charts notes](https://github.com/bcgov/common-object-management-service/blob/master/charts/NOTES.md)
 * [Product Roadmap](https://github.com/bcgov/common-object-management-service/wiki/Product-Roadmap)
 * [Product Wiki](https://github.com/bcgov/common-object-management-service/wiki)
 * [Security Reporting](SECURITY.md)
