@@ -241,7 +241,9 @@ postgres:
     - name: app
       databases:
         - app
-  # databaseInitSQL references a ConfigMap that contains a SQL file that should be
+  # Custom SQL commands we want to run, that get added to a ConfigMap
+  # that crunchyDB references duriing intialization
+  # gives our app permissions on the schemas (also required to run our knex migrations)
   databaseInitSQL:
     name: bootstrap-sql
     key: bootstrap.sql

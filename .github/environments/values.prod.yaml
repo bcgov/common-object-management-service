@@ -131,6 +131,14 @@ postgres:
           bucket: csstops
           endpoint: https://nrs.objectstore.gov.bc.ca
           region: us-east-1
+    # -- restore from backup
+    # ref: https://access.crunchydata.com/documentation/postgres-operator/latest/tutorials/backups-disaster-recovery/disaster-recovery#perform-an-in-place-point-in-time-recovery-pitr
+    restore:
+      enabled: false
+      repoName: repo1 # eg `repo1` (pvc) or `repo2` (s3)
+      options:
+        - --type=time
+        - --target="2024-10-28 14:15:11-04"
 
   # -------- monitoring ---------
   monitoring: true
