@@ -1,6 +1,6 @@
 # common-object-management-service
 
-![Version: 0.0.22](https://img.shields.io/badge/Version-0.0.22-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.8.0](https://img.shields.io/badge/AppVersion-0.8.0-informational?style=flat-square)
+![Version: 2.0.0](https://img.shields.io/badge/Version-2.0.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.8.0](https://img.shields.io/badge/AppVersion-0.8.0-informational?style=flat-square)
 
 A microservice for managing access control to S3 Objects
 
@@ -22,7 +22,7 @@ Kubernetes: `>= 1.13.0`
 
 | Repository | Name | Version |
 |------------|------|---------|
-| https://bcgov.github.io/nr-patroni-chart | patroni | ~0.0.4 |
+| file://../postgres | postgres(postgrescluster) | 2.0.0 |
 
 ## Values
 
@@ -55,12 +55,56 @@ Kubernetes: `>= 1.13.0`
 | networkPolicy.enabled | bool | `true` | Specifies whether a network policy should be created |
 | objectStorageSecretOverride.password | string | `nil` | Object storage password |
 | objectStorageSecretOverride.username | string | `nil` | Object storage username |
-| postgres.enabled | bool | `false` | Controls whether to enable managing a Postgres db dependency as a part of the helm release |
 | podAnnotations | object | `{}` | Annotations for coms pods |
 | podSecurityContext | object | `{}` | Privilege and access control settings |
+| postgres.databaseInitSQL.key | string | `"bootstrap.sql"` |  |
+| postgres.databaseInitSQL.name | string | `"bootstrap-sql"` |  |
+| postgres.databaseInitSQL.sql | string | `"\\c app;\nALTER DATABASE app OWNER TO app;\nALTER SCHEMA public OWNER TO app;\nREVOKE CREATE ON SCHEMA public FROM PUBLIC;\nCREATE SCHEMA invite;\nALTER SCHEMA invite OWNER TO app;\nCREATE SCHEMA audit;\nALTER SCHEMA audit OWNER TO app;\nCREATE SCHEMA queue;\nALTER SCHEMA queue OWNER TO app;\n"` |  |
+| postgres.enabled | bool | `true` |  |
+| postgres.instances[0].dataVolumeClaimSpec.accessModes[0] | string | `"ReadWriteOnce"` |  |
+| postgres.instances[0].dataVolumeClaimSpec.resources.requests.storage | string | `"1Gi"` |  |
+| postgres.instances[0].dataVolumeClaimSpec.storageClassName | string | `"netapp-block-standard"` |  |
+| postgres.instances[0].name | string | `"db"` |  |
+| postgres.instances[0].replicas | int | `2` |  |
+| postgres.instances[0].resources.limits.cpu | string | `"100m"` |  |
+| postgres.instances[0].resources.limits.memory | string | `"256Mi"` |  |
+| postgres.instances[0].resources.requests.cpu | string | `"50m"` |  |
+| postgres.instances[0].resources.requests.memory | string | `"128Mi"` |  |
+| postgres.instances[0].sidecars.replicaCertCopy.resources.limits.cpu | string | `"50m"` |  |
+| postgres.instances[0].sidecars.replicaCertCopy.resources.limits.memory | string | `"64Mi"` |  |
+| postgres.instances[0].sidecars.replicaCertCopy.resources.requests.cpu | string | `"1m"` |  |
+| postgres.instances[0].sidecars.replicaCertCopy.resources.requests.memory | string | `"32Mi"` |  |
+| postgres.monitoring | bool | `false` |  |
+| postgres.pgBackRestConfig.jobs.resources.limits.cpu | string | `"50m"` |  |
+| postgres.pgBackRestConfig.jobs.resources.limits.memory | string | `"128Mi"` |  |
+| postgres.pgBackRestConfig.jobs.resources.requests.cpu | string | `"10m"` |  |
+| postgres.pgBackRestConfig.jobs.resources.requests.memory | string | `"64Mi"` |  |
+| postgres.pgBackRestConfig.manual.options[0] | string | `"--type=full"` |  |
+| postgres.pgBackRestConfig.manual.repoName | string | `"repo1"` |  |
+| postgres.pgBackRestConfig.repoHost.resources.limits.cpu | string | `"50m"` |  |
+| postgres.pgBackRestConfig.repoHost.resources.limits.memory | string | `"256Mi"` |  |
+| postgres.pgBackRestConfig.repoHost.resources.requests.cpu | string | `"20m"` |  |
+| postgres.pgBackRestConfig.repoHost.resources.requests.memory | string | `"128Mi"` |  |
+| postgres.pgBackRestConfig.sidecars.pgbackrest.resources.limits.cpu | string | `"20m"` |  |
+| postgres.pgBackRestConfig.sidecars.pgbackrest.resources.limits.memory | string | `"64Mi"` |  |
+| postgres.pgBackRestConfig.sidecars.pgbackrest.resources.requests.cpu | string | `"5m"` |  |
+| postgres.pgBackRestConfig.sidecars.pgbackrest.resources.requests.memory | string | `"16Mi"` |  |
+| postgres.pgBackRestConfig.sidecars.pgbackrestConfig.resources.limits.cpu | string | `"20m"` |  |
+| postgres.pgBackRestConfig.sidecars.pgbackrestConfig.resources.limits.memory | string | `"64Mi"` |  |
+| postgres.pgBackRestConfig.sidecars.pgbackrestConfig.resources.requests.cpu | string | `"5m"` |  |
+| postgres.pgBackRestConfig.sidecars.pgbackrestConfig.resources.requests.memory | string | `"32Mi"` |  |
+| postgres.pgBouncerConfig.config.global.client_tls_sslmode | string | `"disable"` |  |
+| postgres.pgBouncerConfig.replicas | int | `2` |  |
+| postgres.pgBouncerConfig.resources.limits.cpu | string | `"20m"` |  |
+| postgres.pgBouncerConfig.resources.limits.memory | string | `"64Mi"` |  |
+| postgres.pgBouncerConfig.resources.requests.cpu | string | `"5m"` |  |
+| postgres.pgBouncerConfig.resources.requests.memory | string | `"32Mi"` |  |
+| postgres.postgresVersion | int | `16` | ------------------------------ note: override methodology: - defaults exist in subchart postgres - overrides that apply to all coms environments are defined in this values.yaml file - overrides specific to a single environment are defined in values.<environment>.yaml name of the cluster. in COMS pipeline we pass this in Helm deploy command in github action eg: --set postgres.name=postgres-master name: postgres-master |
+| postgres.users[0].databases[0] | string | `"app"` |  |
+| postgres.users[0].name | string | `"app"` |  |
 | replicaCount | int | `2` |  |
 | resources.limits.cpu | string | `"200m"` | Limit Peak CPU (in millicores ex. 1000m) |
-| resources.limits.memory | string | `"512Mi"` | Limit Peak Memory (in gigabytes Gi or megabytes Mi ex. 2Gi) |
+| resources.limits.memory | string | `"256Mi"` | Limit Peak Memory (in gigabytes Gi or megabytes Mi ex. 2Gi) |
 | resources.requests.cpu | string | `"50m"` | Requested CPU (in millicores ex. 500m) |
 | resources.requests.memory | string | `"128Mi"` | Requested Memory (in gigabytes Gi or megabytes Mi ex. 500Mi) |
 | route.annotations | object | `{}` | Annotations to add to the route |
@@ -78,4 +122,4 @@ Kubernetes: `>= 1.13.0`
 | serviceAccount.name | string | `nil` | The name of the service account to use. If not set and create is true, a name is generated using the fullname template |
 
 ----------------------------------------------
-An Autogenerated from chart metadata using [helm-docs v1.11.3](https://github.com/norwoodj/helm-docs/releases/v1.11.3)
+Autogenerated from chart metadata using [helm-docs v1.14.2](https://github.com/norwoodj/helm-docs/releases/v1.14.2)
