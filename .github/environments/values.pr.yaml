@@ -3,40 +3,42 @@ features:
   basicAuth: true
   oidcAuth: true
   defaultBucket: false
+#
+#
+# We don't deploy a postgrescluster for PR's
+# postgres:
+#   enabled: true
 
-postgres:
-  enabled: true
+#   # --------------------------------
+#   # --------crunchydb config: ------
+#   # --------------------------------
 
-  # --------------------------------
-  # --------crunchydb config: ------
-  # --------------------------------
+#   instances:
+#     - name: db # do not change this name after initial install, pvc (data) and stateful sets will be deleted
+#       replicas: 3
+#       dataVolumeClaimSpec:
+#         accessModes:
+#           - "ReadWriteOnce"
+#         resources:
+#           requests:
+#             storage: .5Gi
+#         storageClassName: "netapp-block-standard"
+#       resources:
+#         requests:
+#           cpu: 50m
+#           memory: 128Mi
+#         limits:
+#           cpu: 100m
+#           memory: 256Mi
+#       sidecars:
+#         replicaCertCopy:
+#           resources:
+#             requests:
+#               cpu: 1m
+#               memory: 32Mi
+#             limits:
+#               cpu: 50m
+#               memory: 64Mi
 
-  instances:
-    - name: db # do not change this name after initial install, pvc (data) and stateful sets will be deleted
-      replicas: 3
-      dataVolumeClaimSpec:
-        accessModes:
-          - "ReadWriteOnce"
-        resources:
-          requests:
-            storage: .5Gi
-        storageClassName: "netapp-block-standard"
-      resources:
-        requests:
-          cpu: 50m
-          memory: 128Mi
-        limits:
-          cpu: 100m
-          memory: 256Mi
-      sidecars:
-        replicaCertCopy:
-          resources:
-            requests:
-              cpu: 1m
-              memory: 32Mi
-            limits:
-              cpu: 50m
-              memory: 64Mi
-
-  # -------- backups ---------
-  pgBackRestConfig: {}
+#   # -------- backups ---------
+#   pgBackRestConfig: {}
