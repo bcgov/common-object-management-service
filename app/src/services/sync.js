@@ -21,23 +21,34 @@ const service = {
    * @function _deriveObjectId
    * Checks an S3 Object for any previous `coms-id` tag traces and returns it if found.
    * Otherwise it writes a new `coms-id` to the S3 Object if none were previously found.
+   * If the `coms-id` conflicts with an existing COMS object, it is replaced with a new one.
    * @param {object | boolean} s3Object The result of an S3 HeadObject operation
    * @param {string} path String representing the canonical path for the specified object
    * @param {string | null} bucketId uuid of bucket or `null` if syncing object in default bucket
-   * @returns {Promise<string>} Resolves to an existing objectId or creates a new one
+   * @returns {Promise<string>} Resolves to an existing objectId (if not already in COMS)
+   *                            or creates a new one
    */
   _deriveObjectId: async (s3Object, path, bucketId) => {
     let objId = uuidv4();
 
     if (typeof s3Object === 'object') { // If regular S3 Object
-      const TagSet = await storageService.getObjectTagging({ filePath: path, bucketId: bucketId })
+      let TagSet = await storageService.getObjectTagging({ filePath: path, bucketId: bucketId })
         .then(result => result.TagSet ?? []);
+
       const s3ObjectComsId = TagSet.find(obj => (obj.Key === 'coms-id'))?.Value;
 
-      if (s3ObjectComsId && uuidValidate(s3ObjectComsId)) {
+      if (s3ObjectComsId
+        && uuidValidate(s3ObjectComsId)
+        && !(await objectService.exists(s3ObjectComsId))) {
+        // re-use existing coms-id (if no conflict)
         objId = s3ObjectComsId;
-      } else { // Update S3 Object if there is still remaining space in the TagSet
-        if (TagSet.length < 10) { // putObjectTagging replaces S3 tags so new TagSet must contain existing values
+      } else {
+        // remove `coms-id` tag since it conflicts with an existing COMS object
+        TagSet = TagSet.filter(x => x.Key != 'coms-id');
+
+        // Update S3 Object if there is still remaining space in the TagSet
+        if (TagSet.length < 10) {
+          // putObjectTagging replaces S3 tags so new TagSet must contain existing values
           await storageService.putObjectTagging({
             filePath: path,
             bucketId: bucketId,
