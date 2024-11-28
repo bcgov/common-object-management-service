@@ -6,6 +6,8 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ .Values.databaseInitSQL.name }}
+  annotations:
+    "helm.sh/resource-policy": keep
 data:
   bootstrap.sql:
 {{ toYaml .Values.databaseInitSQL.sql | indent 2 }}
