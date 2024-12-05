@@ -211,6 +211,30 @@ const service = {
   },
 
   /**
+   * @function exists
+   * Checks if an object db record exists
+   * @param {string} objId The object uuid to read
+   * @param {object} [etrx=undefined] An optional Objection Transaction object
+   * @returns {Promise<object>} true if object exists in db, false otherwise
+   * @throws The error encountered upon db transaction failure
+   */
+  exists: async (objId, etrx = undefined) => {
+    let trx;
+    try {
+      trx = etrx ? etrx : await ObjectModel.startTransaction();
+
+      const response = await ObjectModel.query(trx).findById(objId);
+
+      if (!etrx) await trx.commit();
+
+      return response ? true : false;
+    } catch (err) {
+      if (!etrx && trx) await trx.rollback();
+      throw err;
+    }
+  },
+
+  /**
    * @function update
    * Update an object DB record
    * @param {string} data.id The object uuid

@@ -226,6 +226,36 @@ describe('read', () => {
   });
 });
 
+describe('exists', () => {
+  it('returns true if coms-id already exists in db ', async () => {
+    ObjectModel.findById.mockResolvedValueOnce(true);
+
+    const result = await service.exists(data.id);
+
+    expect(result).toBeTruthy();
+    expect(ObjectModel.startTransaction).toHaveBeenCalledTimes(1);
+    expect(ObjectModel.query).toHaveBeenCalledTimes(1);
+    expect(ObjectModel.query).toHaveBeenCalledWith(expect.anything());
+    expect(ObjectModel.findById).toHaveBeenCalledTimes(1);
+    expect(ObjectModel.findById).toBeCalledWith(OBJECT_ID);
+    expect(objectModelTrx.commit).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns false if coms-id does not exist in db', async () => {
+    ObjectModel.findById.mockResolvedValueOnce(false);
+
+    const result = await service.exists(data.id);
+
+    expect(result).toBeFalsy();
+    expect(ObjectModel.startTransaction).toHaveBeenCalledTimes(1);
+    expect(ObjectModel.query).toHaveBeenCalledTimes(1);
+    expect(ObjectModel.query).toHaveBeenCalledWith(expect.anything());
+    expect(ObjectModel.findById).toHaveBeenCalledTimes(1);
+    expect(ObjectModel.findById).toBeCalledWith(OBJECT_ID);
+    expect(objectModelTrx.commit).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('update', () => {
   it('Update an object DB record', async () => {
 

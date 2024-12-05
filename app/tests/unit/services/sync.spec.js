@@ -64,11 +64,15 @@ afterAll(() => { // Mockrestores must only happen after suite is completed
 });
 
 describe('_deriveObjectId', () => {
+
+  const existsSpy = jest.spyOn(objectService, 'exists');
+
   describe('Regular S3 Object', () => {
-    it('Returns an existing coms-id if valid', async () => {
+    it('Returns an existing coms-id if valid and doesn\'t already exist in COMS', async () => {
       getObjectTaggingSpy.mockResolvedValue({
         TagSet: [{ Key: 'coms-id', Value: validUuidv4 }]
       });
+      existsSpy.mockResolvedValue(false);
 
       const result = await service._deriveObjectId({}, path, bucketId);
 
@@ -82,6 +86,32 @@ describe('_deriveObjectId', () => {
       }));
       expect(listAllObjectVersionsSpy).toHaveBeenCalledTimes(0);
       expect(putObjectTaggingSpy).toHaveBeenCalledTimes(0);
+    });
+
+    it('Returns a new uuid and removes coms-id tag if it already exists in COMS', async () => {
+      getObjectTaggingSpy.mockResolvedValue({
+        TagSet: [{ Key: 'coms-id', Value: validUuidv4 }]
+      });
+      existsSpy.mockResolvedValue(true);
+      jest.spyOn(storageService, 'putObjectTagging').mockImplementation(() => Promise.resolve());
+
+      const result = await service._deriveObjectId({}, path, bucketId);
+
+      expect(result).toBeTruthy();
+      expect(typeof result).toBe('string');
+      expect(result).not.toMatch(validUuidv4);
+      expect(getObjectTaggingSpy).toHaveBeenCalledTimes(1);
+      expect(getObjectTaggingSpy).toHaveBeenCalledWith(expect.objectContaining({
+        filePath: path,
+        bucketId: bucketId
+      }));
+      expect(listAllObjectVersionsSpy).toHaveBeenCalledTimes(0);
+      expect(putObjectTaggingSpy).toHaveBeenCalledTimes(1);
+      expect(putObjectTaggingSpy).toHaveBeenCalledWith({
+        filePath: path,
+        bucketId: bucketId,
+        tags: [{ Key: 'coms-id', Value: expect.not.stringMatching(validUuidv4) }]
+      });
     });
 
     it('Returns a new uuid if invalid and pushes tags when less than 10 present', async () => {
