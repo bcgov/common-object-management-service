@@ -34,6 +34,7 @@ const {
   metadataService,
   objectService,
   storageService,
+  syncService,
   tagService,
   userService,
   versionService,
@@ -297,20 +298,31 @@ const controller = {
           bucketId: bucketId
         });
 
+        // sync existing file versions and get COMS objectId
+        const objectId =
+          await syncService.syncJob(joinPath(bucketKey, req.currentUpload.filename), bucketId, true, userId);
+
         // Hard short circuit skip file as the object already exists on bucket
-        throw new Problem(409, {
+        throw new Problem(409, 'Bucket already contains object', req.originalUrl, {
           detail: 'Bucket already contains object',
-          instance: req.originalUrl
+          existingObjectId: objectId,
         });
+
       } catch (err) {
         if (err instanceof Problem) throw err; // Rethrow Problem type errors
 
         // Object is soft deleted from the bucket
         if (err.$response?.headers['x-amz-delete-marker']) {
-          throw new Problem(409, {
+
+          // sync existing file versions and get COMS objectId
+          const objectId =
+            await syncService.syncJob(joinPath(bucketKey, req.currentUpload.filename), bucketId, true, userId);
+
+          throw new Problem(409, 'Bucket already contains object', req.originalUrl, {
             detail: 'Bucket already contains object',
-            instance: req.originalUrl
+            existingObjectId: objectId,
           });
+
         }
 
         // Skip upload in the unlikely event we get an unexpected error from headObject
@@ -1032,67 +1044,52 @@ const controller = {
 
       let s3Response;
       try {
-        // Preflight S3 Object check
-        const headResponse = await storageService.headObject({
+        // Preflight check for object in bucket
+        const vs = await storageService.listObjectVersion({
           filePath: joinPath(bucketKey, filename),
           bucketId: bucketId
         });
-
-        // Skip upload in the unlikely event we get an unexpected response from headObject
-        if (headResponse.$metadata?.httpStatusCode !== 200) {
-          throw new Problem(502, {
-            detail: 'Bucket communication error',
-            instance: req.originalUrl
-          });
-        }
-
-        // Object exists on bucket
-        if (req.currentUpload.contentLength < MAXCOPYOBJECTLENGTH) {
-          log.debug('Uploading with putObject', {
-            contentLength: req.currentUpload.contentLength,
-            function: 'createObject',
-            uploadMethod: 'putObject'
-          });
-          s3Response = await storageService.putObject({ ...data, stream: req });
-        } else if (req.currentUpload.contentLength < MAXFILEOBJECTLENGTH) {
-          log.debug('Uploading with lib-storage', {
-            contentLength: req.currentUpload.contentLength,
-            function: 'createObject',
-            uploadMethod: 'lib-storage'
-          });
-          s3Response = await storageService.upload({ ...data, stream: req });
-        } else {
-          throw new Problem(413, {
-            detail: 'File exceeds maximum 50GB limit',
-            instance: req.originalUrl
-          });
-        }
-      } catch (err) {
-        if (err instanceof Problem) throw err; // Rethrow Problem type errors
-        else if (err.$metadata?.httpStatusCode !== 404) {
-          // An unexpected response from headObject
-          throw new Problem(502, {
-            detail: 'Bucket communication error',
-            instance: req.originalUrl
-          });
-        } else {
-          if (err.$response?.headers['x-amz-delete-marker']) {
-            // Object is soft deleted from the bucket
-            throw new Problem(409, {
-              detail: 'Unable to update soft deleted object',
-              instance: req.originalUrl
+        // if object exists
+        if (Array.isArray(vs.Versions)) {
+          // if smaller file use putObject
+          if (req.currentUpload.contentLength < MAXCOPYOBJECTLENGTH) {
+            log.debug('Uploading with putObject', {
+              contentLength: req.currentUpload.contentLength,
+              function: 'createObject',
+              uploadMethod: 'putObject'
             });
+            s3Response = await storageService.putObject({ ...data, stream: req });
+          }
+          // else use upload command
+          else if (req.currentUpload.contentLength < MAXFILEOBJECTLENGTH) {
+            log.debug('Uploading with lib-storage', {
+              contentLength: req.currentUpload.contentLength,
+              function: 'createObject',
+              uploadMethod: 'lib-storage'
+            });
+            s3Response = await storageService.upload({ ...data, stream: req });
           } else {
-            // Bucket is missing the existing object
-            throw new Problem(409, {
-              detail: 'Bucket does not contain existing object',
+            throw new Problem(413, {
+              detail: 'File exceeds maximum 50GB limit',
               instance: req.originalUrl
             });
           }
-          // TODO: Add in sync operation to update object record in COMS DB?
         }
+        // else no file in bucket
+        else {
+          throw new Problem(409, {
+            detail: 'Bucket does not contain existing object',
+            instance: req.originalUrl
+          });
+        }
+      } catch (error) {
+        throw new Problem(502, {
+          detail: 'Bucket communication error',
+          instance: req.originalUrl
+        });
       }
 
+      // do COMS database updates:
       const s3Head = await storageService.headObject({
         filePath: joinPath(bucketKey, req.currentUpload.filename),
         bucketId: bucketId
