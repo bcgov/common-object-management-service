@@ -652,6 +652,28 @@ paths:
         default:
           $ref: "#/components/responses/Error"
   /object/{objectId}/version:
+    put:
+      summary: Copy a version to become latest
+      description: >-
+        Copies a previous version of an object and places on top of the version 'stack'.
+        If no version is provided to copy, the latest existing version will be copied.
+      operationId: copyVersion
+      tags:
+        - Version
+      parameters:
+        - $ref: "#/components/parameters/Path-ObjectId"
+        - $ref: "#/components/parameters/Query-VersionId"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        default:
+          $ref: "#/components/responses/Error"
     get:
       summary: List versions for an object
       description: >-
