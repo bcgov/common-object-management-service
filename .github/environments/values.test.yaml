@@ -106,28 +106,30 @@ postgres:
     global:
       # log-level-console: debug
       # --- pvc
-      repo1-retention-full: "2"
-      repo1-retention-diff: "3"
+      repo1-retention-full: "1"
+      repo1-retention-diff: "5"
       # --- s3
       repo2-path: /backups/common-object-management-service/postgres/test
-      repo2-retention-full: "30"
+      repo2-retention-full: "1"
+      repo2-retention-diff: "30"
       repo2-s3-uri-style: path
     repos:
       - name: repo1
         schedules:
-          full: "0 7 * * *" # full backup every day at 7am
-          differential: "0 */2 * * *" # differential every 2 hours
+          full: "0 14 15 * *" # full backup at 14:00 on day-of-month 15
+          differential: "30 */2 * * *" # differential at minute 30 past every 2nd hour
         volume:
           volumeClaimSpec:
             accessModes:
               - "ReadWriteOnce"
             resources:
               requests:
-                storage: 2Gi
+                storage: 10Gi
             storageClassName: "netapp-file-backup"
       - name: repo2
         schedules:
-          full: "0 3 * * *" # full backup every day at 3am
+          full: "0 2 1 * *" # full backup at 02:00 on day-of-month 1
+          differential: "0 */2 * * *" # differential every 2 hours
         s3:
           bucket: csstops
           endpoint: https://nrs.objectstore.gov.bc.ca
