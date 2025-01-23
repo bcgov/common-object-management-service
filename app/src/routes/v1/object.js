@@ -41,7 +41,7 @@ router.head('/:objectId', objectValidator.headObject, currentObject, hasPermissi
 router.get('/:objectId', helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }),
   objectValidator.readObject, currentObject, hasPermission(Permissions.READ),
   (req, res, next) => {
-  // TODO: Add validation to reject unexpected query parameters
+    // TODO: Add validation to reject unexpected query parameters
     objectController.readObject(req, res, next);
   }
 );
@@ -66,6 +66,12 @@ router.get('/:objectId/version', requireSomeAuth, objectValidator.listObjectVers
     objectController.listObjectVersion(req, res, next);
   }
 );
+
+/** creates a new version of an object using either a specified version or latest as the source */
+router.put('/:objectId/version', objectValidator.copyVersion,
+  currentObject, hasPermission(Permissions.UPDATE), (req, res, next) => {
+    objectController.copyVersion(req, res, next);
+  });
 
 /** Sets the public flag of an object */
 router.patch('/:objectId/public', requireSomeAuth, objectValidator.togglePublic,
