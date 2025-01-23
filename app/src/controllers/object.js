@@ -717,6 +717,90 @@ const controller = {
   },
 
   /**
+ * @function copyVersion
+ * Copies a previous version of an object and places on top of the version 'stack'.
+ * If no version is provided to copy, the latest existing version will be copied.
+ * @param {object} req Express request object
+ * @param {object} res Express response object
+ * @param {function} next The next callback function
+ * @returns {function} Express middleware function
+ */
+  async copyVersion(req, res, next) {
+    try {
+      const bucketId = req.currentObject?.bucketId;
+      const objId = addDashesToUuid(req.params.objectId);
+      const objPath = req.currentObject?.path;
+      const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
+      let source;
+      // if COMS versionId parameter is provided, get corresponding Version from S3
+      if (req.query.versionId) {
+        const sourceS3VersionId = await getS3VersionId(undefined, addDashesToUuid(req.query.versionId), objId);
+        source = await storageService.headObject({ filePath: objPath, s3VersionId: sourceS3VersionId, bucketId });
+      }
+      // else get most recent Version that is not a delete marker from S3
+      else {
+        const vs = await storageService.listObjectVersion({ filePath: objPath, bucketId });
+        const sourceS3VersionId = vs.Versions
+          .sort((a, b) => new Date(b.LastModified).getTime() - new Date(a.LastModified).getTime())[0].VersionId;
+        source = await storageService.headObject({ filePath: objPath, s3VersionId: sourceS3VersionId, bucketId });
+      }
+
+      if (source.ContentLength > MAXCOPYOBJECTLENGTH) {
+        throw new Error('Cannot copy an object larger than 5GB');
+      }
+      // get existing tags on source object, eg: { 'animal': 'bear', colour': 'black' }
+      const sourceObject = await storageService.getObjectTagging({
+        filePath: objPath,
+        s3VersionId: source.VersionId,
+        bucketId: bucketId
+      });
+      const sourceTags = Object.assign({},
+        ...(sourceObject.TagSet?.map(item => ({ [item.Key]: item.Value })) ?? [])
+      );
+
+      // create new version in S3
+      const data = {
+        bucketId: bucketId,
+        copySource: objPath,
+        filePath: objPath,
+        metadata: source.Metadata,
+        tags: sourceTags,
+        metadataDirective: MetadataDirective.REPLACE,
+        taggingDirective: TaggingDirective.REPLACE,
+        s3VersionId: source.VersionId
+      };
+      const s3Response = await storageService.copyObject(data);
+      let version;
+
+      // update COMS database
+      await utils.trxWrapper(async (trx) => {
+        // create or update version (if a non-versioned object)
+        version = s3Response.VersionId ?
+          await versionService.copy(
+            source.VersionId, s3Response.VersionId, objId, s3Response.CopyObjectResult?.ETag,
+            s3Response.CopyObjectResult?.LastModified, userId, trx
+          ) :
+          await versionService.update({
+            ...data,
+            id: objId,
+            etag: s3Response.CopyObjectResult?.ETag,
+            isLatest: true,
+            lastModifiedDate: s3Response.CopyObjectResult?.LastModified
+              ? new Date(s3Response.CopyObjectResult?.LastModified).toISOString() : undefined
+          }, userId, trx);
+        // add metadata to version in DB
+        await metadataService.associateMetadata(version.id, getKeyValue(data.metadata), userId, trx);
+        // add tags to new version in DB
+        await tagService.associateTags(version.id, getKeyValue(data.tags), userId, trx);
+      });
+
+      res.status(201).json(version);
+    } catch (e) {
+      next(errorToProblem(SERVICE, e));
+    }
+  },
+
+  /**
    * @function listObjectVersion
    * List all versions of the object
    * @param {object} req Express request object

@@ -89,12 +89,11 @@ const objectStorageService = {
     const data = await utils.getBucket(bucketId);
     const params = {
       Bucket: data.bucket,
-      CopySource: `${data.bucket}/${copySource}`,
+      CopySource: `${data.bucket}/${copySource}?versionId=${s3VersionId}`,
       Key: filePath,
       Metadata: metadata,
       MetadataDirective: metadataDirective,
       TaggingDirective: taggingDirective,
-      VersionId: s3VersionId
     };
 
     if (tags) {

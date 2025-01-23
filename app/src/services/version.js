@@ -301,23 +301,26 @@ const service = {
         filePath: object.path,
         bucketId: object.bucketId
       });
-      const latestS3VersionId = s3Versions.DeleteMarkers
-        .concat(s3Versions.Versions)
-        .filter((v) => v.IsLatest)[0].VersionId;
 
-      // get same version from COMS db
-      const current = await Version.query(trx)
-        .first()
-        .where({ objectId: objectId, s3VersionId: latestS3VersionId })
-        .throwIfNotFound();
-      let updated;
-      // update as latest if not already and fetch
-      if (!current.isLatest) {
-        updated = await Version.query(trx)
-          .updateAndFetchById(current.id, { isLatest: true });
+      let updated, current;
+      if(s3Versions.DeleteMarkers.concat(s3Versions.Versions).length > 0){
+        const latestS3VersionId = s3Versions.DeleteMarkers
+          .concat(s3Versions.Versions)
+          .filter((v) => v.IsLatest)[0].VersionId;
+        // get same version from COMS db
+        current = await Version.query(trx)
+          .first()
+          .where({ objectId: objectId, s3VersionId: latestS3VersionId })
+          .throwIfNotFound();
+
+        // update as latest if not already and fetch
+        if (!current.isLatest) {
+          updated = await Version.query(trx)
+            .updateAndFetchById(current.id, { isLatest: true });
+        }
+        // set other versions in COMS db to isLatest=false
+        await service.removeDuplicateLatest(current.id, current.objectId, trx);
       }
-      // set other versions in COMS db to isLatest=false
-      await service.removeDuplicateLatest(current.id, current.objectId, trx);
 
       if (!etrx) await trx.commit();
       return Promise.resolve(updated ?? current);
