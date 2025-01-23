@@ -91,6 +91,15 @@ const schema = {
     })
   },
 
+  copyVersion: {
+    params: Joi.object({
+      objectId: type.uuidv4
+    }),
+    query: Joi.object({
+      versionId: type.uuidv4
+    })
+  },
+
   readObject: {
     params: Joi.object({
       objectId: type.uuidv4
@@ -190,6 +199,7 @@ const validator = {
   fetchTags: validate(schema.fetchTags),
   headObject: validate(schema.headObject),
   listObjectVersion: validate(schema.listObjectVersion),
+  copyVersion: validate(schema.copyVersion),
   readObject: validate(schema.readObject),
   replaceMetadata: validate(schema.replaceMetadata),
   replaceTags: validate(schema.replaceTags),

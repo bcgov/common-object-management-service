@@ -83,12 +83,11 @@ describe('copyObject', () => {
     expect(s3ClientMock).toHaveReceivedCommandTimes(CopyObjectCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(CopyObjectCommand, {
       Bucket: bucket,
-      CopySource: `${bucket}/${copySource}`,
+      CopySource: `${bucket}/${copySource}?versionId=${undefined}`,
       Key: filePath,
       Metadata: undefined,
       MetadataDirective: MetadataDirective.COPY,
       TaggingDirective: TaggingDirective.COPY,
-      VersionId: undefined
     });
   });
 
@@ -103,12 +102,11 @@ describe('copyObject', () => {
     expect(s3ClientMock).toHaveReceivedCommandTimes(CopyObjectCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(CopyObjectCommand, {
       Bucket: bucket,
-      CopySource: `${bucket}/${copySource}`,
+      CopySource: `${bucket}/${copySource}?versionId=1234`,
       Key: filePath,
       Metadata: undefined,
       MetadataDirective: MetadataDirective.COPY,
       TaggingDirective: TaggingDirective.COPY,
-      VersionId: s3VersionId
     });
   });
 
@@ -124,12 +122,11 @@ describe('copyObject', () => {
     expect(s3ClientMock).toHaveReceivedCommandTimes(CopyObjectCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(CopyObjectCommand, {
       Bucket: bucket,
-      CopySource: `${bucket}/${copySource}`,
+      CopySource: `${bucket}/${copySource}?versionId=${undefined}`,
       Key: filePath,
       Metadata: metadata,
       MetadataDirective: metadataDirective,
       TaggingDirective: TaggingDirective.COPY,
-      VersionId: undefined
     });
   });
 
@@ -146,12 +143,11 @@ describe('copyObject', () => {
     expect(s3ClientMock).toHaveReceivedCommandTimes(CopyObjectCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(CopyObjectCommand, {
       Bucket: bucket,
-      CopySource: `${bucket}/${copySource}`,
+      CopySource: `${bucket}/${copySource}?versionId=1234`,
       Key: filePath,
       Metadata: metadata,
       MetadataDirective: metadataDirective,
       TaggingDirective: TaggingDirective.COPY,
-      VersionId: s3VersionId
     });
   });
 
@@ -167,13 +163,12 @@ describe('copyObject', () => {
     expect(s3ClientMock).toHaveReceivedCommandTimes(CopyObjectCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(CopyObjectCommand, {
       Bucket: bucket,
-      CopySource: `${bucket}/${copySource}`,
+      CopySource: `${bucket}/${copySource}?versionId=${undefined}`,
       Key: filePath,
       Metadata: undefined,
       MetadataDirective: MetadataDirective.COPY,
       Tagging: 'test=123',
       TaggingDirective: taggingDirective,
-      VersionId: undefined
     });
   });
 
@@ -190,13 +185,12 @@ describe('copyObject', () => {
     expect(s3ClientMock).toHaveReceivedCommandTimes(CopyObjectCommand, 1);
     expect(s3ClientMock).toHaveReceivedCommandWith(CopyObjectCommand, {
       Bucket: bucket,
-      CopySource: `${bucket}/${copySource}`,
+      CopySource: `${bucket}/${copySource}?versionId=1234`,
       Key: filePath,
       Metadata: undefined,
       MetadataDirective: MetadataDirective.COPY,
       Tagging: 'test=123',
       TaggingDirective: taggingDirective,
-      VersionId: s3VersionId
     });
   });
 });
