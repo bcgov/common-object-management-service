@@ -1,33 +1,11 @@
 const Problem = require('api-problem');
 const config = require('config');
-const basicAuth = require('express-basic-auth');
 const jwt = require('jsonwebtoken');
 
 const { AuthType } = require('../components/constants');
 const { getConfigBoolean } = require('../components/utils');
 const { userService } = require('../services');
 
-/**
- * Basic Auth configuration object
- * @see {@link https://github.com/LionC/express-basic-auth}
- */
-const _basicAuthConfig = {
-  // Must be a synchronous function
-  authorizer: (username, password) => {
-    const userMatch = basicAuth.safeCompare(username, config.get('basicAuth.username'));
-    const pwMatch = basicAuth.safeCompare(password, config.get('basicAuth.password'));
-    return userMatch & pwMatch;
-  },
-  unauthorizedResponse: () => {
-    return new Problem(401, { detail: 'Invalid authorization credentials' });
-  }
-};
-
-/**
- * An express middleware function that checks basic authentication validity
- * @see {@link https://github.com/LionC/express-basic-auth}
- */
-const _checkBasicAuth = basicAuth(_basicAuthConfig);
 
 /**
  * @function _spkiWrapper
@@ -54,7 +32,7 @@ const currentUser = async (req, res, next) => {
   };
 
   if (authorization) {
-    // Basic Authorization
+    // Basic Authorization (using s3 credentials)
     if (getConfigBoolean('basicAuth.enabled') && authorization.toLowerCase().startsWith('basic ')) {
       currentUser.authType = AuthType.BASIC;
     }
@@ -94,13 +72,9 @@ const currentUser = async (req, res, next) => {
   // Inject currentUser data into request
   req.currentUser = Object.freeze(currentUser);
 
-  // Continue middleware stack based on detected AuthType
-  if (currentUser.authType === AuthType.BASIC) {
-    _checkBasicAuth(req, res, next);
-  }
-  else next();
+  next();
 };
 
 module.exports = {
-  _basicAuthConfig, _checkBasicAuth, currentUser, _spkiWrapper
+  currentUser, _spkiWrapper
 };

@@ -4,8 +4,8 @@ const log = require('../components/log')(module.filename);
 const { AuthMode, AuthType, Permissions } = require('../components/constants');
 const { getAppAuthMode, getCurrentIdentity } = require('../components/utils');
 const { NIL: SYSTEM_USER } = require('uuid');
-const { bucketPermissionService, objectService, objectPermissionService, userService } = require('../services');
-
+const { bucketPermissionService, objectService, objectPermissionService, userService, bucketService } = require('../services');
+const { bucketController } = require('../controllers');
 /**
  * @function _checkPermission
  * Checks if the current user is authorized to perform the operation
@@ -43,6 +43,29 @@ const _checkPermission = async ({ currentObject, currentUser, params }, permissi
 
   log.debug('Missing user identification', { function: '_checkPermission' });
   return result;
+};
+
+
+const _checkClient = async ({ headers, params, currentObject }) => {
+
+  // validate credentials
+  await bucketController._validateCredentials({
+    bucket: headers.bucket,
+    endpoint: headers.endpoint,
+    accessKeyId: headers.accessKeyId,
+    secretAccessKey: headers.secretAccessKey,
+  });
+
+  // get the bucket involved from db
+  const paramBucket = bucketService.read(params.bucketId || currentObject.bucketId);
+
+  // get any bucket matching the endpoint and bucket name in request headers
+  const matchingBucket = bucketService.readUnique({
+    bucket: headers.bucket,
+    endpoint: headers.endpoint,
+    key: paramBucket.key,
+  });
+  return paramBucket.bucketId === matchingBucket.bucketId;
 };
 
 /**
@@ -127,9 +150,17 @@ const hasPermission = (permission) => {
       } else if (req.params.objectId && !req.currentObject) {
         // Force 403 on unauthorized or not found; do not allow 404 id brute force discovery
         throw new Error('Missing object record');
-      } else if (authType === AuthType.BASIC && canBasicMode(authMode)) {
-        log.debug('Basic authTypes are always permitted', { function: 'hasPermission' });
-      } else if (req.params.objectId && req.currentObject.public && permission === Permissions.READ) {
+      }
+
+      // check basic auth with S3 credentials
+      else if (authType === AuthType.BASIC && canBasicMode(authMode)) {
+        if (!await _checkClient(req)) {
+          throw new Error('Credentials not valid', { function: 'hasPermission' });
+        }
+        log.debug('Basic auth request permitted', { function: 'hasPermission' });
+      }
+
+      else if (req.params.objectId && req.currentObject.public && permission === Permissions.READ) {
         log.debug('Read requests on public objects are always permitted', { function: 'hasPermission' });
       } else if (!await _checkPermission(req, permission)) {
         throw new Error(`User lacks required permission ${permission}`);
