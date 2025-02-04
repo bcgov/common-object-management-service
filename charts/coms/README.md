@@ -1,6 +1,6 @@
 # common-object-management-service
 
-![Version: 2.0.0](https://img.shields.io/badge/Version-2.0.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.8.0](https://img.shields.io/badge/AppVersion-0.8.0-informational?style=flat-square)
+![Version: 2.0.3](https://img.shields.io/badge/Version-2.0.3-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.9.0](https://img.shields.io/badge/AppVersion-0.9.0-informational?style=flat-square)
 
 A microservice for managing access control to S3 Objects
 
@@ -22,16 +22,15 @@ Kubernetes: `>= 1.13.0`
 
 | Repository | Name | Version |
 |------------|------|---------|
-| file://../postgres | postgres(postgrescluster) | 2.0.0 |
+| file://../postgres | postgres(postgrescluster) | 2.0.2 |
 
 ## Values
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| autoscaling.behavior | object | `{"scaleDown":{"policies":[{"periodSeconds":120,"type":"Pods","value":1}],"selectPolicy":"Max","stabilizationWindowSeconds":120},"scaleUp":{"policies":[{"periodSeconds":30,"type":"Pods","value":2}],"selectPolicy":"Max","stabilizationWindowSeconds":0}}` | behavior configures the scaling behavior of the target in both Up and Down directions (scaleUp and scaleDown fields respectively). |
 | autoscaling.enabled | bool | `false` | Specifies whether the Horizontal Pod Autoscaler should be created |
-| autoscaling.maxReplicas | int | `16` |  |
-| autoscaling.minReplicas | int | `2` |  |
+| autoscaling.maxReplicas | int | `8` |  |
+| autoscaling.minReplicas | int | `3` |  |
 | autoscaling.targetCPUUtilizationPercentage | int | `80` |  |
 | basicAuthSecretOverride.password | string | `nil` | Basic authentication password |
 | basicAuthSecretOverride.username | string | `nil` | Basic authentication username |
@@ -55,6 +54,8 @@ Kubernetes: `>= 1.13.0`
 | networkPolicy.enabled | bool | `true` | Specifies whether a network policy should be created |
 | objectStorageSecretOverride.password | string | `nil` | Object storage password |
 | objectStorageSecretOverride.username | string | `nil` | Object storage username |
+| pdb.enabled | bool | `false` |  |
+| pdb.minAvailable | int | `2` |  |
 | podAnnotations | object | `{}` | Annotations for coms pods |
 | podSecurityContext | object | `{}` | Privilege and access control settings |
 | postgres.databaseInitSQL.key | string | `"bootstrap.sql"` |  |
@@ -66,45 +67,28 @@ Kubernetes: `>= 1.13.0`
 | postgres.instances[0].dataVolumeClaimSpec.storageClassName | string | `"netapp-block-standard"` |  |
 | postgres.instances[0].name | string | `"db"` |  |
 | postgres.instances[0].replicas | int | `2` |  |
-| postgres.instances[0].resources.limits.cpu | string | `"100m"` |  |
-| postgres.instances[0].resources.limits.memory | string | `"256Mi"` |  |
 | postgres.instances[0].resources.requests.cpu | string | `"50m"` |  |
 | postgres.instances[0].resources.requests.memory | string | `"128Mi"` |  |
-| postgres.instances[0].sidecars.replicaCertCopy.resources.limits.cpu | string | `"50m"` |  |
-| postgres.instances[0].sidecars.replicaCertCopy.resources.limits.memory | string | `"64Mi"` |  |
 | postgres.instances[0].sidecars.replicaCertCopy.resources.requests.cpu | string | `"1m"` |  |
 | postgres.instances[0].sidecars.replicaCertCopy.resources.requests.memory | string | `"32Mi"` |  |
 | postgres.monitoring | bool | `false` |  |
-| postgres.pgBackRestConfig.jobs.resources.limits.cpu | string | `"50m"` |  |
-| postgres.pgBackRestConfig.jobs.resources.limits.memory | string | `"128Mi"` |  |
 | postgres.pgBackRestConfig.jobs.resources.requests.cpu | string | `"10m"` |  |
 | postgres.pgBackRestConfig.jobs.resources.requests.memory | string | `"64Mi"` |  |
 | postgres.pgBackRestConfig.manual.options[0] | string | `"--type=full"` |  |
 | postgres.pgBackRestConfig.manual.repoName | string | `"repo1"` |  |
-| postgres.pgBackRestConfig.repoHost.resources.limits.cpu | string | `"50m"` |  |
-| postgres.pgBackRestConfig.repoHost.resources.limits.memory | string | `"256Mi"` |  |
 | postgres.pgBackRestConfig.repoHost.resources.requests.cpu | string | `"20m"` |  |
 | postgres.pgBackRestConfig.repoHost.resources.requests.memory | string | `"128Mi"` |  |
-| postgres.pgBackRestConfig.sidecars.pgbackrest.resources.limits.cpu | string | `"20m"` |  |
-| postgres.pgBackRestConfig.sidecars.pgbackrest.resources.limits.memory | string | `"64Mi"` |  |
 | postgres.pgBackRestConfig.sidecars.pgbackrest.resources.requests.cpu | string | `"5m"` |  |
 | postgres.pgBackRestConfig.sidecars.pgbackrest.resources.requests.memory | string | `"16Mi"` |  |
-| postgres.pgBackRestConfig.sidecars.pgbackrestConfig.resources.limits.cpu | string | `"20m"` |  |
-| postgres.pgBackRestConfig.sidecars.pgbackrestConfig.resources.limits.memory | string | `"64Mi"` |  |
 | postgres.pgBackRestConfig.sidecars.pgbackrestConfig.resources.requests.cpu | string | `"5m"` |  |
 | postgres.pgBackRestConfig.sidecars.pgbackrestConfig.resources.requests.memory | string | `"32Mi"` |  |
 | postgres.pgBouncerConfig.config.global.client_tls_sslmode | string | `"disable"` |  |
 | postgres.pgBouncerConfig.replicas | int | `2` |  |
-| postgres.pgBouncerConfig.resources.limits.cpu | string | `"20m"` |  |
-| postgres.pgBouncerConfig.resources.limits.memory | string | `"64Mi"` |  |
 | postgres.pgBouncerConfig.resources.requests.cpu | string | `"5m"` |  |
 | postgres.pgBouncerConfig.resources.requests.memory | string | `"32Mi"` |  |
 | postgres.postgresVersion | int | `16` | ------------------------------ note: override methodology: - defaults exist in subchart postgres - overrides that apply to all coms environments are defined in this values.yaml file - overrides specific to a single environment are defined in values.<environment>.yaml name of the cluster. in COMS pipeline we pass this in Helm deploy command in github action eg: --set postgres.name=postgres-master name: postgres-master |
 | postgres.users[0].databases[0] | string | `"app"` |  |
 | postgres.users[0].name | string | `"app"` |  |
-| replicaCount | int | `2` |  |
-| resources.limits.cpu | string | `"200m"` | Limit Peak CPU (in millicores ex. 1000m) |
-| resources.limits.memory | string | `"256Mi"` | Limit Peak Memory (in gigabytes Gi or megabytes Mi ex. 2Gi) |
 | resources.requests.cpu | string | `"50m"` | Requested CPU (in millicores ex. 500m) |
 | resources.requests.memory | string | `"128Mi"` | Requested Memory (in gigabytes Gi or megabytes Mi ex. 500Mi) |
 | route.annotations | object | `{}` | Annotations to add to the route |
