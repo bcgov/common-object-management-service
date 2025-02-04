@@ -32,6 +32,24 @@ spec:
     {{- end }}
   {{- with .Values.autoscaling.behavior }}
   behavior:
-    {{- toYaml . | nindent 4 }}
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 10
+          periodSeconds: 60
+        - type: Pods
+          value: 2
+          periodSeconds: 60
+      selectPolicy: Min
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 30
+        - type: Pods
+          value: 2
+          periodSeconds: 30
   {{- end }}
 {{- end }}

@@ -2,7 +2,7 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-replicaCount: 2
+# replicaCount: 2
 
 image:
   # -- Default image repository
@@ -44,26 +44,14 @@ autoscaling:
   # -- Specifies whether the Horizontal Pod Autoscaler should be created
   enabled: false
 
-  # -- behavior configures the scaling behavior of the target in both Up and Down directions (scaleUp and scaleDown fields respectively).
-  behavior:
-    scaleDown:
-      stabilizationWindowSeconds: 120
-      selectPolicy: Max
-      policies:
-        - type: Pods
-          value: 1
-          periodSeconds: 120
-    scaleUp:
-      stabilizationWindowSeconds: 0
-      selectPolicy: Max
-      policies:
-        - type: Pods
-          value: 2
-          periodSeconds: 30
-  minReplicas: 2
-  maxReplicas: 16
+  minReplicas: 3
+  maxReplicas: 8
   targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
+
+# pod disruption budget.
+pdb:
+  enabled: false
+  minAvailable: 2 # the minimum number of pods that must be available during the disruption budget.
 
 serviceAccount:
   # -- Specifies whether a service account should be created
@@ -106,11 +94,11 @@ resources:
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  limits:
-    # -- Limit Peak CPU (in millicores ex. 1000m)
-    cpu: 200m
-    # -- Limit Peak Memory (in gigabytes Gi or megabytes Mi ex. 2Gi)
-    memory: 256Mi
+  # limits:
+  #   # -- Limit Peak CPU (in millicores ex. 1000m)
+  #   cpu: 200m
+  #   # -- Limit Peak Memory (in gigabytes Gi or megabytes Mi ex. 2Gi)
+  #   memory: 256Mi
   requests:
     # -- Requested CPU (in millicores ex. 500m)
     cpu: 50m
@@ -223,18 +211,12 @@ postgres:
         requests:
           cpu: 50m
           memory: 128Mi
-        limits:
-          cpu: 100m
-          memory: 256Mi
       sidecars:
         replicaCertCopy:
           resources:
             requests:
               cpu: 1m
               memory: 32Mi
-            limits:
-              cpu: 50m
-              memory: 64Mi
 
   # ------- postgres user/db configuration ----------
   users:
@@ -271,34 +253,22 @@ postgres:
         requests:
           cpu: 20m
           memory: 128Mi
-        limits:
-          cpu: 50m
-          memory: 256Mi
     sidecars:
       pgbackrest:
         resources:
           requests:
             cpu: 5m
             memory: 16Mi
-          limits:
-            cpu: 20m
-            memory: 64Mi
       pgbackrestConfig:
         resources:
           requests:
             cpu: 5m
             memory: 32Mi
-          limits:
-            cpu: 20m
-            memory: 64Mi
     jobs:
       resources:
         requests:
           cpu: 10m
           memory: 64Mi
-        limits:
-          cpu: 50m
-          memory: 128Mi
 
   # ----- pgBouncer (network pooling) ------
   pgBouncerConfig:
@@ -310,9 +280,6 @@ postgres:
       requests:
         cpu: 5m
         memory: 32Mi
-      limits:
-        cpu: 20m
-        memory: 64Mi
 
   # -------- monitoring ----------
   monitoring: false

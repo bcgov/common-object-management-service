@@ -6,7 +6,8 @@ features:
 
 autoscaling:
   enabled: true
-  maxReplicas: 4
+pdb:
+  enabled: true
 
 config:
   enabled: true
@@ -45,20 +46,17 @@ postgres:
         storageClassName: "netapp-block-standard"
       resources:
         requests:
-          cpu: 50m
-          memory: 128Mi
+          cpu: 256m
+          memory: 512Mi
         limits:
-          cpu: 100m
-          memory: 256Mi
+          cpu: 512m
+          memory: 1024Mi
       sidecars:
         replicaCertCopy:
           resources:
             requests:
-              cpu: 1m
-              memory: 32Mi
-            limits:
-              cpu: 50m
-              memory: 64Mi
+              cpu: 25m
+              memory: 50Mi
 
   # -------- backups ---------
   pgBackRestConfig:
@@ -69,36 +67,24 @@ postgres:
     repoHost:
       resources:
         requests:
-          cpu: 20m
+          cpu: 100m
           memory: 128Mi
-        limits:
-          cpu: 50m
-          memory: 256Mi
     sidecars:
       pgbackrest:
         resources:
           requests:
-            cpu: 5m
-            memory: 16Mi
-          limits:
-            cpu: 20m
-            memory: 64Mi
+            cpu: 50m
+            memory: 50Mi
       pgbackrestConfig:
         resources:
           requests:
-            cpu: 5m
-            memory: 32Mi
-          limits:
-            cpu: 20m
-            memory: 64Mi
+            cpu: 50m
+            memory: 128Mi
     jobs:
       resources:
         requests:
-          cpu: 10m
+          cpu: 20m
           memory: 64Mi
-        limits:
-          cpu: 50m
-          memory: 128Mi
     configuration:
       # secret for saving backups to S3
       - secret:
