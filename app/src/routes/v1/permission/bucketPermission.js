@@ -4,11 +4,12 @@ const router = express.Router();
 const { Permissions } = require('../../../components/constants');
 const { bucketPermissionController } = require('../../../controllers');
 const { bucketPermissionValidator } = require('../../../validators');
-const { checkAppMode, currentObject, hasPermission } = require('../../../middleware/authorization');
+const { checkAppMode, currentObject, checkS3BasicAccess, hasPermission } = require('../../../middleware/authorization');
 const { requireSomeAuth } = require('../../../middleware/featureToggle');
 
 router.use(checkAppMode);
 router.use(requireSomeAuth);
+router.use(checkS3BasicAccess);
 
 /** Search for bucket permissions */
 router.get('/', bucketPermissionValidator.searchPermissions, (req, res, next) => {

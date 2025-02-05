@@ -2,11 +2,12 @@ const router = require('express').Router();
 
 const { versionValidator } = require('../../validators');
 const { versionController } = require('../../controllers');
-const { checkAppMode } = require('../../middleware/authorization');
+const { checkAppMode, checkS3BasicAccess } = require('../../middleware/authorization');
 const { requireSomeAuth } = require('../../middleware/featureToggle');
 
 router.use(checkAppMode);
 router.use(requireSomeAuth);
+router.use(checkS3BasicAccess);
 
 /** Fetch metadata for specific version */
 router.get('/metadata', versionValidator.fetchMetadata, (req, res, next) => {

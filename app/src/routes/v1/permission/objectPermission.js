@@ -4,11 +4,12 @@ const router = express.Router();
 const { Permissions } = require('../../../components/constants');
 const { objectPermissionController } = require('../../../controllers');
 const { objectPermissionValidator } = require('../../../validators');
-const { checkAppMode, currentObject, hasPermission } = require('../../../middleware/authorization');
+const { checkAppMode, currentObject, checkS3BasicAccess, hasPermission } = require('../../../middleware/authorization');
 const { requireSomeAuth } = require('../../../middleware/featureToggle');
 
 router.use(checkAppMode);
 router.use(requireSomeAuth);
+router.use(checkS3BasicAccess);
 
 /** Search for object permissions */
 router.get('/', objectPermissionValidator.searchPermissions, (req, res, next) => {
