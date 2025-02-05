@@ -130,6 +130,7 @@ config:
   # to string value "true".
   configMap:
     # BASICAUTH_ENABLED: "true"
+    # S3ACCESSMODE_ENABLED: "true"
 
     # DB_HOST: ~
     DB_PORT: "5432"

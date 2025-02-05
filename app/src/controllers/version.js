@@ -28,6 +28,7 @@ const controller = {
       const versionIds = mixedQueryToArray(req.query.versionId);
       const s3VersionIds = mixedQueryToArray(req.query.s3VersionId);
       const metadata = getMetadata(req.headers);
+      const bucketId = mixedQueryToArray(req.query.bucketId);
 
       const params = {
         versionIds: versionIds ? versionIds.map(id => addDashesToUuid(id)) : versionIds,
@@ -37,6 +38,7 @@ const controller = {
       // if scoping to current user permissions on objects
       if (getConfigBoolean('server.privacyMask')) {
         params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
+        params.bucketId = bucketId?.length ? bucketId : undefined;
       }
       const response = await metadataService.fetchMetadataForVersion(params);
       res.status(200).json(response);
@@ -58,6 +60,7 @@ const controller = {
       const versionIds = mixedQueryToArray(req.query.versionId);
       const s3VersionIds = mixedQueryToArray(req.query.s3VersionId);
       const tagging = req.query.tagset;
+      const bucketId = mixedQueryToArray(req.query.bucketId);
 
       const params = {
         versionIds: versionIds ? versionIds.map(id => addDashesToUuid(id)) : versionIds,
@@ -67,6 +70,7 @@ const controller = {
       // if scoping to current user permissions on objects
       if (getConfigBoolean('server.privacyMask')) {
         params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
+        params.bucketId = bucketId?.length ? bucketId : undefined;
       }
       const response = await tagService.fetchTagsForVersion(params);
       res.status(200).json(response);

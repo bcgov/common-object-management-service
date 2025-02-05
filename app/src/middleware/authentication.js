@@ -3,9 +3,10 @@ const config = require('config');
 const basicAuth = require('express-basic-auth');
 const jwt = require('jsonwebtoken');
 
-const { AuthType } = require('../components/constants');
+const { AuthType, DEFAULTREGION } = require('../components/constants');
 const { getConfigBoolean } = require('../components/utils');
-const { userService } = require('../services');
+const { userService, storageService } = require('../services');
+
 
 /**
  * Basic Auth configuration object
@@ -55,8 +56,34 @@ const currentUser = async (req, res, next) => {
 
   if (authorization) {
     // Basic Authorization
-    if (getConfigBoolean('basicAuth.enabled') && authorization.toLowerCase().startsWith('basic ')) {
+    if (authorization.toLowerCase().startsWith('basic ')) {
       currentUser.authType = AuthType.BASIC;
+      if (getConfigBoolean('basicAuth.s3AccessMode') && req.get('x-amz-endpoint') && req.get('x-amz-bucket')) {
+        try {
+          // This will validate with s3 bucket end point
+          const base64Credentials = authorization.split(' ')[1];
+          const credentials = Buffer.from(base64Credentials, 'base64').toString('utf-8');
+          const [accessKeyId, secretAccessKey] = credentials.split(':');
+
+          const bucketSettings = {
+            accessKeyId: accessKeyId,
+            bucket: req.get('x-amz-bucket'),
+            endpoint: req.get('x-amz-endpoint'),
+            key: req.get('x-amz-key') ? req.get('x-amz-key') : '/',
+            region: credentials.region || DEFAULTREGION,
+            secretAccessKey: secretAccessKey,
+          };
+          const bucketHeader = await storageService.headBucket(bucketSettings);
+
+          if (bucketHeader?.$metadata?.httpStatusCode === 200) {
+            currentUser.authType = AuthType.BASIC;
+            delete bucketSettings.secretAccessKey;
+            currentUser.bucketSettings = bucketSettings;
+          }
+        } catch (err) {
+          return next(new Problem(403, { detail: 'Invalid authorization credentials', instance: req.originalUrl }));
+        }
+      }
     }
 
     // OIDC JWT Authorization
@@ -95,7 +122,7 @@ const currentUser = async (req, res, next) => {
   req.currentUser = Object.freeze(currentUser);
 
   // Continue middleware stack based on detected AuthType
-  if (currentUser.authType === AuthType.BASIC) {
+  if (currentUser.authType === AuthType.BASIC && !currentUser?.bucketSettings) {
     _checkBasicAuth(req, res, next);
   }
   else next();

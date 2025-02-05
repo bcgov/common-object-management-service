@@ -253,6 +253,13 @@ const service = {
               .modifyGraph('object', query => { query.modify('hasPermission', params.userId, 'READ'); })
               .whereNotNull('object.id');
           }
+          if (params.bucketId) {
+            query
+              .allowGraph('object')
+              .withGraphJoined('object')
+              .modifyGraph('object', query => { query.modify('filterBucketIds', params.bucketId); })
+              .whereNotNull('object.id');
+          }
         })
         // format result
         .orderBy('version.createdAt', 'desc')

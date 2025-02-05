@@ -80,20 +80,22 @@ describe('delimit', () => {
 describe('getAppAuthMode', () => {
   const getConfigBooleanSpy = jest.spyOn(utils, 'getConfigBoolean');
   it.each([
-    [AuthMode.NOAUTH, false, false],
-    [AuthMode.BASICAUTH, true, false],
-    [AuthMode.OIDCAUTH, false, true],
-    [AuthMode.FULLAUTH, true, true]
-  ])('should return %s when basicAuth.enabled %s and keycloak.enabled %s', (expected, basicAuth, keycloak) => {
-    getConfigBooleanSpy
-      .mockReturnValueOnce(basicAuth) // basicAuth.enabled
-      .mockReturnValueOnce(keycloak); // keycloak.enabled
+    [AuthMode.NOAUTH, false, false, false],
+    [AuthMode.BASICAUTH, true, false, false], // basicAuth.enabled
+    [AuthMode.OIDCAUTH, false, false, true],   // s3AccessMode && keycloak  enabled
+    [AuthMode.FULLAUTH, false, true, true],  // s3Access enabled
+  ])('should return %s when basicAuth.enabled %s and keycloak.enabled %s',
+    (expected, basicAuth, keycloak, S3AccessMode) => {
+      getConfigBooleanSpy
+        .mockReturnValueOnce(basicAuth)
+        .mockReturnValueOnce(S3AccessMode)
+        .mockReturnValueOnce(keycloak);
 
-    const result = utils.getAppAuthMode();
+      const result = utils.getAppAuthMode();
 
-    expect(result).toEqual(expected);
-    expect(utils.getConfigBoolean).toHaveBeenCalledTimes(2);
-  });
+      expect(result).toEqual(expected);
+      expect(utils.getConfigBoolean).toHaveBeenCalledTimes(3);
+    });
 });
 
 describe('getBucket', () => {
