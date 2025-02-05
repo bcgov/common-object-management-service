@@ -2,9 +2,13 @@ const Problem = require('api-problem');
 
 const log = require('../components/log')(module.filename);
 const { AuthMode, AuthType, Permissions } = require('../components/constants');
-const { getAppAuthMode, getCurrentIdentity } = require('../components/utils');
+const { getAppAuthMode, getCurrentIdentity, mixedQueryToArray } = require('../components/utils');
 const { NIL: SYSTEM_USER } = require('uuid');
-const { bucketPermissionService, objectService, objectPermissionService, userService } = require('../services');
+const {
+  bucketPermissionService,
+  objectService,
+  objectPermissionService,
+  userService, bucketService } = require('../services');
 
 /**
  * @function _checkPermission
@@ -43,6 +47,58 @@ const _checkPermission = async ({ currentObject, currentUser, params }, permissi
 
   log.debug('Missing user identification', { function: '_checkPermission' });
   return result;
+};
+/**
+ * @function checkS3BasicAccess
+ * Checks and authorized access to perform operation for s3 basic authentication request
+ * @param {object} req Express request object
+ * @param {object} _res Express response object
+ * @param {function} next The next callback function
+ * @returns {function} Express middleware function
+ * @throws The error encountered upon failure
+ * @returns
+ */
+const checkS3BasicAccess = async (req, _res, next) => {
+  const authType = req.currentUser ? req.currentUser.authType : undefined;
+  const bucketSettings = req.currentUser?.bucketSettings ? req.currentUser.bucketSettings : undefined;
+  let bucketIds = mixedQueryToArray(req.query.bucketId) || mixedQueryToArray(req.params.bucketId) || req.body.bucketId;
+  const objIds = mixedQueryToArray(req.query.objectId) || mixedQueryToArray(req.params.objectId) || req.body.objectId;
+
+  if (!bucketIds?.length && objIds?.length) {
+    const objectIds = await objectService.searchObjects({ id: objIds });
+    bucketIds = objectIds.data.map(i => i.bucketId);
+  }
+
+  if (
+    authType === AuthType.BASIC &&
+    bucketSettings) {
+    if (bucketIds?.length > 0) {
+      try {
+        const bucketData = {
+          bucketId: bucketIds,
+          bucket: bucketSettings.bucket,
+          endpoint: bucketSettings.endpoint,
+          accessKeyId: bucketSettings.accessKeyId,
+        };
+        const buckets = await bucketService.checkBucketBasicAccess(bucketData);
+
+        if (buckets.length === 0) {
+          return next(new Problem(403, {
+            detail: 'User lacks permission to complete this action',
+            instance: req.originalUrl
+          }));
+        } else {
+          //bucketId params will be overwritten with passed or valid access bucketId.
+          req.query.bucketId = buckets;
+        }
+      } catch (err) {
+        return next(new Problem(403, { detail: err.message, instance: req.originalUrl }));
+      }
+    } else if (!req.originalUrl.startsWith('/api/v1/bucket')) {
+      return next(new Problem(403, { detail: 'BucketId or ObjectId is required', instance: req.originalUrl }));
+    }
+  }
+  next();
 };
 
 /**
@@ -147,5 +203,5 @@ const hasPermission = (permission) => {
 };
 
 module.exports = {
-  _checkPermission, checkAppMode, currentObject, hasPermission
+  _checkPermission, checkAppMode, checkS3BasicAccess, currentObject, hasPermission
 };

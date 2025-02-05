@@ -5,10 +5,11 @@ const { Permissions } = require('../../components/constants');
 const { bucketController, syncController } = require('../../controllers');
 const { bucketValidator } = require('../../validators');
 const { requireSomeAuth } = require('../../middleware/featureToggle');
-const { checkAppMode, hasPermission } = require('../../middleware/authorization');
+const { checkAppMode, hasPermission, checkS3BasicAccess } = require('../../middleware/authorization');
 
 router.use(checkAppMode);
 router.use(requireSomeAuth);
+router.use(checkS3BasicAccess);
 
 /** Creates a bucket */
 router.put('/', express.json(), bucketValidator.createBucket, (req, res, next) => {
@@ -35,7 +36,8 @@ router.get('/', bucketValidator.searchBuckets, (req, res, next) => {
 });
 
 /** Updates a bucket */
-router.patch('/:bucketId', express.json(), bucketValidator.updateBucket, hasPermission(Permissions.MANAGE),
+router.patch('/:bucketId', express.json(), checkS3BasicAccess,
+  bucketValidator.updateBucket, hasPermission(Permissions.MANAGE),
   (req, res, next) => {
     bucketController.updateBucket(req, res, next);
   }

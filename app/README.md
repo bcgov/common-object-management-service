@@ -145,6 +145,7 @@ docker run -it --rm -p 3000:3000 \
   -e BASICAUTH_ENABLED=true \
   -e BASICAUTH_USERNAME=<Your chosen Basic Auth Username> \
   -e BASICAUTH_PASSWORD=<Your chosen Basic Auth Password> \
+  -e S3ACCESSMODE_ENABLED=true \
   docker.io/bcgovimages/common-object-management-service:latest
 ```
 
@@ -192,6 +193,7 @@ docker run -it --rm -p 3000:3000 \
   -e BASICAUTH_USERNAME=<Your chosen Basic Auth Username> \
   -e BASICAUTH_PASSWORD=<Your chosen Basic Auth Password> \
   -e KC_ENABLED=true \
+  -e S3ACCESSMODE_ENABLED=true \
   -e KC_CLIENTID=<id> \
   -e KC_CLIENTSECRET=<secret> \
   -e KC_PUBLICKEY=<publickey> \

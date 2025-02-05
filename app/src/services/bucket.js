@@ -7,6 +7,38 @@ const { Bucket } = require('../db/models');
  * The Bucket DB Service
  */
 const service = {
+
+  /**
+   * @function checkBucketBasicAccess
+   * Grants a user provided permissions to the bucket if the data precisely matches
+   * accessKeyId, bucketId, bucket and endpoint values.
+   * @param {string} data.bucketId The COMS guid for the bucket
+   * @param {string} data.bucket The S3 bucket name
+   * @param {string} data.endpoint The S3 bucket endpoint
+   * @param {string} data.accessKeyId The S3 bucket secret access key
+   * @param {object} [etrx=undefined] An optional Objection Transaction object
+   * @returns {Promise<object>} The result will include all bucketIds that pass the validation
+   * @throws The error encountered upon db transaction failure
+   */
+  checkBucketBasicAccess: async (data, etrx = undefined) => {
+    let trx;
+    try {
+      trx = etrx ? etrx : await Bucket.startTransaction();
+
+      // Get existing record from DB
+      const buckets = await Bucket.query()
+        .modify('filterBucketIds', data.bucketId)
+        .where('bucket', data.bucket)
+        .where('endpoint', data.endpoint)
+        .where('accessKeyId', data.accessKeyId);
+
+      if (!etrx) await trx.commit();
+      return buckets.map(buckets => buckets.bucketId);
+    } catch (err) {
+      if (!etrx && trx) await trx.rollback();
+      throw err;
+    }
+  },
   /**
    * @function checkGrantPermissions
    * Grants a user provided permissions to the bucket if the data precisely matches

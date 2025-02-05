@@ -13,6 +13,7 @@ config:
   enabled: true
   configMap:
     BASICAUTH_ENABLED: "true"
+    S3ACCESSMODE_ENABLED: "true"
     DB_PORT: "5432"
     KC_ENABLED: "true"
     KC_IDENTITYKEY: idir_user_guid,bceid_user_guid,github_id

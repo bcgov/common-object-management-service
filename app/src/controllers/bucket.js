@@ -305,7 +305,12 @@ const controller = {
         endpoint: req.body.endpoint ? stripDelimit(req.body.endpoint) : currentBucket.endpoint
       });
 
-      const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER), SYSTEM_USER);
+      let userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER), SYSTEM_USER);
+
+      if ((userId === SYSTEM_USER || userId === undefined) && req.currentUser?.bucketSettings) {
+        userId = req.currentUser.bucketSettings.accessKeyId;
+      }
+
       const response = await bucketService.update({
         bucketId: bucketId,
         bucketName: req.body.bucketName,
