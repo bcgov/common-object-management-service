@@ -1,13 +1,14 @@
 const { NIL: SYSTEM_USER } = require('uuid');
 const errorToProblem = require('../components/errorToProblem');
 const {
+  AuthType,
   getConfigBoolean,
   getCurrentIdentity,
   addDashesToUuid,
   getMetadata,
   mixedQueryToArray
 } = require('../components/utils');
-const { metadataService, tagService, userService } = require('../services');
+const { bucketService, metadataService, tagService, userService } = require('../services');
 
 const SERVICE = 'VersionService';
 
@@ -34,9 +35,14 @@ const controller = {
         s3VersionIds: s3VersionIds ? s3VersionIds.map(id => id.toString()) : s3VersionIds,
         metadata: metadata && Object.keys(metadata).length ? metadata : undefined,
       };
-      // if scoping to current user permissions on objects
+      // if privacy mode enabled
       if (getConfigBoolean('server.privacyMask')) {
-        params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
+        // if using S3 Access Mode, scope results to objects all in buckets with matching credentials
+        if (req.currentUser.authType === AuthType.BASIC && req.currentUser.bucketSettings) {
+          params.bucketId = await bucketService.checkBucketBasicAccess(req.currentUser.bucketSettings);
+        }
+        // else scope results to objects with current user's READ permission on parent objects
+        else params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
       }
       const response = await metadataService.fetchMetadataForVersion(params);
       res.status(200).json(response);
@@ -64,9 +70,14 @@ const controller = {
         s3VersionIds: s3VersionIds ? s3VersionIds.map(id => id.toString()) : s3VersionIds,
         tags: tagging && Object.keys(tagging).length ? tagging : undefined,
       };
-      // if scoping to current user permissions on objects
+      // if privacy mode enabled
       if (getConfigBoolean('server.privacyMask')) {
-        params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
+        // if using S3 Access Mode, scope results to objects in all buckets with matching credentials
+        if (req.currentUser.authType === AuthType.BASIC && req.currentUser.bucketSettings) {
+          params.bucketId = await bucketService.checkBucketBasicAccess(req.currentUser.bucketSettings);
+        }
+        // else scope results to objects with current user's READ permission on parent objects
+        else params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
       }
       const response = await tagService.fetchTagsForVersion(params);
       res.status(200).json(response);

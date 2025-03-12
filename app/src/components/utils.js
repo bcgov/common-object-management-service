@@ -56,7 +56,7 @@ const utils = {
     const s3AccessMode = utils.getConfigBoolean('basicAuth.s3AccessMode');
 
     if (!basicAuth && !oidcAuth && !s3AccessMode) return AuthMode.NOAUTH;
-    else if ((basicAuth || !s3AccessMode) && !oidcAuth) return AuthMode.BASICAUTH;
+    else if ((basicAuth || s3AccessMode) && !oidcAuth) return AuthMode.BASICAUTH;
     else if (!basicAuth && oidcAuth && !s3AccessMode) return AuthMode.OIDCAUTH;
     else return AuthMode.FULLAUTH; // basicAuth && oidcAuth
   },

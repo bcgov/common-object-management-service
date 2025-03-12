@@ -69,19 +69,19 @@ const currentUser = async (req, res, next) => {
             accessKeyId: accessKeyId,
             bucket: req.get('x-amz-bucket'),
             endpoint: req.get('x-amz-endpoint'),
-            key: req.get('x-amz-key') ? req.get('x-amz-key') : '/',
+            key: '/',
             region: credentials.region || DEFAULTREGION,
             secretAccessKey: secretAccessKey,
           };
           const bucketHeader = await storageService.headBucket(bucketSettings);
 
           if (bucketHeader?.$metadata?.httpStatusCode === 200) {
-            currentUser.authType = AuthType.BASIC;
             delete bucketSettings.secretAccessKey;
+            // consider adding COMS bucketId to the currentUser.bucketSettings for later convenience
             currentUser.bucketSettings = bucketSettings;
           }
         } catch (err) {
-          return next(new Problem(403, { detail: err.message, instance: req.originalUrl }));
+          return next(new Problem(403, { detail: 'Invalid bucket credentials provided', instance: req.originalUrl }));
         }
       }
     }

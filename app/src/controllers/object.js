@@ -3,6 +3,7 @@ const cors = require('cors');
 const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 
 const {
+  AuthType,
   DEFAULTCORS,
   DownloadMode,
   MAXCOPYOBJECTLENGTH,
@@ -30,6 +31,7 @@ const {
 const utils = require('../db/models/utils');
 
 const {
+  bucketService,
   bucketPermissionService,
   metadataService,
   objectService,
@@ -637,9 +639,14 @@ const controller = {
         objId: objIds ? objIds.map(id => addDashesToUuid(id)) : objIds,
         metadata: metadata && Object.keys(metadata).length ? metadata : undefined
       };
-      // if scoping to current user permissions on objects
+      // if privacy mode enabled
       if (getConfigBoolean('server.privacyMask')) {
-        params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
+        // if using S3 Access Mode, scope seach results to metadata on objects in buckets with matching credentials
+        if (req.currentUser.authType === AuthType.BASIC && req.currentUser.bucketSettings) {
+          params.bucketId = await bucketService.checkBucketBasicAccess(req.currentUser.bucketSettings);
+        }
+        // else scope results to metadata for objects with current user's READ permission
+        else params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
       }
       const response = await metadataService.fetchMetadataForObject(params);
       res.status(200).json(response);
@@ -666,9 +673,14 @@ const controller = {
         objectIds: objIds ? objIds.map(id => addDashesToUuid(id)) : objIds,
         tagset: tagset && Object.keys(tagset).length ? tagset : undefined,
       };
-      // if scoping to current user permissions on objects
+      // if privacy mode enabled
       if (getConfigBoolean('server.privacyMask')) {
-        params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
+        // if using S3 Access Mode, scope seach results to tags on objects in buckets with matching credentials
+        if (req.currentUser.authType === AuthType.BASIC && req.currentUser.bucketSettings) {
+          params.bucketId = await bucketService.checkBucketBasicAccess(req.currentUser.bucketSettings);
+        }
+        // else scope results to tags on objects with current user's READ permission
+        else params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
       }
       const response = await tagService.fetchTagsForObject(params);
       res.status(200).json(response);
@@ -1046,9 +1058,14 @@ const controller = {
         sort: req.query.sort,
         order: req.query.order,
       };
-      // if scoping to current user permissions on objects
+      // if privacy mode enabled
       if (getConfigBoolean('server.privacyMask')) {
-        params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
+        // if using S3 Access Mode, scope seach results to all buckets with matching credentials
+        if (req.currentUser.authType === AuthType.BASIC && req.currentUser.bucketSettings) {
+          params.bucketId = await bucketService.checkBucketBasicAccess(req.currentUser.bucketSettings);
+        }
+        // else scope results to objects with current user's READ permission on objects
+        else params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
       }
       const response = await objectService.searchObjects(params);
       res.setHeader('X-Total-Rows', response.total).status(200).json(response.data);
