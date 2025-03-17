@@ -58,7 +58,7 @@ const currentUser = async (req, res, next) => {
     // Basic Authorization
     if (authorization.toLowerCase().startsWith('basic ')) {
       currentUser.authType = AuthType.BASIC;
-      if (req.get('x-amz-endpoint') && req.get('x-amz-bucket')) {
+      if (getConfigBoolean('basicAuth.s3AccessMode') && req.get('x-amz-endpoint') && req.get('x-amz-bucket')) {
         try {
           // This will validate with s3 bucket end point
           const base64Credentials = authorization.split(' ')[1];
