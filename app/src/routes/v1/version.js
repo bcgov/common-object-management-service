@@ -7,15 +7,14 @@ const { requireSomeAuth } = require('../../middleware/featureToggle');
 
 router.use(checkAppMode);
 router.use(requireSomeAuth);
-router.use(checkS3BasicAccess);
 
 /** Fetch metadata for specific version */
-router.get('/metadata', versionValidator.fetchMetadata, (req, res, next) => {
+router.get('/metadata', versionValidator.fetchMetadata, checkS3BasicAccess, (req, res, next) => {
   versionController.fetchMetadata(req, res, next);
 });
 
 /** Fetch tags for specific version */
-router.get('/tagging', versionValidator.fetchTags, (req, res, next) => {
+router.get('/tagging', versionValidator.fetchTags, checkS3BasicAccess, (req, res, next) => {
   versionController.fetchTags(req, res, next);
 });
 

@@ -81,7 +81,7 @@ const currentUser = async (req, res, next) => {
             currentUser.bucketSettings = bucketSettings;
           }
         } catch (err) {
-          return next(new Problem(403, { detail: err.message, instance: req.originalUrl }));
+          return next(new Problem(403, { detail: 'Invalid authorization credentials', instance: req.originalUrl }));
         }
       }
     }

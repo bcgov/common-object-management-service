@@ -138,7 +138,9 @@ const service = {
         .modify('filterPublic', params.public)
         .modify('filterActive', params.active)
         // version
-        .modify('filterVersionAttributes', params.mimeType, params.deleteMarker, params.latest)
+        .modify('filterVersionAttributes',
+          params.mimeType, params.deleteMarker, params.latest, params.versionId, params.s3VersionId
+        )
         // meta/tag
         .modify('filterMetadataTag', {
           metadata: params.metadata,

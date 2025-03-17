@@ -11,7 +11,7 @@ const utils = {
    */
   filterOneOrMany(query, value, column) {
     if (value) {
-      if (Array.isArray(value) && value.length) {
+      if (Array.isArray(value)) {
         query.whereIn(column, value);
       } else {
         query.where(column, value);

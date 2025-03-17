@@ -61,14 +61,24 @@ const _checkPermission = async ({ currentObject, currentUser, params }, permissi
 const checkS3BasicAccess = async (req, _res, next) => {
   const authType = req.currentUser ? req.currentUser.authType : undefined;
   const bucketSettings = req.currentUser?.bucketSettings ? req.currentUser.bucketSettings : undefined;
-  let bucketIds = mixedQueryToArray(req.query.bucketId) || mixedQueryToArray(req.params.bucketId) || req.body.bucketId;
-  const objIds = mixedQueryToArray(req.query.objectId) || mixedQueryToArray(req.params.objectId) || req.body.objectId;
 
-  if (!bucketIds?.length && objIds?.length) {
-    const objectIds = await objectService.searchObjects({ id: objIds });
-    bucketIds = objectIds.data.map(i => i.bucketId);
-  }
   if (authType === AuthType.BASIC && bucketSettings) {
+    // determine which buckets relate to the request
+    let bucketIds = mixedQueryToArray(req.query.bucketId) || mixedQueryToArray(req.params.bucketId) || req.body.bucketId;
+    const objIds = mixedQueryToArray(req.query.objectId) || mixedQueryToArray(req.params.objectId) || req.body.objectId;
+    const versionIds = mixedQueryToArray(req.query.versionId);
+    const s3VersionIds = mixedQueryToArray(req.query.s3VersionId);
+
+    if (!bucketIds?.length) {
+      if (objIds?.length || versionIds?.length || s3VersionIds?.length) {
+        const objects = await objectService.searchObjects({
+          id: objIds, versionId: versionIds, s3VersionId: s3VersionIds
+        });
+        bucketIds = objects.data.map(i => i.bucketId);
+      }
+    }
+
+    // filter request by buckets matching provided credentials
     try {
       const bucketData = {
         bucketId: bucketIds,
@@ -84,7 +94,7 @@ const checkS3BasicAccess = async (req, _res, next) => {
           instance: req.originalUrl
         }));
       } else {
-        //bucketId params will be overwritten with passed or valid access bucketId.
+        // bucketId params will be overwritten with passed or valid access bucketId.
         req.query.bucketId = buckets.length > 1 ? buckets : buckets[0];
       }
     } catch (err) {

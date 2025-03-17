@@ -78,7 +78,7 @@ class ObjectModel extends Timestamps(Model) {
       filterActive(query, value) {
         if (value !== undefined) query.where('object.active', value);
       },
-      filterVersionAttributes(query, mimeType, deleteMarker, isLatest) {
+      filterVersionAttributes(query, mimeType, deleteMarker, isLatest, versionId, s3VersionId) {
         query
           .withGraphJoined('version')
           .leftJoinRelated('version')
@@ -92,6 +92,8 @@ class ObjectModel extends Timestamps(Model) {
             if (isLatest !== undefined) {
               query.where('version.isLatest', isLatest);
             }
+            filterOneOrMany(query, versionId, 'version.id');
+            filterOneOrMany(query, s3VersionId, 'version.s3VersionId');
           });
       },
       filterMetadataTag(query, value) {
