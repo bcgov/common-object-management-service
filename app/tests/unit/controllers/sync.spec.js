@@ -30,7 +30,7 @@ afterEach(() => {
   jest.resetAllMocks();
 });
 
-describe('syncBucket', () => {
+describe('syncBucketSingle', () => {
   const enqueueSpy = jest.spyOn(objectQueueService, 'enqueue');
   const getCurrentIdentitySpy = jest.spyOn(utils, 'getCurrentIdentity');
   const getCurrentUserIdSpy = jest.spyOn(userService, 'getCurrentUserId');
@@ -40,7 +40,7 @@ describe('syncBucket', () => {
   const updateSpy = jest.spyOn(bucketService, 'update');
   const next = jest.fn();
 
-  it('should enqueue all objects in a bucket', async () => {
+  it('should enqueue all objects in in current \'directory\' in bucket', async () => {
     const USR_IDENTITY = 'xxxy';
     const USR_ID = 'abc-123';
     const req = {
@@ -58,7 +58,7 @@ describe('syncBucket', () => {
     trxWrapperSpy.mockImplementation(callback => callback({}));
     updateSpy.mockResolvedValue({});
 
-    await controller.syncBucket(req, res, next);
+    await controller.syncBucketSingle(req, res, next);
 
     expect(enqueueSpy).toHaveBeenCalledTimes(1);
     expect(listAllObjectVersionsSpy).toHaveBeenCalledTimes(1);
@@ -76,7 +76,7 @@ describe('syncBucket', () => {
     listAllObjectVersionsSpy.mockImplementation(() => { throw new Error('error'); });
     searchObjectsSpy.mockResolvedValue([{ path: path }]);
 
-    await controller.syncBucket(req, res, next);
+    await controller.syncBucketSingle(req, res, next);
 
     expect(enqueueSpy).toHaveBeenCalledTimes(0);
     expect(listAllObjectVersionsSpy).toHaveBeenCalledTimes(1);
