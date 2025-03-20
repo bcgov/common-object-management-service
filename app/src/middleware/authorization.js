@@ -66,7 +66,7 @@ const checkS3BasicAccess = async (req, _res, next) => {
   const authType = req.currentUser ? req.currentUser.authType : undefined;
   const bucketSettings = req.currentUser?.bucketSettings ? req.currentUser.bucketSettings : undefined;
 
-  if (authType === AuthType.BASIC && bucketSettings) {
+  if (getConfigBoolean('basicAuth.s3AccessMode') && authType === AuthType.BASIC && bucketSettings) {
     // determine which buckets relate to the request
     let bucketIds = mixedQueryToArray(req.query.bucketId) || mixedQueryToArray(req.params.bucketId) || req.body.bucketId;
     const objIds = mixedQueryToArray(req.query.objectId) || mixedQueryToArray(req.params.objectId) || req.body.objectId;

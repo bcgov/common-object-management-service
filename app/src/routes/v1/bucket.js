@@ -14,6 +14,7 @@ router.use(requireSomeAuth);
 router.put('/',
   express.json(),
   bucketValidator.createBucket,
+  checkS3BasicAccess,
   (req, res, next) => {
     bucketController.createBucket(req, res, next);
   });

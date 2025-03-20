@@ -21,7 +21,6 @@ router.post('/',
 router.get('/:token',
   requireBearerAuth,
   inviteValidator.useInvite,
-  checkS3BasicAccess,
   (req, res, next) => {
     inviteController.useInvite(req, res, next);
   });
