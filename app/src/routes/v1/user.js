@@ -9,7 +9,7 @@ router.use(checkAppMode);
 router.use(requireSomeAuth);
 
 /** Search for users */
-router.get('/', checkS3BasicAccess, userValidator.searchUsers, (req, res, next) => {
+router.get('/', userValidator.searchUsers, checkS3BasicAccess, (req, res, next) => {
   userController.searchUsers(req, res, next);
 });
 
