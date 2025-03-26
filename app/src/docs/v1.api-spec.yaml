@@ -1818,7 +1818,7 @@ components:
               example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
     Query-BucketName:
       in: query
-      name: name
+      name: displayName
       description: A display name given to the bucket on creation
       schema:
         type: string
@@ -2735,7 +2735,7 @@ components:
             status:
               example: 403
             detail:
-              example: The provided S3 credentials do not authorize this operation
+              example: User lacks permission to complete this action
     Response-Gone:
       title: Response Gone
       type: object

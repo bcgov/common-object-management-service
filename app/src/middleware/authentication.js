@@ -58,30 +58,40 @@ const currentUser = async (req, res, next) => {
     // Basic Authorization
     if (authorization.toLowerCase().startsWith('basic ')) {
       currentUser.authType = AuthType.BASIC;
-      if (getConfigBoolean('basicAuth.s3AccessMode') && req.get('x-amz-endpoint') && req.get('x-amz-bucket')) {
-        try {
-          // This will validate with s3 bucket end point
-          const base64Credentials = authorization.split(' ')[1];
-          const credentials = Buffer.from(base64Credentials, 'base64').toString('utf-8');
-          const [accessKeyId, secretAccessKey] = credentials.split(':');
+      if (getConfigBoolean('basicAuth.s3AccessMode')) {
+        const amzEndpoint = req.get('x-amz-endpoint');
+        const amzBucket = req.get('x-amz-bucket');
 
-          const bucketSettings = {
-            accessKeyId: accessKeyId,
-            bucket: req.get('x-amz-bucket'),
-            endpoint: req.get('x-amz-endpoint'),
-            key: req.get('x-amz-key') ? req.get('x-amz-key') : '/',
-            region: credentials.region || DEFAULTREGION,
-            secretAccessKey: secretAccessKey,
-          };
-          const bucketHeader = await storageService.headBucket(bucketSettings);
+        // Ensure both 'x-amz-endpoint' and 'x-amz-bucket' are either both provided or both missing
+        if ((amzEndpoint && !amzBucket) || (!amzEndpoint && amzBucket)) {
+          return next(new Problem(400,
+            { detail: 'Both x-amz-endpoint and x-amz-bucket must be provided together', instance: req.originalUrl }));
+        }
 
-          if (bucketHeader?.$metadata?.httpStatusCode === 200) {
-            currentUser.authType = AuthType.BASIC;
-            delete bucketSettings.secretAccessKey;
-            currentUser.bucketSettings = bucketSettings;
+        if (amzEndpoint && amzBucket) {
+          try {
+            // This will validate with s3 bucket endpoint
+            const base64Credentials = authorization.split(' ')[1];
+            const credentials = Buffer.from(base64Credentials, 'base64').toString('utf-8');
+            const [accessKeyId, secretAccessKey] = credentials.split(':');
+
+            const bucketSettings = {
+              accessKeyId: accessKeyId,
+              bucket: amzBucket,
+              endpoint: amzEndpoint,
+              region: credentials.region || DEFAULTREGION,
+              secretAccessKey: secretAccessKey,
+            };
+            const bucketHeader = await storageService.headBucket(bucketSettings);
+
+            if (bucketHeader?.$metadata?.httpStatusCode === 200) {
+              await storageService.headBucket(bucketSettings);
+              delete bucketSettings.secretAccessKey;
+              currentUser.bucketSettings = bucketSettings;
+            }
+          } catch (err) {
+            return next(new Problem(403, { detail: 'Invalid authorization credentials', instance: req.originalUrl }));
           }
-        } catch (err) {
-          return next(new Problem(403, { detail: 'Invalid authorization credentials', instance: req.originalUrl }));
         }
       }
     }

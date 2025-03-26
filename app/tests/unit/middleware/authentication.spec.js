@@ -139,7 +139,7 @@ describe('currentUser', () => {
 
       expect(req.currentUser).toBeTruthy();
       expect(req.currentUser).toHaveProperty('authType', AuthType.BASIC);
-      expect(req.get).toHaveBeenCalledTimes(2);
+      expect(req.get).toHaveBeenCalledTimes(3);
       expect(req.get).toHaveBeenCalledWith('Authorization');
       expect(checkBasicAuthSpy).toHaveBeenCalledTimes(1);
     });

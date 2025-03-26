@@ -6,7 +6,7 @@ const {
   getAppAuthMode,
   getCurrentIdentity,
   getConfigBoolean,
-  mixedQueryToArray } = require('../components/utils');
+  mixedQueryToArray, stripDelimit } = require('../components/utils');
 const { NIL: SYSTEM_USER } = require('uuid');
 const {
   bucketPermissionService,
@@ -68,7 +68,8 @@ const checkS3BasicAccess = async (req, _res, next) => {
 
   if (getConfigBoolean('basicAuth.s3AccessMode') && authType === AuthType.BASIC && bucketSettings) {
     // determine which buckets relate to the request
-    let bucketIds = mixedQueryToArray(req.query.bucketId) || mixedQueryToArray(req.params.bucketId) || req.body.bucketId;
+    let bucketIds = mixedQueryToArray(req.query.bucketId)
+      || mixedQueryToArray(req.params.bucketId) || req.body.bucketId;
     const objIds = mixedQueryToArray(req.query.objectId) || mixedQueryToArray(req.params.objectId) || req.body.objectId;
     const versionIds = mixedQueryToArray(req.query.versionId);
     const s3VersionIds = mixedQueryToArray(req.query.s3VersionId);
@@ -87,7 +88,7 @@ const checkS3BasicAccess = async (req, _res, next) => {
       const bucketData = {
         bucketId: bucketIds,
         bucket: bucketSettings.bucket,
-        endpoint: bucketSettings.endpoint,
+        endpoint: stripDelimit(bucketSettings.endpoint),
         accessKeyId: bucketSettings.accessKeyId,
       };
       const buckets = await bucketService.checkBucketBasicAccess(bucketData);
@@ -95,6 +96,8 @@ const checkS3BasicAccess = async (req, _res, next) => {
       if (buckets.length != 0) {
         //bucketId params will be overwritten with passed or valid access bucketId.
         req.query.bucketId = buckets.length > 1 ? buckets : buckets[0];
+      } else {
+        return next(new Problem(403, { detail: 'Invalid authorization credentials', instance: req.originalUrl }));
       }
     } catch (err) {
       return next(new Problem(403, { detail: err.message, instance: req.originalUrl }));
