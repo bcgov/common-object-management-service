@@ -200,14 +200,22 @@ const service = {
    * @function searchChildBuckets
    * Get db records for each bucket that acts as a sub-folder of the provided bucket
    * @param {object} parentBucket a bucket model (record) from the COMS db
+   * @param {object} [etrx=undefined] An optional Objection Transaction object
    * @returns {Promise<object[]>} An array of bucket records
    * @throws If there are no records found
    */
-  searchChildBuckets: async (parentBucket) => {
-    return Bucket.query()
-      .modify('filterKeyIsChild', parentBucket.key)
-      .modify('filterEndpoint', parentBucket.endpoint)
-      .where('bucket', parentBucket.bucket);
+  searchChildBuckets: async (parentBucket, etrx = undefined) => {
+    let trx;
+    try {
+      trx = etrx ? etrx : await Bucket.startTransaction();
+      return Bucket.query()
+        .modify('filterKeyIsChild', parentBucket.key)
+        .modify('filterEndpoint', parentBucket.endpoint)
+        .where('bucket', parentBucket.bucket);
+    } catch (err) {
+      if (!etrx && trx) await trx.rollback();
+      throw err;
+    }
   },
 
   /**

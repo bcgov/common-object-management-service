@@ -22,44 +22,44 @@ tags:
     description: Operations for managing S3 Bucket(s).
     externalDocs:
       url: >-
-        https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#bucket
+        https://developer.gov.bc.ca/docs/default/component/common-object-management-service/Endpoint-Notes/#bucket
   - name: Metadata
     description: Operations for managing Metadata for S3 Objects.
     externalDocs:
       url: >-
-        https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#metadata
+        https://developer.gov.bc.ca/docs/default/component/common-object-management-service/Endpoint-Notes/#metadata
   - name: Object
     description: Operations directly influencing an S3 Object.
     externalDocs:
       url: >-
-        https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#object
+        https://developer.gov.bc.ca/docs/default/component/common-object-management-service/Endpoint-Notes/#object
   - name: Permission
     description: Operations for managing S3 permissions.
     externalDocs:
       url: >-
-        https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#permission
+        https://developer.gov.bc.ca/docs/default/component/common-object-management-service/Endpoint-Notes/#permissions
   - name: Sync
     description: >-
       Operations for syncing existing buckets and objects. Ensures that external
       S3 modifications are eventually correctly tracked by COMS.
     externalDocs:
       url: >-
-        https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#sync
+        https://developer.gov.bc.ca/docs/default/component/common-object-management-service/Endpoint-Notes/#sync
   - name: Tagging
     description: Operations for managing Tags for S3 Objects.
     externalDocs:
       url: >-
-        https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#tag
+        https://developer.gov.bc.ca/docs/default/component/common-object-management-service/Endpoint-Notes/#tag
   - name: User
     description: Operations to list valid queryable users and identity providers.
     externalDocs:
       url: >-
-        https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes#user
+        https://developer.gov.bc.ca/docs/default/component/common-object-management-service/Endpoint-Notes/#user
   - name: Version
     description: Operations to list object versions.
     externalDocs:
       url: >-
-        https://github.com/bcgov/common-object-management-service/wiki/Endpoint-Notes
+        hhttps://developer.gov.bc.ca/docs/default/component/common-object-management-service/Endpoint-Notes/#versions
 paths:
   /bucket:
     put:
@@ -297,6 +297,7 @@ paths:
         - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
         - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Path-BucketId"
+        - $ref: "#/components/parameters/Query-Recursive"
       responses:
         "202":
           $ref: "#/components/responses/AddedQueueLength"
@@ -1386,9 +1387,10 @@ paths:
     get:
       summary: Synchronize with the default bucket
       description: >-
-        Synchronize the contents of the default bucket with COMS so that it can
-        track and manage objects that are already in the bucket. This avoids the
-        need to re-upload preexisting files through the COMS API. This endpoint
+        Synchronize the contents of the default bucket (specified in environent
+        variables: `OBJECTSTORAGE_*`) with with current state in object storage.
+        This is a 'recursive' sync which will sync objects in all sub-folders.
+        Syncing avoids the need to re-upload preexisting files through the COMS API. This endpoint
         does not guarantee immediately synchronized results. Synchronization
         latency will be affected by the remaining number of objects awaiting
         synchronization. This endpoint updates the last known successful
@@ -2045,6 +2047,15 @@ components:
           - bucketId
           - name
         example: name
+    Query-Recursive:
+      in: query
+      name: recursive
+      description: >-
+        Whether or not to also sync sub-folders inside the provided bucket/folder
+      schema:
+        type: boolean
+        default: false
+        example: 1
     Query-S3VersionId:
       in: query
       name: s3VersionId

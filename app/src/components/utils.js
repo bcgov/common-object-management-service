@@ -62,6 +62,17 @@ const utils = {
   },
 
   /**
+   * @function formatS3KeyForCompare
+   * Format S3 key-prefixes for comparison with bucket.key in COMS db
+   * @param {string} k S3 key prefix. example: photos/docs/
+   * @returns {string} provided key prefix without trailing slash
+   */
+  formatS3KeyForCompare(k) {
+    let key = k.substr(0, k.lastIndexOf('/')); // remove trailing slash and file name
+    return key || '/'; // set empty key to '/' to match convention in COMS db
+  },
+
+  /**
    * @function getBucket
    * Acquire core S3 bucket credential information from database or configuration
    * @param {string} [bucketId=undefined] An optional bucket ID to query database for bucket

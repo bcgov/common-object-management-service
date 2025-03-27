@@ -1,8 +1,10 @@
 const { NIL: SYSTEM_USER } = require('uuid');
 
 const errorToProblem = require('../components/errorToProblem');
-const { addDashesToUuid, getCurrentIdentity, isAtPath, isTruthy } = require('../components/utils');
+const { addDashesToUuid, getCurrentIdentity, formatS3KeyForCompare, isAtPath } = require('../components/utils');
 const utils = require('../db/models/utils');
+const log = require('../components/log')(module.filename);
+
 const {
   bucketPermissionService,
   bucketService,
@@ -31,43 +33,101 @@ const controller = {
    */
   async syncBucketRecursive(req, res, next) {
     try {
-      const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER), SYSTEM_USER);
-      const bucketId = addDashesToUuid(req.params.bucketId);
-      const parentBucket = await bucketService.read(bucketId);
-      // current user's permissions on parent folder
-      const currentUserParentBucketPerms = userId !== SYSTEM_USER ? (await bucketPermissionService.searchPermissions({
-        bucketId: parentBucket.bucketId,
-        userId: userId
-      })).map(p => p.permCode) : [];
+      // Wrap all sql operations in a single transaction
+      const response = await utils.trxWrapper(async (trx) => {
 
-      /**
-       * get the two following lists for comparison:
-       */
-      // get parent + child bucket records already in COMS db
-      const dbChildBuckets = await bucketService.searchChildBuckets(parentBucket);
-      let dbBuckets = [parentBucket].concat(dbChildBuckets);
+        // curren userId
+        const userId = await userService.getCurrentUserId(
+          getCurrentIdentity(req.currentUser, SYSTEM_USER),
+          SYSTEM_USER
+        );
+        // parent bucket
+        const bucketId = addDashesToUuid(req.params.bucketId);
+        const parentBucket = await bucketService.read(bucketId);
 
-      // get 'folders' that exist below (and including) the parent 'folder'
-      const s3Response = await storageService.listAllObjectVersions({ bucketId: bucketId, precisePath: false });
-      const formatS3KeyForCompare = (k => {
-        let key = k.substr(0, k.lastIndexOf('/')); // remove trailing slash and file name
-        return key ? key : '/'; // if parent is root set as '/' to match convention in COMS db
+        // current user's permissions on parent bucket (folder)
+        const currentUserParentBucketPerms = userId !== SYSTEM_USER ? (await bucketPermissionService.searchPermissions({
+          bucketId: parentBucket.bucketId,
+          userId: userId
+        })).map(p => p.permCode) : [];
+
+        /**
+         * sync (ie create or delete) bucket records in COMS db to match 'folders' (S3 key prefixes) that exist in S3
+        */
+        // parent + child bucket records already in COMS db
+        const dbChildBuckets = await bucketService.searchChildBuckets(parentBucket);
+        let dbBuckets = [parentBucket].concat(dbChildBuckets);
+        // 'folders' that exist below (and including) the parent 'folder' in S3
+        const s3Response = await storageService.listAllObjectVersions({ bucketId: bucketId, precisePath: false });
+        const s3Keys = [...new Set([
+          ...s3Response.DeleteMarkers.map(object => formatS3KeyForCompare(object.Key)),
+          ...s3Response.Versions.map(object => formatS3KeyForCompare(object.Key)),
+        ])];
+
+        const syncedBuckets = await this.syncBucketRecords(
+          dbBuckets,
+          s3Keys,
+          parentBucket,
+          // assign current user's permissions on parent bucket to new sub-folders (buckets)
+          currentUserParentBucketPerms,
+          trx
+        );
+
+        /**
+         * Queue objects in all the folders for syncing
+         */
+        return await this.queueObjectRecords(syncedBuckets, s3Response, userId, trx);
       });
-      const s3Keys = [...new Set([
-        ...s3Response.DeleteMarkers.map(object => formatS3KeyForCompare(object.Key)),
-        ...s3Response.Versions.map(object => formatS3KeyForCompare(object.Key)),
-      ])];
-      // console.log('s3Keys', s3Keys);
 
+      // return number of jobs inserted
+      res.status(202).json(response);
+    } catch (e) {
+      next(errorToProblem(SERVICE, e));
+    }
+  },
 
-      /**
-       * compare each list and sync (ie create or delete) bucket records in COMS db to match 'folders' that exist in S3
-       * note: we assign all permissions to all users that created parent bucket
-       */
+  /**
+   * @function syncBucketSingle
+   * Synchronizes objects found at the Key of the given bucket, ignoring subfolders and files after the next delimiter
+   * @param {object} req Express request object
+   * @param {object} res Express response object
+   * @param {function} next The next callback function
+   * @returns {function} Express middleware function
+   */
+  async syncBucketSingle(req, res, next) {
+    try {
+      const bucketId = addDashesToUuid(req.params.bucketId);
+      const bucket = await bucketService.read(bucketId);
+      const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER), SYSTEM_USER);
+
+      const s3Objects = await storageService.listAllObjectVersions({ bucketId: bucketId, filterLatest: true });
+
+      const response = await utils.trxWrapper(async (trx) => {
+        return this.queueObjectRecords([bucket], s3Objects, userId, trx);
+      });
+
+      res.status(202).json(response);
+    } catch (e) {
+      next(errorToProblem(SERVICE, e));
+    }
+  },
+
+  /**
+  * @function syncBucketRecords
+  * Synchronizes (creates / prunes) COMS db bucket records for each 'directry' found in S3
+  * @param {object[]} Array of Bucket models - bucket records already in COMS db before syncing
+  * @param {string[]} s3Keys Array of key prefixes from S3 representing 'directories'
+  * @param {object} Bucket model for the COMS db bucket record of parent bucket
+  * @param {string[]} currentUserParentBucketPerms Array of PermCodes to add to NEW buckets
+ *  @param {object} [trx] An Objection Transaction object
+  * @returns {string[]} And array of bucketId's for bucket records in COMS db
+  */
+  async syncBucketRecords(dbBuckets, s3Keys, parentBucket, currentUserParentBucketPerms, trx) {
+    try {
       // delete buckets not found in S3 from COMS db
       const oldDbBuckets = dbBuckets.filter(b => !s3Keys.includes(b.key));
       for (const dbBucket of oldDbBuckets) {
-        await bucketService.delete(dbBucket.bucketId);
+        await bucketService.delete(dbBucket.bucketId, trx);
         dbBuckets = dbBuckets.filter(b => b.bucketId != dbBucket.bucketId);
       }
       // Create buckets only found in S3 in COMS db
@@ -87,24 +147,34 @@ const controller = {
           // ..so copy all their perms to NEW subfolders
           permCodes: currentUserParentBucketPerms
         };
-        const dbResponse = await bucketService.create(data);
+
+        const dbResponse = await bucketService.create(data, trx);
         dbBuckets.push(dbResponse);
       }
+      return dbBuckets;
+    }
+    catch (err) {
+      log.error(err.message, { function: 'syncBucketRecords' });
+      throw err;
+    }
+  },
 
-      /**
-       * Sync all the objects found in all the parent and child 'folders'.
-       * by comparing objects in COMS db with the keys of the object found in S3
-       */
+  /**
+   * @function queueObjectRecords
+   * Synchronizes (creates / prunes) COMS db object records with state in S3
+   * @param {object[]} dbBuckets Array of Bucket models in COMS db
+   * @param {object} s3Objects The response from storage.listAllObjectVersions - and
+   * object containg an array of DeleteMarkers and Versions
+   * @param {string} userId the guid of current user
+  *  @param {object} [trx] An Objection Transaction object
+   * @returns {string[]} And array of bucketId's for bucket records in COMS db
+   */
+  async queueObjectRecords(dbBuckets, s3Objects, userId, trx) {
+    try {
       // get all objects in existing buckets in all 'buckets' in COMS db
       const dbObjects = await objectService.searchObjects({
         bucketId: dbBuckets.map(b => b.bucketId)
-      });
-      // get all objects below parent 'key' in S3
-      const s3Objects = s3Response;
-
-      console.log('s3Objects', s3Objects);
-
-
+      }, trx);
       /**
        * merge arrays of objects from COMS db and S3 to form an array of jobs with format:
        *  [ { path: '/images/img3.jpg', bucketId: '123' }, { path: '/images/album1/img1.jpg', bucketId: '456' } ]
@@ -145,66 +215,19 @@ const controller = {
       const jobs = [...new Map(objects.map(o => [o.path, o])).values()];
 
       // create jobs in COMS db object_queue for each object
-      const response = await utils.trxWrapper(async (trx) => {
-        // update 'lastSyncRequestedDate' value in COMS db for each bucket
-        for (const bucket of dbBuckets) {
-          await bucketService.update({
-            bucketId: bucket.bucketId,
-            userId: userId,
-            lastSyncRequestedDate: new Date().toISOString()
-          }, trx);
-        }
-        return await objectQueueService.enqueue({ jobs: jobs }, trx);
-      });
-      // return number of jobs inserted
-      res.status(202).json(response);
-    } catch (e) {
-      next(errorToProblem(SERVICE, e));
-    }
-  },
-
-  /**
-   * @function syncBucketSingle
-   * Synchronizes objects found at the Key of the given bucket, ignoring subfolders and files after the next delimiter
-   * @param {object} req Express request object
-   * @param {object} res Express response object
-   * @param {function} next The next callback function
-   * @returns {function} Express middleware function
-   */
-  async syncBucketSingle(req, res, next) {
-    try {
-      const bucketId = addDashesToUuid(req.params.bucketId);
-      const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER), SYSTEM_USER);
-
-      const [dbResponse, s3Response] = await Promise.all([
-        objectService.searchObjects({ bucketId: bucketId }),
-        storageService.listAllObjectVersions({ bucketId: bucketId, filterLatest: true })
-      ]);
-
-      // Aggregate and dedupe all file paths to consider
-      const jobs = [...new Set([
-        ...dbResponse.data.map(object => object.path),
-        ...s3Response.DeleteMarkers.map(object => object.Key),
-        ...s3Response.Versions.map(object => object.Key)
-      ])].map(path => ({
-        path: path,
-        bucketId: bucketId
-        // adding current userId will give ALL perms on new objects
-        // and set createdBy on all downstream resources (versions, tags, meta)
-        // userId: userId
-      }));
-
-      const response = await utils.trxWrapper(async (trx) => {
+      // update 'lastSyncRequestedDate' value in COMS db for each bucket
+      for (const bucket of dbBuckets) {
         await bucketService.update({
-          bucketId: bucketId,
+          bucketId: bucket.bucketId,
           userId: userId,
           lastSyncRequestedDate: new Date().toISOString()
         }, trx);
-        return await objectQueueService.enqueue({ jobs: jobs }, trx);
-      });
-      res.status(202).json(response);
-    } catch (e) {
-      next(errorToProblem(SERVICE, e));
+      }
+      return await objectQueueService.enqueue({ jobs: jobs }, trx);
+    }
+    catch (err) {
+      log.error(err.message, { function: 'queueObjectRecords' });
+      throw err;
     }
   },
 
