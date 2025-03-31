@@ -340,6 +340,24 @@ const utils = {
   },
 
   /**
+   * @function isPrefixOfPath
+   * Predicate function determining if the `path` is a member of or equal to the `prefix` path
+   * @param {string} prefix The base "folder"
+   * @param {string} path The "file" to check
+   * @returns {boolean} True if path is member of prefix. False in all other cases.
+   */
+  isPrefixOfPath(prefix, path) {
+    if (typeof prefix !== 'string' || typeof path !== 'string') return false;
+    // path `/photos/holiday/` (represents a folder) and should be an objects in bucket with key `/photos/holiday`
+    if (prefix === path || prefix + DELIMITER === path) return true;
+
+    const pathParts = path.split(DELIMITER).filter(part => part);
+    const prefixParts = prefix.split(DELIMITER).filter(part => part);
+    return prefixParts.every((part, i) => pathParts[i] === part)
+      && pathParts.filter(part => !prefixParts.includes(part)).length === 1;
+  },
+
+  /**
    * @function isTruthy
    * Returns true if the element name in the object contains a truthy value
    * @param {object} value The object to evaluate

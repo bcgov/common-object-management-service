@@ -1,7 +1,7 @@
 const { NIL: SYSTEM_USER } = require('uuid');
 
 const errorToProblem = require('../components/errorToProblem');
-const { addDashesToUuid, getCurrentIdentity, formatS3KeyForCompare, isAtPath } = require('../components/utils');
+const { addDashesToUuid, getCurrentIdentity, formatS3KeyForCompare, isPrefixOfPath } = require('../components/utils');
 const utils = require('../db/models/utils');
 const log = require('../components/log')(module.filename);
 
@@ -126,31 +126,40 @@ const controller = {
     try {
       // delete buckets not found in S3 from COMS db
       const oldDbBuckets = dbBuckets.filter(b => !s3Keys.includes(b.key));
-      for (const dbBucket of oldDbBuckets) {
-        await bucketService.delete(dbBucket.bucketId, trx);
-        dbBuckets = dbBuckets.filter(b => b.bucketId != dbBucket.bucketId);
-      }
+      await Promise.all(
+        oldDbBuckets.map(dbBucket =>
+          bucketService.delete(dbBucket.bucketId, trx)
+            .then(() => {
+              dbBuckets = dbBuckets.filter(b => b.bucketId !== dbBucket.bucketId);
+            })
+        )
+      );
+
       // Create buckets only found in S3 in COMS db
       const newS3Keys = s3Keys.filter(k => !dbBuckets.map(b => b.key).includes(k));
-      for (const s3Key of newS3Keys) {
-        const data = {
-          bucketName: s3Key.substring(s3Key.lastIndexOf('/') + 1),
-          accessKeyId: parentBucket.accessKeyId,
-          bucket: parentBucket.bucket,
-          endpoint: parentBucket.endpoint,
-          key: s3Key,
-          secretAccessKey: parentBucket.secretAccessKey,
-          region: parentBucket.region ?? undefined,
-          active: parentBucket.active,
-          userId: parentBucket.createdBy ?? SYSTEM_USER,
-          // current user has MANAGE perm on parent folder (see route.hasPermission)
-          // ..so copy all their perms to NEW subfolders
-          permCodes: currentUserParentBucketPerms
-        };
+      await Promise.all(
+        newS3Keys.map(s3Key => {
+          const data = {
+            bucketName: s3Key.substring(s3Key.lastIndexOf('/') + 1),
+            accessKeyId: parentBucket.accessKeyId,
+            bucket: parentBucket.bucket,
+            endpoint: parentBucket.endpoint,
+            key: s3Key,
+            secretAccessKey: parentBucket.secretAccessKey,
+            region: parentBucket.region ?? undefined,
+            active: parentBucket.active,
+            userId: parentBucket.createdBy ?? SYSTEM_USER,
+            // current user has MANAGE perm on parent folder (see route.hasPermission)
+            // ..so copy all their perms to NEW subfolders
+            permCodes: currentUserParentBucketPerms
+          };
+          return bucketService.create(data, trx)
+            .then((dbResponse) => {
+              dbBuckets.push(dbResponse);
+            });
+        })
+      );
 
-        const dbResponse = await bucketService.create(data, trx);
-        dbBuckets.push(dbResponse);
-      }
       return dbBuckets;
     }
     catch (err) {
@@ -175,6 +184,7 @@ const controller = {
       const dbObjects = await objectService.searchObjects({
         bucketId: dbBuckets.map(b => b.bucketId)
       }, trx);
+
       /**
        * merge arrays of objects from COMS db and S3 to form an array of jobs with format:
        *  [ { path: '/images/img3.jpg', bucketId: '123' }, { path: '/images/album1/img1.jpg', bucketId: '456' } ]
@@ -191,9 +201,7 @@ const controller = {
         ...s3Objects.DeleteMarkers.map(object => {
           return {
             path: object.Key,
-            bucketId: dbBuckets
-              .filter(b => isAtPath(b.key, object.Key))
-              .map(b => b.bucketId)[0]
+            bucketId: dbBuckets.find(b => isPrefixOfPath(b.key, object.Key))?.bucketId
           };
         }),
         // Versions found in S3
@@ -202,15 +210,14 @@ const controller = {
           .map(object => {
             return {
               path: object.Key,
-              bucketId: dbBuckets
-                .filter(b => isAtPath(b.key, object.Key))
-                .map(b => b.bucketId)[0],
-              // adding current userId will give ALL perms on new objects
+              bucketId: dbBuckets.find(b => isPrefixOfPath(b.key, object.Key))?.bucketId
+              // NOTE: adding current userId will give ALL perms on new objects
               // and set createdBy on all downstream resources (versions, tags, meta)
               // userId: userId
             };
-          })
+          }),
       ])];
+
       // merge and remove duplicates
       const jobs = [...new Map(objects.map(o => [o.path, o])).values()];
 
