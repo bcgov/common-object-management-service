@@ -8,7 +8,7 @@ const schema = {
   addMetadata: {
     headers: type.metadata(),
     params: Joi.object({
-      objectId: type.uuidv4
+      objectId: type.uuidv4.required()
     }),
     query: Joi.object({
       s3VersionId: Joi.string(),
@@ -18,7 +18,7 @@ const schema = {
 
   addTags: {
     params: Joi.object({
-      objectId: type.uuidv4
+      objectId: type.uuidv4.required()
     }),
     query: Joi.object({
       tagset: type.tagset(),
@@ -31,14 +31,14 @@ const schema = {
     headers: type.metadata(),
     query: Joi.object({
       tagset: type.tagset(),
-      bucketId: type.uuidv4
+      bucketId: type.uuidv4.required()
     })
   },
 
   deleteMetadata: {
     headers: type.metadata(),
     params: Joi.object({
-      objectId: type.uuidv4
+      objectId: type.uuidv4.required()
     }),
     query: Joi.object({
       s3VersionId: Joi.string(),
@@ -48,7 +48,7 @@ const schema = {
 
   deleteObject: {
     params: Joi.object({
-      objectId: type.uuidv4
+      objectId: type.uuidv4.required()
     }),
     query: Joi.object({
       s3VersionId: Joi.string(),
@@ -58,7 +58,7 @@ const schema = {
 
   deleteTags: {
     params: Joi.object({
-      objectId: type.uuidv4
+      objectId: type.uuidv4.required()
     }),
     query: Joi.object({
       tagset: type.tagset(),
@@ -87,13 +87,15 @@ const schema = {
 
   listObjectVersion: {
     params: Joi.object({
-      objectId: type.uuidv4
+      objectId: type.uuidv4.required()
+    }),
+    query: Joi.object({
     })
   },
 
   copyVersion: {
     params: Joi.object({
-      objectId: type.uuidv4
+      objectId: type.uuidv4.required()
     }),
     query: Joi.object({
       versionId: type.uuidv4
@@ -102,7 +104,7 @@ const schema = {
 
   readObject: {
     params: Joi.object({
-      objectId: type.uuidv4
+      objectId: type.uuidv4.required()
     }),
     query: Joi.object({
       expiresIn: Joi.number(),
@@ -115,7 +117,7 @@ const schema = {
   replaceMetadata: {
     headers: type.metadata(),
     params: Joi.object({
-      objectId: type.uuidv4
+      objectId: type.uuidv4.required()
     }),
     query: Joi.object({
       s3VersionId: Joi.string(),
@@ -125,7 +127,7 @@ const schema = {
 
   replaceTags: {
     params: Joi.object({
-      objectId: type.uuidv4
+      objectId: type.uuidv4.required()
     }),
     query: Joi.object({
       tagset: type.tagset(),
@@ -165,12 +167,14 @@ const schema = {
   syncObject: {
     params: Joi.object({
       objectId: type.uuidv4.required()
+    }),
+    query: Joi.object({
     })
   },
 
   togglePublic: {
     params: Joi.object({
-      objectId: type.uuidv4
+      objectId: type.uuidv4.required()
     }),
     query: Joi.object({
       public: type.truthy
@@ -180,7 +184,7 @@ const schema = {
   updateObject: {
     headers: type.metadata(),
     params: Joi.object({
-      objectId: type.uuidv4
+      objectId: type.uuidv4.required()
     }),
     query: Joi.object({
       tagset: type.tagset(),
