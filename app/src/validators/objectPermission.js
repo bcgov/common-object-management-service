@@ -44,6 +44,8 @@ const schema = {
         permCode: Joi.string().required().valid(...Object.values(Permissions)),
       }).required()
     ).required(),
+    query: Joi.object({
+    })
   },
 
   removePermissions: {

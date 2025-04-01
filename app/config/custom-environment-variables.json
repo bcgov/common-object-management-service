@@ -1,6 +1,7 @@
 {
   "basicAuth": {
     "enabled": "BASICAUTH_ENABLED",
+    "s3AccessMode": "S3ACCESSMODE_ENABLED",
     "password": "BASICAUTH_PASSWORD",
     "username": "BASICAUTH_USERNAME"
   },

@@ -122,7 +122,7 @@ describe('searchObjects', () => {
       objectPermission: [{
         permCode: 'READ',
         userId: 'ae8a58f6-62bc-4dd1-acef-79f123609d48'
-      },{
+      }, {
         permCode: 'UPDATE',
         userId: 'afcbad71-d2d5-4551-bd8b-18634fd8370e'
       }], ...params
@@ -150,9 +150,8 @@ describe('searchObjects', () => {
     expect(ObjectModel.modify).toHaveBeenNthCalledWith(4, 'filterPath', params.path);
     expect(ObjectModel.modify).toHaveBeenNthCalledWith(5, 'filterPublic', params.public);
     expect(ObjectModel.modify).toHaveBeenNthCalledWith(6, 'filterActive', params.active);
-    expect(ObjectModel.modify).toHaveBeenNthCalledWith(
-      7, 'filterVersionAttributes', params.mimeType, params.deleteMarker, params.latest
-    );
+    expect(ObjectModel.modify).toHaveBeenNthCalledWith(7, 'filterVersionAttributes',
+      params.mimeType, params.deleteMarker, params.latest, params.versionId, params.s3VersionId);
     expect(ObjectModel.modify).toHaveBeenNthCalledWith(8, 'filterMetadataTag', {
       metadata: params.metadata,
       tag: params.tag
@@ -197,8 +196,8 @@ describe('searchObjects', () => {
     expect(ObjectModel.modify).toHaveBeenNthCalledWith(4, 'filterPath', params.path);
     expect(ObjectModel.modify).toHaveBeenNthCalledWith(5, 'filterPublic', params.public);
     expect(ObjectModel.modify).toHaveBeenNthCalledWith(6, 'filterActive', params.active);
-    expect(ObjectModel.modify).toHaveBeenNthCalledWith(
-      7, 'filterVersionAttributes', params.mimeType, params.deleteMarker, params.latest
+    expect(ObjectModel.modify).toHaveBeenNthCalledWith(7, 'filterVersionAttributes',
+      params.mimeType, params.deleteMarker, params.latest, params.versionId, params.s3VersionId
     );
     expect(ObjectModel.modify).toHaveBeenNthCalledWith(8, 'filterMetadataTag', {
       metadata: params.metadata,

@@ -18,12 +18,16 @@ const schema = {
           otherwise: Joi.array().items(...Object.values(InviteObjectAllowedPermissions)).min(1)
         }),
 
-    }).xor('bucketId', 'objectId')
+    }).xor('bucketId', 'objectId'),
+    query: Joi.object({
+    })
   },
 
   useInvite: {
     params: Joi.object({
       token: type.uuidv4
+    }),
+    query: Joi.object({
     })
   }
 };

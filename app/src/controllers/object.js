@@ -1105,7 +1105,11 @@ const controller = {
    */
   async updateObject(req, res, next) {
     try {
-      const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
+      let userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
+
+      if ((userId === SYSTEM_USER || userId === undefined) && req.currentUser?.bucketSettings) {
+        userId = req.currentUser.bucketSettings.accessKeyId;
+      }
 
       // Preflight existence check for bucketId
       const bucketId = req.currentObject?.bucketId;

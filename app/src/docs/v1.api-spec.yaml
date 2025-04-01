@@ -71,6 +71,9 @@ paths:
         generating a new bucket record. This endpoint can be used to grant the current user
         permission to upload to a new or existing bucket.
       operationId: createBucket
+      parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
       tags:
         - Bucket
       requestBody:
@@ -102,6 +105,8 @@ paths:
       tags:
         - Bucket
       parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Query-BucketId"
         - $ref: "#/components/parameters/Query-Active"
         - $ref: "#/components/parameters/Query-Key"
@@ -129,6 +134,8 @@ paths:
       tags:
         - Bucket
       parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Path-BucketId"
       responses:
         "204":
@@ -144,6 +151,8 @@ paths:
       tags:
         - Bucket
       parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Path-BucketId"
       responses:
         "200":
@@ -170,6 +179,8 @@ paths:
               items:
                 $ref: "#/components/schemas/Request-UpdateBucket"
       parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Path-BucketId"
       responses:
         "200":
@@ -194,6 +205,8 @@ paths:
       tags:
         - Bucket
       parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Path-BucketId"
       responses:
         "204":
@@ -215,6 +228,8 @@ paths:
       tags:
         - Bucket
       parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Path-BucketId"
       requestBody:
         content:
@@ -279,6 +294,8 @@ paths:
         - Sync
       operationId: syncBucket
       parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Path-BucketId"
       responses:
         "202":
@@ -303,6 +320,8 @@ paths:
         - Metadata
       parameters:
         - $ref: "#/components/parameters/Header-Metadata"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
       responses:
         "200":
           description: Returns an array of matching key/value pairs.
@@ -332,9 +351,11 @@ paths:
       tags:
         - Object
       parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
         - $ref: "#/components/parameters/Header-ContentDisposition"
         - $ref: "#/components/parameters/Header-ContentLength"
         - $ref: "#/components/parameters/Header-ContentType"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Header-Metadata"
         - $ref: "#/components/parameters/Query-TagSet"
         - in: query
@@ -403,6 +424,8 @@ paths:
       tags:
         - Object
       parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Header-Metadata"
         - $ref: "#/components/parameters/Query-ObjectId"
         - $ref: "#/components/parameters/Query-BucketId"
@@ -469,6 +492,8 @@ paths:
       tags:
         - Object
       parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Path-ObjectId"
         - $ref: "#/components/parameters/Query-Download"
         - $ref: "#/components/parameters/Query-ExpiresIn"
@@ -531,6 +556,8 @@ paths:
       tags:
         - Object
       parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Path-ObjectId"
         - $ref: "#/components/parameters/Query-S3VersionId"
         - $ref: "#/components/parameters/Query-VersionId"
@@ -577,8 +604,10 @@ paths:
       tags:
         - Object
       parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
         - $ref: "#/components/parameters/Header-ContentLength"
         - $ref: "#/components/parameters/Header-ContentType"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Header-Metadata"
         - $ref: "#/components/parameters/Path-ObjectId"
         - $ref: "#/components/parameters/Query-TagSet"
@@ -633,6 +662,8 @@ paths:
       tags:
         - Object
       parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Path-ObjectId"
         - $ref: "#/components/parameters/Query-S3VersionId"
         - $ref: "#/components/parameters/Query-VersionId"
@@ -661,6 +692,8 @@ paths:
       tags:
         - Version
       parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Path-ObjectId"
         - $ref: "#/components/parameters/Query-VersionId"
       responses:
@@ -687,6 +720,8 @@ paths:
       tags:
         - Version
       parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Path-ObjectId"
       responses:
         "200":
@@ -713,6 +748,8 @@ paths:
       tags:
         - Object
       parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Path-ObjectId"
         - $ref: "#/components/parameters/Query-Public"
       responses:
@@ -740,6 +777,8 @@ paths:
       tags:
         - Metadata
       parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Header-Metadata"
         - $ref: "#/components/parameters/Path-ObjectId"
         - $ref: "#/components/parameters/Query-S3VersionId"
@@ -766,6 +805,8 @@ paths:
       tags:
         - Metadata
       parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Header-Metadata"
         - $ref: "#/components/parameters/Path-ObjectId"
         - $ref: "#/components/parameters/Query-S3VersionId"
@@ -793,6 +834,8 @@ paths:
       tags:
         - Metadata
       parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Header-Metadata"
         - $ref: "#/components/parameters/Path-ObjectId"
         - $ref: "#/components/parameters/Query-S3VersionId"
@@ -821,6 +864,8 @@ paths:
         - Sync
       operationId: syncObject
       parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Path-ObjectId"
       responses:
         "202":
@@ -849,6 +894,8 @@ paths:
       tags:
         - Tagging
       parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Path-ObjectId"
         - $ref: "#/components/parameters/Query-TagSet"
         - $ref: "#/components/parameters/Query-S3VersionId"
@@ -875,6 +922,8 @@ paths:
       tags:
         - Tagging
       parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Path-ObjectId"
         - $ref: "#/components/parameters/Query-TagSet"
         - $ref: "#/components/parameters/Query-S3VersionId"
@@ -900,6 +949,8 @@ paths:
       tags:
         - Tagging
       parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Path-ObjectId"
         - $ref: "#/components/parameters/Query-TagSet"
         - $ref: "#/components/parameters/Query-S3VersionId"
@@ -925,6 +976,8 @@ paths:
       tags:
         - Metadata
       parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Header-Metadata"
         - $ref: "#/components/parameters/Query-BucketId"
         - $ref: "#/components/parameters/Query-ObjectId"
@@ -964,6 +1017,8 @@ paths:
       tags:
         - Tagging
       parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Query-BucketId"
         - $ref: "#/components/parameters/Query-ObjectId"
         - $ref: "#/components/parameters/Query-TagSet"
@@ -1341,6 +1396,9 @@ paths:
       operationId: syncDefault
       tags:
         - Sync
+      parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
       responses:
         "202":
           $ref: "#/components/responses/AddedQueueLength"
@@ -1357,6 +1415,9 @@ paths:
       operationId: syncStatus
       tags:
         - Sync
+      parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
       responses:
         "200":
           description: Returns the number of objects currently in the queue
@@ -1383,6 +1444,8 @@ paths:
       tags:
         - Tagging
       parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Query-TagSet"
       responses:
         "200":
@@ -1469,6 +1532,8 @@ paths:
       tags:
         - Metadata
       parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Header-Metadata"
         - in: query
           name: s3VersionId
@@ -1528,6 +1593,8 @@ paths:
       tags:
         - Tagging
       parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Query-TagSet"
         - in: query
           name: s3VersionId
@@ -1686,6 +1753,21 @@ components:
           - x-amz-meta-foo
           - x-amz-meta-bar
           - x-amz-meta-baz
+    Header-S3AccessMode-Bucket:
+      in: header
+      name: x-amz-bucket
+      description: >-
+        The ID of a bucket. Must be presented when authenticated using S3AccessMode.
+      schema:
+        type: string
+    Header-S3AccessMode-Endpoint:
+      in: header
+      name: x-amz-endpoint
+      description: >-
+        A valid RFC 3986 formatted S3 Service URI endpoint. Must be presented when authenticated using S3AccessMode.
+      schema:
+        type: string
+        maxLength: 255
     Path-BucketId:
       in: path
       name: bucketId
@@ -1736,7 +1818,7 @@ components:
               example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
     Query-BucketName:
       in: query
-      name: name
+      name: displayName
       description: A display name given to the bucket on creation
       schema:
         type: string
@@ -3182,7 +3264,10 @@ components:
   securitySchemes:
     BasicAuth:
       type: http
-      description: Basic auth via environment defined username and password
+      description: |
+        Authentication can be done via basic authentication using an environment-defined username and password, or for service accounts, using the bucket's accessKeyId and secretAccessKey. There are two ways to authenticate with basic auth:
+        * When basic auth is enabled (via the environment variable `BASICAUTH_ENABLED`), clients can authenticate by providing an Authorization header with the word "Basic", followed by a space and a base64-encoded string in the format `username:password`.
+        * When 'S3 Access Mode' is enabled (via the environment variable `S3ACCESSMODE_ENABLED`), clients can authenticate with an Authorization header containing the word "Basic", followed by a space and a base64-encoded string in the format `accessKeyId:secretAccessKey`. Additionally, the headers `x-amz-bucket:` and `x-amz-endpoint:` are required.
       scheme: basic
     BearerAuth:
       type: http

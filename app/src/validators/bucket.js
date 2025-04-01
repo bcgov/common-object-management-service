@@ -17,6 +17,10 @@ const schema = {
       active: type.truthy,
       permCodes: Joi.array().items(...Object.values(Permissions))
     }).required(),
+    params: Joi.object({
+    }),
+    query: Joi.object({
+    })
   },
 
   createBucketChild: {
@@ -26,24 +30,32 @@ const schema = {
     }).required(),
     params: Joi.object({
       bucketId: type.uuidv4
+    }),
+    query: Joi.object({
     })
   },
 
   deleteBucket: {
     params: Joi.object({
       bucketId: type.uuidv4
+    }),
+    query: Joi.object({
     })
   },
 
   headBucket: {
     params: Joi.object({
       bucketId: type.uuidv4.required()
+    }),
+    query: Joi.object({
     })
   },
 
   readBucket: {
     params: Joi.object({
       bucketId: type.uuidv4.required()
+    }),
+    query: Joi.object({
     })
   },
 
@@ -59,6 +71,8 @@ const schema = {
   syncBucket: {
     params: Joi.object({
       bucketId: type.uuidv4.required()
+    }),
+    query: Joi.object({
     })
   },
 
@@ -74,6 +88,8 @@ const schema = {
     }),
     params: Joi.object({
       bucketId: type.uuidv4
+    }),
+    query: Joi.object({
     })
   },
 };
