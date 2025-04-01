@@ -73,6 +73,7 @@ const schema = {
       bucketId: type.uuidv4.required()
     }),
     query: Joi.object({
+      recursive: type.truthy,
     })
   },
 
@@ -100,7 +101,7 @@ const validator = {
   deleteBucket: validate(schema.deleteBucket),
   headBucket: validate(schema.headBucket),
   readBucket: validate(schema.readBucket),
-  syncBucket: validate(schema.readBucket),
+  syncBucket: validate(schema.syncBucket),
   searchBuckets: validate(schema.searchBuckets),
   updateBucket: validate(schema.updateBucket)
 };

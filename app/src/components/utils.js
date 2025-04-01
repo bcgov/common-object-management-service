@@ -62,6 +62,17 @@ const utils = {
   },
 
   /**
+   * @function formatS3KeyForCompare
+   * Format S3 key-prefixes for comparison with bucket.key in COMS db
+   * @param {string} k S3 key prefix. example: photos/docs/
+   * @returns {string} provided key prefix without trailing slash
+   */
+  formatS3KeyForCompare(k) {
+    let key = k.substr(0, k.lastIndexOf('/')); // remove trailing slash and file name
+    return key || '/'; // set empty key to '/' to match convention in COMS db
+  },
+
+  /**
    * @function getBucket
    * Acquire core S3 bucket credential information from database or configuration
    * @param {string} [bucketId=undefined] An optional bucket ID to query database for bucket
@@ -321,6 +332,24 @@ const utils = {
     if (typeof prefix !== 'string' || typeof path !== 'string') return false;
     if (prefix === path) return true; // Matching strings are always at the at the path
     if (path.endsWith(DELIMITER)) return false; // Trailing slashes references the folder
+
+    const pathParts = path.split(DELIMITER).filter(part => part);
+    const prefixParts = prefix.split(DELIMITER).filter(part => part);
+    return prefixParts.every((part, i) => pathParts[i] === part)
+      && pathParts.filter(part => !prefixParts.includes(part)).length === 1;
+  },
+
+  /**
+   * @function isPrefixOfPath
+   * Predicate function determining if the `path` is a member of or equal to the `prefix` path
+   * @param {string} prefix The base "folder"
+   * @param {string} path The "file" to check
+   * @returns {boolean} True if path is member of prefix. False in all other cases.
+   */
+  isPrefixOfPath(prefix, path) {
+    if (typeof prefix !== 'string' || typeof path !== 'string') return false;
+    // path `/photos/holiday/` (represents a folder) and should be an objects in bucket with key `/photos/holiday`
+    if (prefix === path || prefix + DELIMITER === path) return true;
 
     const pathParts = path.split(DELIMITER).filter(part => part);
     const prefixParts = prefix.split(DELIMITER).filter(part => part);
