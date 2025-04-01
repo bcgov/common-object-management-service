@@ -48,8 +48,18 @@ class Bucket extends mixin(Model, [
       filterBucketName(query, value) {
         filterILike(query, value, 'bucket.bucketName');
       },
+      filterEndpoint(query, value) {
+        filterILike(query, value, 'bucket.endpoint');
+      },
       filterKey(query, value) {
         filterILike(query, value, 'bucket.key');
+      },
+      filterKeyIsChild(query, value) {
+        if (value && value !== '/') {
+          query.where('bucket.key', 'like', `${value}%`);
+        }
+        query
+          .where('bucket.key', '!=', value);
       },
       filterActive(query, value) {
         if (value !== undefined) query.where('bucket.active', value);
