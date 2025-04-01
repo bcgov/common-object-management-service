@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const { Permissions } = require('../../components/constants');
+const { isTruthy } = require('../../components/utils');
 const { bucketController, syncController } = require('../../controllers');
 const { bucketValidator } = require('../../validators');
 const { requireSomeAuth } = require('../../middleware/featureToggle');
@@ -80,13 +81,24 @@ router.put('/:bucketId/child',
   }
 );
 
-/** Synchronizes a bucket */
+/**
+ * Synchronizes a bucket
+ * if doing 'recursive sync', check for MANAGE permission and call syncBucketRecursive
+ * else skip to next route for this path
+ * ref: https://expressjs.com/en/guide/using-middleware.html
+ */
 router.get('/:bucketId/sync',
   bucketValidator.syncBucket,
   checkS3BasicAccess,
+  (req, _res, next) => {
+    if (isTruthy(req.query.recursive)) next();
+    else next('route');
+  },
+  hasPermission(Permissions.MANAGE),
+  (req, res, next) => syncController.syncBucketRecursive(req, res, next));
+
+router.get('/:bucketId/sync',
   hasPermission(Permissions.READ),
-  (req, res, next) => {
-    syncController.syncBucket(req, res, next);
-  });
+  (req, res, next) => syncController.syncBucketSingle(req, res, next));
 
 module.exports = router;
