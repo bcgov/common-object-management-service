@@ -3,6 +3,7 @@ const { UniqueViolationError } = require('objection');
 const { NIL: SYSTEM_USER } = require('uuid');
 
 const controller = require('../../../src/controllers/bucket');
+const moduleUtils = require('../../../src/db/models/utils');
 const {
   bucketService,
   storageService,
@@ -453,6 +454,8 @@ describe('createBucketChild', () => {
 describe('deleteBucket', () => {
   // mock service calls
   const addDashesToUuidSpy = jest.spyOn(utils, 'addDashesToUuid');
+  const readSpy = jest.spyOn(bucketService, 'read');
+  const trxWrapperSpy = jest.spyOn(moduleUtils, 'trxWrapper');
   const deleteSpy = jest.spyOn(bucketService, 'delete');
 
   const next = jest.fn();
@@ -466,13 +469,16 @@ describe('deleteBucket', () => {
     };
 
     addDashesToUuidSpy.mockReturnValue(REQUEST_BUCKET_ID);
+    readSpy.mockReturnValue({ bucketId: REQUEST_BUCKET_ID });
+    trxWrapperSpy.mockImplementation(callback => callback({}));
     deleteSpy.mockReturnValue(true);
 
     await controller.deleteBucket(req, res, next);
 
     expect(addDashesToUuidSpy).toHaveBeenCalledTimes(1);
     expect(addDashesToUuidSpy).toHaveBeenCalledWith(REQUEST_BUCKET_ID);
-    expect(deleteSpy).toHaveBeenCalledWith(REQUEST_BUCKET_ID);
+    expect(trxWrapperSpy).toHaveBeenCalledTimes(1);
+    expect(deleteSpy).toHaveBeenCalledWith(REQUEST_BUCKET_ID, {});
 
     expect(res.status).toHaveBeenCalledWith(204);
   });
@@ -486,6 +492,8 @@ describe('deleteBucket', () => {
     };
 
     addDashesToUuidSpy.mockReturnValue(REQUEST_BUCKET_ID);
+    readSpy.mockReturnValue({ bucketId: REQUEST_BUCKET_ID });
+    trxWrapperSpy.mockImplementation(callback => callback({}));
     deleteSpy.mockImplementationOnce(() => {
       throw new Problem(502, 'Unknown BucketService Error');
     });
@@ -494,7 +502,8 @@ describe('deleteBucket', () => {
 
     expect(addDashesToUuidSpy).toHaveBeenCalledTimes(1);
     expect(addDashesToUuidSpy).toHaveBeenCalledWith(REQUEST_BUCKET_ID);
-    expect(deleteSpy).toHaveBeenCalledWith(REQUEST_BUCKET_ID);
+    expect(trxWrapperSpy).toHaveBeenCalledTimes(1);
+    expect(deleteSpy).toHaveBeenCalledWith(REQUEST_BUCKET_ID, {});
 
     expect(next).toHaveBeenCalledTimes(1);
     expect(next).toHaveBeenCalledWith(
