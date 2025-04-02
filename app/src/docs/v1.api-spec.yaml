@@ -198,9 +198,11 @@ paths:
     delete:
       summary: Deletes a bucket
       description: >-
-        Deletes the bucket record based on bucketId. This request does not
-        dispatch an S3 operation to request the deletion of the associated
-        bucket.
+        Deletes the bucket record (and child objects) from the COMS database, based on bucketId.
+        Providing the 'recursive' parameter will also delete all sub-folders.
+        This request does not dispatch an S3 operation to request the deletion of the associated
+        bucket(s) or delete any objects in object storage, it simply 'de-registers' knowledge of the bucket/folder
+        and objects from the COMS system.
       operationId: deleteBucket
       tags:
         - Bucket
@@ -208,6 +210,7 @@ paths:
         - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
         - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Path-BucketId"
+        - $ref: "#/components/parameters/Query-Recursive"
       responses:
         "204":
           description: Returns no content success
@@ -285,11 +288,14 @@ paths:
       description: >-
         Synchronize the contents of an existing bucket with COMS so that it can
         track and manage the objects in it. This avoids the need to re-upload
-        preexisting files through the COMS API. This endpoint does not guarantee
+        pre-existing files through the COMS API. This endpoint does not guarantee
         immediately synchronized results. Synchronization latency will be
         affected by the remaining number of objects awaiting synchronization.
         This endpoint updates the last known successful synchronization request
         date when invoked.
+        The `recursive` option will optionally sync sub-folders.
+        Note: The current user (if using OIDC auth) will get the permissions they
+        already have on the parent applied to any NEW sub-folders created in COMS
       tags:
         - Sync
       operationId: syncBucket
@@ -2051,7 +2057,7 @@ components:
       in: query
       name: recursive
       description: >-
-        Whether or not to also sync sub-folders inside the provided bucket/folder
+        Whether or not to also run this operation for sub-folders inside the provided bucket/folder
       schema:
         type: boolean
         default: false

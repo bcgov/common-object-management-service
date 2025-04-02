@@ -3,6 +3,7 @@ const { UniqueViolationError } = require('objection');
 const { NIL: SYSTEM_USER } = require('uuid');
 
 const { DEFAULTREGION, Permissions } = require('../components/constants');
+const utils = require('../db/models/utils');
 const errorToProblem = require('../components/errorToProblem');
 const log = require('../components/log')(module.filename);
 const {
@@ -215,7 +216,20 @@ const controller = {
   async deleteBucket(req, res, next) {
     try {
       const bucketId = addDashesToUuid(req.params.bucketId);
-      await bucketService.delete(bucketId);
+      const parentBucket = await bucketService.read(bucketId);
+      let buckets = [parentBucket];
+      // if doing recursive delete
+      if (isTruthy(req.query.recursive)) {
+        // get sub-folders
+        const dbChildBuckets = await bucketService.searchChildBuckets(parentBucket);
+        buckets = buckets.concat(dbChildBuckets);
+      }
+      // do delete
+      await utils.trxWrapper(async (trx) => {
+        return await Promise.all(
+          buckets.map(bucket => bucketService.delete(bucket.bucketId, trx))
+        );
+      });
       res.status(204).end();
     } catch (e) {
       next(errorToProblem(SERVICE, e));

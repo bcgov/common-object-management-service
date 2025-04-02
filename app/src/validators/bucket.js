@@ -40,6 +40,7 @@ const schema = {
       bucketId: type.uuidv4
     }),
     query: Joi.object({
+      recursive: type.truthy,
     })
   },
 
