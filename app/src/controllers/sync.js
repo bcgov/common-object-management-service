@@ -33,36 +33,36 @@ const controller = {
    */
   async syncBucketRecursive(req, res, next) {
     try {
-      // Wrap all sql operations in a single transaction
+      // current userId
+      const userId = await userService.getCurrentUserId(
+        getCurrentIdentity(req.currentUser, SYSTEM_USER),
+        SYSTEM_USER
+      );
+      // parent bucket
+      const bucketId = addDashesToUuid(req.params.bucketId);
+      const parentBucket = await bucketService.read(bucketId);
+
+      // current user's permissions on parent bucket (folder)
+      const currentUserParentBucketPerms = userId !== SYSTEM_USER ? (await bucketPermissionService.searchPermissions({
+        bucketId: parentBucket.bucketId,
+        userId: userId
+      })).map(p => p.permCode) : [];
+
+      /**
+       * sync (ie create or delete) bucket records in COMS db to match 'folders' (S3 key prefixes) that exist in S3
+      */
+      // parent + child bucket records already in COMS db
+      const dbChildBuckets = await bucketService.searchChildBuckets(parentBucket, false, userId);
+      let dbBuckets = [parentBucket].concat(dbChildBuckets);
+      // 'folders' that exist below (and including) the parent 'folder' in S3
+      const s3Response = await storageService.listAllObjectVersions({ bucketId: bucketId, precisePath: false });
+      const s3Keys = [...new Set([
+        ...s3Response.DeleteMarkers.map(object => formatS3KeyForCompare(object.Key)),
+        ...s3Response.Versions.map(object => formatS3KeyForCompare(object.Key)),
+      ])];
+
+      // Wrap sync sql operations in a single transaction
       const response = await utils.trxWrapper(async (trx) => {
-
-        // curren userId
-        const userId = await userService.getCurrentUserId(
-          getCurrentIdentity(req.currentUser, SYSTEM_USER),
-          SYSTEM_USER
-        );
-        // parent bucket
-        const bucketId = addDashesToUuid(req.params.bucketId);
-        const parentBucket = await bucketService.read(bucketId);
-
-        // current user's permissions on parent bucket (folder)
-        const currentUserParentBucketPerms = userId !== SYSTEM_USER ? (await bucketPermissionService.searchPermissions({
-          bucketId: parentBucket.bucketId,
-          userId: userId
-        })).map(p => p.permCode) : [];
-
-        /**
-         * sync (ie create or delete) bucket records in COMS db to match 'folders' (S3 key prefixes) that exist in S3
-        */
-        // parent + child bucket records already in COMS db
-        const dbChildBuckets = await bucketService.searchChildBuckets(parentBucket);
-        let dbBuckets = [parentBucket].concat(dbChildBuckets);
-        // 'folders' that exist below (and including) the parent 'folder' in S3
-        const s3Response = await storageService.listAllObjectVersions({ bucketId: bucketId, precisePath: false });
-        const s3Keys = [...new Set([
-          ...s3Response.DeleteMarkers.map(object => formatS3KeyForCompare(object.Key)),
-          ...s3Response.Versions.map(object => formatS3KeyForCompare(object.Key)),
-        ])];
 
         const syncedBuckets = await this.syncBucketRecords(
           dbBuckets,
@@ -70,6 +70,7 @@ const controller = {
           parentBucket,
           // assign current user's permissions on parent bucket to new sub-folders (buckets)
           currentUserParentBucketPerms,
+          userId,
           trx
         );
 
@@ -115,14 +116,16 @@ const controller = {
   /**
   * @function syncBucketRecords
   * Synchronizes (creates / prunes) COMS db bucket records for each 'directry' found in S3
+  * Adds current user's permissions to all buckets
   * @param {object[]} Array of Bucket models - bucket records already in COMS db before syncing
   * @param {string[]} s3Keys Array of key prefixes from S3 representing 'directories'
   * @param {object} Bucket model for the COMS db bucket record of parent bucket
   * @param {string[]} currentUserParentBucketPerms Array of PermCodes to add to NEW buckets
- *  @param {object} [trx] An Objection Transaction object
+  * @param {string} userId the guid of current user
+  *  @param {object} [trx] An Objection Transaction object
   * @returns {string[]} And array of bucketId's for bucket records in COMS db
   */
-  async syncBucketRecords(dbBuckets, s3Keys, parentBucket, currentUserParentBucketPerms, trx) {
+  async syncBucketRecords(dbBuckets, s3Keys, parentBucket, currentUserParentBucketPerms, userId, trx) {
     try {
       // delete buckets not found in S3 from COMS db
       const oldDbBuckets = dbBuckets.filter(b => !s3Keys.includes(b.key));
@@ -133,6 +136,17 @@ const controller = {
               dbBuckets = dbBuckets.filter(b => b.bucketId !== dbBucket.bucketId);
             })
         )
+      );
+      // add current user's permissions to all buckets
+      await Promise.all(
+        dbBuckets.map(bucket => {
+          return bucketPermissionService.addPermissions(
+            bucket.bucketId,
+            currentUserParentBucketPerms.map(permCode => ({ userId, permCode })),
+            undefined,
+            trx
+          );
+        })
       );
 
       // Create buckets only found in S3 in COMS db
@@ -149,8 +163,6 @@ const controller = {
             region: parentBucket.region ?? undefined,
             active: parentBucket.active,
             userId: parentBucket.createdBy ?? SYSTEM_USER,
-            // current user has MANAGE perm on parent folder (see route.hasPermission)
-            // ..so copy all their perms to NEW subfolders
             permCodes: currentUserParentBucketPerms
           };
           return bucketService.create(data, trx)
@@ -159,7 +171,6 @@ const controller = {
             });
         })
       );
-
       return dbBuckets;
     }
     catch (err) {

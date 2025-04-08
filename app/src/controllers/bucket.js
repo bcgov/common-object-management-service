@@ -207,7 +207,8 @@ const controller = {
 
   /**
    * @function deleteBucket
-   * Deletes the bucket
+   * Deletes a bucket
+   * Recursive option will delete all sub-folders (where current user has DELETE permission)
    * @param {object} req Express request object
    * @param {object} res Express response object
    * @param {function} next The next callback function
@@ -218,11 +219,35 @@ const controller = {
       const bucketId = addDashesToUuid(req.params.bucketId);
       const parentBucket = await bucketService.read(bucketId);
       let buckets = [parentBucket];
+
       // if doing recursive delete
       if (isTruthy(req.query.recursive)) {
-        // get sub-folders
-        const dbChildBuckets = await bucketService.searchChildBuckets(parentBucket);
-        buckets = buckets.concat(dbChildBuckets);
+        // if current user is OIDC
+        const userId = await userService.getCurrentUserId(
+          getCurrentIdentity(req.currentUser, SYSTEM_USER), SYSTEM_USER);
+        if (userId !== SYSTEM_USER) {
+          const dbChildBuckets = await bucketService.searchChildBuckets(parentBucket, true, userId);
+          // if there are sub-folders
+          if (dbChildBuckets.length > 0) {
+            const checkForDelete = obj => obj.permCode === 'DELETE';
+            const dbChildBucketsWithDelete = dbChildBuckets.filter(b =>
+              b.bucketPermission.some(checkForDelete));
+            // if user has DELETE on all subfolders
+            if (dbChildBucketsWithDelete.length === dbChildBuckets.length) {
+              buckets = buckets.concat(dbChildBucketsWithDelete);
+            } else {
+              throw new Problem(403, {
+                detail: 'User lacks DELETE permission for some sub-folders',
+                instance: req.originalUrl,
+              });
+            }
+          }
+        }
+        // else basic auth
+        else {
+          const dbChildBuckets = await bucketService.searchChildBuckets(parentBucket);
+          buckets = buckets.concat(dbChildBuckets);
+        }
       }
       // do delete
       await utils.trxWrapper(async (trx) => {
