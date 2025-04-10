@@ -1,6 +1,6 @@
 # common-object-management-service
 
-![Version: 2.0.3](https://img.shields.io/badge/Version-2.0.3-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.9.0](https://img.shields.io/badge/AppVersion-0.9.0-informational?style=flat-square)
+![Version: 2.1.1](https://img.shields.io/badge/Version-2.1.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.9.0](https://img.shields.io/badge/AppVersion-0.9.0-informational?style=flat-square)
 
 A microservice for managing access control to S3 Objects
 
@@ -22,7 +22,7 @@ Kubernetes: `>= 1.13.0`
 
 | Repository | Name | Version |
 |------------|------|---------|
-| file://../postgres | postgres(postgrescluster) | 2.0.2 |
+| file://../postgres | postgres(postgrescluster) | 2.1.1 |
 
 ## Values
 
@@ -45,7 +45,7 @@ Kubernetes: `>= 1.13.0`
 | features.oidcAuth | bool | `false` | Specifies whether oidc auth is enabled |
 | fullnameOverride | string | `nil` | String to fully override fullname |
 | image.pullPolicy | string | `"IfNotPresent"` | Default image pull policy |
-| image.repository | string | `"docker.io/bcgovimages"` | Default image repository |
+| image.repository | string | `"ghcr.io/bcgov"` | Default image repository |
 | image.tag | string | `nil` | Overrides the image tag whose default is the chart appVersion. |
 | imagePullSecrets | list | `[]` | Specify docker-registry secret names as an array |
 | keycloakSecretOverride.password | string | `nil` | Keycloak password |
