@@ -70,9 +70,13 @@ describe('syncObject', () => {
 describe('syncStatus', () => {
   const queueSizeSpy = jest.spyOn(objectQueueService, 'queueSize');
   const next = jest.fn();
+  const req = {
+    query: {
+      bucketId: undefined
+    }
+  };
 
   it('should return the current sync queue size', async () => {
-    const req = {};
     queueSizeSpy.mockResolvedValue(0);
 
     await controller.syncStatus(req, res, next);
@@ -84,7 +88,6 @@ describe('syncStatus', () => {
   });
 
   it('should handle unexpected errors', async () => {
-    const req = {};
     queueSizeSpy.mockImplementation(() => { throw new Error('error'); });
 
     await controller.syncStatus(req, res, next);
