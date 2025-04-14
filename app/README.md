@@ -6,10 +6,6 @@
 [![Maintainability](https://api.codeclimate.com/v1/badges/91d2b0aebc348a1d5d0a/maintainability)](https://codeclimate.com/github/bcgov/common-object-management-service/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/91d2b0aebc348a1d5d0a/test_coverage)](https://codeclimate.com/github/bcgov/common-object-management-service/test_coverage)
 
-[![version](https://img.shields.io/docker/v/bcgovimages/common-object-management-service.svg?sort=semver)](https://hub.docker.com/r/bcgovimages/common-object-management-service)
-[![pulls](https://img.shields.io/docker/pulls/bcgovimages/common-object-management-service.svg)](https://hub.docker.com/r/bcgovimages/common-object-management-service)
-[![size](https://img.shields.io/docker/image-size/bcgovimages/common-object-management-service.svg)](https://hub.docker.com/r/bcgovimages/common-object-management-service)
-
 A microservice for managing access control to S3 Objects
 
 To learn more about the **Common Services** available visit the [Common Services Showcase](https://bcgov.github.io/common-service-showcase/) page.
@@ -116,7 +112,7 @@ Note: change the `latest` tag to specific version if needed. Avoid using the lat
 Get COMS image:
 
 ```sh
-docker pull docker.io/bcgovimages/common-object-management-service:latest
+docker pull ghcr.io/bcgov/common-object-management-service:latest
 ```
 
 Run COMS in **Unauthenticated mode** (replace environment values as necessary)
@@ -129,7 +125,7 @@ docker run -it --rm -p 3000:3000 \
   -e OBJECTSTORAGE_ENDPOINT=<Object store URL. eg: https://nrs.objectstore.gov.bc.ca> \
   -e OBJECTSTORAGE_KEY=<base path for storage location> \
   -e OBJECTSTORAGE_SECRETACCESSKEY=<Secret Access Key for your S3 compatible object storage account> \
-  docker.io/bcgovimages/common-object-management-service:latest
+  bcgov/common-object-management-service:latest
 ```
 
 Run COMS in **Basic Auth mode** (replace environment values as necessary)
@@ -146,7 +142,7 @@ docker run -it --rm -p 3000:3000 \
   -e BASICAUTH_USERNAME=<Your chosen Basic Auth Username> \
   -e BASICAUTH_PASSWORD=<Your chosen Basic Auth Password> \
   -e S3ACCESSMODE_ENABLED=true \
-  docker.io/bcgovimages/common-object-management-service:latest
+  bcgov/common-object-management-service:latest
 ```
 
 ---
@@ -155,7 +151,7 @@ Before running the application, you must make sure that your database is up to d
 
 ```sh
 docker run -it --rm --entrypoint '/bin/sh' -c 'npm run migrate' \
-  docker.io/bcgovimages/common-object-management-service:latest
+  bcgov/common-object-management-service:latest
 ```
 
 Run COMS in **OIDC Auth Mode** (replace environment values as necessary)
@@ -176,7 +172,7 @@ docker run -it --rm -p 3000:3000 \
   -e KC_SERVERURL=<url> \
   -e DB_PASSWORD=<password> \
   -e DB_PORT=<your postgres database port> \
-  docker.io/bcgovimages/common-object-management-service:latest
+  bcgov/common-object-management-service:latest
 ```
 
 Run COMS in **Full Auth Mode** (replace environment values as necessary)
@@ -201,7 +197,7 @@ docker run -it --rm -p 3000:3000 \
   -e KC_SERVERURL=<url> \
   -e DB_PASSWORD=<password> \
   -e DB_PORT=<your postgres database port> \
-  docker.io/bcgovimages/common-object-management-service:latest
+  bcgov/common-object-management-service:latest
 ```
 
 ### Local Machine
