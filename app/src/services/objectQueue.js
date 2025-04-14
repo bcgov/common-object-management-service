@@ -72,11 +72,16 @@ const service = {
 
   /**
    * @function queueSize
-   * Returns the number of jobs currently waiting for processing in the object queue.
+   * Returns the number of jobs currently waiting for processing in the object queue,
+   * optionally filtered by the bucketId(s)
+   * @param {string[]} optional array of bucketIds
    * @returns {Promise<number>} An integer representing how many jobs are in the queue.
    */
-  async queueSize() {
-    return ObjectQueue.query().count().first()
+  async queueSize(bucketIds) {
+    return ObjectQueue.query()
+      .modify('filterBucketIds', bucketIds)
+      .count()
+      .first()
       .then(response => parseInt(response.count));
   },
 };
