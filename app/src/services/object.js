@@ -175,10 +175,12 @@ const service = {
                 }
               }
               if (Array.isArray(version) && version.length > 0) {
-                object.lastModifiedDate = version.reduce((latest, v) => {
-                  return v.lastModifiedDate > latest ? v.lastModifiedDate : latest;
-                }, version[0].lastModifiedDate);
+                const latestVersion = version.find(v => v.isLatest);
+
+                object.lastModifiedDate =
+                  latestVersion.lastModifiedDate ?? latestVersion.createdAt ?? latestVersion.updatedAt;
               }
+
               return object;
             }).filter(x => x) // Drop empty row results from the array set
           );
