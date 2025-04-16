@@ -466,6 +466,14 @@ paths:
                     - $ref: "#/components/schemas/DB-Object"
                     - type: object
                       properties:
+                        lastModifiedDate:
+                          type: string
+                          format: date-time
+                          description: >-
+                            The object creation date or the last modified date (as exposed
+                            by S3's `Last-Modified` header), whichever is the latest.
+                          example: "2022-03-11T23:19:16.343Z"
+                          default: null
                         permissions:
                           type: array
                           description: >-
