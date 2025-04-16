@@ -1423,13 +1423,16 @@ paths:
   /sync/status:
     get:
       summary: Get sync queue size
-      description: Returns the number of objects currently awaiting processing by COMS.
+      description: >-
+        Returns the number of objects (optionally filtered by bucketId)
+        currently in the queue awaiting synchronization with the state in object-storage.
       operationId: syncStatus
       tags:
         - Sync
       parameters:
         - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
         - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
+        - $ref: "#/components/parameters/Query-BucketId"
       responses:
         "200":
           description: Returns the number of objects currently in the queue

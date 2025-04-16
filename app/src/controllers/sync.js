@@ -1,7 +1,12 @@
 const { NIL: SYSTEM_USER } = require('uuid');
 
 const errorToProblem = require('../components/errorToProblem');
-const { addDashesToUuid, getCurrentIdentity, formatS3KeyForCompare, isPrefixOfPath } = require('../components/utils');
+const {
+  addDashesToUuid,
+  getCurrentIdentity,
+  formatS3KeyForCompare,
+  isPrefixOfPath,
+  mixedQueryToArray } = require('../components/utils');
 const utils = require('../db/models/utils');
 const log = require('../components/log')(module.filename);
 
@@ -277,9 +282,11 @@ const controller = {
    * @param {function} next The next callback function
    * @returns {function} Express middleware function
    */
-  async syncStatus(_req, res, next) {
+  async syncStatus(req, res, next) {
     try {
-      const response = await objectQueueService.queueSize();
+      const bucketIds = mixedQueryToArray(req.query.bucketId);
+
+      const response = await objectQueueService.queueSize(bucketIds);
       res.status(200).json(response);
     } catch (e) {
       next(errorToProblem(SERVICE, e));
