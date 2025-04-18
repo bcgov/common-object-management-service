@@ -308,7 +308,9 @@ const controller = {
           existingObjectId: objectId,
         });
 
-      } catch (err) {
+      }
+      // headObject threw an error because object was not found
+      catch (err) {
         if (err instanceof Problem) throw err; // Rethrow Problem type errors
 
         // Object is soft deleted from the bucket
@@ -1083,9 +1085,9 @@ const controller = {
         // )
       };
 
-      storageService.putObjectPublic(data).catch(() => {
+      storageService.updatePublicPermissions(data).catch(() => {
         // Gracefully continue even when S3 ACL management operation fails
-        log.warn('Failed to apply ACL permission changes to S3', { function: 'togglePublic', ...data });
+        log.warn('Failed to apply permission changes to S3', { function: 'togglePublic', ...data });
       });
       const response = await objectService.update(data);
 

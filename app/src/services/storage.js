@@ -12,6 +12,9 @@ const {
   ListObjectsV2Command,
   ListObjectVersionsCommand,
   PutObjectAclCommand,
+  GetBucketPolicyCommand,
+  PutBucketPolicyCommand,
+  DeleteBucketPolicyCommand,
   PutObjectCommand,
   PutBucketEncryptionCommand,
   PutObjectTaggingCommand,
@@ -495,6 +498,92 @@ const objectStorageService = {
   async putObjectPublic({ filePath, public: publicFlag = false, s3VersionId = undefined, bucketId = undefined }) {
     const acl = publicFlag ? 'public-read' : 'private';
     return this.putObjectAcl({ acl, filePath, s3VersionId, bucketId });
+  },
+
+  // set as either public or not
+  async updatePublicPermissions({
+    filePath,
+    public: publicFlag = false,
+    bucketId = undefined
+  }) {
+    const data = await utils.getBucket(bucketId);
+
+
+    // setting to private
+    if (!publicFlag) {
+      // remove existing public-read acl (phase out previous implementation)
+      const params = {
+        Bucket: data.bucket,
+        Key: filePath
+      };
+      const existingAcl = await this._getS3Client(data).send(new GetObjectAclCommand(params));
+      const existingGrants = existingAcl.Grants;
+      const hasPublicAcl = existingGrants.some(grant => grant.Grantee?.URI === ALLUSERS && grant.Permission === 'READ');
+      if (hasPublicAcl) {
+        await this._getS3Client(data).send(new PutObjectAclCommand({
+          AccessControlPolicy: {
+            Grants: existingGrants
+              .filter(grant => grant.Grantee?.URI !== ALLUSERS && grant.Permission !== 'READ')
+              .map(grant => {
+                return {
+                  Grantee: grant.Grantee,
+                  Permission: grant.Permission,
+                };
+              }),
+            Owner: existingAcl.Owner
+          },
+          Bucket: data.bucket,
+          Key: filePath,
+        }));
+      }
+
+      // remove COMS policy
+      try {
+        const existingPolicy = await this._getS3Client(data).send(new GetBucketPolicyCommand({ Bucket: data.bucket }));
+        const statement = JSON.parse(existingPolicy.Policy).Statement;
+        const newStatement = statement.filter(policy =>
+          policy.Sid !== 'coms::' + data.bucket + '/' + filePath
+        );
+        // if other policies exist, re-apply them
+        if (newStatement.length > 0) {
+          const policy = {
+            'Version': '2012-10-17',
+            'Statement': newStatement
+          };
+          await this._getS3Client(data).send(new PutBucketPolicyCommand({
+            Bucket: data.bucket,
+            Policy: JSON.stringify(policy),
+          }));
+        }
+        // else delete COMS policy
+        else {
+          await this._getS3Client(data).send(new DeleteBucketPolicyCommand({ Bucket: data.bucket }));
+        }
+      } catch (e) {
+        console.log('no bucket policy exists');
+      }
+    }
+
+    // else making public
+    else {
+      // add policy
+      const policy = {
+        'Version': '2012-10-17',
+        'Statement': [
+          {
+            'Sid': 'coms::' + data.bucket + '/' + filePath,
+            'Effect': 'Allow',
+            'Principal': '*',
+            'Action': 's3:GetObject',
+            'Resource': data.bucket + '/' + filePath
+          }
+        ]
+      };
+      await this._getS3Client(data).send(new PutBucketPolicyCommand({
+        Bucket: data.bucket,
+        Policy: JSON.stringify(policy),
+      }));
+    }
   },
 
   /**
