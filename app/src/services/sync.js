@@ -160,7 +160,8 @@ const service = {
         // Determine S3 Public status
         let s3Public;
         try {
-          s3Public = await storageService.getObjectPublic({ filePath: path, bucketId: bucketId });
+          // TODO: check for acl and policies instead
+          // s3Public = await storageService.getObjectPublic({ filePath: path, bucketId: bucketId });
         } catch (e) {
           // Gracefully continue even when S3 ACL management operation fails
           log.warn(`Failed to read ACL permissions from S3: ${e.message}`, {
