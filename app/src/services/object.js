@@ -174,6 +174,13 @@ const service = {
                     .map(o => o.permCode);
                 }
               }
+              if (Array.isArray(version) && version.length > 0) {
+                const latestVersion = version.find(v => v.isLatest);
+
+                object.lastModifiedDate =
+                  latestVersion.lastModifiedDate ?? latestVersion.createdAt ?? latestVersion.updatedAt;
+              }
+
               return object;
             }).filter(x => x) // Drop empty row results from the array set
           );
