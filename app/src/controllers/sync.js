@@ -120,7 +120,7 @@ const controller = {
 
   /**
   * @function syncBucketRecords
-  * Synchronizes (creates / prunes) COMS db bucket records for each 'directry' found in S3
+  * Synchronizes (creates / prunes) COMS db bucket records for each 'directory' found in S3
   * Adds current user's permissions to all buckets
   * @param {object[]} Array of Bucket models - bucket records already in COMS db before syncing
   * @param {string[]} s3Keys Array of key prefixes from S3 representing 'directories'
@@ -132,8 +132,9 @@ const controller = {
   */
   async syncBucketRecords(dbBuckets, s3Keys, parentBucket, currentUserParentBucketPerms, userId, trx) {
     try {
-      // delete buckets not found in S3 from COMS db
-      const oldDbBuckets = dbBuckets.filter(b => !s3Keys.includes(b.key));
+      // delete child buckets not found in S3 from COMS db
+      // note: leave parent bucket recoprd in database even if it is empty
+      const oldDbBuckets = dbBuckets.filter(b => !s3Keys.includes(b.key) && b.bucketId !== parentBucket.bucketId);
       await Promise.all(
         oldDbBuckets.map(dbBucket =>
           bucketService.delete(dbBucket.bucketId, trx)
