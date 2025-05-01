@@ -58,6 +58,7 @@ class QueueManager {
     if (!this.isBusy && !this.toClose) {
       objectQueueService.queueSize().then(size => {
         if (size > 0) this.processNextJob();
+        // if (size > 0);
       }).catch((err) => {
         log.error(`Error encountered while checking queue: ${err.message}`, { function: 'checkQueue', error: err });
       });

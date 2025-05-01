@@ -141,7 +141,9 @@ const controller = {
               dbBuckets = dbBuckets.filter(b => b.bucketId !== dbBucket.bucketId);
             })
         )
+        // TODO: delete COMS S3 Policies for deleted COMS buckets and child objects.
       );
+
       // add current user's permissions to all buckets
       await Promise.all(
         dbBuckets.map(bucket => {
@@ -176,6 +178,13 @@ const controller = {
             });
         })
       );
+
+
+      // Sync Public Policies
+      // S3 Bucket Policies applied by COMS to make a file or prefix 'public'
+      // need to be synced with the bucket.public value in COMS db
+
+
       return dbBuckets;
     }
     catch (err) {

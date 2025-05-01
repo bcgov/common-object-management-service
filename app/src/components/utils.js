@@ -358,6 +358,21 @@ const utils = {
   },
 
   /**
+   * @function isBelowPrefix
+   * Predicate function determining if a path is 'below' a prefix
+   * @param {string} prefix The base "folder"
+   * @param {string} path The "sub-folder" to check
+   * @returns {boolean} True if path is below of prefix. False in all other cases.
+   */
+  isBelowPrefix(prefix, path) {
+    if (typeof prefix !== 'string' || typeof path !== 'string') return false;
+    else if (path === prefix) return false;
+    else if (prefix === DELIMITER) return true;
+    else if (path.startsWith(prefix)) return true;
+    else return false;
+  },
+
+  /**
    * @function isTruthy
    * Returns true if the element name in the object contains a truthy value
    * @param {object} value The object to evaluate

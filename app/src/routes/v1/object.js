@@ -4,7 +4,13 @@ const helmet = require('helmet');
 const { Permissions } = require('../../components/constants');
 const { objectController, syncController } = require('../../controllers');
 const { objectValidator } = require('../../validators');
-const { checkAppMode, checkS3BasicAccess, currentObject, hasPermission } = require('../../middleware/authorization');
+const {
+  checkAppMode,
+  // checkObjectPublic,
+  checkS3BasicAccess,
+  currentObject,
+  hasPermission
+} = require('../../middleware/authorization');
 const { requireSomeAuth } = require('../../middleware/featureToggle');
 const { currentUpload } = require('../../middleware/upload');
 
@@ -22,8 +28,9 @@ router.put('/',
 
 /** Search for objects */
 router.get('/',
-  requireSomeAuth,
   objectValidator.searchObjects,
+  // requireSomeAuth,
+  // TODO: if no auth.. scope to public folder, or create new 'list' endpoint ?
   checkS3BasicAccess,
   (req, res, next) => {
     objectController.searchObjects(req, res, next);
