@@ -56,10 +56,10 @@ const controller = {
       /**
        * sync (ie create or delete) bucket records in COMS db to match 'folders' (S3 key prefixes) that exist in S3
       */
-      // parent + child bucket records already in COMS db
+      // get parent + child bucket records already in COMS db
       const dbChildBuckets = await bucketService.searchChildBuckets(parentBucket, false, userId);
       let dbBuckets = [parentBucket].concat(dbChildBuckets);
-      // 'folders' that exist below (and including) the parent 'folder' in S3
+
       const s3Response = await storageService.listAllObjectVersions({ bucketId: bucketId, precisePath: false });
       const s3Keys = [...new Set([
         ...s3Response.DeleteMarkers.map(object => formatS3KeyForCompare(object.Key)),
@@ -68,7 +68,7 @@ const controller = {
 
       // Wrap sync sql operations in a single transaction
       const response = await utils.trxWrapper(async (trx) => {
-
+        // sync bucket records
         const syncedBuckets = await this.syncBucketRecords(
           dbBuckets,
           s3Keys,
@@ -106,6 +106,9 @@ const controller = {
       const bucket = await bucketService.read(bucketId);
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER), SYSTEM_USER);
 
+      // sync bucket.public flag
+      await this.syncBucketPublic(bucket.key, bucket.bucketId, userId);
+
       const s3Objects = await storageService.listAllObjectVersions({ bucketId: bucketId, filterLatest: true });
 
       const response = await utils.trxWrapper(async (trx) => {
@@ -141,17 +144,8 @@ const controller = {
               dbBuckets = dbBuckets.filter(b => b.bucketId !== dbBucket.bucketId);
             })
         )
-      );
-      // add current user's permissions to all buckets
-      await Promise.all(
-        dbBuckets.map(bucket => {
-          return bucketPermissionService.addPermissions(
-            bucket.bucketId,
-            currentUserParentBucketPerms.map(permCode => ({ userId, permCode })),
-            undefined,
-            trx
-          );
-        })
+        // TODO: delete COMS S3 Policies for deleted COMS buckets and child objects.
+        // Also consider when using DEL /Bucket endpoint, should we delete policies?
       );
 
       // Create buckets only found in S3 in COMS db
@@ -176,12 +170,40 @@ const controller = {
             });
         })
       );
+
+      // Update permissions and Sync Public status
+      await Promise.all(
+        // for each bucket
+        dbBuckets.map(async bucket => {
+          // --- Add current user's permissions that exist on parent bucket if they dont already exist
+          await bucketPermissionService.addPermissions(
+            bucket.bucketId,
+            currentUserParentBucketPerms.map(permCode => ({ userId, permCode })),
+            undefined,
+            trx
+          );
+          // --- Sync S3 Bucket Policies applied by COMS
+          await this.syncBucketPublic(bucket.key, bucket.bucketId, userId);
+        })
+      );
       return dbBuckets;
     }
     catch (err) {
       log.error(err.message, { function: 'syncBucketRecords' });
       throw err;
     }
+  },
+
+  async syncBucketPublic(key, bucketId, userId) {
+    let public = false;
+    public = await storageService.getPublic({ path: key, bucketId: bucketId });
+    bucketService.update({
+      bucketId: bucketId,
+      updatedBy: userId,
+      public: public
+      // TODO: consider changing this to actual lastSyncDate
+      // lastSyncRequestedDate: now(),
+    });
   },
 
   /**
