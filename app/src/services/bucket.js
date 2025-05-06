@@ -78,7 +78,8 @@ const service = {
           await bucketPermissionService.addPermissions(bucket.bucketId, perms, data.userId, trx);
         }
       } else {
-        throw new Error('Bucket credential mismatch');
+        throw new Error('The bucket already exists in COMS, but with different credentials. ' +
+          'Please contact your object storage server admin, or whoever added the bucket first.');
       }
 
       if (!etrx) await trx.commit();
