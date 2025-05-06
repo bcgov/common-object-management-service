@@ -90,7 +90,7 @@ const controller = {
       log.warn(`Failure to validate bucket credentials: ${e.message}`, {
         function: '_validateCredentials',
       });
-      throw new Problem(409, {
+      throw new Problem(403, {
         detail: 'Unable to validate supplied credentials for the bucket',
       });
     }
@@ -128,7 +128,7 @@ const controller = {
       if (e instanceof UniqueViolationError) {
         // Grant permissions if credentials precisely match
         response = await bucketService.checkGrantPermissions(data).catch(permErr => {
-          next(new Problem(403, { detail: permErr.message, instance: req.originalUrl }));
+          next(new Problem(409, { detail: permErr.message, instance: req.originalUrl }));
         });
       } else {
         next(errorToProblem(SERVICE, e));
