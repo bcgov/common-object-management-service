@@ -357,7 +357,7 @@ describe('createBucketChild', () => {
     }));
   });
 
-  it('should return a 409 when bucket can not be validated', async () => {
+  it('should return a 403 when bucket can not be validated', async () => {
     const req = {
       body: { bucketName: 'bucketName', subKey: 'subKey' },
       currentUser: CURRENT_USER,
@@ -404,7 +404,7 @@ describe('createBucketChild', () => {
     }));
 
     expect(next).toHaveBeenCalledTimes(1);
-    expect(next).toHaveBeenCalledWith(new Problem(409, {
+    expect(next).toHaveBeenCalledWith(new Problem(403, {
       detail: 'Unable to validate supplied credentials for the bucket'
     }));
   });
