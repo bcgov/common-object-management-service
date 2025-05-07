@@ -116,7 +116,15 @@ const currentUser = async (req, res, next) => {
           throw new Error('OIDC environment variable KC_PUBLICKEY or keycloak.publicKey must be defined');
         }
 
-        if (isValid) {
+        // ensure token contains supported idp claim
+        const decodedToken = jwt.decode(bearerToken);
+        let idpSupported = true;
+        if (config.has('keycloak.identityKey')) {
+          const supportedIdentityKeys = config.get('keycloak.identityKey').split(',');
+          idpSupported = supportedIdentityKeys.some(k => Object.keys(decodedToken).includes(k));
+        }
+
+        if (isValid && idpSupported) {
           currentUser.tokenPayload = typeof isValid === 'object' ? isValid : jwt.decode(bearerToken);
           await userService.login(currentUser.tokenPayload);
         } else {
