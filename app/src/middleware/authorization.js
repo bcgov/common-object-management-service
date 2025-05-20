@@ -6,7 +6,10 @@ const {
   getAppAuthMode,
   getCurrentIdentity,
   getConfigBoolean,
-  mixedQueryToArray, stripDelimit } = require('../components/utils');
+  hasOnlyPermittedKeys,
+  mixedQueryToArray,
+  stripDelimit
+} = require('../components/utils');
 const { NIL: SYSTEM_USER } = require('uuid');
 const {
   bucketPermissionService,
@@ -207,6 +210,29 @@ const hasPermission = (permission) => {
   };
 };
 
+/**
+ * if non-IDIR user, require userId, email or identityId query parameter
+ * route validationrequires a valid email
+ */
+const restrictNonIdirUserSearch = async (req, _res, next) => {
+  try {
+    if (req.currentUser.authType === AuthType.BEARER &&
+      req.currentUser.tokenPayload.identity_provider !== 'idir' &&
+      !hasOnlyPermittedKeys(req.query, ['email', 'userId', 'identityId'])
+    ) {
+      throw new Error('User lacks permission to complete this actionnn');
+    }
+  }
+  catch (err) {
+    log.verbose(err.message, { function: 'restrictNonIdirUserSearch' });
+    return next(new Problem(403, {
+      detail: err.message,
+      instance: req.originalUrl
+    }));
+  }
+  next();
+};
+
 module.exports = {
-  _checkPermission, checkAppMode, checkS3BasicAccess, currentObject, hasPermission
+  _checkPermission, checkAppMode, checkS3BasicAccess, currentObject, hasPermission, restrictNonIdirUserSearch
 };
