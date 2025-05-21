@@ -196,6 +196,7 @@ postgres:
   # name: postgres-master
 
   postgresVersion: 16
+  openshift: true
 
   # --- resource allocation ----
   instances:
