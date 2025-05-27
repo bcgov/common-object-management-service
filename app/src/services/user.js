@@ -21,12 +21,20 @@ const service = {
       .filter(claims => claims) // Drop falsy values from array
       .concat(undefined)[0]; // Set undefined as last element of array
 
+    // handle inconsistencies between tokens
+    const lastName = token.family_name !== '' ?
+      token.family_name :
+      token.display_name.split(' ').pop();
+    const firstName = token.given_name !== token.display_name ?
+      token.given_name :
+      token.display_name.substring(0, token.display_name.lastIndexOf(' '));
+
     return {
       identityId: identityId,
       username: token.identity_provider_identity ? token.identity_provider_identity : token.preferred_username,
-      firstName: token.given_name,
-      fullName: token.name,
-      lastName: token.family_name,
+      firstName: firstName,
+      fullName: token.display_name,
+      lastName: lastName,
       email: token.email,
       idp: token.identity_provider
     };
@@ -145,6 +153,9 @@ const service = {
    * @returns {Promise<object>} The result of running the login operation
    */
   login: async (token) => {
+
+    console.log('a', token);
+
     const newUser = service._tokenToUser(token);
     // wrap with db transaction
     return await utils.trxWrapper(async (trx) => {
