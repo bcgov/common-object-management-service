@@ -2,7 +2,11 @@ const router = require('express').Router();
 
 const { userValidator } = require('../../validators');
 const { userController } = require('../../controllers');
-const { checkAppMode, checkS3BasicAccess } = require('../../middleware/authorization');
+const {
+  checkAppMode,
+  checkS3BasicAccess,
+  restrictNonIdirUserSearch,
+} = require('../../middleware/authorization');
 const { requireSomeAuth } = require('../../middleware/featureToggle');
 
 router.use(checkAppMode);
@@ -15,7 +19,9 @@ router.get('/',
    * checkS3BasicAccess will add a bucketId query param which triggers a 422 from the userValidator
    */
   checkS3BasicAccess,
-  userValidator.searchUsers, (req, res, next) => {
+  userValidator.searchUsers,
+  restrictNonIdirUserSearch,
+  (req, res, next) => {
     userController.searchUsers(req, res, next);
   });
 

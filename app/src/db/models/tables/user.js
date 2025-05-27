@@ -51,8 +51,12 @@ class User extends Timestamps(Model) {
       filterUsername(query, value) {
         filterILike(query, value, 'username');
       },
-      filterEmail(query, value) {
-        filterILike(query, value, 'email');
+      filterEmail(query, email, emailExact) {
+        if (emailExact) {
+          query.where('email', email);
+        } else {
+          filterILike(query, email, 'email');
+        }
       },
       filterFirstName(query, value) {
         filterILike(query, value, 'firstName');

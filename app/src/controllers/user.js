@@ -44,6 +44,7 @@ const controller = {
         idp: mixedQueryToArray(req.query.idp),
         username: req.query.username,
         email: req.query.email,
+        emailExact: req.query.emailExact,
         firstName: req.query.firstName,
         fullName: req.query.fullName,
         lastName: req.query.lastName,

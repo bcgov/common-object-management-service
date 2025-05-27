@@ -153,9 +153,6 @@ const service = {
    * @returns {Promise<object>} The result of running the login operation
    */
   login: async (token) => {
-
-    console.log('a', token);
-
     const newUser = service._tokenToUser(token);
     // wrap with db transaction
     return await utils.trxWrapper(async (trx) => {
@@ -230,7 +227,7 @@ const service = {
       .modify('filterIdentityId', params.identityId)
       .modify('filterIdp', params.idp)
       .modify('filterUsername', params.username)
-      .modify('filterEmail', params.email)
+      .modify('filterEmail', params.email, params.emailExact)
       .modify('filterFirstName', params.firstName)
       .modify('filterFullName', params.fullName)
       .modify('filterLastName', params.lastName)
