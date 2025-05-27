@@ -72,6 +72,11 @@ const utils = {
     return key || '/'; // set empty key to '/' to match convention in COMS db
   },
 
+  hasOnlyPermittedKeys(obj, permittedKeys) {
+    const objKeys = Object.keys(obj);
+    return objKeys.every(key => permittedKeys.includes(key));
+  },
+
   /**
    * @function getBucket
    * Acquire core S3 bucket credential information from database or configuration
@@ -161,6 +166,8 @@ const utils = {
    * @function getCurrentIdentity
    * Attempts to acquire current identity value.
    * Always takes first non-default value available. Yields `defaultValue` otherwise.
+   * looks for one of the specified claims (eg idir_user_guid,bceid_user_guid or github_id)
+   * if not found, returns 'sub' claim
    * @param {object} currentUser The express request currentUser object
    * @param {string} [defaultValue=undefined] An optional default return value
    * @returns {string} The current user identifier if applicable, or `defaultValue`

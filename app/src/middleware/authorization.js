@@ -6,7 +6,10 @@ const {
   getAppAuthMode,
   getCurrentIdentity,
   getConfigBoolean,
-  mixedQueryToArray, stripDelimit } = require('../components/utils');
+  hasOnlyPermittedKeys,
+  mixedQueryToArray,
+  stripDelimit
+} = require('../components/utils');
 const { NIL: SYSTEM_USER } = require('uuid');
 const {
   bucketPermissionService,
@@ -207,6 +210,43 @@ const hasPermission = (permission) => {
   };
 };
 
+/**
+ * if in strict mode, when non-idir auth, require one or more of the following query parameters:
+ * - complete email address
+ * - userId
+ * - identityId
+ *
+ * This restriction ensures that a non-idir user cannot expose other external user's names and email addresses
+ * through a user search without knowing their full email, userId or identityId
+ */
+const restrictNonIdirUserSearch = async (req, _res, next) => {
+  try {
+    if (getConfigBoolean('server.privacyMask') &&
+      req.currentUser.authType === AuthType.BEARER &&
+      req.currentUser.tokenPayload.identity_provider !== 'idir' &&
+      !hasOnlyPermittedKeys(req.query, ['email', 'userId', 'identityId'])
+    ) {
+      throw new Error('User lacks permission to complete this action');
+    }
+  }
+  catch (err) {
+    log.verbose(err.message, { function: 'restrictNonIdirUserSearch' });
+    return next(new Problem(403, {
+      detail: err.message,
+      instance: req.originalUrl
+    }));
+  }
+
+  // if searching by email address,
+  // add a query parameter indicating that email parameter must have an exact match
+  if (Object.prototype.hasOwnProperty.call(req.query, 'email')) req.query.emailExact = true;
+
+  next();
+};
+  next();
+};
+
 module.exports = {
-  _checkPermission, checkAppMode, checkS3BasicAccess, currentObject, hasPermission
+  restrictNonIdirUserSearch,
+  isElevatedUser
 };
