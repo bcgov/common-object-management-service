@@ -1865,7 +1865,7 @@ components:
     Query-Email:
       in: query
       name: email
-      description: Search by specific email
+      description: Search by specific email. For non-IDIR users, only exact matches are returned; for IDIR users, partial matches are possible.
       schema:
         type: string
         format: email

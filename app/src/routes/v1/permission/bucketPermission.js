@@ -4,7 +4,14 @@ const router = express.Router();
 const { Permissions } = require('../../../components/constants');
 const { bucketPermissionController } = require('../../../controllers');
 const { bucketPermissionValidator } = require('../../../validators');
-const { checkAppMode, currentObject, checkS3BasicAccess, hasPermission } = require('../../../middleware/authorization');
+const {
+  checkAppMode,
+  currentObject,
+  checkS3BasicAccess,
+  hasPermission,
+  checkElevatedUser,
+  // checkGrantingPermittedPermissions
+} = require('../../../middleware/authorization');
 const { requireSomeAuth } = require('../../../middleware/featureToggle');
 
 router.use(checkAppMode);
@@ -35,6 +42,9 @@ router.put('/:bucketId',
   bucketPermissionValidator.addPermissions,
   currentObject,
   checkS3BasicAccess,
+  checkElevatedUser,
+  // probably not going to bother with this. just block making folder public
+  // checkGrantingPermittedPermissions,
   hasPermission(Permissions.MANAGE),
   (req, res, next) => {
     bucketPermissionController.addPermissions(req, res, next);
@@ -46,6 +56,7 @@ router.delete('/:bucketId',
   bucketPermissionValidator.removePermissions,
   currentObject,
   checkS3BasicAccess,
+  checkElevatedUser,
   hasPermission(Permissions.MANAGE),
   (req, res, next) => {
     bucketPermissionController.removePermissions(req, res, next);

@@ -300,7 +300,7 @@ describe('searchUsers', () => {
     expect(User.modify).toHaveBeenNthCalledWith(2, 'filterIdentityId', params.identityId);
     expect(User.modify).toHaveBeenNthCalledWith(3, 'filterIdp', params.idp);
     expect(User.modify).toHaveBeenNthCalledWith(4, 'filterUsername', params.username);
-    expect(User.modify).toHaveBeenNthCalledWith(5, 'filterEmail', params.email);
+    expect(User.modify).toHaveBeenNthCalledWith(5, 'filterEmail', params.email, undefined);
     expect(User.modify).toHaveBeenNthCalledWith(6, 'filterFirstName', params.firstName);
     expect(User.modify).toHaveBeenNthCalledWith(7, 'filterFullName', params.fullName);
     expect(User.modify).toHaveBeenNthCalledWith(8, 'filterLastName', params.lastName);

@@ -24,6 +24,14 @@ module.exports = Object.freeze({
     NONE: 'NONE'
   },
 
+  /**
+   * In COMS 'strict mode', users specific with token idp's (eg: idir)
+   * are given additional permissions.
+  */
+  ElevatedIdps: [
+    'idir'
+  ],
+
   /** Default CORS settings used across the entire application */
   DEFAULTCORS: {
     /** Tells browsers to cache preflight requests for Access-Control-Max-Age seconds */

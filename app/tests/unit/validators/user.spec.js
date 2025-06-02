@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const jestJoi = require('jest-joi');
+const Joi = require('joi');
 expect.extend(jestJoi.matchers);
 
 const { schema } = require('../../../src/validators/user');
@@ -67,7 +68,7 @@ describe('searchUsers', () => {
 
     describe('email', () => {
       it('is the expected schema', () => {
-        expect(query.keys.email).toEqual(type.email.describe());
+        expect(query.keys.email).toEqual(Joi.string().describe());
       });
     });
 

@@ -1,7 +1,7 @@
 const Problem = require('api-problem');
 
 const log = require('../components/log')(module.filename);
-const { AuthMode, AuthType, Permissions } = require('../components/constants');
+const { AuthMode, AuthType, Permissions, ElevatedIdps } = require('../components/constants');
 const {
   getAppAuthMode,
   getCurrentIdentity,
@@ -223,7 +223,7 @@ const restrictNonIdirUserSearch = async (req, _res, next) => {
   try {
     if (getConfigBoolean('server.privacyMask') &&
       req.currentUser.authType === AuthType.BEARER &&
-      req.currentUser.tokenPayload.identity_provider !== 'idir' &&
+      !ElevatedIdps.includes(req.currentUser.tokenPayload.identity_provider) &&
       !hasOnlyPermittedKeys(req.query, ['email', 'userId', 'identityId'])
     ) {
       throw new Error('User lacks permission to complete this action');
@@ -243,10 +243,36 @@ const restrictNonIdirUserSearch = async (req, _res, next) => {
 
   next();
 };
+
+/**
+ * If privacyMask (soon to be renamed as 'strictMode' to support additional feature restroctions)
+ * is true and request is from a non-idir user, throw a permission error
+ */
+const checkElevatedUser = async (req, _res, next) => {
+  try {
+    if (getConfigBoolean('server.privacyMask') &&
+      req.currentUser.authType === AuthType.BEARER &&
+      !ElevatedIdps.includes(req.currentUser.tokenPayload.identity_provider)) {
+      throw new Error('User lacks permission to complete this action');
+    }
+  }
+  catch (err) {
+    log.verbose(err.message, { function: 'checkElevatedUser' });
+    return next(new Problem(403, {
+      detail: err.message,
+      instance: req.originalUrl
+    }));
+  }
   next();
 };
 
 module.exports = {
+  _checkPermission,
+  checkAppMode,
+  checkS3BasicAccess,
+  currentObject,
+  hasPermission,
   restrictNonIdirUserSearch,
-  isElevatedUser
+  checkElevatedUser,
+  // checkGrantingPermittedPermissions
 };
