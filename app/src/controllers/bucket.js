@@ -194,11 +194,24 @@ const controller = {
       await controller._validateCredentials(childBucket);
       childBucket.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
-      // assign all permissions
-      childBucket.permCodes = Object.values(Permissions);
+
+      // if non-elevated user, exclude MANAGE and DELETE permission
+      // ---------------------
+      // childBucket.permCodes = Object.values(Permissions);
 
       // Create child bucket
       const response = await bucketService.create(childBucket);
+
+
+      /**
+       * copy all permissions from parent to child
+       * exclude MANAGE and DELETE of external users
+       *
+       * we also need a migration to give top-level bucket creator, if idir, the MANAGE permission on all sub-folders.
+       * or use the recursive sync flow
+       */
+
+
       res.status(201).json(redactSecrets(response, secretFields));
     } catch (e) {
       next(errorToProblem(SERVICE, e));
