@@ -60,6 +60,9 @@ module.exports = Object.freeze({
   /** Maximum Content Length supported by S3 CopyObjectCommand */
   MAXFILEOBJECTLENGTH: 5 * 1024 * 1024 * 1024 * 1024, // 5 TB
 
+  /** Maximum object key length supported by S3 */
+  MAXOBJECTKEYLENGTH: 1024, // 1024 B
+
   /** Allowable values for the Metadata Directive parameter */
   MetadataDirective: {
     /** The original metadata is copied to the new version as-is where applicable. */

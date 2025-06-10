@@ -8,7 +8,8 @@ const {
   MAXCOPYOBJECTLENGTH,
   MAXFILEOBJECTLENGTH,
   MetadataDirective,
-  TaggingDirective
+  TaggingDirective,
+  MAXOBJECTKEYLENGTH
 } = require('../components/constants');
 const errorToProblem = require('../components/errorToProblem');
 const log = require('../components/log')(module.filename);
@@ -292,6 +293,14 @@ const controller = {
 
       let s3Response;
       try {
+        // Short circuit if object key length exceeds maximum allowed by S3
+        if (Buffer.byteLength(joinPath(bucketKey, req.currentUpload.filename), 'utf-8') > MAXOBJECTKEYLENGTH) {
+          throw new Problem(422, 'Bucket key or filename too long', req.originalUrl, {
+            detail: 'Bucket key and object filename combined exceed the maximum length allowed by S3',
+            bucketId: bucketId
+          });
+        }
+
         // Preflight S3 Object check
         await storageService.headObject({
           filePath: joinPath(bucketKey, req.currentUpload.filename),
