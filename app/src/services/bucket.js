@@ -199,11 +199,13 @@ const service = {
 
   /**
    * @function searchChildBuckets
-   * Get db records for each bucket that acts as a sub-folder of the provided bucket
+   * Get db records for each bucket that acts as a sub-folder of the provided bucket,
+   * and is accessible to a given user
    * @param {object} parentBucket a bucket model (record) from the COMS db
    * @param {boolean} returnPermissions also return current user's permissions for each bucket
+   * @param {string} userId uuid of the user
    * @param {object} [etrx=undefined] An optional Objection Transaction object
-   * @returns {Promise<object[]>} An array of bucket records
+   * @returns {Promise<object[]>} An array of bucket records that the given user can access
    * @throws If there are no records found
    */
   searchChildBuckets: async (parentBucket, returnPermissions = false, userId, etrx = undefined) => {
@@ -215,9 +217,14 @@ const service = {
           if (returnPermissions) {
             query
               .withGraphJoined('bucketPermission')
-              .whereIn('bucketPermission.bucketId', builder => {
-                builder.distinct('bucketPermission.bucketId')
-                  .where('bucketPermission.userId', userId);
+              .modify(query => {
+                if (userId !== SYSTEM_USER) {
+                  query
+                    .whereIn('bucketPermission.bucketId', builder => {
+                      builder.distinct('bucketPermission.bucketId')
+                        .where('bucketPermission.userId', userId);
+                    });
+                }
               });
           }
         })
