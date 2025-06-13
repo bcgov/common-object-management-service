@@ -36,7 +36,7 @@ const schema = {
 
   addPermissions: {
     params: Joi.object({
-      bucketId: type.uuidv4
+      bucketId: type.uuidv4,
     }),
     body: Joi.array().items(
       Joi.object().keys({
@@ -45,6 +45,7 @@ const schema = {
       }).required()
     ).required(),
     query: Joi.object({
+      recursive: type.truthy,
     })
   },
 

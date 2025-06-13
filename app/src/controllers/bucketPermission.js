@@ -1,3 +1,4 @@
+const { Permissions } = require('../components/constants');
 const errorToProblem = require('../components/errorToProblem');
 const {
   addDashesToUuid,
@@ -7,7 +8,7 @@ const {
   isTruthy
 } = require('../components/utils');
 const { NIL: SYSTEM_USER } = require('uuid');
-const { bucketPermissionService, userService } = require('../services');
+const { bucketPermissionService, userService, bucketService } = require('../services');
 
 const SERVICE = 'BucketPermissionService';
 
@@ -89,12 +90,42 @@ const controller = {
    */
   async addPermissions(req, res, next) {
     try {
-      const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
-      const response = await bucketPermissionService.addPermissions(
-        addDashesToUuid(req.params.bucketId),req.body, userId
-      );
-      res.status(201).json(response);
+      const userId = await userService.getCurrentUserId(
+        getCurrentIdentity(req.currentUser, SYSTEM_USER), SYSTEM_USER);
+      const bucket = await bucketService.read(addDashesToUuid(req.params.bucketId));
+
+      if (isTruthy(req.query.recursive)) {
+
+        const children = await bucketService.searchChildBuckets(bucket, true, userId);
+
+        // only add child bucket if current user has MANAGE permission
+        const filteredChildren = children.filter(bucket =>
+          bucket.bucketPermission?.some(
+            perm => perm.userId === userId && perm.permCode === Permissions.MANAGE
+          )
+        );
+
+        const allBuckets = [bucket, ...filteredChildren];
+        const responses = await Promise.all(
+          allBuckets.map(c =>
+            bucketPermissionService.addPermissions(addDashesToUuid(c.bucketId), req.body, userId)
+          )
+        );
+
+        // FIXME: we can't seem to serialize + return the responses,
+        //        but the actual recursively-add-permisions operation works
+        res.status[201].json(responses);
+
+      }
+      else {
+        const response = await bucketPermissionService.addPermissions(
+          addDashesToUuid(req.params.bucketId), req.body, userId);
+        res.status(201).json(response);
+      }
+
+
     } catch (e) {
+      console.log(e);
       next(errorToProblem(SERVICE, e));
     }
   },
