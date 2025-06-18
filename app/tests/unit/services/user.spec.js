@@ -45,7 +45,7 @@ const token = {
   preferred_username: 'john@email.com',
   given_name: 'john',
   family_name: 'smith',
-  name: 'john smith',
+  display_name: 'john smith',
   email: 'jsmith@email.com',
   identity_provider: 'idir'
 };

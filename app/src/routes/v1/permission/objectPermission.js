@@ -4,7 +4,14 @@ const router = express.Router();
 const { Permissions } = require('../../../components/constants');
 const { objectPermissionController } = require('../../../controllers');
 const { objectPermissionValidator } = require('../../../validators');
-const { checkAppMode, currentObject, checkS3BasicAccess, hasPermission } = require('../../../middleware/authorization');
+const {
+  checkAppMode,
+  currentObject,
+  checkS3BasicAccess,
+  hasPermission,
+  checkElevatedUser,
+  // checkGrantingPermittedPermissions
+} = require('../../../middleware/authorization');
 const { requireSomeAuth } = require('../../../middleware/featureToggle');
 
 router.use(checkAppMode);
@@ -35,6 +42,8 @@ router.put('/:objectId',
   objectPermissionValidator.addPermissions,
   currentObject,
   checkS3BasicAccess,
+  checkElevatedUser,
+  // checkGrantingPermittedPermissions,
   hasPermission(Permissions.MANAGE),
   (req, res, next) => {
     objectPermissionController.addPermissions(req, res, next);
@@ -46,6 +55,7 @@ router.delete('/:objectId',
   objectPermissionValidator.removePermissions,
   currentObject,
   checkS3BasicAccess,
+  checkElevatedUser,
   hasPermission(Permissions.MANAGE),
   (req, res, next) => {
     objectPermissionController.removePermissions(req, res, next);

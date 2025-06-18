@@ -4,7 +4,13 @@ const helmet = require('helmet');
 const { Permissions } = require('../../components/constants');
 const { objectController, syncController } = require('../../controllers');
 const { objectValidator } = require('../../validators');
-const { checkAppMode, checkS3BasicAccess, currentObject, hasPermission } = require('../../middleware/authorization');
+const {
+  checkAppMode,
+  checkS3BasicAccess,
+  currentObject,
+  hasPermission,
+  checkElevatedUser
+} = require('../../middleware/authorization');
 const { requireSomeAuth } = require('../../middleware/featureToggle');
 const { currentUpload } = require('../../middleware/upload');
 
@@ -110,6 +116,7 @@ router.get('/:objectId/version',
 
 /** creates a new version of an object using either a specified version or latest as the source */
 router.put('/:objectId/version',
+  requireSomeAuth,
   objectValidator.copyVersion,
   currentObject,
   checkS3BasicAccess,
@@ -124,6 +131,7 @@ router.patch('/:objectId/public',
   objectValidator.togglePublic,
   currentObject,
   checkS3BasicAccess,
+  checkElevatedUser,
   hasPermission(Permissions.MANAGE),
   (req, res, next) => {
     objectController.togglePublic(req, res, next);
@@ -202,7 +210,7 @@ router.put('/:objectId/tagging',
   }
 );
 
-/** Add tags to an object */
+/** Delete tags from an object */
 router.delete('/:objectId/tagging',
   requireSomeAuth,
   objectValidator.deleteTags,
