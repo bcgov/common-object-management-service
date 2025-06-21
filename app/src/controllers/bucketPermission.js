@@ -1,3 +1,4 @@
+const { Permissions } = require('../components/constants');
 const errorToProblem = require('../components/errorToProblem');
 const {
   addDashesToUuid,
@@ -7,7 +8,7 @@ const {
   isTruthy
 } = require('../components/utils');
 const { NIL: SYSTEM_USER } = require('uuid');
-const { bucketPermissionService, userService } = require('../services');
+const { bucketPermissionService, userService, bucketService } = require('../services');
 
 const SERVICE = 'BucketPermissionService';
 
@@ -15,6 +16,33 @@ const SERVICE = 'BucketPermissionService';
  * The Permission Controller
  */
 const controller = {
+
+  /**
+   * Gets all child bucket records for a given bucket, where the specified user
+   * has MANAGE permission on said child buckets.
+   * @param {string} parentBucketId bucket id of the parent bucket
+   * @param {string} userId user id
+   * @returns {Promise<object[]>} An array of bucket records that are children of the parent,
+   *                              where the user has MANAGE permissions.
+   */
+  async _getChildrenWithManagePerms(parentBucketId, userId) {
+
+    const parentBucket = await bucketService.read(parentBucketId);
+    const allChildren = await bucketService.searchChildBuckets(parentBucket, true, userId);
+
+    // Filter out child buckets where user doesn't have MANAGE permissions
+    const filteredChildren = allChildren.filter(bucket =>
+      bucket.bucketPermission?.some(
+        perm => {
+          // skip check for currentUser's access to bucket if SYSTEM_USER
+          return (userId === SYSTEM_USER ? true : perm.userId === userId) && perm.permCode === Permissions.MANAGE;
+        }
+      )
+    );
+
+    return filteredChildren;
+  },
+
   /**
    * @function searchPermissions
    * Searches for bucket permissions
@@ -89,11 +117,30 @@ const controller = {
    */
   async addPermissions(req, res, next) {
     try {
-      const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
-      const response = await bucketPermissionService.addPermissions(
-        addDashesToUuid(req.params.bucketId),req.body, userId
-      );
-      res.status(201).json(response);
+      const currUserId = await userService.getCurrentUserId(
+        getCurrentIdentity(req.currentUser, SYSTEM_USER), SYSTEM_USER);
+      const currBucketId = addDashesToUuid(req.params.bucketId);
+
+      if (isTruthy(req.query.recursive)) {
+
+        const parentBucket = await bucketService.read(currBucketId);
+        const childBuckets = await this._getChildrenWithManagePerms(currBucketId, currUserId);
+
+        const allBuckets = [parentBucket, ...childBuckets];
+
+        const responses = await Promise.all(
+          allBuckets.map(b =>
+            // Only apply permissions to child buckets that currentUser can MANAGE
+            bucketPermissionService.addPermissions(b.bucketId, req.body, currUserId)
+          )
+        );
+        res.status(201).json(responses);
+      }
+      else {
+        const response = await bucketPermissionService.addPermissions(
+          currBucketId, req.body, currUserId);
+        res.status(201).json(response);
+      }
     } catch (e) {
       next(errorToProblem(SERVICE, e));
     }
@@ -112,13 +159,35 @@ const controller = {
       const userArray = mixedQueryToArray(req.query.userId);
       const userIds = userArray ? userArray.map(id => addDashesToUuid(id)) : userArray;
       const permissions = mixedQueryToArray(req.query.permCode);
-      const response = await bucketPermissionService.removePermissions(req.params.bucketId, userIds, permissions);
-      res.status(200).json(response);
+
+      const currUserId = await userService.getCurrentUserId(
+        getCurrentIdentity(req.currentUser, SYSTEM_USER), SYSTEM_USER);
+      const currBucketId = addDashesToUuid(req.params.bucketId);
+
+      if (isTruthy(req.query.recursive)) {
+
+        const parentBucket = await bucketService.read(currBucketId);
+        const childBuckets = await this._getChildrenWithManagePerms(currBucketId, currUserId);
+
+        const allBuckets = [parentBucket, ...childBuckets];
+
+        const responses = await Promise.all(
+          allBuckets.map(b =>
+            // Only remove permissions from child buckets that currentUser can MANAGE
+            bucketPermissionService.removePermissions(b.bucketId, userIds, permissions)
+          )
+        );
+        res.status(200).json(responses);
+      }
+      else {
+        const response = await bucketPermissionService.removePermissions(currBucketId, userIds, permissions);
+        res.status(200).json(response);
+      }
+
     } catch (e) {
       next(errorToProblem(SERVICE, e));
     }
   },
-
 
 };
 
