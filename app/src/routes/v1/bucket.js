@@ -75,7 +75,7 @@ router.put('/:bucketId/child',
   express.json(),
   bucketValidator.createBucketChild,
   checkS3BasicAccess,
-  hasPermission(Permissions.MANAGE),
+  hasPermission(Permissions.CREATE),
   (req, res, next) => {
     bucketController.createBucketChild(req, res, next);
   }

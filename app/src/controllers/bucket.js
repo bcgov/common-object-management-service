@@ -16,7 +16,7 @@ const {
 } = require('../components/utils');
 const { redactSecrets } = require('../db/models/utils');
 
-const { bucketService, storageService, userService } = require('../services');
+const { bucketService, storageService, userService, bucketPermissionService } = require('../services');
 
 const SERVICE = 'BucketService';
 const secretFields = ['accessKeyId', 'secretAccessKey'];
@@ -148,60 +148,61 @@ const controller = {
    * @throws The error encountered upon failure
    */
   async createBucketChild(req, res, next) {
-    try {
-      // Get Parent bucket data
-      const parentBucketId = addDashesToUuid(req.params.bucketId);
-      const parentBucket = await bucketService.read(parentBucketId);
 
-      // Check new child key length
-      const childKey = joinPath(stripDelimit(parentBucket.key), stripDelimit(req.body.subKey));
-      if (childKey.length > 255) {
-        throw new Problem(422, {
-          detail: 'New derived key exceeds maximum length of 255',
-          instance: req.originalUrl,
-          key: childKey
-        });
-      }
+    // Get Parent bucket data
+    const parentBucketId = addDashesToUuid(req.params.bucketId);
+    const parentBucket = await bucketService.read(parentBucketId);
 
-      // Future task: give user MANAGE permission on existing sub-folder (bucket) instead (see above)
-      // Check for existing bucket collision
-      const bucketCollision = await bucketService.readUnique({
-        bucket: parentBucket.bucket,
-        endpoint: parentBucket.endpoint,
+    // Check new child key length
+    const childKey = joinPath(stripDelimit(parentBucket.key), stripDelimit(req.body.subKey));
+    if (childKey.length > 255) {
+      throw new Problem(422, {
+        detail: 'New derived key exceeds maximum length of 255',
+        instance: req.originalUrl,
         key: childKey
-      }).catch(() => undefined);
+      });
+    }
 
-      if (bucketCollision) {
-        throw new Problem(409, {
-          bucketId: bucketCollision.bucketId,
-          detail: 'Requested bucket already exists',
-          instance: req.originalUrl,
-          key: childKey
-        });
-      }
+    const childBucket = {
+      bucketName: req.body.bucketName,
+      accessKeyId: parentBucket.accessKeyId,
+      bucket: parentBucket.bucket,
+      endpoint: parentBucket.endpoint,
+      key: childKey,
+      secretAccessKey: parentBucket.secretAccessKey,
+      region: parentBucket.region ?? undefined,
+      active: parentBucket.active
+    };
+
+    let response = undefined;
+    try {
 
       // Check for credential accessibility/validity
-      const childBucket = {
-        bucketName: req.body.bucketName,
-        accessKeyId: parentBucket.accessKeyId,
-        bucket: parentBucket.bucket,
-        endpoint: parentBucket.endpoint,
-        key: childKey,
-        secretAccessKey: parentBucket.secretAccessKey,
-        region: parentBucket.region ?? undefined,
-        active: parentBucket.active
-      };
       await controller._validateCredentials(childBucket);
       childBucket.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
-      // assign all permissions
-      childBucket.permCodes = Object.values(Permissions);
+      // get all permissions that user has on parent bucket
+      childBucket.permCodes = childBucket.userId !== SYSTEM_USER ?
+        (await bucketPermissionService.searchPermissions({
+          bucketId: parentBucket.bucketId,
+          userId: childBucket.userId
+        })).map(p => p.permCode) : [];
 
       // Create child bucket
-      const response = await bucketService.create(childBucket);
-      res.status(201).json(redactSecrets(response, secretFields));
-    } catch (e) {
-      next(errorToProblem(SERVICE, e));
+      response = await bucketService.create(childBucket);
+    }
+    catch (e) {
+      // If child bucket exists..
+      if (e instanceof UniqueViolationError) {
+        // Grant permissions if credentials precisely match
+        response = await bucketService.checkGrantPermissions(childBucket).catch(permErr => {
+          next(new Problem(403, { detail: permErr.message, instance: req.originalUrl }));
+        });
+      } else {
+        next(errorToProblem(SERVICE, e));
+      }
+    } finally {
+      if (response) res.status(201).json(redactSecrets(response, secretFields));
     }
   },
 
