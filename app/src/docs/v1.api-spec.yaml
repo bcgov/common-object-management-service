@@ -199,10 +199,10 @@ paths:
       summary: Deletes a bucket
       description: >-
         Deletes the bucket record (and child objects) from the COMS database, based on bucketId.
-        When calling this endpoint using OIDC token authentication, the user requires the DELETE
+        When calling this endpoint using OIDC token authentication, the user requires the `DELETE`
         permission for the bucket.
-        Providing the 'recursive' parameter will also delete all sub-folders.
-        The recursive option also requires the OIDC user to have the DELETE permission
+        Providing the `recursive` parameter will also delete all sub-folders.
+        The `recursive` option also requires the OIDC user to have the `DELETE` permission
         on all of these sub-folders otherwise the entire operation will fail.
         This request does not dispatch an S3 operation to request the deletion of the associated
         bucket(s) or delete any objects in object storage, it simply 'de-registers' knowledge of the bucket/folder
@@ -2588,6 +2588,11 @@ components:
             `objectId` must be specified.
           format: uuid
           example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
+        recursive:
+          type: boolean
+          description: >-
+            Optionally apply permCodes to all sub-folders in the spcified bucket
+          example: true
         email:
           type: string
           description: >-
@@ -2614,7 +2619,7 @@ components:
           type: array
           items:
             type: string
-          description: Optional array of permCode. Defaults to 'READ', if unspecified. Accepts any of `"READ", "CREATE", "UPDATE"` for bucket or  `"READ", "UPDATE"` for objects
+          description: Optional array of permCode. Defaults to `READ`, if unspecified. Accepts any of `"READ", "CREATE", "UPDATE"` for bucket or  `"READ", "UPDATE"` for objects
           example: ["READ", "CREATE", "UPDATE"]
     Request-UpdateBucket:
       title: Request Update Bucket

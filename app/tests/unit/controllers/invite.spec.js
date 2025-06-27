@@ -97,7 +97,7 @@ describe('createInvite', () => {
   });
 
   describe('object', () => {
-    it('should 409 when object not found', async () => {
+    it('should 404 when object not found', async () => {
       const req = { body: { objectId: RESOURCE } };
 
       objectReadSpy.mockRejectedValue({ statusCode: 404 });
@@ -111,7 +111,7 @@ describe('createInvite', () => {
       expect(objectReadSpy).toHaveBeenCalledWith(RESOURCE);
       expect(objectSearchPermissionSpy).toHaveBeenCalledTimes(0);
       expect(next).toHaveBeenCalledTimes(1);
-      expect(next).toHaveBeenCalledWith(new Problem(409));
+      expect(next).toHaveBeenCalledWith(new Problem(404));
     });
 
     it('should 403 when no object manage permission found', async () => {
@@ -261,7 +261,7 @@ describe('createInvite', () => {
   });
 
   describe('bucket', () => {
-    it('should 409 when bucket not found', async () => {
+    it('should 404 when bucket not found', async () => {
       const req = { body: { bucketId: RESOURCE } };
 
       bucketReadSpy.mockRejectedValue({ statusCode: 404 });
@@ -275,7 +275,7 @@ describe('createInvite', () => {
       expect(objectReadSpy).toHaveBeenCalledTimes(0);
       expect(objectSearchPermissionSpy).toHaveBeenCalledTimes(0);
       expect(next).toHaveBeenCalledTimes(1);
-      expect(next).toHaveBeenCalledWith(new Problem(409));
+      expect(next).toHaveBeenCalledWith(new Problem(404));
     });
 
     it('should 403 when no bucket manage permission found', async () => {
