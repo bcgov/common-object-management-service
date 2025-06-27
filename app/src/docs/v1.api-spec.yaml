@@ -199,10 +199,10 @@ paths:
       summary: Deletes a bucket
       description: >-
         Deletes the bucket record (and child objects) from the COMS database, based on bucketId.
-        When calling this endpoint using OIDC token authentication, the user requires the DELETE
+        When calling this endpoint using OIDC token authentication, the user requires the `DELETE`
         permission for the bucket.
-        Providing the 'recursive' parameter will also delete all sub-folders.
-        The recursive option also requires the OIDC user to have the DELETE permission
+        Providing the `recursive` parameter will also delete all sub-folders.
+        The `recursive` option also requires the OIDC user to have the `DELETE` permission
         on all of these sub-folders otherwise the entire operation will fail.
         This request does not dispatch an S3 operation to request the deletion of the associated
         bucket(s) or delete any objects in object storage, it simply 'de-registers' knowledge of the bucket/folder
@@ -1137,12 +1137,15 @@ paths:
         arbitrary array of permCode and user tuples. This is an idempotent
         operation, so users that already have a requested permission will remain
         unaffected. Only permissions successfully added to COMS will appear in
-        the response.
+        the response. The `recursive` option will also apply the specified
+        permissions to all child buckets where the current user has `MANAGE`
+        permissions.
       operationId: bucketAddPermissions
       tags:
         - Permission
       parameters:
         - $ref: "#/components/parameters/Path-BucketId"
+        - $ref: "#/components/parameters/Query-Recursive"
       requestBody:
         description: >-
           An array of bucket permissions, each containing a `userId` and
@@ -1175,9 +1178,10 @@ paths:
         of users and subset of permissions to revoke. This is an idempotent
         operation, so users that already lack the specified permission(s) will
         remain unaffected. Only permissions successfully removed from COMS will
-        appear in the response. WARNING: Specifying no parameters will delete
-        all permissions associated with a bucket; it is possible to lock
-        yourself out of your own bucket!
+        appear in the response. The `recursive` option will also remove the specified
+        permissions from all child buckets where the current user has `MANAGE`
+        permissions. WARNING: Specifying no parameters will delete all permissions
+        associated with a bucket; it is possible to lock yourself out of your own bucket!
       operationId: bucketRemovePermissions
       tags:
         - Permission
@@ -1185,6 +1189,7 @@ paths:
         - $ref: "#/components/parameters/Path-BucketId"
         - $ref: "#/components/parameters/Query-UserId"
         - $ref: "#/components/parameters/Query-PermCode"
+        - $ref: "#/components/parameters/Query-Recursive"
       responses:
         "200":
           description: Returns an array of deleted permissions
@@ -2583,6 +2588,11 @@ components:
             `objectId` must be specified.
           format: uuid
           example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
+        recursive:
+          type: boolean
+          description: >-
+            Optionally apply permCodes to all sub-folders in the spcified bucket
+          example: true
         email:
           type: string
           description: >-
@@ -2609,7 +2619,7 @@ components:
           type: array
           items:
             type: string
-          description: Optional array of permCode. Defaults to 'READ', if unspecified. Accepts any of `"READ", "CREATE", "UPDATE"` for bucket or  `"READ", "UPDATE"` for objects
+          description: Optional array of permCode. Defaults to `READ`, if unspecified. Accepts any of `"READ", "CREATE", "UPDATE"` for bucket or  `"READ", "UPDATE"` for objects
           example: ["READ", "CREATE", "UPDATE"]
     Request-UpdateBucket:
       title: Request Update Bucket

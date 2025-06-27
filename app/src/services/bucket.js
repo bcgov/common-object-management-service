@@ -2,6 +2,7 @@ const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 
 const bucketPermissionService = require('./bucketPermission');
 const { Bucket } = require('../db/models');
+const { Permissions } = require('../components/constants');
 
 /**
  * The Bucket DB Service
@@ -174,6 +175,25 @@ const service = {
   },
 
   /**
+   * Gets all child bucket records for a given bucket, where the specified user
+   * has MANAGE permission on said child buckets.
+   * @param {string} parentBucketId bucket id of the parent bucket
+   * @param {string} userId user id
+   * @param {object} [etrx=undefined] An optional Objection Transaction object
+   * @returns {Promise<object[]>} An array of bucket records that are children of the parent,
+   *                              where the user has MANAGE permissions.
+   */
+  getChildrenWithManagePermissions: async (parentBucketId, userId, etrx = undefined) => {
+    const parentBucket = await service.read(parentBucketId);
+    const allChildren = await service.searchChildBuckets(parentBucket, true, userId, etrx);
+
+    const filteredChildren = allChildren.filter(bucket =>
+      bucket.bucketPermission?.some(perm => perm.userId === userId && perm.permCode === Permissions.MANAGE)
+    );
+    return filteredChildren;
+  },
+
+  /**
    * @function searchBuckets
    * Search and filter for specific bucket records
    * @param {string|string[]} [params.bucketId] Optional string or array of uuids representing the bucket
@@ -199,11 +219,13 @@ const service = {
 
   /**
    * @function searchChildBuckets
-   * Get db records for each bucket that acts as a sub-folder of the provided bucket
+   * Get db records for each bucket that acts as a sub-folder of the provided bucket,
+   * and is accessible to a given user
    * @param {object} parentBucket a bucket model (record) from the COMS db
    * @param {boolean} returnPermissions also return current user's permissions for each bucket
+   * @param {string} userId uuid of the user
    * @param {object} [etrx=undefined] An optional Objection Transaction object
-   * @returns {Promise<object[]>} An array of bucket records
+   * @returns {Promise<object[]>} An array of bucket records that the given user can access
    * @throws If there are no records found
    */
   searchChildBuckets: async (parentBucket, returnPermissions = false, userId, etrx = undefined) => {
@@ -215,9 +237,14 @@ const service = {
           if (returnPermissions) {
             query
               .withGraphJoined('bucketPermission')
-              .whereIn('bucketPermission.bucketId', builder => {
-                builder.distinct('bucketPermission.bucketId')
-                  .where('bucketPermission.userId', userId);
+              .modify(query => {
+                if (userId !== SYSTEM_USER) {
+                  query
+                    .whereIn('bucketPermission.bucketId', builder => {
+                      builder.distinct('bucketPermission.bucketId')
+                        .where('bucketPermission.userId', userId);
+                    });
+                }
               });
           }
         })

@@ -3,7 +3,8 @@ const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 
 const { AuthType, Permissions, ResourceType } = require('../components/constants');
 const errorToProblem = require('../components/errorToProblem');
-const { addDashesToUuid, getCurrentIdentity } = require('../components/utils');
+const { addDashesToUuid, getCurrentIdentity, isTruthy } = require('../components/utils');
+const utils = require('../db/models/utils');
 const {
   bucketPermissionService,
   bucketService,
@@ -29,7 +30,6 @@ const controller = {
    */
   async createInvite(req, res, next) {
     let resource, type;
-
     try {
       // Reject if expiresAt is more than 30 days away
       const maxExpiresAt = Math.floor(Date.now() / 1000) + 2592000;
@@ -120,12 +120,13 @@ const controller = {
         type: type,
         expiresAt: req.body.expiresAt ? new Date(req.body.expiresAt * 1000).toISOString() : undefined,
         userId: userId,
-        permCodes: req.body.permCodes
+        permCodes: req.body.permCodes,
+        recursive: (req.body.bucketId && isTruthy(req.body.recursive)) ?? false
       });
       res.status(201).json(response.token);
     } catch (e) {
       if (e.statusCode === 404) {
-        next(errorToProblem(SERVICE, new Problem(409, {
+        next(errorToProblem(SERVICE, new Problem(404, {
           detail: `Resource type '${type}' not found`,
           instance: req.originalUrl,
           resource: resource
@@ -186,7 +187,7 @@ const controller = {
         await objectPermissionService.addPermissions(invite.resource,
           permCodes.map(permCode => ({ userId, permCode })), invite.createdBy);
       } else if (invite.type === ResourceType.BUCKET) {
-        // Check for object existence
+        // Check for bucket existence
         await bucketService.read(invite.resource).catch(() => {
           inviteService.delete(token);
           throw new Problem(409, {
@@ -196,14 +197,37 @@ const controller = {
           });
         });
 
-        // Grant invitation permission and cleanup
-        await bucketPermissionService.addPermissions(invite.resource,
-          permCodes.map(permCode => ({ userId, permCode })), invite.createdBy);
+        // Grant invitation permission
+        // if invite was for specified folder AND all subfolders
+        if (invite.recursive) {
+          const parentBucket = await bucketService.read(invite.resource);
+          // Only apply permissions to child buckets that inviter can MANAGE
+          // If the invite was created via basic auth, apply permissions to all child buckets
+          const childBuckets = invite.createdBy !== SYSTEM_USER ?
+            await bucketService.getChildrenWithManagePermissions(invite.resource, invite.createdBy) :
+            await bucketService.searchChildBuckets(parentBucket, true, invite.createdBy);
+
+          const allBuckets = [parentBucket, ...childBuckets];
+
+          await utils.trxWrapper(async (trx) => {
+            return await Promise.all(
+              allBuckets.map(b =>
+                bucketPermissionService.addPermissions(b.bucketId, permCodes.map(
+                  permCode => ({ userId, permCode })), invite.createdBy, trx)
+              )
+            );
+          });
+        }
+        // else not recursive
+        else {
+          await bucketPermissionService.addPermissions(invite.resource,
+            permCodes.map(permCode => ({ userId, permCode })), invite.createdBy);
+        }
       }
 
       // Cleanup invite on success
       inviteService.delete(token);
-      res.status(200).json({ resource: invite.resource, type: invite.type });
+      res.status(200).json({ resource: invite.resource, type: invite.type, recursive: invite.recursive });
     } catch (e) {
       if (e.statusCode === 404) {
         next(errorToProblem(SERVICE, new Problem(404, {

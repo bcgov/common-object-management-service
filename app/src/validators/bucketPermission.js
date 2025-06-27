@@ -45,6 +45,7 @@ const schema = {
       }).required()
     ).required(),
     query: Joi.object({
+      recursive: type.truthy,
     })
   },
 
@@ -55,6 +56,7 @@ const schema = {
     query: Joi.object({
       userId: scheme.guid,
       permCode: scheme.permCode,
+      recursive: type.truthy
     })
   }
 };
