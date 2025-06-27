@@ -1,4 +1,3 @@
-const { Permissions } = require('../components/constants');
 const errorToProblem = require('../components/errorToProblem');
 const utils = require('../db/models/utils');
 const {
@@ -17,26 +16,6 @@ const SERVICE = 'BucketPermissionService';
  * The Permission Controller
  */
 const controller = {
-
-  /**
-   * Gets all child bucket records for a given bucket, where the specified user
-   * has MANAGE permission on said child buckets.
-   * @param {string} parentBucketId bucket id of the parent bucket
-   * @param {string} userId user id
-   * @returns {Promise<object[]>} An array of bucket records that are children of the parent,
-   *                              where the user has MANAGE permissions.
-   */
-  async _getChildrenWithManagePerms(parentBucketId, userId) {
-
-    const parentBucket = await bucketService.read(parentBucketId);
-    const allChildren = await bucketService.searchChildBuckets(parentBucket, true, userId);
-
-    const filteredChildren = allChildren.filter(bucket =>
-      bucket.bucketPermission?.some(perm => perm.userId === userId && perm.permCode === Permissions.MANAGE)
-    );
-
-    return filteredChildren;
-  },
 
   /**
    * @function searchPermissions
@@ -123,7 +102,7 @@ const controller = {
         // Only apply permissions to child buckets that currentUser can MANAGE
         // If the current user is SYSTEM_USER, apply permissions to all child buckets
         const childBuckets = currUserId !== SYSTEM_USER ?
-          await this._getChildrenWithManagePerms(currBucketId, currUserId) :
+          await bucketService.getChildrenWithManagePermissions(currBucketId, currUserId) :
           await bucketService.searchChildBuckets(parentBucket, true, currUserId);
 
         const allBuckets = [parentBucket, ...childBuckets];
@@ -171,7 +150,7 @@ const controller = {
         // Only apply permissions to child buckets that currentUser can MANAGE
         // If the current user is SYSTEM_USER, apply permissions to all child buckets
         const childBuckets = currUserId !== SYSTEM_USER ?
-          await this._getChildrenWithManagePerms(currBucketId, currUserId) :
+          await bucketService.getChildrenWithManagePermissions(currBucketId, currUserId) :
           await bucketService.searchChildBuckets(parentBucket, true, currUserId);
 
         const allBuckets = [parentBucket, ...childBuckets];

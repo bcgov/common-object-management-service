@@ -17,7 +17,7 @@ const schema = {
           then: Joi.array().items(...Object.values(InviteBucketAllowedPermissions)).min(1),
           otherwise: Joi.array().items(...Object.values(InviteObjectAllowedPermissions)).min(1)
         }),
-
+      recursive: type.truthy.optional() // TODO: make forbidden if body.objectId exists
     }).xor('bucketId', 'objectId'),
     query: Joi.object({
     })

@@ -2,6 +2,7 @@ const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 
 const bucketPermissionService = require('./bucketPermission');
 const { Bucket } = require('../db/models');
+const { Permissions } = require('../components/constants');
 
 /**
  * The Bucket DB Service
@@ -171,6 +172,25 @@ const service = {
       if (!etrx && trx) await trx.rollback();
       throw err;
     }
+  },
+
+  /**
+   * Gets all child bucket records for a given bucket, where the specified user
+   * has MANAGE permission on said child buckets.
+   * @param {string} parentBucketId bucket id of the parent bucket
+   * @param {string} userId user id
+   * @param {object} [etrx=undefined] An optional Objection Transaction object
+   * @returns {Promise<object[]>} An array of bucket records that are children of the parent,
+   *                              where the user has MANAGE permissions.
+   */
+  getChildrenWithManagePermissions: async (parentBucketId, userId, etrx = undefined) => {
+    const parentBucket = await service.read(parentBucketId);
+    const allChildren = await service.searchChildBuckets(parentBucket, true, userId, etrx);
+
+    const filteredChildren = allChildren.filter(bucket =>
+      bucket.bucketPermission?.some(perm => perm.userId === userId && perm.permCode === Permissions.MANAGE)
+    );
+    return filteredChildren;
   },
 
   /**

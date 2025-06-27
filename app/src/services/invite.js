@@ -33,7 +33,8 @@ const service = {
         // if permCodes provided set as unique permCodes otherwise just ['READ']
         permCodes: data.permCodes ? Array.from(new Set(data.permCodes)) : ['READ'],
         expiresAt: data.expiresAt,
-        createdBy: data.userId ?? SYSTEM_USER
+        createdBy: data.userId ?? SYSTEM_USER,
+        recursive: data.recursive ?? false
       });
 
       if (!etrx) await trx.commit();
