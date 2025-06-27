@@ -227,10 +227,11 @@ paths:
       summary: Creates a child bucket
       description: >-
         Creates a child bucket record relative to the parent bucket and copies
-        the majority of the credential values. Bucket should exist in S3. This
-        endpoint will report a collision and the bucketId it collided with if
-        the desired bucket already exists. User requires `MANAGE` permission on
-        the parent bucket to proceed.
+        the majority of the credential values. Bucket should exist in S3. Current
+        user's permissions that exist on the parent bucket will be copied over to
+        the child bucket. if the child bucket already exists, the user will be
+        given manage permission to it. User requires `CREATE` permission on the parent
+        bucket to proceed.
       operationId: createBucketChild
       tags:
         - Bucket
@@ -254,23 +255,6 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
-        "409":
-          description: Conflict (Request conflicts with server state)
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: "#/components/schemas/Response-Conflict"
-                  - type: object
-                    properties:
-                      bucketId:
-                        type: string
-                        description: The bucketId this request is in collision with
-                        example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
-                      key:
-                        type: string
-                        description: The derived bucket key
-                        example: foo/bar
         "422":
           description: Unprocessable Content (Derived bucket key is too long)
           content:
@@ -2576,7 +2560,7 @@ components:
               type: string
               description: a path relative to the parent bucket to the 'directory' you are mounting
               maxLength: 255
-              example: canada/bc/maps
+              example: my-subfolder
     Request-CreateInvite:
       title: Request Create Invite
       type: object
