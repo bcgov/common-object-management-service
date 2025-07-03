@@ -13,6 +13,7 @@ jest.mock('config');
 jest.mock('../../../../src/middleware/authorization', () => ({
   checkAppMode: jest.fn((_req, _res, next) => next()),
   checkS3BasicAccess: jest.fn((_req, _res, next) => next()),
+  restrictNonIdirUserSearch: jest.fn((_req, _res, next) => next()),
 }));
 
 jest.mock('../../../../src/middleware/featureToggle', () => ({

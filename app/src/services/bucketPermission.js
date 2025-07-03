@@ -33,12 +33,12 @@ const service = {
       const currentPerms = await service.searchPermissions({ bucketId });
       const obj = data
         // Ensure all codes are upper cased
-        .map(p => ({ ...p, code: p.permCode.toUpperCase().trim() }))
+        .map(p => ({ ...p, permCode: p.permCode.toUpperCase().trim() }))
         // Filter out any invalid code values
         .filter(p => Object.values(Permissions).some(perm => perm === p.permCode))
         // Filter entry tuples that already exist
         .filter(p => !currentPerms.some(cp => cp.userId === p.userId && cp.permCode === p.permCode))
-        // Create DB buckets to insert
+        // Create DB records to insert
         .map(p => ({
           id: uuidv4(),
           userId: p.userId,

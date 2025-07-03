@@ -10,7 +10,7 @@ const schema = {
       identityId: scheme.string,
       idp: scheme.string,
       username: type.alphanum,
-      email: type.email,
+      email: Joi.string(),
       firstName: type.alphanum,
       fullName: Joi.string().pattern(/^[\w\-\s]+$/).max(255),
       lastName: type.alphanum,

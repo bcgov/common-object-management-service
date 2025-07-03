@@ -6,7 +6,12 @@ const { isTruthy } = require('../../components/utils');
 const { bucketController, syncController } = require('../../controllers');
 const { bucketValidator } = require('../../validators');
 const { requireSomeAuth } = require('../../middleware/featureToggle');
-const { checkAppMode, hasPermission, checkS3BasicAccess } = require('../../middleware/authorization');
+const {
+  checkAppMode,
+  hasPermission,
+  checkS3BasicAccess,
+  checkElevatedUser
+} = require('../../middleware/authorization');
 
 router.use(checkAppMode);
 router.use(requireSomeAuth);
@@ -16,6 +21,7 @@ router.put('/',
   express.json(),
   bucketValidator.createBucket,
   checkS3BasicAccess,
+  checkElevatedUser,
   (req, res, next) => {
     bucketController.createBucket(req, res, next);
   });
@@ -55,6 +61,7 @@ router.patch('/:bucketId',
   express.json(),
   bucketValidator.updateBucket,
   checkS3BasicAccess,
+  checkElevatedUser,
   hasPermission(Permissions.MANAGE),
   (req, res, next) => {
     bucketController.updateBucket(req, res, next);
@@ -65,12 +72,16 @@ router.patch('/:bucketId',
 router.delete('/:bucketId',
   bucketValidator.deleteBucket,
   checkS3BasicAccess,
+  checkElevatedUser,
   hasPermission(Permissions.DELETE),
   (req, res, next) => {
     bucketController.deleteBucket(req, res, next);
   });
 
-/** Creates a child bucket */
+/**
+ * Creates a child bucket
+ * Note: operation requires CREATE permission on parent
+ * */
 router.put('/:bucketId/child',
   express.json(),
   bucketValidator.createBucketChild,
@@ -94,6 +105,7 @@ router.get('/:bucketId/sync',
     if (isTruthy(req.query.recursive)) next();
     else next('route');
   },
+  checkElevatedUser,
   hasPermission(Permissions.MANAGE),
   (req, res, next) => syncController.syncBucketRecursive(req, res, next));
 

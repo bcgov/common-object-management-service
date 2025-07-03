@@ -1,12 +1,15 @@
 const Problem = require('api-problem');
 
 const log = require('../components/log')(module.filename);
-const { AuthMode, AuthType, Permissions } = require('../components/constants');
+const { AuthMode, AuthType, Permissions, ElevatedIdps } = require('../components/constants');
 const {
   getAppAuthMode,
   getCurrentIdentity,
   getConfigBoolean,
-  mixedQueryToArray, stripDelimit } = require('../components/utils');
+  hasOnlyPermittedKeys,
+  mixedQueryToArray,
+  stripDelimit
+} = require('../components/utils');
 const { NIL: SYSTEM_USER } = require('uuid');
 const {
   bucketPermissionService,
@@ -207,6 +210,69 @@ const hasPermission = (permission) => {
   };
 };
 
+/**
+ * if in strict mode, when non-idir auth, require one or more of the following query parameters:
+ * - complete email address
+ * - userId
+ * - identityId
+ *
+ * This restriction ensures that a non-idir user cannot expose other external user's names and email addresses
+ * through a user search without knowing their full email, userId or identityId
+ */
+const restrictNonIdirUserSearch = async (req, _res, next) => {
+  try {
+    if (getConfigBoolean('server.privacyMask') &&
+      req.currentUser.authType === AuthType.BEARER &&
+      !ElevatedIdps.includes(req.currentUser.tokenPayload.identity_provider) &&
+      !hasOnlyPermittedKeys(req.query, ['email', 'userId', 'identityId'])
+    ) {
+      throw new Error('User lacks permission to complete this action');
+    }
+  }
+  catch (err) {
+    log.verbose(err.message, { function: 'restrictNonIdirUserSearch' });
+    return next(new Problem(403, {
+      detail: err.message,
+      instance: req.originalUrl
+    }));
+  }
+
+  // if searching by email address,
+  // add a query parameter indicating that email parameter must have an exact match
+  if (Object.prototype.hasOwnProperty.call(req.query, 'email')) req.query.emailExact = true;
+
+  next();
+};
+
+/**
+ * If privacyMask (soon to be renamed as 'strictMode' to support additional feature restroctions)
+ * is true and request is from a non-idir user, throw a permission error
+ */
+const checkElevatedUser = async (req, _res, next) => {
+  try {
+    if (getConfigBoolean('server.privacyMask') &&
+      req.currentUser.authType === AuthType.BEARER &&
+      !ElevatedIdps.includes(req.currentUser.tokenPayload.identity_provider)) {
+      throw new Error('User lacks permission to complete this action');
+    }
+  }
+  catch (err) {
+    log.verbose(err.message, { function: 'checkElevatedUser' });
+    return next(new Problem(403, {
+      detail: err.message,
+      instance: req.originalUrl
+    }));
+  }
+  next();
+};
+
 module.exports = {
-  _checkPermission, checkAppMode, checkS3BasicAccess, currentObject, hasPermission
+  _checkPermission,
+  checkAppMode,
+  checkS3BasicAccess,
+  currentObject,
+  hasPermission,
+  restrictNonIdirUserSearch,
+  checkElevatedUser,
+  // checkGrantingPermittedPermissions
 };
