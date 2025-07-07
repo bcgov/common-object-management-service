@@ -171,7 +171,8 @@ const controller = {
       key: childKey,
       secretAccessKey: parentBucket.secretAccessKey,
       region: parentBucket.region ?? undefined,
-      active: parentBucket.active
+      active: parentBucket.active,
+      permCodes: []
     };
 
     let response = undefined;
@@ -181,19 +182,30 @@ const controller = {
       await controller._validateCredentials(childBucket);
       childBucket.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
-      // get all permissions that user has on parent bucket
-      childBucket.permCodes = childBucket.userId !== SYSTEM_USER ?
-        (await bucketPermissionService.searchPermissions({
-          bucketId: parentBucket.bucketId,
-          userId: childBucket.userId
-        })).map(p => p.permCode) : [];
+      const parentPermissions = await bucketPermissionService.searchPermissions({ bucketId: parentBucket.bucketId });
 
-      // Create child bucket
-      response = await bucketService.create(childBucket);
+      response = await utils.trxWrapper(async (trx) => {
+        // Create child bucket
+        const childBucketResp = await bucketService.create(childBucket, trx);
+
+        // Add parent permissions to child bucket
+        if (parentPermissions.length > 0)
+          await bucketPermissionService.addPermissions(
+            childBucketResp.bucketId, parentPermissions, childBucket.userId, trx);
+
+        return childBucketResp;
+      });
     }
     catch (e) {
       // If child bucket exists..
       if (e instanceof UniqueViolationError) {
+        // get all permissions that user has on parent bucket
+        childBucket.permCodes = childBucket.userId !== SYSTEM_USER ?
+          (await bucketPermissionService.searchPermissions({
+            bucketId: parentBucket.bucketId,
+            userId: childBucket.userId
+          })).map(p => p.permCode) : [];
+
         // Grant permissions if credentials precisely match
         response = await bucketService.checkGrantPermissions(childBucket).catch(permErr => {
           next(new Problem(403, { detail: permErr.message, instance: req.originalUrl }));
