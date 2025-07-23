@@ -21,7 +21,7 @@ router.put('/',
   express.json(),
   bucketValidator.createBucket,
   checkS3BasicAccess,
-  checkElevatedUser,
+  // checkElevatedUser,
   (req, res, next) => {
     bucketController.createBucket(req, res, next);
   });
