@@ -28,7 +28,6 @@ router.put('/',
 
 /** Search for objects */
 router.get('/',
-  requireSomeAuth,
   objectValidator.searchObjects,
   checkS3BasicAccess,
   (req, res, next) => {
