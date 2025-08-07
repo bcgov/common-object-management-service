@@ -411,10 +411,16 @@ paths:
           $ref: "#/components/responses/Error"
     get:
       summary: Search for objects
-      description: >-
+      description: |
         Returns a list of objects matching all search criteria across all known
         versions of objects. Search criteria on string attributes will match on
         partial results and ignore case sensitivity.
+
+        This endpoint can be used without authentication. If so, some response attributes (`path`, `createdBy`, `updatedBy`, and
+        `lastSynceDate`) are redacted. The following restrictions also apply:
+        * Only the following query parameters are allowed: `bucketId`, `objectId`, `public`, `page`, `limit`, `sort`
+        * `public` must be `true`
+        * An `objectId` or `publicId` must be provided
       operationId: searchObjects
       tags:
         - Object
