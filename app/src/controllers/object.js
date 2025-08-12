@@ -3,6 +3,7 @@ const cors = require('cors');
 const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 
 const {
+  AuthType,
   DEFAULTCORS,
   DownloadMode,
   MAXCOPYOBJECTLENGTH,
@@ -26,7 +27,8 @@ const {
   mixedQueryToArray,
   toLowerKeys,
   getBucket,
-  renameObjectProperty
+  renameObjectProperty,
+  hasOnlyPermittedKeys
 } = require('../components/utils');
 const utils = require('../db/models/utils');
 
@@ -1057,10 +1059,34 @@ const controller = {
       };
       // if scoping to current user permissions on objects
       if (getConfigBoolean('server.privacyMask')) {
+
+        if (req.currentUser.authType === AuthType.NONE) {
+
+          const permittedPublicSearchParams = ['bucketId', 'objectId', 'public', 'page', 'limit', 'sort'];
+
+          // no-auth requests MUST have all of the following:
+          //  (a) only the permitted search params; (b) ?public=true; (c) an object or bucket id
+          if (!hasOnlyPermittedKeys(req.query, permittedPublicSearchParams) || !params.public ||
+            !(params.bucketId || params.id)) {
+            throw new Problem(403, {
+              detail: 'User lacks permission to complete this action',
+              instance: req.originalUrl
+            });
+          }
+        }
         params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
       }
+
       const response = await objectService.searchObjects(params);
-      res.setHeader('X-Total-Rows', response.total).status(200).json(response.data);
+
+      if (req.currentUser.authType === AuthType.NONE) {
+        const redactedFields = ['path', 'createdBy', 'updatedBy', 'lastSyncedDate'];
+        const redactedResponseData = response.data.map(object => utils.redactSecrets(object, redactedFields));
+        res.setHeader('X-Total-Rows', response.total).status(200).json(redactedResponseData);
+      }
+      else {
+        res.setHeader('X-Total-Rows', response.total).status(200).json(response.data);
+      }
     } catch (error) {
       next(error);
     }
