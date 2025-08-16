@@ -6,6 +6,7 @@ const { objectController, syncController } = require('../../controllers');
 const { objectValidator } = require('../../validators');
 const {
   checkAppMode,
+  // checkObjectPublic,
   checkS3BasicAccess,
   currentObject,
   hasPermission,

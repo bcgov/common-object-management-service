@@ -78,6 +78,15 @@ const schema = {
     })
   },
 
+  togglePublic: {
+    params: Joi.object({
+      bucketId: type.uuidv4.required()
+    }),
+    query: Joi.object({
+      public: type.truthy
+    })
+  },
+
   updateBucket: {
     body: Joi.object().keys({
       bucketName: Joi.string().max(255),
@@ -104,7 +113,8 @@ const validator = {
   readBucket: validate(schema.readBucket),
   syncBucket: validate(schema.syncBucket),
   searchBuckets: validate(schema.searchBuckets),
-  updateBucket: validate(schema.updateBucket)
+  updateBucket: validate(schema.updateBucket),
+  togglePublic: validate(schema.togglePublic),
 };
 
 module.exports = validator;
