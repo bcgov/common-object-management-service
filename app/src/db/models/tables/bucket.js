@@ -99,6 +99,7 @@ class Bucket extends mixin(Model, [
         region: { type: 'string', maxLength: 255 },
         active: { type: 'boolean' },
         lastSyncRequestedDate: { type: ['string', 'null'], format: 'date-time' },
+        public: { type: 'boolean' },
         ...stamps
       },
       additionalProperties: false

@@ -38,11 +38,13 @@ const _checkPermission = async ({ currentObject, currentUser, params }, permissi
     const searchParams = { permCode: permission, userId: userId };
 
     if (params.objectId) {
+      // add object permissions
       permissions.push(...await objectPermissionService.searchPermissions({
         objId: params.objectId, ...searchParams
       }));
     }
     if (params.bucketId || currentObject.bucketId) {
+      // add bucket permissions
       permissions.push(...await bucketPermissionService.searchPermissions({
         bucketId: params.bucketId || currentObject.bucketId, ...searchParams
       }));
@@ -55,6 +57,7 @@ const _checkPermission = async ({ currentObject, currentUser, params }, permissi
   log.debug('Missing user identification', { function: '_checkPermission' });
   return result;
 };
+
 /**
  * @function checkS3BasicAccess
  * Checks and authorized access to perform operation for s3 basic authentication request
@@ -193,15 +196,22 @@ const hasPermission = (permission) => {
         throw new Error('Missing object record');
       } else if (authType === AuthType.BASIC && canBasicMode(authMode)) {
         log.debug('Basic authTypes are always permitted', { function: 'hasPermission' });
-      } else if (req.params.objectId && req.currentObject.public && permission === Permissions.READ) {
+      }
+      // if reading a public object
+      else if (req.params.objectId && await isObjectPublic(req.currentObject) && permission === Permissions.READ) {
         log.debug('Read requests on public objects are always permitted', { function: 'hasPermission' });
-      } else if (!await _checkPermission(req, permission)) {
+      }
+      // if reading a public bucket
+      else if (req.params.bucketId && await isBucketPublic(req.params.bucketId) && permission === Permissions.READ) {
+        log.debug('Read requests on public buckets are always permitted', { function: 'hasPermission' });
+      }
+      else if (!await _checkPermission(req, permission)) {
         throw new Error(`User lacks required permission ${permission}`);
       }
     } catch (err) {
       log.verbose(err.message, { function: 'hasPermission' });
       return next(new Problem(403, {
-        detail: 'User lacks permission to complete this action',
+        detail: `User lacks permission to complete this action: ${err}`,
         instance: req.originalUrl
       }));
     }
@@ -266,13 +276,63 @@ const checkElevatedUser = async (req, _res, next) => {
   next();
 };
 
+/**
+ * get public status from COMS database
+ * checks current object and all parent folders
+ */
+const isObjectPublic = async (currentObject) => {
+  if (currentObject.public) return true;
+  if (await isBucketPublic(currentObject.bucketId)) return true;
+  return false;
+};
+
+/**
+ * get public status from COMS database
+ * checks current folder and all parent folders
+ */
+const isBucketPublic = async (bucketId) => {
+  const bucket = await bucketService.read(bucketId);
+  if (bucket.public) return true;
+  const parentBuckets = await bucketService.searchParentBuckets(bucket);
+  if (parentBuckets.some(b => b.public)) return true;
+  return false;
+};
+
+// alternative approach
+// Route middleware to check if requested bucket is public
+// const isBucketPublic = async (req, _res, next) => {
+//   // if an unauthenticated request
+//   if (!req.currentUser || req.currentUser.authType === AuthType.NONE) {
+//     // if providing a single bucketId in query
+//     if (mixedQueryToArray(req.query.bucketId).length === 1) {
+//       const bucket = await bucketService.read(req.query.bucketId);
+//       // and bucket public is truthy
+//       if (!bucket.public) {
+//         return next(new Problem(403, {
+//           detail: 'Bucket is not public',
+//           instance: req.originalUrl
+//         }));
+//       }
+//     }
+//   }
+//   else {
+//     return next(new Problem(403, {
+//       detail: 'User lacks permission to complete this action',
+//       instance: req.originalUrl
+//     }));
+//   }
+//   next();
+// };
+
 module.exports = {
   _checkPermission,
   checkAppMode,
+  checkElevatedUser,
   checkS3BasicAccess,
+  // checkGrantingPermittedPermissions
   currentObject,
   hasPermission,
+  isBucketPublic,
+  isObjectPublic,
   restrictNonIdirUserSearch,
-  checkElevatedUser,
-  // checkGrantingPermittedPermissions
 };

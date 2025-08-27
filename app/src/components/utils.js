@@ -98,6 +98,7 @@ const utils = {
         data.bucket = bucketData.bucket;
         data.endpoint = bucketData.endpoint;
         data.key = bucketData.key;
+        // data.public = bucketData.public;
         data.secretAccessKey = bucketData.secretAccessKey;
         if (bucketData.region) data.region = bucketData.region;
       } else if (utils.getConfigBoolean('objectStorage.enabled')) {
@@ -370,6 +371,21 @@ const utils = {
     const prefixParts = prefix.split(DELIMITER).filter(part => part);
     return prefixParts.every((part, i) => pathParts[i] === part)
       && pathParts.filter(part => !prefixParts.includes(part)).length === 1;
+  },
+
+  /**
+   * @function isBelowPrefix
+   * Predicate function determining if a path is 'below' a prefix
+   * @param {string} prefix The base "folder"
+   * @param {string} path The "sub-folder" to check
+   * @returns {boolean} True if path is below of prefix. False in all other cases.
+   */
+  isBelowPrefix(prefix, path) {
+    if (typeof prefix !== 'string' || typeof path !== 'string') return false;
+    else if (path === prefix) return false;
+    else if (prefix === DELIMITER) return true;
+    else if (path.startsWith(prefix)) return true;
+    else return false;
   },
 
   /**

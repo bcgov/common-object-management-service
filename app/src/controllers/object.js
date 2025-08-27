@@ -276,7 +276,7 @@ const controller = {
       }
 
       // Preflight existence check for bucketId
-      const { key: bucketKey } = await getBucket(bucketId);
+      const { key: bucketKey, public: bucketPublic } = await getBucket(bucketId);
 
       const objId = uuidv4();
       const data = {
@@ -318,7 +318,9 @@ const controller = {
           existingObjectId: objectId,
         });
 
-      } catch (err) {
+      }
+      // headObject threw an error because object was not found
+      catch (err) {
         if (err instanceof Problem) throw err; // Rethrow Problem type errors
 
         // Object is soft deleted from the bucket
@@ -376,7 +378,8 @@ const controller = {
         const object = await objectService.create({
           ...data,
           userId: userId,
-          path: joinPath(bucketKey, data.name)
+          path: joinPath(bucketKey, data.name),
+          public: bucketPublic // set public status to match that of parent 'folder'
         }, trx);
 
         // Create Version
@@ -1105,19 +1108,17 @@ const controller = {
       const data = {
         id: objId,
         bucketId: req.currentObject?.bucketId,
-        filePath: req.currentObject?.path,
+        path: req.currentObject?.path,
         public: publicFlag,
         userId: userId,
-        // TODO: Implement if/when we proceed with version-scoped public permission management
-        // s3VersionId: await getS3VersionId(
-        //   req.query.s3VersionId, addDashesToUuid(req.query.versionId), objId
-        // )
       };
 
-      storageService.putObjectPublic(data).catch(() => {
-        // Gracefully continue even when S3 ACL management operation fails
-        log.warn('Failed to apply ACL permission changes to S3', { function: 'togglePublic', ...data });
+      // Update S3 Policy
+      await storageService.updatePublic(data).catch((error) => {
+        log.warn('Failed to apply permission changes to S3', { function: 'togglePublic', ...data });
+        throw new Error(error);
       });
+      // Update object record in COMS database
       const response = await objectService.update(data);
 
       res.status(200).json(response);

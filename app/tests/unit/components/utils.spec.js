@@ -446,6 +446,26 @@ describe('isAtPath', () => {
   });
 });
 
+describe('isBelowPrefix', () => {
+  it.each([
+    [false, undefined, undefined],
+    [false, null, null],
+    [true, '/', 'a'],
+    [true, '/', 'a/b'],
+    [true, '/', 'a/b/c'],
+    [false, 'a', 'a'],
+    [true, 'a', 'a/b'],
+    [true, 'a', 'a/b/c'],
+    [false, 'a/b', 'a/b'],
+    [true, 'a/b', 'a/b/c'],
+    [false, 'a/b', 'a/c'],
+    [false, 'a/b/c', 'a/c/b'],
+    [true, 'a/b/c', 'a/b/c/d/e/f'],
+  ])('should return %j given prefix %j and path %j', (expected, prefix, path) => {
+    expect(utils.isBelowPrefix(prefix, path)).toEqual(expected);
+  });
+});
+
 describe('isTruthy', () => {
 
   beforeAll(() => {
