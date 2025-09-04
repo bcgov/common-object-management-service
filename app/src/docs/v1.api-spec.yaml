@@ -418,9 +418,10 @@ paths:
 
         This endpoint may be used without authentication. If so, some response attributes (`path`, `createdBy`, `updatedBy`, and
         `lastSyncedDate`) are redacted. The following restrictions also apply:
-        * Only the following query parameters are allowed: `bucketId`, `objectId`, `public`, `page`, `limit`, `sort`
-        * `public` must be `true`
         * An `objectId` or `bucketId` must be provided
+        * `public` must be `true`
+        * The `path` parameter is not permitted
+
       operationId: searchObjects
       tags:
         - Object

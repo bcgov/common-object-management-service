@@ -27,8 +27,7 @@ const {
   mixedQueryToArray,
   toLowerKeys,
   getBucket,
-  renameObjectProperty,
-  hasOnlyPermittedKeys
+  renameObjectProperty
 } = require('../components/utils');
 const utils = require('../db/models/utils');
 
@@ -1062,12 +1061,9 @@ const controller = {
 
         if (req.currentUser.authType === AuthType.NONE) {
 
-          const permittedPublicSearchParams = ['bucketId', 'objectId', 'public', 'page', 'limit', 'sort'];
-
           // no-auth requests MUST have all of the following:
-          //  (a) only the permitted search params; (b) ?public=true; (c) an object or bucket id
-          if (!hasOnlyPermittedKeys(req.query, permittedPublicSearchParams) || !params.public ||
-            !(params.bucketId || params.id)) {
+          //  (a) an object or bucket id; (b) ?public=true; (c) not search by S3 path
+          if (!(params.bucketId || params.id) || !params.public || params.path) {
             throw new Problem(403, {
               detail: 'User lacks permission to complete this action',
               instance: req.originalUrl
