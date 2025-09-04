@@ -416,11 +416,12 @@ paths:
         versions of objects. Search criteria on string attributes will match on
         partial results and ignore case sensitivity.
 
-        This endpoint can be used without authentication. If so, some response attributes (`path`, `createdBy`, `updatedBy`, and
-        `lastSynceDate`) are redacted. The following restrictions also apply:
-        * Only the following query parameters are allowed: `bucketId`, `objectId`, `public`, `page`, `limit`, `sort`
+        This endpoint may be used without authentication. If so, some response attributes (`path`, `createdBy`, `updatedBy`, and
+        `lastSyncedDate`) are redacted. The following restrictions also apply:
+        * An `objectId` or `bucketId` must be provided
         * `public` must be `true`
-        * An `objectId` or `publicId` must be provided
+        * The `path` parameter is not permitted
+
       operationId: searchObjects
       tags:
         - Object
@@ -1836,7 +1837,7 @@ components:
               example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
     Query-BucketName:
       in: query
-      name: displayName
+      name: bucketName
       description: A display name given to the bucket on creation
       schema:
         type: string
