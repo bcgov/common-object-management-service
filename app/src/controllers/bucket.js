@@ -364,6 +364,16 @@ const controller = {
         log.warn('Failed to apply permission changes to S3' + e, { function: 'togglePublic', ...data });
       });
 
+      // Child bucket cannot be non-public when parent is public
+      const parents = await bucketService.searchParentBuckets(bucket);
+      if (!publicFlag && parents.some(b => b.public)) {
+        throw new Problem(409, {
+          detail: 'Current bucket cannot be non-public when parent bucket(s) are public',
+          instance: req.originalUrl,
+          bucketId: bucketId
+        });
+      }
+
       // update public flag for this bucket and all child buckets and objects!
       const response = await bucketService.updatePublic({
         ...bucket,
