@@ -378,7 +378,7 @@ describe('syncObject', () => {
   const _deriveObjectIdSpy = jest.spyOn(service, '_deriveObjectId');
   const createSpy = jest.spyOn(objectService, 'create');
   const deleteSpy = jest.spyOn(objectService, 'delete');
-  const getObjectPublicSpy = jest.spyOn(storageService, 'getObjectPublic');
+  const getPublicSpy = jest.spyOn(storageService, 'getPublic');
   const pruneOrphanedMetadataSpy = jest.spyOn(metadataService, 'pruneOrphanedMetadata');
   const pruneOrphanedTagsSpy = jest.spyOn(tagService, 'pruneOrphanedTags');
   const searchObjectsSpy = jest.spyOn(objectService, 'searchObjects');
@@ -388,7 +388,7 @@ describe('syncObject', () => {
     _deriveObjectIdSpy.mockReset();
     createSpy.mockReset();
     deleteSpy.mockReset();
-    getObjectPublicSpy.mockReset();
+    getPublicSpy.mockReset();
     pruneOrphanedMetadataSpy.mockReset();
     pruneOrphanedTagsSpy.mockReset();
     searchObjectsSpy.mockReset();
@@ -399,7 +399,7 @@ describe('syncObject', () => {
     _deriveObjectIdSpy.mockRestore();
     createSpy.mockRestore();
     deleteSpy.mockRestore();
-    getObjectPublicSpy.mockRestore();
+    getPublicSpy.mockRestore();
     pruneOrphanedMetadataSpy.mockRestore();
     pruneOrphanedTagsSpy.mockRestore();
     searchObjectsSpy.mockRestore();
@@ -410,7 +410,7 @@ describe('syncObject', () => {
     const comsObject = { id: validUuidv4, path: path, public: true };
     headObjectSpy.mockResolvedValue({});
     searchObjectsSpy.mockResolvedValue({ total: 1, data: [comsObject] });
-    getObjectPublicSpy.mockResolvedValue(true);
+    getPublicSpy.mockResolvedValue(true);
     updateSpy.mockResolvedValue(comsObject);
 
     const result = await service.syncObject(path, bucketId);
@@ -423,9 +423,9 @@ describe('syncObject', () => {
     expect(_deriveObjectIdSpy).toHaveBeenCalledTimes(0);
     expect(createSpy).toHaveBeenCalledTimes(0);
     expect(deleteSpy).toHaveBeenCalledTimes(0);
-    expect(getObjectPublicSpy).toHaveBeenCalledTimes(1);
-    expect(getObjectPublicSpy).toHaveBeenCalledWith(expect.objectContaining({
-      filePath: path, bucketId: bucketId
+    expect(getPublicSpy).toHaveBeenCalledTimes(1);
+    expect(getPublicSpy).toHaveBeenCalledWith(expect.objectContaining({
+      path: path, bucketId: bucketId
     }));
     expect(headObjectSpy).toHaveBeenCalledTimes(1);
     expect(headObjectSpy).toHaveBeenCalledWith(expect.objectContaining({
@@ -448,7 +448,7 @@ describe('syncObject', () => {
     const comsObject = { id: validUuidv4, path: path, public: true };
     headObjectSpy.mockResolvedValue({});
     searchObjectsSpy.mockResolvedValue({ total: 1, data: [comsObject] });
-    getObjectPublicSpy.mockResolvedValue(false);
+    getPublicSpy.mockResolvedValue(false);
     updateSpy.mockResolvedValue(comsObject);
 
     const result = await service.syncObject(path, bucketId);
@@ -461,9 +461,9 @@ describe('syncObject', () => {
     expect(_deriveObjectIdSpy).toHaveBeenCalledTimes(0);
     expect(createSpy).toHaveBeenCalledTimes(0);
     expect(deleteSpy).toHaveBeenCalledTimes(0);
-    expect(getObjectPublicSpy).toHaveBeenCalledTimes(1);
-    expect(getObjectPublicSpy).toHaveBeenCalledWith(expect.objectContaining({
-      filePath: path, bucketId: bucketId
+    expect(getPublicSpy).toHaveBeenCalledTimes(1);
+    expect(getPublicSpy).toHaveBeenCalledWith(expect.objectContaining({
+      path: path, bucketId: bucketId
     }));
     expect(headObjectSpy).toHaveBeenCalledTimes(1);
     expect(headObjectSpy).toHaveBeenCalledWith(expect.objectContaining({
@@ -486,7 +486,7 @@ describe('syncObject', () => {
     const comsObject = { id: validUuidv4, path: path, public: true };
     headObjectSpy.mockResolvedValue({});
     searchObjectsSpy.mockResolvedValue({ total: 1, data: [comsObject] });
-    getObjectPublicSpy.mockImplementation(() => { throw new Error(); });
+    getPublicSpy.mockImplementation(() => { throw new Error(); });
     updateSpy.mockResolvedValue(comsObject);
 
     const result = await service.syncObject(path, bucketId);
@@ -499,9 +499,9 @@ describe('syncObject', () => {
     expect(_deriveObjectIdSpy).toHaveBeenCalledTimes(0);
     expect(createSpy).toHaveBeenCalledTimes(0);
     expect(deleteSpy).toHaveBeenCalledTimes(0);
-    expect(getObjectPublicSpy).toHaveBeenCalledTimes(1);
-    expect(getObjectPublicSpy).toHaveBeenCalledWith(expect.objectContaining({
-      filePath: path, bucketId: bucketId
+    expect(getPublicSpy).toHaveBeenCalledTimes(1);
+    expect(getPublicSpy).toHaveBeenCalledWith(expect.objectContaining({
+      path: path, bucketId: bucketId
     }));
     expect(headObjectSpy).toHaveBeenCalledTimes(1);
     expect(headObjectSpy).toHaveBeenCalledWith(expect.objectContaining({
@@ -523,7 +523,7 @@ describe('syncObject', () => {
     createSpy.mockResolvedValue(comsObject);
     headObjectSpy.mockResolvedValue({});
     searchObjectsSpy.mockResolvedValue({ total: 0, data: [] });
-    getObjectPublicSpy.mockResolvedValue(true);
+    getPublicSpy.mockResolvedValue(true);
 
     const result = await service.syncObject(path, bucketId);
 
@@ -544,9 +544,9 @@ describe('syncObject', () => {
       userId: expect.any(String)
     }), expect.any(Object));
     expect(deleteSpy).toHaveBeenCalledTimes(0);
-    expect(getObjectPublicSpy).toHaveBeenCalledTimes(1);
-    expect(getObjectPublicSpy).toHaveBeenCalledWith(expect.objectContaining({
-      filePath: path, bucketId: bucketId
+    expect(getPublicSpy).toHaveBeenCalledTimes(1);
+    expect(getPublicSpy).toHaveBeenCalledWith(expect.objectContaining({
+      path: path, bucketId: bucketId
     }));
     expect(headObjectSpy).toHaveBeenCalledTimes(1);
     expect(headObjectSpy).toHaveBeenCalledWith(expect.objectContaining({
@@ -567,7 +567,7 @@ describe('syncObject', () => {
     createSpy.mockResolvedValue(comsObject);
     headObjectSpy.mockResolvedValue({});
     searchObjectsSpy.mockResolvedValue({ total: 0, data: [] });
-    getObjectPublicSpy.mockImplementation(() => { throw new Error(); });
+    getPublicSpy.mockImplementation(() => { throw new Error(); });
 
     const result = await service.syncObject(path, bucketId);
 
@@ -588,9 +588,9 @@ describe('syncObject', () => {
       userId: expect.any(String)
     }), expect.any(Object));
     expect(deleteSpy).toHaveBeenCalledTimes(0);
-    expect(getObjectPublicSpy).toHaveBeenCalledTimes(1);
-    expect(getObjectPublicSpy).toHaveBeenCalledWith(expect.objectContaining({
-      filePath: path, bucketId: bucketId
+    expect(getPublicSpy).toHaveBeenCalledTimes(1);
+    expect(getPublicSpy).toHaveBeenCalledWith(expect.objectContaining({
+      path: path, bucketId: bucketId
     }));
     expect(headObjectSpy).toHaveBeenCalledTimes(1);
     expect(headObjectSpy).toHaveBeenCalledWith(expect.objectContaining({
@@ -624,7 +624,7 @@ describe('syncObject', () => {
     expect(createSpy).toHaveBeenCalledTimes(0);
     expect(deleteSpy).toHaveBeenCalledTimes(1);
     expect(deleteSpy).toHaveBeenCalledWith(validUuidv4, expect.any(Object));
-    expect(getObjectPublicSpy).toHaveBeenCalledTimes(0);
+    expect(getPublicSpy).toHaveBeenCalledTimes(0);
     expect(headObjectSpy).toHaveBeenCalledTimes(1);
     expect(headObjectSpy).toHaveBeenCalledWith(expect.objectContaining({
       filePath: path, bucketId: bucketId
