@@ -60,6 +60,7 @@ const service = {
       if (!jobsArray.length || !jobsArray.every(job => !!job.path)) return Promise.resolve(0);
 
       // Only insert jobs in if it does not already exist
+      // what if jobsArray is bigger than psql max allowed?
       const response = await ObjectQueue.query(trx).insert(jobsArray).onConflict().ignore();
 
       if (!etrx) await trx.commit();

@@ -55,8 +55,10 @@ class QueueManager {
    * Checks the queue for any unprocessed jobs
    */
   checkQueue() {
+    // if not already processing queue..
     if (!this.isBusy && !this.toClose) {
       objectQueueService.queueSize().then(size => {
+        // .. and jobs in queue, start processing
         if (size > 0) this.processNextJob();
       }).catch((err) => {
         log.error(`Error encountered while checking queue: ${err.message}`, { function: 'checkQueue', error: err });
@@ -87,14 +89,17 @@ class QueueManager {
     let job;
 
     try {
+      // deletes job from queue table 
       const response = await objectQueueService.dequeue();
 
+      // if delete was done..
       if (response.length) {
         this.isBusy = true;
         job = response[0];
 
         log.verbose(`Started processing job id ${job.id}`, { function: 'processNextJob', job: job });
 
+        // sync object
         const objectId = await syncService.syncJob(job.path, job.bucketId, job.full, job.createdBy);
 
         log.verbose(`Finished processing job id ${job.id}`, {
@@ -103,6 +108,7 @@ class QueueManager {
           objectId: objectId
         });
 
+        // consider setting a timeout/delay to throttle
         this.isBusy = false;
         // If job is completed, check if there are more jobs
         if (!this.toClose) this.checkQueue();

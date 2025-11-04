@@ -246,6 +246,10 @@ const controller = {
           userId: userId,
           lastSyncRequestedDate: new Date().toISOString()
         }, trx);
+
+        // consider running this here in loop to break down enqueue inserts, instead of below
+        // consider using Promise.all to enqueue objects for each bucket in parallel
+        // return await objectQueueService.enqueue({ jobs: jobs }, trx);
       }
       return await objectQueueService.enqueue({ jobs: jobs }, trx);
     }

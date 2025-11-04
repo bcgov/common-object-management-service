@@ -224,6 +224,7 @@ function initializeConnections() {
 
       // Start periodic 10 second connection probes
       probeId = setInterval(checkConnections, 10000);
+      // check queue every 10 seconds
       queueId = setInterval(() => {
         if (state.ready) queueManager.checkQueue();
       }, 10000);

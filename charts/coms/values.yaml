@@ -42,6 +42,8 @@ securityContext:
 
 autoscaling:
   # -- Specifies whether the Horizontal Pod Autoscaler should be created
+  # check if this affects capacity
+  # is coms scaling a bottleneck or is it just postgres?
   enabled: false
 
   minReplicas: 3
@@ -273,6 +275,7 @@ postgres:
           memory: 64Mi
 
   # ----- pgBouncer (network pooling) ------
+  # check if this config affects capacity
   pgBouncerConfig:
     replicas: 2
     config:

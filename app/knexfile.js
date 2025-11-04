@@ -53,6 +53,7 @@ module.exports = {
     directory: __dirname + '/src/db/migrations'
   },
   pool: {
+    // does knex limit number of connections?
     min: parseInt(config.get('db.poolMin')),
     max: parseInt(config.get('db.poolMax'))
     // This shouldn't be here: https://github.com/knex/knex/issues/3455#issuecomment-535554401
