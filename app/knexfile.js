@@ -1,4 +1,5 @@
 const config = require('config');
+const os = require('os');
 const { format } = require('date-fns');
 
 const log = require('./src/components/log')(module.filename);
@@ -37,7 +38,8 @@ module.exports = {
     user: config.get('db.username'),
     password: config.get('db.password'),
     database: config.get('db.database'),
-    port: config.get('db.port')
+    port: config.get('db.port'),
+    application_name: os.hostname()
   },
   debug: ['silly', 'debug'].includes(config.get('server.logLevel')),
   log: {
