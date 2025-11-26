@@ -144,16 +144,18 @@ const controller = {
         )
       );
       // add current user's permissions to all buckets
-      await Promise.all(
-        dbBuckets.map(bucket => {
-          return bucketPermissionService.addPermissions(
-            bucket.bucketId,
-            currentUserParentBucketPerms.map(permCode => ({ userId, permCode })),
-            undefined,
-            trx
-          );
-        })
-      );
+      if (userId !== SYSTEM_USER) {
+        await Promise.all(
+          dbBuckets.map(bucket => {
+            return bucketPermissionService.addPermissions(
+              bucket.bucketId,
+              currentUserParentBucketPerms.map(permCode => ({ userId, permCode })),
+              undefined,
+              trx
+            );
+          })
+        );
+      }
 
       // Create buckets only found in S3 in COMS db
       const newS3Keys = s3Keys.filter(k => !dbBuckets.map(b => b.key).includes(k));
