@@ -5,9 +5,9 @@ features:
   oidcAuth: true
 
 autoscaling:
-  enabled: false
+  enabled: true
 pdb:
-  enabled: false
+  enabled: true
 
 config:
   enabled: true
