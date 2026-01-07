@@ -32,6 +32,7 @@ types.setTypeParser(1184, (value) => new Date(value).toISOString());
 const logWrapper = (level, msg) => log.log(level, msg);
 
 module.exports = {
+  acquireConnectionTimeout: config.get('db.acquireConnectionTimeout'),
   client: 'pg',
   connection: {
     host: config.get('db.host'),

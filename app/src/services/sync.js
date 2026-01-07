@@ -238,10 +238,10 @@ const service = {
       const comsObject = typeof object === 'object' ? object : await objectService.read(object, trx);
 
       // Check for COMS and S3 Version statuses
-      const [comsVersions, s3VersionsRaw] = await Promise.allSettled([
+      const [comsVersions, s3VersionsRaw] = await Promise.all([
         versionService.list(comsObject.id, trx),
         storageService.listAllObjectVersions({ filePath: comsObject.path, bucketId: comsObject.bucketId })
-      ]).then(settled => settled.map(promise => promise.value));
+      ]);
 
       // Combine S3 DeleteMarkers and Versions into one array
       const s3Versions = s3VersionsRaw.DeleteMarkers

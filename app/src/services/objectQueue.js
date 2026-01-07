@@ -3,7 +3,7 @@ const { NIL: SYSTEM_USER } = require('uuid');
 const { ObjectQueue } = require('../db/models');
 
 /**
- * Max number of parameters in a prepared statement (this is a Postrgres hard-coded limit).
+ * Max number of parameters in a prepared statement (this is a Postgres hard-coded limit).
  * https://www.postgresql.org/docs/current/limits.html ("query parameters")
 */
 const POSTGRES_QUERY_MAX_PARAM_LIMIT = 65535;
