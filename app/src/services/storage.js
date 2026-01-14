@@ -27,6 +27,9 @@ const utils = require('../components/utils');
 
 const DELIMITER = '/';
 
+// Cache AWS S3Clients in order to reuse S3 connections
+const s3ClientCache = new Map();
+
 // Get app configuration
 const defaultTempExpiresIn = parseInt(config.get('server.defaultTempExpiresIn'), 10);
 
@@ -51,7 +54,14 @@ const objectStorageService = {
       log.error('Unable to generate S3Client due to missing arguments', { function: '_getS3Client' });
     }
 
-    return new S3Client({
+    // S3Client already exists for the given credentials
+    const cacheKey = JSON.stringify([accessKeyId, endpoint, region]);
+    if (s3ClientCache.has(cacheKey)) {
+      return s3ClientCache.get(cacheKey);
+    }
+
+    // If new, cache the S3Client before returning
+    const newClient = new S3Client({
       credentials: {
         accessKeyId: accessKeyId,
         secretAccessKey: secretAccessKey
@@ -59,8 +69,22 @@ const objectStorageService = {
       endpoint: endpoint,
       forcePathStyle: true,
       logger: ['silly', 'debug'].includes(config.get('server.logLevel')) ? log : undefined,
+      retryMode: 'standard',
+      requestHandler: {
+        connectionTimeout: 5000,
+        requestTimeout: 60000,
+        httpsAgent: {
+          keepAlive: true,
+          keepAliveMsecs: 5000,
+          maxSockets: 15,
+          maxFreeSockets: 10,
+          timeout: 30000
+        }
+      },
       region: region
     });
+    s3ClientCache.set(cacheKey, newClient);
+    return newClient;
   },
 
   /**
