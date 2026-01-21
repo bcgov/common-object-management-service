@@ -59,8 +59,14 @@ const controller = {
       // parent + child bucket records already in COMS db
       const dbChildBuckets = await bucketService.searchChildBuckets(parentBucket, false, userId);
       let dbBuckets = [parentBucket].concat(dbChildBuckets);
+      log.info(`Found ${dbBuckets.length} bucket records in COMS db for parent bucketId ${bucketId}`,
+        { function: 'syncBucketRecursive' });
+
       // 'folders' that exist below (and including) the parent 'folder' in S3
       const s3Response = await storageService.listAllObjectVersions({ bucketId: bucketId, precisePath: false });
+      log.info(`Found ${s3Response.Versions.length} object versions and ${s3Response.DeleteMarkers.length} 
+        delete markers in S3 for bucketId ${bucketId}`, { function: 'syncBucketRecursive' });
+
       const s3Keys = [...new Set([
         ...s3Response.DeleteMarkers.map(object => formatS3KeyForCompare(object.Key)),
         ...s3Response.Versions.map(object => formatS3KeyForCompare(object.Key)),
@@ -78,6 +84,7 @@ const controller = {
           userId,
           trx
         );
+        log.info(`${syncedBuckets.length} buckets records synced`, { function: 'syncBucketRecursive' });
 
         /**
          * Queue objects in all the folders for syncing
@@ -107,6 +114,8 @@ const controller = {
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER), SYSTEM_USER);
 
       const s3Objects = await storageService.listAllObjectVersions({ bucketId: bucketId, filterLatest: true });
+      log.info(`Found ${s3Objects.Versions.length} object versions and ${s3Objects.DeleteMarkers.length} 
+        delete markers in S3 for bucketId ${bucketId}`, { function: 'syncBucketSingle' });
 
       const response = await utils.trxWrapper(async (trx) => {
         return this.queueObjectRecords([bucket], s3Objects, userId, trx);
@@ -139,6 +148,8 @@ const controller = {
         oldDbBuckets.map(dbBucket =>
           bucketService.delete(dbBucket.bucketId, trx)
             .then(() => {
+              log.info(`Deleted bucketId ${dbBucket.bucketId} from COMS db as key ${dbBucket.key} not found in S3`,
+                { function: 'syncBucketRecords' });
               dbBuckets = dbBuckets.filter(b => b.bucketId !== dbBucket.bucketId);
             })
         )
@@ -161,6 +172,7 @@ const controller = {
       const newS3Keys = s3Keys.filter(k => !dbBuckets.map(b => b.key).includes(k));
       await Promise.all(
         newS3Keys.map(s3Key => {
+          log.info(`Creating new bucket record in COMS db for S3 key ${s3Key}`, { function: 'syncBucketRecords' });
           const data = {
             bucketName: s3Key.substring(s3Key.lastIndexOf('/') + 1),
             accessKeyId: parentBucket.accessKeyId,
@@ -204,6 +216,9 @@ const controller = {
         bucketId: dbBuckets.map(b => b.bucketId)
       }, trx);
 
+      log.info(`Found ${dbObjects.data.length} object records in COMS db for ${dbBuckets.length} buckets`,
+        { function: 'queueObjectRecords' });
+
       /**
        * merge arrays of objects from COMS db and S3 to form an array of jobs with format:
        *  [ { path: '/images/img3.jpg', bucketId: '123' }, { path: '/images/album1/img1.jpg', bucketId: '456' } ]
@@ -239,6 +254,7 @@ const controller = {
 
       // merge and remove duplicates
       const jobs = [...new Map(objects.map(o => [o.path, o])).values()];
+      log.info(`Prepared ${jobs.length} jobs to enqueue to object queue`, { function: 'queueObjectRecords' });
 
       // create jobs in COMS db object_queue for each object
       // update 'lastSyncRequestedDate' value in COMS db for each bucket

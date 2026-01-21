@@ -57,7 +57,10 @@ class QueueManager {
   checkQueue() {
     if (!this.isBusy && !this.toClose) {
       objectQueueService.queueSize().then(size => {
-        if (size > 0) this.processNextJob();
+        if (size > 0) {
+          log.verbose(`There are ${size} jobs in the queue to process`, { function: 'checkQueue' });
+          this.processNextJob();
+        }
       }).catch((err) => {
         log.error(`Error encountered while checking queue: ${err.message}`, { function: 'checkQueue', error: err });
       });
@@ -93,7 +96,7 @@ class QueueManager {
         this.isBusy = true;
         job = response[0];
 
-        log.verbose(`Started processing job id ${job.id}`, { function: 'processNextJob', job: job });
+        log.info(`Started processing job id ${job.id}`, { function: 'processNextJob', job: job });
 
         const objectId = await syncService.syncJob(job.path, job.bucketId, job.full, job.createdBy);
 

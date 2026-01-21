@@ -1,6 +1,8 @@
 const { NIL: SYSTEM_USER } = require('uuid');
 
 const { ObjectQueue } = require('../db/models');
+const log = require('../components/log')(module.filename);
+
 
 /**
  * Max number of parameters in a prepared statement (this is a Postgres hard-coded limit).
@@ -53,6 +55,8 @@ const service = {
     let trx;
     try {
       trx = etrx ? etrx : await ObjectQueue.startTransaction();
+      log.info(`Enqueuing ${jobs.length} jobs to object queue (full: ${full}, 
+        retries: ${retries}, createdBy: ${createdBy})`, { function: 'enqueue' });
 
       const jobsArray = jobs.map(job => ({
         bucketId: job.bucketId,
@@ -78,6 +82,8 @@ const service = {
         const response = await ObjectQueue.query(trx).insert(batch).onConflict().ignore();
 
         totalInserted += response.reduce((acc, job) => job?.id ? acc + 1 : acc, 0);
+        log.verbose(`Inserted ${response.length} jobs to object queue (batch starting at index ${i})`,
+          { function: 'enqueue' });
       }
 
       if (!etrx) await trx.commit();
