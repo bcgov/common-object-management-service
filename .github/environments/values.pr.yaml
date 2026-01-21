@@ -3,6 +3,11 @@ features:
   basicAuth: true
   oidcAuth: true
   defaultBucket: false
+
+autoscaling:
+  enabled: true
+pdb:
+  enabled: true
 #
 #
 # We don't deploy a postgrescluster for PR's

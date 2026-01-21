@@ -49,9 +49,6 @@ postgres:
         requests:
           cpu: 256m
           memory: 512Mi
-        limits:
-          cpu: 512m
-          memory: 1024Mi
       sidecars:
         replicaCertCopy:
           resources:

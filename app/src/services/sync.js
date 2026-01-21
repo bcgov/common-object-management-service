@@ -98,11 +98,14 @@ const service = {
         // 1. Sync Object
         const object = await service.syncObject(path, bucketId, userId, trx)
           .then(obj => obj.object);
+        log.info(`Synchronized object at path ${path} in bucket ${bucketId}`,
+          { function: 'syncJob', objectId: object?.id });
 
         // 2. Sync Object Versions
         let versions = [];
         if (object) {
           versions = await service.syncVersions(object, userId, trx);
+          log.info(`Synchronized ${versions.length} versions for object id ${object.id}`, { function: 'syncJob' });
         }
 
         // 3. Sync Version Metadata & Tags
@@ -238,10 +241,10 @@ const service = {
       const comsObject = typeof object === 'object' ? object : await objectService.read(object, trx);
 
       // Check for COMS and S3 Version statuses
-      const [comsVersions, s3VersionsRaw] = await Promise.allSettled([
+      const [comsVersions, s3VersionsRaw] = await Promise.all([
         versionService.list(comsObject.id, trx),
         storageService.listAllObjectVersions({ filePath: comsObject.path, bucketId: comsObject.bucketId })
-      ]).then(settled => settled.map(promise => promise.value));
+      ]);
 
       // Combine S3 DeleteMarkers and Versions into one array
       const s3Versions = s3VersionsRaw.DeleteMarkers
@@ -407,8 +410,10 @@ const service = {
 
       // COMS Tags
       const comsTags = comsTagsForVersion[0]?.tagset ?? [];
+      // log.info(`Found ${comsTags.length} tags in COMS for version id ${comsVersion.id}`, { function: 'syncTags' });
       // S3 Tags
       const s3Tags = toLowerKeys(s3TagsForVersion?.TagSet ?? []);
+      // log.info(`Found ${s3Tags.length} tags in S3 for version id ${comsVersion.id}`, { function: 'syncTags' });
       /**
        * Add coms-id tag to latest version in S3 if not already present
        * NOTE: For a sync job the _deriveObjectId() function will have already added
@@ -501,8 +506,12 @@ const service = {
 
       // COMS Metadata
       const comsMetadata = comsMetadataForVersion[0]?.metadata ?? [];
+      // log.info(`Found ${comsMetadata.length} metadata entries in COMS for version id ${comsVersion.id}`, 
+      // { function: 'syncMetadata' });
       // S3 Metadata
       const s3Metadata = getKeyValue(s3ObjectHead?.Metadata ?? {});
+      // log.info(`Found ${s3Metadata.length} metadata entries in S3 for version id ${comsVersion.id}`, 
+      // { function: 'syncMetadata' });
 
       // Dissociate Metadata not in S3
       const oldMetadata = [];

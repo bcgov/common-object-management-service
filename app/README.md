@@ -48,15 +48,17 @@ The following variables enable and enforce the use of Basic Authentication for r
 
 The following variables configure the use of a backend database to support user-based access control, tagging and other advanced features
 
-| Config Var | Env Var       | Default   | Notes                       |
-| ---------- | ------------- | --------- | --------------------------- |
-| `database` | `DB_DATABASE` | coms      | COMS database name          |
-| `host`     | `DB_HOST`     | localhost | Database conection hostname |
-| `username` | `DB_USERNAME` | app       | Database account username   |
-| `password` | `DB_PASSWORD` |           | Database account password   |
-| `port`     | `DB_PORT`     | 5432      | Database connection port    |
-| `poolMin`  | `DB_POOL_MIN` | 2         | avalable connections        |
-| `poolMax`  | `DB_POOL_MAX` | 10        | available connections       |
+| Config Var                 | Env Var                         | Default   | Notes                                                               |
+|----------------------------|---------------------------------|-----------|---------------------------------------------------------------------|
+| `acquireConnectionTimeout` | `DB_ACQUIRE_CONNECTION_TIMEOUT` | 90000     | Timeout length on acquiring a database connection (in milliseconds) |
+| `database`                 | `DB_DATABASE`                   | coms      | COMS database name                                                  |
+| `host`                     | `DB_HOST`                       | localhost | Database conection hostname                                         |
+| `username`                 | `DB_USERNAME`                   | app       | Database account username                                           |
+| `password`                 | `DB_PASSWORD`                   |           | Database account password                                           |
+| `port`                     | `DB_PORT`                       | 5432      | Database connection port                                            |
+| `poolMin`                  | `DB_POOL_MIN`                   | 2         | avalable connections                                                |
+| `poolMax`                  | `DB_POOL_MAX`                   | 10        | available connections                                               |
+
 
 ### Keycloak Variables
 

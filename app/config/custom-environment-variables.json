@@ -6,6 +6,7 @@
     "username": "BASICAUTH_USERNAME"
   },
   "db": {
+    "acquireConnectionTimeout": "DB_ACQUIRE_CONNECTION_TIMEOUT",
     "database": "DB_DATABASE",
     "host": "DB_HOST",
     "password": "DB_PASSWORD",

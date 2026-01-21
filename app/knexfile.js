@@ -1,4 +1,5 @@
 const config = require('config');
+const os = require('os');
 const { format } = require('date-fns');
 
 const log = require('./src/components/log')(module.filename);
@@ -31,13 +32,15 @@ types.setTypeParser(1184, (value) => new Date(value).toISOString());
 const logWrapper = (level, msg) => log.log(level, msg);
 
 module.exports = {
+  acquireConnectionTimeout: config.get('db.acquireConnectionTimeout'),
   client: 'pg',
   connection: {
     host: config.get('db.host'),
     user: config.get('db.username'),
     password: config.get('db.password'),
     database: config.get('db.database'),
-    port: config.get('db.port')
+    port: config.get('db.port'),
+    application_name: os.hostname()
   },
   debug: ['silly', 'debug'].includes(config.get('server.logLevel')),
   log: {

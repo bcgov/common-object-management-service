@@ -115,7 +115,15 @@ const utils = {
       return data;
     } catch (err) {
       log.error(err.message, { function: 'getBucket' });
-      throw new Problem(404, { detail: err.message });
+      if (err.name === 'NotFoundError') {
+        throw new Problem(404, { detail: `bucketId ${bucketId} not found` });
+      }
+      else if (err.name == 'KnexTimeoutError') {
+        throw new Problem(504, { detail: 'Database timeout' });
+      }
+      else {
+        throw new Problem(500, { detail: err.message });
+      }
     }
   },
 

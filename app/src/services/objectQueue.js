@@ -1,6 +1,14 @@
 const { NIL: SYSTEM_USER } = require('uuid');
 
 const { ObjectQueue } = require('../db/models');
+const log = require('../components/log')(module.filename);
+
+
+/**
+ * Max number of parameters in a prepared statement (this is a Postgres hard-coded limit).
+ * https://www.postgresql.org/docs/current/limits.html ("query parameters")
+*/
+const POSTGRES_QUERY_MAX_PARAM_LIMIT = 65535;
 
 /**
  * The Object Queue DB Service
@@ -47,6 +55,8 @@ const service = {
     let trx;
     try {
       trx = etrx ? etrx : await ObjectQueue.startTransaction();
+      log.info(`Enqueuing ${jobs.length} jobs to object queue (full: ${full}, 
+        retries: ${retries}, createdBy: ${createdBy})`, { function: 'enqueue' });
 
       const jobsArray = jobs.map(job => ({
         bucketId: job.bucketId,
@@ -59,11 +69,25 @@ const service = {
       // Short circuit when nothing to add or there are missing paths
       if (!jobsArray.length || !jobsArray.every(job => !!job.path)) return Promise.resolve(0);
 
-      // Only insert jobs in if it does not already exist
-      const response = await ObjectQueue.query(trx).insert(jobsArray).onConflict().ignore();
+      const PARAMS_PER_JOB = 6;   // 5 params in jobsArray, plus `createdAt` added by the `Timestamps` mixin
+      const MAX_JOBS_PER_BATCH = Math.floor(POSTGRES_QUERY_MAX_PARAM_LIMIT / PARAMS_PER_JOB);
+
+      let totalInserted = 0;
+
+      // Split query as necessary if number of query params exceed Postgres hard limit
+      for (let i = 0; i < jobsArray.length; i += MAX_JOBS_PER_BATCH) {
+        const batch = jobsArray.slice(i, i + MAX_JOBS_PER_BATCH);
+
+        // Only insert jobs in if it does not already exist
+        const response = await ObjectQueue.query(trx).insert(batch).onConflict().ignore();
+
+        totalInserted += response.reduce((acc, job) => job?.id ? acc + 1 : acc, 0);
+        log.verbose(`Inserted ${response.length} jobs to object queue (batch starting at index ${i})`,
+          { function: 'enqueue' });
+      }
 
       if (!etrx) await trx.commit();
-      return Promise.resolve(response.reduce((acc, job) => job?.id ? acc + 1 : acc, 0));
+      return Promise.resolve(totalInserted);
     } catch (err) {
       if (!etrx && trx) await trx.rollback();
       throw err;
