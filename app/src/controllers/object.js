@@ -1034,8 +1034,6 @@ const controller = {
    * @returns {function} Express middleware function
    */
   async searchObjects(req, res, next) {
-    // TODO: Consider support for filtering by set of permissions?
-    // TODO: handle additional parameters. Eg: deleteMarker, latest
     try {
       const bucketIds = mixedQueryToArray(req.query.bucketId);
       const objIds = mixedQueryToArray(req.query.objectId);

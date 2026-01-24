@@ -222,6 +222,33 @@ paths:
           $ref: "#/components/responses/Forbidden"
         default:
           $ref: "#/components/responses/Error"
+  /bucket/{bucketId}/public:
+    patch:
+      summary: Sets the public flag of a bucket and all child objects
+      description: >-
+        Toggles the public property for a bucket and all child objects and broadcasts to S3 ACL. Sets
+        public to false if public query parameter is not specified.
+      operationId: togglePublic
+      tags:
+        - Bucket
+      parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
+        - $ref: "#/components/parameters/Path-BucketId"
+        - $ref: "#/components/parameters/Query-Public"
+      responses:
+        "200":
+          description: Returns the bucket information
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DB-Bucket"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        default:
+          $ref: "#/components/responses/Error"
   /bucket/{bucketId}/child:
     put:
       summary: Creates a child bucket
@@ -2136,6 +2163,7 @@ components:
           required:
             - accessKeyId
             - active
+            - public
             - bucket
             - bucketId
             - bucketName
@@ -2155,6 +2183,11 @@ components:
               description: Determines whether this bucket is considered active in COMS
               default: true
               example: true
+            public:
+              type: boolean
+              description: Determines whether this bucket is publicly accessible
+              default: false
+              example: false
             bucket:
               type: string
               description: The ID of a bucket

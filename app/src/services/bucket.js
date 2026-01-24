@@ -272,7 +272,6 @@ const service = {
    * @throws If there are no records found
    */
   searchParentBuckets: async (bucket, returnPermissions = false, userId, etrx = undefined) => {
-
     let trx;
     try {
       trx = etrx ? etrx : await Bucket.startTransaction();

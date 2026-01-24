@@ -298,38 +298,11 @@ const isBucketPublic = async (bucketId) => {
   return false;
 };
 
-// alternative approach
-// Route middleware to check if requested bucket is public
-// const isBucketPublic = async (req, _res, next) => {
-//   // if an unauthenticated request
-//   if (!req.currentUser || req.currentUser.authType === AuthType.NONE) {
-//     // if providing a single bucketId in query
-//     if (mixedQueryToArray(req.query.bucketId).length === 1) {
-//       const bucket = await bucketService.read(req.query.bucketId);
-//       // and bucket public is truthy
-//       if (!bucket.public) {
-//         return next(new Problem(403, {
-//           detail: 'Bucket is not public',
-//           instance: req.originalUrl
-//         }));
-//       }
-//     }
-//   }
-//   else {
-//     return next(new Problem(403, {
-//       detail: 'User lacks permission to complete this action',
-//       instance: req.originalUrl
-//     }));
-//   }
-//   next();
-// };
-
 module.exports = {
   _checkPermission,
   checkAppMode,
   checkElevatedUser,
   checkS3BasicAccess,
-  // checkGrantingPermittedPermissions
   currentObject,
   hasPermission,
   isBucketPublic,
