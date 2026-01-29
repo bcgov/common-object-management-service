@@ -56,7 +56,7 @@ const controller = {
       /**
        * sync (ie create or delete) bucket records in COMS db to match 'folders' (S3 key prefixes) that exist in S3
       */
-      // parent + child bucket records already in COMS db
+      // get parent + child bucket records already in COMS db
       const dbChildBuckets = await bucketService.searchChildBuckets(parentBucket, false, userId);
       let dbBuckets = [parentBucket].concat(dbChildBuckets);
       log.info(`Found ${dbBuckets.length} bucket records in COMS db for parent bucketId ${bucketId}`,
@@ -74,7 +74,7 @@ const controller = {
 
       // Wrap sync sql operations in a single transaction
       const response = await utils.trxWrapper(async (trx) => {
-
+        // sync bucket records
         const syncedBuckets = await this.syncBucketRecords(
           dbBuckets,
           s3Keys,
@@ -112,6 +112,9 @@ const controller = {
       const bucketId = addDashesToUuid(req.params.bucketId);
       const bucket = await bucketService.read(bucketId);
       const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER), SYSTEM_USER);
+
+      // sync bucket.public flag
+      await this.syncBucketPublic(bucket.key, bucket.bucketId, userId);
 
       const s3Objects = await storageService.listAllObjectVersions({ bucketId: bucketId, filterLatest: true });
       log.info(`Found ${s3Objects.Versions.length} object versions and ${s3Objects.DeleteMarkers.length} 
@@ -191,12 +194,40 @@ const controller = {
             });
         })
       );
+
+      // Update permissions and Sync Public status
+      await Promise.all(
+        // for each bucket
+        dbBuckets.map(async bucket => {
+          // --- Add current user's permissions that exist on parent bucket if they dont already exist
+          await bucketPermissionService.addPermissions(
+            bucket.bucketId,
+            currentUserParentBucketPerms.map(permCode => ({ userId, permCode })),
+            undefined,
+            trx
+          );
+          // --- Sync S3 Bucket Policies applied by COMS
+          await this.syncBucketPublic(bucket.key, bucket.bucketId, userId);
+        })
+      );
       return dbBuckets;
     }
     catch (err) {
       log.error(err.message, { function: 'syncBucketRecords' });
       throw err;
     }
+  },
+
+  async syncBucketPublic(key, bucketId, userId) {
+    let isPublic = false;
+    isPublic = await storageService.getPublic({ path: key, bucketId: bucketId });
+    bucketService.update({
+      bucketId: bucketId,
+      updatedBy: userId,
+      public: isPublic
+      // TODO: consider changing this to actual lastSyncDate
+      // lastSyncRequestedDate: now(),
+    });
   },
 
   /**
