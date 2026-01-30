@@ -373,6 +373,21 @@ const utils = {
   },
 
   /**
+   * @function isBelowPrefix
+   * Predicate function determining if a path is 'below' a prefix
+   * @param {string} prefix The base "folder"
+   * @param {string} path The "sub-folder" to check
+   * @returns {boolean} True if path is below of prefix. False in all other cases.
+   */
+  isBelowPrefix(prefix, path) {
+    if (typeof prefix !== 'string' || typeof path !== 'string') return false;
+    else if (path === prefix) return false;
+    else if (prefix === DELIMITER) return true;
+    else if (path.startsWith(prefix)) return true;
+    else return false;
+  },
+
+  /**
    * @function isTruthy
    * Returns true if the element name in the object contains a truthy value
    * @param {object} value The object to evaluate
@@ -480,13 +495,30 @@ const utils = {
 
   /**
    * @function stripDelimit
-   * Yields a string `s` that will never have a trailing delimiter. Returns an empty string if falsy.
+   * Yields a string `s` that will never have a trailing delimiter.
    * @param {string} s The input string
    * @returns {string} The string `s` without the trailing delimiter, or an empty string.
    */
   stripDelimit(s) {
     if (s) return s.endsWith(DELIMITER) ? utils.stripDelimit(s.slice(0, -1)) : s;
     else return '';
+  },
+
+  /**
+   * @function trimResourcePath
+   * Yields a string `s` without trailing delimiters or asterixes.
+   * @param {string} s The input string
+   * @returns {string} The string `s` without trailing delimiters or asterix, or an empty string.
+   */
+  trimResourcePath(s) {
+    switch (true) {
+      case s.endsWith(DELIMITER):
+        return utils.stripDelimit(s.slice(0, -1));
+      case s.endsWith(DELIMITER + '*'):
+        return utils.stripDelimit(s.slice(0, -2));
+      default:
+        return s;
+    }
   },
 
   /**
