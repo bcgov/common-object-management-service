@@ -275,6 +275,28 @@ const utils = {
     return array.find(obj => (obj.key === key && obj.value === value));
   },
 
+
+  /**
+ * @function getS3Url
+ * Constructs the S3 URL for a given file in a specified bucket.
+ * @param {object} data An object containing the necessary information to construct the S3 URL.
+ * @param {string} data.bucketId The ID of the S3 bucket.
+ * @param {string} data.filePath The path of the file within the bucket.
+ * @param {string} [data.s3VersionId] An optional S3 version ID for the file.
+ * @returns {Promise<string>} A promise that resolves to the constructed S3 URL.
+ * @throws {Error} If there is an issue retrieving the bucket details.
+ */
+  async getS3Url(data) {
+    // get bucket details
+    const { read } = require('../services/bucket');
+    const bucket = await read(data.bucketId);
+    let url = `${bucket.endpoint}/${bucket.bucket}/${data.filePath.replace(/^\/|\/$/g, '')}`;
+    if (data.s3VersionId) {
+      url += `?versionId=${data.s3VersionId}`;
+    }
+    return url;
+  },
+
   /**
    * @function getS3VersionId
    * Gets the s3VersionId from database using given internal COMS version id
@@ -370,6 +392,21 @@ const utils = {
     const prefixParts = prefix.split(DELIMITER).filter(part => part);
     return prefixParts.every((part, i) => pathParts[i] === part)
       && pathParts.filter(part => !prefixParts.includes(part)).length === 1;
+  },
+
+  /**
+   * @function isBelowPrefix
+   * Predicate function determining if a path is 'below' a prefix
+   * @param {string} prefix The base "folder"
+   * @param {string} path The "sub-folder" to check
+   * @returns {boolean} True if path is below of prefix. False in all other cases.
+   */
+  isBelowPrefix(prefix, path) {
+    if (typeof prefix !== 'string' || typeof path !== 'string') return false;
+    else if (path === prefix) return false;
+    else if (prefix === DELIMITER) return true;
+    else if (path.startsWith(prefix)) return true;
+    else return false;
   },
 
   /**
@@ -480,13 +517,30 @@ const utils = {
 
   /**
    * @function stripDelimit
-   * Yields a string `s` that will never have a trailing delimiter. Returns an empty string if falsy.
+   * Yields a string `s` that will never have a trailing delimiter.
    * @param {string} s The input string
    * @returns {string} The string `s` without the trailing delimiter, or an empty string.
    */
   stripDelimit(s) {
     if (s) return s.endsWith(DELIMITER) ? utils.stripDelimit(s.slice(0, -1)) : s;
     else return '';
+  },
+
+  /**
+   * @function trimResourcePath
+   * Yields a string `s` without trailing delimiters or asterixes.
+   * @param {string} s The input string
+   * @returns {string} The string `s` without trailing delimiters or asterix, or an empty string.
+   */
+  trimResourcePath(s) {
+    switch (true) {
+      case s.endsWith(DELIMITER):
+        return utils.stripDelimit(s.slice(0, -1));
+      case s.endsWith(DELIMITER + '*'):
+        return utils.stripDelimit(s.slice(0, -2));
+      default:
+        return s;
+    }
   },
 
   /**

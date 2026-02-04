@@ -98,14 +98,14 @@ const service = {
         // 1. Sync Object
         const object = await service.syncObject(path, bucketId, userId, trx)
           .then(obj => obj.object);
-        log.info(`Synchronized object at path ${path} in bucket ${bucketId}`,
+        log.debug(`Synchronized object at path ${path} in bucket ${bucketId}`,
           { function: 'syncJob', objectId: object?.id });
 
         // 2. Sync Object Versions
         let versions = [];
         if (object) {
           versions = await service.syncVersions(object, userId, trx);
-          log.info(`Synchronized ${versions.length} versions for object id ${object.id}`, { function: 'syncJob' });
+          log.debug(`Synchronized ${versions.length} versions for object id ${object.id}`, { function: 'syncJob' });
         }
 
         // 3. Sync Version Metadata & Tags
@@ -163,7 +163,7 @@ const service = {
         // Determine S3 Public status
         let s3Public;
         try {
-          s3Public = await storageService.getObjectPublic({ filePath: path, bucketId: bucketId });
+          s3Public = await storageService.getPublic({ path: path, bucketId: bucketId });
         } catch (e) {
           // Gracefully continue even when S3 ACL management operation fails
           log.warn(`Failed to read ACL permissions from S3: ${e.message}`, {
