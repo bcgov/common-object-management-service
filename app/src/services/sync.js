@@ -42,7 +42,8 @@ const service = {
         && !(await objectService.exists(s3ObjectComsId))) {
         // re-use existing coms-id (if no conflict)
         objId = s3ObjectComsId;
-      } else {
+      }
+      else {
         // remove `coms-id` tag since it conflicts with an existing COMS object
         TagSet = TagSet.filter(x => x.Key != 'coms-id');
 
@@ -302,7 +303,7 @@ const service = {
           else if (
             existingVersion.mimeType !== mimeType ||
             existingVersion.etag != s3Version.ETag ||
-            existingVersion.lastModifiedDate != (s3Version.LastModified ?
+            existingVersion?.lastModifiedDate != (s3Version.LastModified ?
               new Date(s3Version.LastModified).toISOString() : undefined)
           ) {
             const updatedVersion = await versionService.update({
@@ -328,7 +329,7 @@ const service = {
             // Recorded version has different values
             if (
               comsVersion.etag != s3Version.ETag ||
-              comsVersion.lastModifiedDate != (s3Version.LastModified ?
+              comsVersion?.lastModifiedDate != (s3Version.LastModified ?
                 new Date(s3Version.LastModified).toISOString() : undefined)
             ) {
               modified = true;

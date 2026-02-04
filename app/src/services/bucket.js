@@ -121,6 +121,7 @@ const service = {
         bucket: data.bucket,
         endpoint: data.endpoint,
         key: data.key ? data.key : '/',
+        public: data.public,
         secretAccessKey: data.secretAccessKey,
         region: data.region,
         active: data.active,

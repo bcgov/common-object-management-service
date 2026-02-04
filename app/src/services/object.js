@@ -182,7 +182,7 @@ const service = {
                 const latestVersion = version.find(v => v.isLatest);
 
                 object.lastModifiedDate =
-                  latestVersion.lastModifiedDate ?? latestVersion.createdAt ?? latestVersion.updatedAt;
+                  latestVersion?.lastModifiedDate ?? latestVersion?.createdAt ?? latestVersion?.updatedAt ?? new Date().toISOString();
               }
 
               return object;

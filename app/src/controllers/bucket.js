@@ -170,6 +170,7 @@ const controller = {
       bucket: parentBucket.bucket,
       endpoint: parentBucket.endpoint,
       key: childKey,
+      public: parentBucket.public,
       secretAccessKey: parentBucket.secretAccessKey,
       region: parentBucket.region ?? undefined,
       active: parentBucket.active,

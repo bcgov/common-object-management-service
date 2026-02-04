@@ -21,6 +21,7 @@ const {
   getCurrentIdentity,
   getKeyValue,
   getMetadata,
+  getS3Url,
   getS3VersionId,
   joinPath,
   isTruthy,
@@ -879,18 +880,27 @@ const controller = {
           response.Body.pipe(res); // Stream body content directly to response
           res.status(200);
         }
-      } else {
-        const signedUrl = await storageService.readSignedUrl({
-          expiresIn: req.query.expiresIn,
-          ...data
-        });
+      }
+      else {
+        let s3Url;
+        // if object is public, construct S3 url manually
+        if (req.currentObject.public) {
+          s3Url = await getS3Url(data);
+        }
+        // else get pre-signed S3 url
+        else {
+          s3Url = await storageService.readSignedUrl({
+            expiresIn: req.query.expiresIn,
+            ...data
+          });
+        }
 
-        // Present download url link
+        // if request was for a url, present download url link
         if (req.query.download && req.query.download === DownloadMode.URL) {
-          res.status(201).json(signedUrl);
+          res.status(201).json(s3Url);
           // Download via HTTP redirect
         } else {
-          res.status(302).set('Location', signedUrl).end();
+          res.status(302).set('Location', s3Url).end();
         }
       }
 
