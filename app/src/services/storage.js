@@ -24,7 +24,7 @@ const { Upload } = require('@aws-sdk/lib-storage');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const config = require('config');
 
-const { ALLUSERS, MetadataDirective, TaggingDirective } = require('../components/constants');
+const { ALLUSERS, DEFAULTREGION, MetadataDirective, TaggingDirective } = require('../components/constants');
 const log = require('../components/log')(module.filename);
 const utils = require('../components/utils');
 
@@ -582,7 +582,7 @@ const objectStorageService = {
       const resourceKey = isPrefix ? resource + '*' : resource; // prefixes/need/trailing/wildcard/*
       newPolicies
         .push({
-          Action: 's3:GetObject',
+          Action: ['s3:GetObject', 's3:GetObjectVersion'],
           Resource: resourceKey,
           Effect: 'Allow',
           Principal: '*',
@@ -604,17 +604,18 @@ const objectStorageService = {
 
   /**
    * @function getPublic
-   * checks for a Bucket Policy or ACL that will make the given resource public
-   * @param {string} path the path of the resource
-   * @param {string} bucketId of COMS bucket for the resource
-   * @returns {Promise<boolean>} whether the given resource is public
+   * Checks for a Bucket Policy or ACL that will make the given resource public
+   * @param {string} options.path The path of the resource to check
+   * @param {string} [options.bucketId] Optional bucketId to retrieve bucket configuration
+   * @param {object} [options.bucket] Optional bucket object containing bucketId (alternative to bucketId)
+   * @returns {Promise<boolean>} True if the resource is public via policy or ACL, false otherwise
    */
-  async getPublic({ path, bucketId }) {
-    const data = await utils.getBucket(bucketId);
-    const resource = data.bucket + '/' + path;
-    const hasPublicPolicy = await this.hasEffectivePublicPolicy(resource, data);
+  async getPublic({ path, bucketId = undefined, bucket = undefined }) {
+    const bucketData = bucket ? { ...bucket, region: DEFAULTREGION } : await utils.getBucket(bucketId);
+    const resource = bucketData.bucket + '/' + path;
+    const hasPublicPolicy = await this.hasEffectivePublicPolicy(resource, bucketData);
     // if resource is an object, check for public ACL's (ACL's cannot apply to prefixes)
-    const hasPublicAcl = data.key !== resource ? await this.hasPublicAcl(data, path) : false;
+    const hasPublicAcl = bucketData.key !== resource ? await this.hasPublicAcl(bucketData, path) : false;
     // Check for COMS Bucket Policy for this resource
     return hasPublicAcl || hasPublicPolicy;
   },
@@ -623,11 +624,12 @@ const objectStorageService = {
    * @function hasEffectivePublicPolicy
    * check for a Bucket Policy that will make the given resource public
    * @param {*} resource
-   * @param {*} data
+   * @param {*} bucketData
    */
-  async hasEffectivePublicPolicy(resource, data) {
+  async hasEffectivePublicPolicy(resource, bucketData) {
     try {
-      const existingPolicy = await this._getS3Client(data).send(new GetBucketPolicyCommand({ Bucket: data.bucket }));
+      const existingPolicy = await this._getS3Client(bucketData)
+        .send(new GetBucketPolicyCommand({ Bucket: bucketData.bucket }));
       const statement = JSON.parse(existingPolicy.Policy).Statement;
       // A Deny policy on resource or above, which override Allow policies will set public status to false
       const denyPolicies = statement
@@ -651,7 +653,7 @@ const objectStorageService = {
         return (allowPolicies.length > 0) ? true : false;
       }
     } catch (e) {
-      log.debug('No existing effective policies found', { function: 'getPublic' });
+      log.debug('No existing effective policies found', { function: 'hasEffectivePublicPolicy' });
       return false;
     }
   },

@@ -275,6 +275,28 @@ const utils = {
     return array.find(obj => (obj.key === key && obj.value === value));
   },
 
+
+  /**
+ * @function getS3Url
+ * Constructs the S3 URL for a given file in a specified bucket.
+ * @param {object} data An object containing the necessary information to construct the S3 URL.
+ * @param {string} data.bucketId The ID of the S3 bucket.
+ * @param {string} data.filePath The path of the file within the bucket.
+ * @param {string} [data.s3VersionId] An optional S3 version ID for the file.
+ * @returns {Promise<string>} A promise that resolves to the constructed S3 URL.
+ * @throws {Error} If there is an issue retrieving the bucket details.
+ */
+  async getS3Url(data) {
+    // get bucket details
+    const { read } = require('../services/bucket');
+    const bucket = await read(data.bucketId);
+    let url = `${bucket.endpoint}/${bucket.bucket}/${data.filePath.replace(/^\/|\/$/g, '')}`;
+    if (data.s3VersionId) {
+      url += `?versionId=${data.s3VersionId}`;
+    }
+    return url;
+  },
+
   /**
    * @function getS3VersionId
    * Gets the s3VersionId from database using given internal COMS version id
