@@ -63,7 +63,7 @@ const service = {
       const { Versions } = await storageService.listAllObjectVersions({ filePath: path, bucketId: bucketId });
 
       for (const versionId of Versions.map(version => version.VersionId)) {
-        const TagSet = await storageService.getObjectTagging({
+        let TagSet = await storageService.getObjectTagging({
           filePath: path,
           s3VersionId: versionId,
           bucketId: bucketId
@@ -71,7 +71,26 @@ const service = {
         const oldObjId = TagSet.find(obj => obj.Key === 'coms-id')?.Value;
 
         if (oldObjId && uuidValidate(oldObjId)) {
-          objId = oldObjId;
+
+          if (!(await objectService.exists(oldObjId))) {
+            // re-use existing coms-id (if no conflict)
+            objId = oldObjId;
+          } else {
+            // remove `coms-id` tag since it conflicts with an existing COMS object
+            TagSet = TagSet.filter(x => x.Key != 'coms-id');
+
+            // Update S3 Object if there is still remaining space in the TagSet
+            if (TagSet.length < 10) {
+              // putObjectTagging replaces S3 tags so new TagSet must contain existing values
+              await storageService.putObjectTagging({
+                filePath: path,
+                bucketId: bucketId,
+                tags: TagSet.concat([{ Key: 'coms-id', Value: objId }])
+              }).catch((err) => {
+                log.warn(`Unable to add coms-id tag: ${err.message}`, { function: '_deriveObjectId' });
+              });
+            }
+          }
           break; // Stop iterating if a valid uuid was found
         }
       }

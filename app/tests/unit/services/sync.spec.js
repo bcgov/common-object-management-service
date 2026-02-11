@@ -205,25 +205,48 @@ describe('_deriveObjectId', () => {
   });
 
   describe('Soft-Deleted S3 Object', () => {
-    it('Returns a new uuid if valid found', async () => {
+    it('Returns an existing uuid from "coms-id" S3 tag if no conflict with existing COMS object', async () => {
       listAllObjectVersionsSpy.mockResolvedValue({ Versions: [{ VersionId: '2' }, { VersionId: '1' }] });
-      getObjectTaggingSpy.mockResolvedValueOnce({ TagSet: [] });
       getObjectTaggingSpy.mockResolvedValueOnce({
         TagSet: [{ Key: 'coms-id', Value: validUuidv4 }]
       });
+      existsSpy.mockResolvedValueOnce(false);
+      putObjectTaggingSpy.mockResolvedValue({});
 
       const result = await service._deriveObjectId(true, path, bucketId);
 
       expect(result).toBeTruthy();
       expect(typeof result).toBe('string');
-      expect(result).toMatch(validUuidv4);
-      expect(getObjectTaggingSpy).toHaveBeenCalledTimes(2);
+      expect(result).toEqual(validUuidv4);
+      expect(getObjectTaggingSpy).toHaveBeenCalledTimes(1);
       expect(listAllObjectVersionsSpy).toHaveBeenCalledTimes(1);
       expect(listAllObjectVersionsSpy).toHaveBeenCalledWith(expect.objectContaining({
         filePath: path,
         bucketId: bucketId
       }));
       expect(putObjectTaggingSpy).toHaveBeenCalledTimes(0);
+    });
+
+    it('Returns a new uuid if "coms-id" S3 tag conflicts with existing COMS object', async () => {
+      listAllObjectVersionsSpy.mockResolvedValue({ Versions: [{ VersionId: '2' }, { VersionId: '1' }] });
+      getObjectTaggingSpy.mockResolvedValueOnce({
+        TagSet: [{ Key: 'coms-id', Value: validUuidv4 }]
+      });
+      existsSpy.mockResolvedValueOnce(true);
+      putObjectTaggingSpy.mockResolvedValueOnce({});
+
+      const result = await service._deriveObjectId(true, path, bucketId);
+
+      expect(result).toBeTruthy();
+      expect(typeof result).toBe('string');
+      expect(result).not.toEqual(validUuidv4);
+      expect(getObjectTaggingSpy).toHaveBeenCalledTimes(1);
+      expect(listAllObjectVersionsSpy).toHaveBeenCalledTimes(1);
+      expect(listAllObjectVersionsSpy).toHaveBeenCalledWith(expect.objectContaining({
+        filePath: path,
+        bucketId: bucketId
+      }));
+      expect(putObjectTaggingSpy).toHaveBeenCalledTimes(1);
     });
 
     it('Returns a new uuid if valid not found', async () => {
