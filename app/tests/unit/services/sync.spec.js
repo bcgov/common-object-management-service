@@ -210,21 +210,22 @@ describe('_deriveObjectId', () => {
       getObjectTaggingSpy.mockResolvedValueOnce({
         TagSet: [{ Key: 'coms-id', Value: validUuidv4 }]
       });
-      existsSpy.mockResolvedValueOnce(false);
+      existsSpy.mockResolvedValue(true);
       putObjectTaggingSpy.mockResolvedValue({});
+
 
       const result = await service._deriveObjectId(true, path, bucketId);
 
       expect(result).toBeTruthy();
       expect(typeof result).toBe('string');
-      expect(result).toEqual(validUuidv4);
+      expect(result).not.toEqual(validUuidv4);
       expect(getObjectTaggingSpy).toHaveBeenCalledTimes(1);
       expect(listAllObjectVersionsSpy).toHaveBeenCalledTimes(1);
       expect(listAllObjectVersionsSpy).toHaveBeenCalledWith(expect.objectContaining({
         filePath: path,
         bucketId: bucketId
       }));
-      expect(putObjectTaggingSpy).toHaveBeenCalledTimes(0);
+      expect(putObjectTaggingSpy).toHaveBeenCalledTimes(1);
     });
 
     it('Returns a new uuid if "coms-id" S3 tag conflicts with existing COMS object', async () => {

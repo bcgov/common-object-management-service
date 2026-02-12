@@ -104,6 +104,7 @@ describe('getBucket', () => {
     bucket: 'bucket',
     endpoint: 'https://endpoint.com',
     key: 'filePath',
+    public: false,
     region: DEFAULTREGION,
     secretAccessKey: 'secretAccessKey'
   };
@@ -112,6 +113,7 @@ describe('getBucket', () => {
     bucket: 'bar',
     endpoint: 'https://baz.com',
     key: 'koo',
+    public: false,
     region: DEFAULTREGION,
     secretAccessKey: 'soo'
   };
@@ -125,6 +127,7 @@ describe('getBucket', () => {
       .mockReturnValueOnce(cdata.bucket) // objectStorage.bucket
       .mockReturnValueOnce(cdata.endpoint) // objectStorage.endpoint
       .mockReturnValueOnce(cdata.key) // objectStorage.key
+      .mockReturnValueOnce(cdata.public) // objectStorage.public
       .mockReturnValueOnce(cdata.secretAccessKey) // objectStorage.secretAccessKey
       .mockReturnValueOnce(cdata.region); // objectStorage.region
 
@@ -136,6 +139,7 @@ describe('getBucket', () => {
     expect(result).toHaveProperty('bucket', cdata.bucket);
     expect(result).toHaveProperty('endpoint', cdata.endpoint);
     expect(result).toHaveProperty('key', cdata.key);
+    expect(result).toHaveProperty('public', cdata.public);
     expect(result).toHaveProperty('region', cdata.region);
     expect(result).toHaveProperty('secretAccessKey', cdata.secretAccessKey);
     expect(readBucketSpy).toHaveBeenCalledTimes(0);
@@ -160,6 +164,7 @@ describe('getBucket', () => {
     expect(result).toHaveProperty('bucket', ddata.bucket);
     expect(result).toHaveProperty('endpoint', ddata.endpoint);
     expect(result).toHaveProperty('key', ddata.key);
+    expect(result).toHaveProperty('public', ddata.public);
     expect(result).toHaveProperty('region', ddata.region);
     expect(result).toHaveProperty('secretAccessKey', ddata.secretAccessKey);
     expect(readBucketSpy).toHaveBeenCalledTimes(1);
