@@ -860,7 +860,7 @@ const controller = {
         s3VersionId: targetS3VersionId
       };
 
-      // Download via service proxy
+      // Download via service proxy (stream)
       if (req.query.download && req.query.download === DownloadMode.PROXY) {
         // TODO: Consider if we need a HEAD operation first before doing the actual read on large files
         // for pre-flight caching behavior?
@@ -898,12 +898,27 @@ const controller = {
         // if request was for a url, present download url link
         if (req.query.download && req.query.download === DownloadMode.URL) {
           res.status(201).json(s3Url);
-          // Download via HTTP redirect
-        } else {
-          res.status(302).set('Location', s3Url).end();
+        }
+        // Download via HTTP redirect
+        else {
+          /**
+           * Set CSP header to allow redirect to S3 URL
+           * /
+          // res
+          //   .set(
+          //     'Content-Security-Policy', 'default-src \'self\'; ' +
+          //     'connect-src \'self\' \'' + new URL(s3Url).origin + '\''
+          //   )
+          //   .set('Location', s3Url)
+          //   .end();
+
+          /**
+           * use express redirect 
+           * note: this will be a 302 redirect which is necessary for CORS preflight to work properly
+           */
+          res.redirect(s3Url);
         }
       }
-
     } catch (e) {
       next(errorToProblem(SERVICE, e));
     }
