@@ -21,6 +21,7 @@ const {
   getCurrentIdentity,
   getKeyValue,
   getMetadata,
+  getS3Url,
   getS3VersionId,
   joinPath,
   isTruthy,
@@ -276,7 +277,7 @@ const controller = {
       }
 
       // Preflight existence check for bucketId
-      const { key: bucketKey } = await getBucket(bucketId);
+      const { key: bucketKey, public: bucketPublic } = await getBucket(bucketId);
 
       const objId = uuidv4();
       const data = {
@@ -318,7 +319,9 @@ const controller = {
           existingObjectId: objectId,
         });
 
-      } catch (err) {
+      }
+      // headObject threw an error because object was not found
+      catch (err) {
         if (err instanceof Problem) throw err; // Rethrow Problem type errors
 
         // Object is soft deleted from the bucket
@@ -376,7 +379,8 @@ const controller = {
         const object = await objectService.create({
           ...data,
           userId: userId,
-          path: joinPath(bucketKey, data.name)
+          path: joinPath(bucketKey, data.name),
+          public: bucketPublic // set public status to match that of parent 'folder'
         }, trx);
 
         // Create Version
@@ -876,18 +880,27 @@ const controller = {
           response.Body.pipe(res); // Stream body content directly to response
           res.status(200);
         }
-      } else {
-        const signedUrl = await storageService.readSignedUrl({
-          expiresIn: req.query.expiresIn,
-          ...data
-        });
+      }
+      else {
+        let s3Url;
+        // if object is public, construct S3 url manually
+        if (req.currentObject.public) {
+          s3Url = await getS3Url(data);
+        }
+        // else get pre-signed S3 url
+        else {
+          s3Url = await storageService.readSignedUrl({
+            expiresIn: req.query.expiresIn,
+            ...data
+          });
+        }
 
-        // Present download url link
+        // if request was for a url, present download url link
         if (req.query.download && req.query.download === DownloadMode.URL) {
-          res.status(201).json(signedUrl);
+          res.status(201).json(s3Url);
           // Download via HTTP redirect
         } else {
-          res.status(302).set('Location', signedUrl).end();
+          res.status(302).set('Location', s3Url).end();
         }
       }
 
@@ -1031,8 +1044,6 @@ const controller = {
    * @returns {function} Express middleware function
    */
   async searchObjects(req, res, next) {
-    // TODO: Consider support for filtering by set of permissions?
-    // TODO: handle additional parameters. Eg: deleteMarker, latest
     try {
       const bucketIds = mixedQueryToArray(req.query.bucketId);
       const objIds = mixedQueryToArray(req.query.objectId);
@@ -1105,19 +1116,17 @@ const controller = {
       const data = {
         id: objId,
         bucketId: req.currentObject?.bucketId,
-        filePath: req.currentObject?.path,
+        path: req.currentObject?.path,
         public: publicFlag,
         userId: userId,
-        // TODO: Implement if/when we proceed with version-scoped public permission management
-        // s3VersionId: await getS3VersionId(
-        //   req.query.s3VersionId, addDashesToUuid(req.query.versionId), objId
-        // )
       };
 
-      storageService.putObjectPublic(data).catch(() => {
-        // Gracefully continue even when S3 ACL management operation fails
-        log.warn('Failed to apply ACL permission changes to S3', { function: 'togglePublic', ...data });
+      // Update S3 Policy
+      await storageService.updatePublic(data).catch((error) => {
+        log.warn('Failed to apply permission changes to S3', { function: 'togglePublic', ...data });
+        throw new Error(error);
       });
+      // Update object record in COMS database
       const response = await objectService.update(data);
 
       res.status(200).json(response);

@@ -42,7 +42,8 @@ const service = {
         && !(await objectService.exists(s3ObjectComsId))) {
         // re-use existing coms-id (if no conflict)
         objId = s3ObjectComsId;
-      } else {
+      }
+      else {
         // remove `coms-id` tag since it conflicts with an existing COMS object
         TagSet = TagSet.filter(x => x.Key != 'coms-id');
 
@@ -62,7 +63,7 @@ const service = {
       const { Versions } = await storageService.listAllObjectVersions({ filePath: path, bucketId: bucketId });
 
       for (const versionId of Versions.map(version => version.VersionId)) {
-        const TagSet = await storageService.getObjectTagging({
+        let TagSet = await storageService.getObjectTagging({
           filePath: path,
           s3VersionId: versionId,
           bucketId: bucketId
@@ -70,7 +71,26 @@ const service = {
         const oldObjId = TagSet.find(obj => obj.Key === 'coms-id')?.Value;
 
         if (oldObjId && uuidValidate(oldObjId)) {
-          objId = oldObjId;
+
+          if (!(await objectService.exists(oldObjId))) {
+            // re-use existing coms-id (if no conflict)
+            objId = oldObjId;
+          } else {
+            // remove `coms-id` tag since it conflicts with an existing COMS object
+            TagSet = TagSet.filter(x => x.Key != 'coms-id');
+
+            // Update S3 Object if there is still remaining space in the TagSet
+            if (TagSet.length < 10) {
+              // putObjectTagging replaces S3 tags so new TagSet must contain existing values
+              await storageService.putObjectTagging({
+                filePath: path,
+                bucketId: bucketId,
+                tags: TagSet.concat([{ Key: 'coms-id', Value: objId }])
+              }).catch((err) => {
+                log.warn(`Unable to add coms-id tag: ${err.message}`, { function: '_deriveObjectId' });
+              });
+            }
+          }
           break; // Stop iterating if a valid uuid was found
         }
       }
@@ -98,14 +118,14 @@ const service = {
         // 1. Sync Object
         const object = await service.syncObject(path, bucketId, userId, trx)
           .then(obj => obj.object);
-        log.info(`Synchronized object at path ${path} in bucket ${bucketId}`,
+        log.debug(`Synchronized object at path ${path} in bucket ${bucketId}`,
           { function: 'syncJob', objectId: object?.id });
 
         // 2. Sync Object Versions
         let versions = [];
         if (object) {
           versions = await service.syncVersions(object, userId, trx);
-          log.info(`Synchronized ${versions.length} versions for object id ${object.id}`, { function: 'syncJob' });
+          log.debug(`Synchronized ${versions.length} versions for object id ${object.id}`, { function: 'syncJob' });
         }
 
         // 3. Sync Version Metadata & Tags
@@ -163,7 +183,7 @@ const service = {
         // Determine S3 Public status
         let s3Public;
         try {
-          s3Public = await storageService.getObjectPublic({ filePath: path, bucketId: bucketId });
+          s3Public = await storageService.getPublic({ path: path, bucketId: bucketId });
         } catch (e) {
           // Gracefully continue even when S3 ACL management operation fails
           log.warn(`Failed to read ACL permissions from S3: ${e.message}`, {
@@ -302,7 +322,7 @@ const service = {
           else if (
             existingVersion.mimeType !== mimeType ||
             existingVersion.etag != s3Version.ETag ||
-            existingVersion.lastModifiedDate != (s3Version.LastModified ?
+            existingVersion?.lastModifiedDate != (s3Version.LastModified ?
               new Date(s3Version.LastModified).toISOString() : undefined)
           ) {
             const updatedVersion = await versionService.update({
@@ -328,7 +348,7 @@ const service = {
             // Recorded version has different values
             if (
               comsVersion.etag != s3Version.ETag ||
-              comsVersion.lastModifiedDate != (s3Version.LastModified ?
+              comsVersion?.lastModifiedDate != (s3Version.LastModified ?
                 new Date(s3Version.LastModified).toISOString() : undefined)
             ) {
               modified = true;

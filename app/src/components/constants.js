@@ -65,7 +65,7 @@ module.exports = Object.freeze({
   /** Maximum Content Length supported by S3 CopyObjectCommand */
   MAXCOPYOBJECTLENGTH: 5 * 1024 * 1024 * 1024, // 5 GB
 
-  /** Maximum Content Length supported by S3 CopyObjectCommand */
+  /** Maximum Content Length (file size) supported by S3 */
   MAXFILEOBJECTLENGTH: 5 * 1024 * 1024 * 1024 * 1024, // 5 TB
 
   /** Maximum object key length supported by S3 */

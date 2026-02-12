@@ -11,7 +11,8 @@ const {
   HeadObjectCommand,
   ListObjectsV2Command,
   ListObjectVersionsCommand,
-  PutObjectAclCommand,
+  // TODO: public folder feature - remove as it's no longer present
+  // PutObjectAclCommand
   PutBucketEncryptionCommand,
   PutObjectCommand,
   PutObjectTaggingCommand,
@@ -338,7 +339,9 @@ describe('getBucketVersioning', () => {
   });
 });
 
-describe('getObjectAcl', () => {
+// TODO: public folder feature - remove this test
+//        (remove .skip() when done!)
+describe.skip('getObjectAcl', () => {
   beforeEach(() => {
     s3ClientMock.on(GetObjectAclCommand).resolves({});
   });
@@ -373,64 +376,67 @@ describe('getObjectAcl', () => {
   });
 });
 
-describe('getObjectPublic', () => {
-  const getObjectAclMock = jest.spyOn(service, 'getObjectAcl');
+// TODO: public folder feature - swap out `getObjectPublic()` for `getPublic()`, rewrite tests
+// describe('getObjectPublic', () => {
+//   const getObjectAclMock = jest.spyOn(service, 'getObjectAcl');
 
-  beforeEach(() => {
-    getObjectAclMock.mockReset();
-  });
+//   beforeEach(() => {
+//     getObjectAclMock.mockReset();
+//   });
 
-  afterAll(() => {
-    getObjectAclMock.mockRestore();
-  });
+//   afterAll(() => {
+//     getObjectAclMock.mockRestore();
+//   });
 
-  it('should return true', async () => {
-    const filePath = 'filePath';
-    getObjectAclMock.mockResolvedValue({ Grants: [
-      {
-        'Grantee': {
-          'DisplayName': 'name',
-          'ID': 'id',
-          'Type': 'CanonicalUser'
-        },
-        'Permission': 'FULL_CONTROL'
-      },
-      {
-        'Grantee': {
-          'URI': 'http://acs.amazonaws.com/groups/global/AllUsers',
-          'Type': 'Group'
-        },
-        'Permission': 'READ'
-      }
-    ]});
+//   // TODO: public folder feature - update tests
+//   it('should return true', async () => {
+//     const filePath = 'filePath';
+//     getObjectAclMock.mockResolvedValue({ Grants: [
+//       {
+//         'Grantee': {
+//           'DisplayName': 'name',
+//           'ID': 'id',
+//           'Type': 'CanonicalUser'
+//         },
+//         'Permission': 'FULL_CONTROL'
+//       },
+//       {
+//         'Grantee': {
+//           'URI': 'http://acs.amazonaws.com/groups/global/AllUsers',
+//           'Type': 'Group'
+//         },
+//         'Permission': 'READ'
+//       }
+//     ]});
 
-    const result = await service.getObjectPublic({ filePath });
+//     const result = await service.getObjectPublic({ filePath });
 
-    expect(result).toBeTruthy();
-    expect(getObjectAclMock).toHaveBeenCalledTimes(1);
-    expect(getObjectAclMock).toHaveBeenCalledWith(expect.objectContaining({ filePath }));
-  });
+//     expect(result).toBeTruthy();
+//     expect(getObjectAclMock).toHaveBeenCalledTimes(1);
+//     expect(getObjectAclMock).toHaveBeenCalledWith(expect.objectContaining({ filePath }));
+//   });
 
-  it('should return false', async () => {
-    const filePath = 'filePath';
-    getObjectAclMock.mockResolvedValue({ Grants: [
-      {
-        'Grantee': {
-          'DisplayName': 'name',
-          'ID': 'id',
-          'Type': 'CanonicalUser'
-        },
-        'Permission': 'FULL_CONTROL'
-      }
-    ]});
+//   // TODO: public folder feature - update tests
+//   it('should return false', async () => {
+//     const filePath = 'filePath';
+//     getObjectAclMock.mockResolvedValue({ Grants: [
+//       {
+//         'Grantee': {
+//           'DisplayName': 'name',
+//           'ID': 'id',
+//           'Type': 'CanonicalUser'
+//         },
+//         'Permission': 'FULL_CONTROL'
+//       }
+//     ]});
 
-    const result = await service.getObjectPublic({ filePath });
+//     const result = await service.getObjectPublic({ filePath });
 
-    expect(result).toBeFalsy();
-    expect(getObjectAclMock).toHaveBeenCalledTimes(1);
-    expect(getObjectAclMock).toHaveBeenCalledWith(expect.objectContaining({ filePath }));
-  });
-});
+//     expect(result).toBeFalsy();
+//     expect(getObjectAclMock).toHaveBeenCalledTimes(1);
+//     expect(getObjectAclMock).toHaveBeenCalledWith(expect.objectContaining({ filePath }));
+//   });
+// });
 
 describe('getObjectTagging', () => {
   beforeEach(() => {
@@ -551,7 +557,8 @@ describe('listAllObjects', () => {
     listObjectsV2Mock.mockResolvedValueOnce({
       Contents: [{ Key: 'filePath/foo' }],
       IsTruncated: true,
-      NextContinuationToken: continueToken });
+      NextContinuationToken: continueToken
+    });
     listObjectsV2Mock.mockResolvedValueOnce({
       Contents: [{ Key: 'filePath/bar' }],
       IsTruncated: false
@@ -583,7 +590,8 @@ describe('listAllObjects', () => {
     listObjectsV2Mock.mockResolvedValueOnce({
       Contents: [{ Key: 'filePath/test/foo' }],
       IsTruncated: true,
-      NextContinuationToken: continueToken });
+      NextContinuationToken: continueToken
+    });
     listObjectsV2Mock.mockResolvedValueOnce({
       Contents: [{ Key: 'filePath/test/bar' }],
       IsTruncated: false
@@ -618,7 +626,8 @@ describe('listAllObjects', () => {
       listObjectsV2Mock.mockResolvedValueOnce({
         Contents: [{ Key: 'filePath/test/foo' }],
         IsTruncated: true,
-        NextContinuationToken: continueToken });
+        NextContinuationToken: continueToken
+      });
       listObjectsV2Mock.mockResolvedValueOnce({
         Contents: [{ Key: 'filePath/test/bar' }],
         IsTruncated: false
@@ -705,7 +714,8 @@ describe('listAllObjectVersions', () => {
     listObjectVersionMock.mockResolvedValueOnce({
       DeleteMarkers: [{ Key: 'filePath/foo' }],
       IsTruncated: true,
-      NextKeyMarker: nextKeyMarker });
+      NextKeyMarker: nextKeyMarker
+    });
     listObjectVersionMock.mockResolvedValueOnce({
       Versions: [{ Key: 'filePath/bar' }],
       IsTruncated: false
@@ -741,7 +751,8 @@ describe('listAllObjectVersions', () => {
     listObjectVersionMock.mockResolvedValueOnce({
       DeleteMarkers: [{ Key: 'filePath/test/foo' }],
       IsTruncated: true,
-      NextKeyMarker: nextKeyMarker });
+      NextKeyMarker: nextKeyMarker
+    });
     listObjectVersionMock.mockResolvedValueOnce({
       Versions: [{ Key: 'filePath/test/bar' }],
       IsTruncated: false
@@ -777,7 +788,8 @@ describe('listAllObjectVersions', () => {
     listObjectVersionMock.mockResolvedValueOnce({
       DeleteMarkers: [{ Key: 'filePath/test/foo', IsLatest: true }],
       IsTruncated: true,
-      NextKeyMarker: nextKeyMarker });
+      NextKeyMarker: nextKeyMarker
+    });
     listObjectVersionMock.mockResolvedValueOnce({
       Versions: [{ Key: 'filePath/test/bar', IsLatest: false }],
       IsTruncated: false
@@ -986,84 +998,86 @@ describe('putObject', () => {
   });
 });
 
-describe('putObjectAcl', () => {
-  beforeEach(() => {
-    s3ClientMock.on(PutObjectAclCommand).resolves({});
-  });
+// TODO: public folder feature - fix + rewrite tests as needed
+// describe('putObjectAcl', () => {
+//   beforeEach(() => {
+//     s3ClientMock.on(PutObjectAclCommand).resolves({});
+//   });
 
-  it('should send a put object acl command', async () => {
-    const acl = 'public-read';
-    const filePath = 'filePath';
-    const result = await service.putObjectAcl({ acl, filePath });
+//   it('should send a put object acl command', async () => {
+//     const acl = 'public-read';
+//     const filePath = 'filePath';
+//     const result = await service.putObjectAcl({ acl, filePath });
 
-    expect(result).toBeTruthy();
-    expect(utils.getBucket).toHaveBeenCalledTimes(1);
-    expect(s3ClientMock).toHaveReceivedCommandTimes(PutObjectAclCommand, 1);
-    expect(s3ClientMock).toHaveReceivedCommandWith(PutObjectAclCommand, {
-      ACL: acl,
-      Bucket: bucket,
-      Key: filePath,
-      VersionId: undefined
-    });
-  });
+//     expect(result).toBeTruthy();
+//     expect(utils.getBucket).toHaveBeenCalledTimes(1);
+//     expect(s3ClientMock).toHaveReceivedCommandTimes(PutObjectAclCommand, 1);
+//     expect(s3ClientMock).toHaveReceivedCommandWith(PutObjectAclCommand, {
+//       ACL: acl,
+//       Bucket: bucket,
+//       Key: filePath,
+//       VersionId: undefined
+//     });
+//   });
 
-  it('should send a put object acl for a specific version', async () => {
-    const acl = 'public-read';
-    const filePath = 'filePath';
-    const s3VersionId = '1234';
-    const result = await service.putObjectAcl({ acl, filePath, s3VersionId });
+//   it('should send a put object acl for a specific version', async () => {
+//     const acl = 'public-read';
+//     const filePath = 'filePath';
+//     const s3VersionId = '1234';
+//     const result = await service.putObjectAcl({ acl, filePath, s3VersionId });
 
-    expect(result).toBeTruthy();
-    expect(utils.getBucket).toHaveBeenCalledTimes(1);
-    expect(s3ClientMock).toHaveReceivedCommandTimes(PutObjectAclCommand, 1);
-    expect(s3ClientMock).toHaveReceivedCommandWith(PutObjectAclCommand, {
-      ACL: acl,
-      Bucket: bucket,
-      Key: filePath,
-      VersionId: s3VersionId
-    });
-  });
-});
+//     expect(result).toBeTruthy();
+//     expect(utils.getBucket).toHaveBeenCalledTimes(1);
+//     expect(s3ClientMock).toHaveReceivedCommandTimes(PutObjectAclCommand, 1);
+//     expect(s3ClientMock).toHaveReceivedCommandWith(PutObjectAclCommand, {
+//       ACL: acl,
+//       Bucket: bucket,
+//       Key: filePath,
+//       VersionId: s3VersionId
+//     });
+//   });
+// });
 
-describe('putObjectPublic', () => {
-  const putObjectAclMock = jest.spyOn(service, 'putObjectAcl');
+// TODO: public folder feature - swap out `putObjectPublic()` for `updatePublic()` and rewrite tests
+// describe('putObjectPublic', () => {
+//   const putObjectAclMock = jest.spyOn(service, 'putObjectAcl');
 
-  beforeEach(() => {
-    putObjectAclMock.mockReset();
-  });
+//   beforeEach(() => {
+//     putObjectAclMock.mockReset();
+//   });
 
-  afterAll(() => {
-    putObjectAclMock.mockRestore();
-  });
+//   afterAll(() => {
+//     putObjectAclMock.mockRestore();
+//   });
 
-  it('should set to public', async () => {
-    const filePath = 'filePath';
-    putObjectAclMock.mockResolvedValue({});
+//   it('should set to public', async () => {
+//     const filePath = 'filePath';
+//     putObjectAclMock.mockResolvedValue({});
 
-    const result = await service.putObjectPublic({ filePath, public: true });
+//     const result = await service.putObjectPublic({ filePath, public: true });
 
-    expect(result).toBeTruthy();
-    expect(putObjectAclMock).toHaveBeenCalledTimes(1);
-    expect(putObjectAclMock).toHaveBeenCalledWith(expect.objectContaining({
-      acl: 'public-read',
-      filePath: filePath
-    }));
-  });
+//     expect(result).toBeTruthy();
+//     expect(putObjectAclMock).toHaveBeenCalledTimes(1);
+//     expect(putObjectAclMock).toHaveBeenCalledWith(expect.objectContaining({
+//       acl: 'public-read',
+//       filePath: filePath
+//     }));
+//   });
 
-  it('should set to non-public', async () => {
-    const filePath = 'filePath';
-    putObjectAclMock.mockResolvedValue({});
+//   it('should set to non-public', async () => {
+//     const filePath = 'filePath';
+//     putObjectAclMock.mockResolvedValue({});
 
-    const result = await service.putObjectPublic({ filePath });
+//     const result = await service.putObjectPublic({ filePath });
 
-    expect(result).toBeTruthy();
-    expect(putObjectAclMock).toHaveBeenCalledTimes(1);
-    expect(putObjectAclMock).toHaveBeenCalledWith(expect.objectContaining({
-      acl: 'private',
-      filePath: filePath
-    }));
-  });
-});
+//     expect(result).toBeTruthy();
+//     expect(putObjectAclMock).toHaveBeenCalledTimes(1);
+//     expect(putObjectAclMock).toHaveBeenCalledWith(expect.objectContaining({
+//       acl: 'private',
+//       filePath: filePath
+//     }));
+//   });
+// });
 
 describe('putObjectTagging', () => {
   beforeEach(() => {

@@ -163,7 +163,7 @@ const controller = {
       }
 
       // Check for email match if the invitation specifies for it
-      if (invite.email && invite.email !== req.currentUser?.tokenPayload?.email) {
+      if (invite.email && invite.email.toLowerCase() !== req.currentUser?.tokenPayload?.email.toLowerCase()) {
         throw new Problem(403, {
           detail: 'User does not match intended recipient',
           instance: req.originalUrl

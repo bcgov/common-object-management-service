@@ -1,5 +1,6 @@
 const {
   CopyObjectCommand,
+  DeleteBucketPolicyCommand,
   DeleteObjectCommand,
   DeleteObjectTaggingCommand,
   GetBucketEncryptionCommand,
@@ -12,6 +13,8 @@ const {
   ListObjectsV2Command,
   ListObjectVersionsCommand,
   PutObjectAclCommand,
+  GetBucketPolicyCommand,
+  PutBucketPolicyCommand,
   PutObjectCommand,
   PutBucketEncryptionCommand,
   PutObjectTaggingCommand,
@@ -21,7 +24,7 @@ const { Upload } = require('@aws-sdk/lib-storage');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const config = require('config');
 
-const { ALLUSERS, MetadataDirective, TaggingDirective } = require('../components/constants');
+const { ALLUSERS, DEFAULTREGION, MetadataDirective, TaggingDirective } = require('../components/constants');
 const log = require('../components/log')(module.filename);
 const utils = require('../components/utils');
 
@@ -198,40 +201,6 @@ const objectStorageService = {
   },
 
   /**
-   * @function getObjectAcl
-   * Gets the access control list for an object
-   * @param {string} options.filePath The filePath of the object
-   * @param {string} [options.s3VersionId] Optional version ID used to reference a speciific version of the object
-   * @param {string} [options.bucketId] Optional bucketId
-   * @returns {Promise<GetObjectAclOutput>} The response of the get object acl operation
-   * @throws If object is not found
-   */
-  async getObjectAcl({ filePath, s3VersionId = undefined, bucketId = undefined }) {
-    const data = await utils.getBucket(bucketId);
-    const params = {
-      Bucket: data.bucket,
-      Key: filePath,
-      VersionId: s3VersionId
-    };
-    return this._getS3Client(data).send(new GetObjectAclCommand(params));
-  },
-
-  /**
-   * @function getObjectPublic
-   * Gets the public status for an object
-   * @param {string} options.filePath The filePath of the object
-   * @param {string} [options.s3VersionId] Optional version ID used to reference a speciific version of the object
-   * @param {string} [options.bucketId] Optional bucketId
-   * @returns {Promise<boolean>} True if read permission exists on AllUsers group, false otherwise
-   * @throws If object is not found
-   */
-  async getObjectPublic({ filePath, s3VersionId = undefined, bucketId = undefined }) {
-    const response = await this.getObjectAcl({ filePath, s3VersionId, bucketId });
-    return response.Grants
-      .some(grant => grant.Grantee?.URI === ALLUSERS && grant.Permission === 'READ');
-  },
-
-  /**
    * @function getObjectTagging
    * Gets the tags of the object at `filePath`
    * @param {string} options.filePath The filePath of the object
@@ -391,7 +360,7 @@ const objectStorageService = {
       Bucket: data.bucket,
       ContinuationToken: continuationToken,
       MaxKeys: maxKeys,
-      Prefix: filePath ?? prefix // Must filter via "prefix" - https://stackoverflow.com/a/56569856
+      Prefix: filePath ?? prefix // Must filter via 'prefix' - https://stackoverflow.com/a/56569856
     };
 
     return this._getS3Client(data).send(new ListObjectsV2Command(params));
@@ -415,7 +384,7 @@ const objectStorageService = {
       Bucket: data.bucket,
       KeyMarker: keyMarker,
       MaxKeys: maxKeys,
-      Prefix: filePath ?? prefix // Must filter via "prefix" - https://stackoverflow.com/a/56569856
+      Prefix: filePath ?? prefix // Must filter via 'prefix' - https://stackoverflow.com/a/56569856
     };
 
     return this._getS3Client(data).send(new ListObjectVersionsCommand(params));
@@ -486,39 +455,207 @@ const objectStorageService = {
   },
 
   /**
-   * @function putObjectAcl
-   * Puts the canned access control list for an object
-   * @param {ObjectCannedACL} options.acl The acl to apply to an object
-   * @param {string} options.filePath The filePath of the object
-   * @param {string} [options.s3VersionId] Optional version ID used to reference a speciific version of the object
-   * @param {string} [options.bucketId] Optional bucketId
-   * @returns {Promise<PutObjectAclOutput>} The response of the put object acl operation
-   * @throws If object is not found
+   * @function hasPublicAcl
+   * checks for a S3 public 'canned' ACL for the given key
+   * @param {object} data An object containing accessKeyId, bucket, endpoint, key,
+   * @param {string} key Key of the resource
+   * @returns {Promise<boolean>} whether the given resource has a public ACL
    */
-  async putObjectAcl({ acl, filePath, s3VersionId = undefined, bucketId = undefined }) {
-    const data = await utils.getBucket(bucketId);
-    const params = {
-      ACL: acl,
-      Bucket: data.bucket,
-      Key: filePath,
-      VersionId: s3VersionId
-    };
-    return this._getS3Client(data).send(new PutObjectAclCommand(params));
+  async hasPublicAcl(data, key) {
+    let hasPublicAcl = false;
+    if (data.key !== key) {
+      const existingAcl = await this._getS3Client(data).send(new GetObjectAclCommand({
+        Bucket: data.bucket,
+        Key: key
+      }));
+      const existingGrants = existingAcl.Grants;
+      return existingGrants.some(grant => grant.Grantee?.URI === ALLUSERS && grant.Permission === 'READ');
+    }
+    return hasPublicAcl;
   },
 
   /**
-   * @function putObjectPublic
-   * Puts the public/private status for an object
-   * @param {string} options.filePath The filePath of the object
-   * @param {boolean=false} [options.public] Optional boolean on whether to make the object public
-   * @param {string} [options.s3VersionId] Optional version ID used to reference a speciific version of the object
-   * @param {string} [options.bucketId] Optional bucketId
-   * @returns {Promise<PutObjectAclOutput>} The response of the put object acl operation
-   * @throws If object is not found
+   * removes public ACL, where ACL grants ALLUSERS READ permission,
+   * for all objects at or below a given path
+   * note: will also remove this type of ACL set by other applications
    */
-  async putObjectPublic({ filePath, public: publicFlag = false, s3VersionId = undefined, bucketId = undefined }) {
-    const acl = publicFlag ? 'public-read' : 'private';
-    return this.putObjectAcl({ acl, filePath, s3VersionId, bucketId });
+  async removePublicACL(bucketId, path, recursive = false) {
+    try {
+      const data = await utils.getBucket(bucketId);
+      const key = utils.stripDelimit(path);
+      let objects = [];
+
+      // list all objects at and below provided path (key)
+      if (recursive) {
+        const s3Response = await this.listAllObjectVersions({ filePath: key, bucketId: bucketId, precisePath: false });
+        log.info(`Found ${s3Response.Versions.length} object versions and ${s3Response.DeleteMarkers.length} 
+        delete markers in S3 for bucketId ${data.bucketId}`, { function: 'syncBucketRecursive' });
+        const s3Keys = [...new Set([
+          ...s3Response.DeleteMarkers.map(object => object.Key),
+          ...s3Response.Versions.map(object => object.Key),
+        ])];
+        objects = s3Keys;
+      } else {
+        objects = [key];
+      }
+      log.info(`Removing ACL's from ${objects.length} objects`, { function: 'removePublicACL' });
+
+      // for each object update existing ACL to remove READ on ALLUSERS
+      // for (const objKey of objects.slice(0, 1000)) { // limit to 1000 to avoid timeouts
+      for (const objKey of objects) {
+        const existingAcl = await this._getS3Client(data).send(new GetObjectAclCommand({
+          Bucket: data.bucket,
+          Key: objKey
+        }));
+        const existingGrants = existingAcl.Grants;
+        const hasPublicAcl = existingGrants.some(
+          grant => grant.Grantee?.URI === ALLUSERS && grant.Permission === 'READ'
+        );
+        if (hasPublicAcl) {
+          await this._getS3Client(data).send(new PutObjectAclCommand({
+            AccessControlPolicy: {
+              Grants: existingGrants
+                .filter(grant => grant.Grantee?.URI !== ALLUSERS && grant.Permission !== 'READ')
+                .map(grant => {
+                  return {
+                    Grantee: grant.Grantee,
+                    Permission: grant.Permission,
+                  };
+                }),
+              Owner: existingAcl.Owner
+            },
+            Bucket: data.bucket,
+            Key: objKey,
+          }));
+        }
+      }
+    } catch (error) {
+      log.error('Error in removePublicACL:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * @function updatePublic
+   * Updates the S3 Bucket Policies for the given resource
+   * any non-COMS Bucket Policies (Sid starts with `coms::`) are preserved
+   * NOTE: This function will remove legacy ACL's for all resources at or below path when setting to private
+   * to ensure objects are not inadvertently left public due to ACL settings
+   * @param {string} path the path of the resource
+   * @param {boolean} whether given resource should be set to public
+   * @param {string} bucketId of COMS bucket for the resource
+   * @returns {Promise<object>} The S3 PutBucketPolicyCommand response
+   */
+  async updatePublic({ path, public: setAsPublic = false, bucketId }) {
+    const data = await utils.getBucket(bucketId);
+    const isPrefix = data.key + '/' === path;
+    const resource = data.bucket + '/' + path;
+    let existingPolicies = [];
+    let s3Response = [];
+
+    // Get existing policy
+    try {
+      const existingPolicy = await this._getS3Client(data).send(new GetBucketPolicyCommand({ Bucket: data.bucket }));
+      existingPolicies = JSON.parse(existingPolicy.Policy).Statement;
+      // If COMS policy found for any parent prefix, throw error, exceptions from inherited policies are not permitted
+      const parentPolicy = existingPolicies.find(policy =>
+        `coms::${resource}`.startsWith(policy.Sid) &&
+        `coms::${resource}` !== policy.Sid);
+      if (parentPolicy) {
+        throw new Error(`Unable to override Public status set on folder: ${parentPolicy.Resource}`);
+      }
+    } catch (e) {
+      log.debug('No existing policy found', { function: 'updatePublic' });
+    }
+
+    // --- Update policy
+    // keep non-coms and sibling policies
+    let newPolicies = existingPolicies.filter(policy => {
+      return !policy.Sid.startsWith(utils.trimResourcePath(`coms::${resource}`));
+    });
+    // if making resource private and no other policies remain, remove entire policy
+    if (newPolicies.length === 0 && !setAsPublic) {
+      await this._getS3Client(data).send(new DeleteBucketPolicyCommand({ Bucket: data.bucket }));
+    }
+    // if making public add Allow rule for this resource (and below)
+    if (setAsPublic) {
+      const resourceKey = isPrefix ? resource + '*' : resource; // prefixes/need/trailing/wildcard/*
+      newPolicies
+        .push({
+          Action: ['s3:GetObject', 's3:GetObjectVersion'],
+          Resource: resourceKey,
+          Effect: 'Allow',
+          Principal: '*',
+          Sid: 'coms::' + resource,
+        });
+    }
+    if (newPolicies.length > 0) {
+      s3Response = await this._getS3Client(data).send(new PutBucketPolicyCommand({
+        Bucket: data.bucket,
+        Policy: JSON.stringify({ Version: '2012-10-17', Statement: newPolicies })
+      }));
+    }
+    // -- remove all ACL's for this resource and below as precaution to user
+    // if updating a single object or setting a folder private, 
+    if (!isPrefix || !setAsPublic) await this.removePublicACL(bucketId, path, isPrefix);
+
+    return s3Response;
+  },
+
+  /**
+   * @function getPublic
+   * Checks for a Bucket Policy or ACL that will make the given resource public
+   * @param {string} options.path The path of the resource to check
+   * @param {string} [options.bucketId] Optional bucketId to retrieve bucket configuration
+   * @param {object} [options.bucket] Optional bucket object containing bucketId (alternative to bucketId)
+   * @returns {Promise<boolean>} True if the resource is public via policy or ACL, false otherwise
+   */
+  async getPublic({ path, bucketId = undefined, bucket = undefined }) {
+    const bucketData = bucket ? { ...bucket, region: DEFAULTREGION } : await utils.getBucket(bucketId);
+    const resource = bucketData.bucket + '/' + path;
+    const hasPublicPolicy = await this.hasEffectivePublicPolicy(resource, bucketData);
+    // if resource is an object, check for public ACL's (ACL's cannot apply to prefixes)
+    const hasPublicAcl = bucketData.key !== resource ? await this.hasPublicAcl(bucketData, path) : false;
+    // Check for COMS Bucket Policy for this resource
+    return hasPublicAcl || hasPublicPolicy;
+  },
+
+  /**
+   * @function hasEffectivePublicPolicy
+   * check for a Bucket Policy that will make the given resource public
+   * @param {*} resource
+   * @param {*} bucketData
+   */
+  async hasEffectivePublicPolicy(resource, bucketData) {
+    try {
+      const existingPolicy = await this._getS3Client(bucketData)
+        .send(new GetBucketPolicyCommand({ Bucket: bucketData.bucket }));
+      const statement = JSON.parse(existingPolicy.Policy).Statement;
+      // A Deny policy on resource or above, which override Allow policies will set public status to false
+      const denyPolicies = statement
+        .filter(p => {
+          return p.Effect === 'Deny' &&
+            resource.startsWith(utils.trimResourcePath(p.Resource)) &&
+            p.Principal === '*';
+        });
+      if (denyPolicies.length > 0) {
+        return false;
+      }
+      // Any Allow policy on resource or above will set public status to true
+      else {
+        const allowPolicies = statement
+          .filter(p => {
+            return p.Effect === 'Allow' &&
+              resource.startsWith(utils.trimResourcePath(p.Resource)) &&
+              p.Principal === '*';
+          })
+          .sort((a, b) => b.Resource.length - a.Resource.length);
+        return (allowPolicies.length > 0) ? true : false;
+      }
+    } catch (e) {
+      log.debug('No existing effective policies found', { function: 'hasEffectivePublicPolicy' });
+      return false;
+    }
   },
 
   /**

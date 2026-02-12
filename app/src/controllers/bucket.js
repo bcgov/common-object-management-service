@@ -9,6 +9,7 @@ const log = require('../components/log')(module.filename);
 const {
   addDashesToUuid,
   getCurrentIdentity,
+  getBucket,
   isTruthy,
   joinPath,
   mixedQueryToArray,
@@ -169,6 +170,7 @@ const controller = {
       bucket: parentBucket.bucket,
       endpoint: parentBucket.endpoint,
       key: childKey,
+      public: parentBucket.public,
       secretAccessKey: parentBucket.secretAccessKey,
       region: parentBucket.region ?? undefined,
       active: parentBucket.active,
@@ -335,6 +337,58 @@ const controller = {
       next(error);
     }
   },
+
+
+  /**
+   * @function togglePublic
+   * Sets the public flag of a bucket (or folder)
+   * @param {object} req Express request object
+   * @param {object} res Express response object
+   * @param {function} next The next callback function
+   * @returns {function} Express middleware function
+   */
+  async togglePublic(req, res, next) {
+    try {
+      const bucketId = addDashesToUuid(req.params.bucketId);
+      const publicFlag = isTruthy(req.query.public) ?? false;
+      const userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER), SYSTEM_USER);
+
+      const bucket = await getBucket(bucketId);
+      const data = {
+        bucketId: bucketId,
+        path: bucket.key + '/',
+        public: publicFlag,
+        userId: userId
+      };
+      // Update S3 Policy
+      await storageService.updatePublic(data).catch((e) => {
+        log.warn('Failed to apply permission changes to S3 ' + e, { function: 'togglePublic', ...data });
+      });
+
+      // Child bucket cannot be non-public when parent is public
+      const parents = await bucketService.searchParentBuckets(bucket);
+      if (!publicFlag && parents.some(b => b.public)) {
+        throw new Problem(409, {
+          detail: 'Current bucket cannot be non-public when parent bucket(s) are public',
+          instance: req.originalUrl,
+          bucketId: bucketId
+        });
+      }
+
+      // update public flag for this bucket and all child buckets and objects!
+      const response = await bucketService.updatePublic({
+        ...bucket,
+        bucketId: bucketId,
+        public: publicFlag,
+        userId: userId
+      });
+
+      res.status(200).json(response);
+    } catch (e) {
+      next(errorToProblem(SERVICE, e));
+    }
+  },
+
 
   /**
    * @function updateBucket

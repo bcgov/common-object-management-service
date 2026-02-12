@@ -14,14 +14,14 @@ const {
 } = require('../../middleware/authorization');
 
 router.use(checkAppMode);
-router.use(requireSomeAuth);
 
 /** Creates a bucket */
 router.put('/',
+  requireSomeAuth,
   express.json(),
   bucketValidator.createBucket,
   checkS3BasicAccess,
-  // checkElevatedUser,
+  // checkElevatedUser, // only allow elevated users to connect buckets and add folders
   (req, res, next) => {
     bucketController.createBucket(req, res, next);
   });
@@ -32,6 +32,7 @@ router.put('/',
  * If bucketId path param is not given, router.get('/') (the bucket search endpoint) is called instead.
  */
 router.head('/:bucketId',
+  requireSomeAuth,
   bucketValidator.headBucket,
   checkS3BasicAccess,
   hasPermission(Permissions.READ),
@@ -50,6 +51,7 @@ router.get('/:bucketId',
 
 /** Search for buckets */
 router.get('/',
+  requireSomeAuth,
   bucketValidator.searchBuckets,
   checkS3BasicAccess,
   (req, res, next) => {
@@ -58,6 +60,7 @@ router.get('/',
 
 /** Updates a bucket */
 router.patch('/:bucketId',
+  requireSomeAuth,
   express.json(),
   bucketValidator.updateBucket,
   checkS3BasicAccess,
@@ -68,8 +71,21 @@ router.patch('/:bucketId',
   }
 );
 
+/** Sets the public flag of a bucket (or folder) */
+router.patch('/:bucketId/public',
+  requireSomeAuth,
+  bucketValidator.togglePublic,
+  checkS3BasicAccess,
+  checkElevatedUser,
+  hasPermission(Permissions.MANAGE),
+  (req, res, next) => {
+    bucketController.togglePublic(req, res, next);
+  }
+);
+
 /** Deletes the bucket */
 router.delete('/:bucketId',
+  requireSomeAuth,
   bucketValidator.deleteBucket,
   checkS3BasicAccess,
   checkElevatedUser,
@@ -83,6 +99,7 @@ router.delete('/:bucketId',
  * Note: operation requires CREATE permission on parent
  * */
 router.put('/:bucketId/child',
+  requireSomeAuth,
   express.json(),
   bucketValidator.createBucketChild,
   checkS3BasicAccess,
@@ -99,6 +116,7 @@ router.put('/:bucketId/child',
  * ref: https://expressjs.com/en/guide/using-middleware.html
  */
 router.get('/:bucketId/sync',
+  requireSomeAuth,
   bucketValidator.syncBucket,
   checkS3BasicAccess,
   (req, _res, next) => {

@@ -1,8 +1,9 @@
 const { v4: uuidv4, NIL: SYSTEM_USER } = require('uuid');
 
 const bucketPermissionService = require('./bucketPermission');
-const { Bucket } = require('../db/models');
 const { Permissions } = require('../components/constants');
+const { Bucket, ObjectModel } = require('../db/models');
+const { isBelowPrefix } = require('../components/utils');
 
 /**
  * The Bucket DB Service
@@ -120,6 +121,7 @@ const service = {
         bucket: data.bucket,
         endpoint: data.endpoint,
         key: data.key ? data.key : '/',
+        public: data.public,
         secretAccessKey: data.secretAccessKey,
         region: data.region,
         active: data.active,
@@ -261,6 +263,44 @@ const service = {
   },
 
   /**
+   * @function searchParentBuckets
+   * Get db records for each folder above in the hierarchy of the provided bucket
+   * optionally include permissions for each bucket for the given user
+   * @param {object} bucket a bucket model (record) from the COMS db
+   * @param {boolean} returnPermissions also return current user's permissions for each bucket
+   * @param {object} [etrx=undefined] An optional Objection Transaction object
+   * @returns {Promise<object[]>} An array of bucket records
+   * @throws If there are no records found
+   */
+  searchParentBuckets: async (bucket, returnPermissions = false, userId, etrx = undefined) => {
+    let trx;
+    try {
+      trx = etrx ? etrx : await Bucket.startTransaction();
+      const response = Bucket.query()
+        .modify(query => {
+          if (returnPermissions) {
+            query
+              .withGraphJoined('bucketPermission')
+              .whereIn('bucketPermission.bucketId', builder => {
+                builder.distinct('bucketPermission.bucketId')
+                  .where('bucketPermission.userId', userId);
+              });
+          }
+        })
+        .modify('filterEndpoint', bucket.endpoint)
+        .where('bucket', bucket.bucket)
+        .then(buckets => {
+          return buckets.filter(b => isBelowPrefix(b.key, bucket.key));
+        });
+      if (!etrx) await trx.commit();
+      return response;
+    } catch (err) {
+      if (!etrx && trx) await trx.rollback();
+      throw err;
+    }
+  },
+
+  /**
    * @function read
    * Get a bucket db record based on bucketId
    * @param {string} bucketId The bucket uuid to read
@@ -322,7 +362,8 @@ const service = {
         region: data.region,
         active: data.active,
         updatedBy: data.userId,
-        lastSyncRequestedDate: data.lastSyncRequestedDate
+        lastSyncRequestedDate: data.lastSyncRequestedDate,
+        public: data.public
       });
 
       if (!etrx) await trx.commit();
@@ -332,6 +373,35 @@ const service = {
       throw err;
     }
   },
+
+  // update public for all subfolders and objects
+  updatePublic: async (data, etrx = undefined) => {
+    let trx;
+    try {
+      trx = etrx ? etrx : await Bucket.startTransaction();
+
+      // get child buckets
+      const dbChildBuckets = await service.searchChildBuckets(data, false, data.userId, trx);
+      const bucketIds = dbChildBuckets.map(b => b.bucketId).concat([data.bucketId]);
+
+      // Update bucket records in DB
+      await Bucket.query(trx)
+        .patch({ updatedBy: data.userId, public: data.public })
+        .whereIn('bucketId', bucketIds);
+
+      // Update object records in DB
+      const updateObjects = await ObjectModel.query(trx)
+        .patch({ updatedBy: data.userId, public: data.public })
+        .whereIn('bucketId', bucketIds);
+
+      if (!etrx) await trx.commit();
+      return updateObjects.length;
+    } catch (err) {
+      if (!etrx && trx) await trx.rollback();
+      throw err;
+    }
+  },
+
 };
 
 module.exports = service;
