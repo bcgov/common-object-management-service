@@ -33,6 +33,7 @@ let queueId;
 const app = express();
 app.use(compression());
 app.use(cors(DEFAULTCORS));
+// TODO: extend query param settings further as needed (eg allow bucketId[] for multiple bucket search)
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
 
