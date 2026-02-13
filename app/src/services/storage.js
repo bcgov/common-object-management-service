@@ -84,7 +84,8 @@ const objectStorageService = {
           timeout: 30000
         }
       },
-      region: region
+      region: region,
+      requestChecksumCalculation: 'WHEN_REQUIRED'
     });
     s3ClientCache.set(cacheKey, newClient);
     return newClient;
@@ -562,7 +563,7 @@ const objectStorageService = {
         `coms::${resource}`.startsWith(policy.Sid) &&
         `coms::${resource}` !== policy.Sid);
       if (parentPolicy) {
-        throw new Error(`Unable to override Public status set on folder: ${parentPolicy.Resource}`);
+        return Promise.reject(new Error(`Unable to override Public status set on path: ${parentPolicy.Resource}`));
       }
     } catch (e) {
       log.debug('No existing policy found', { function: 'updatePublic' });

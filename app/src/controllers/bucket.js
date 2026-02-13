@@ -361,9 +361,7 @@ const controller = {
         userId: userId
       };
       // Update S3 Policy
-      await storageService.updatePublic(data).catch((e) => {
-        log.warn('Failed to apply permission changes to S3 ' + e, { function: 'togglePublic', ...data });
-      });
+      await storageService.updatePublic(data);
 
       // Child bucket cannot be non-public when parent is public
       const parents = await bucketService.searchParentBuckets(bucket);

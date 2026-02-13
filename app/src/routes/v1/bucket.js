@@ -21,7 +21,7 @@ router.put('/',
   express.json(),
   bucketValidator.createBucket,
   checkS3BasicAccess,
-  checkElevatedUser, // only allow elevated users to connect buckets and add folders
+  // checkElevatedUser,
   (req, res, next) => {
     bucketController.createBucket(req, res, next);
   });
