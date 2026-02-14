@@ -84,7 +84,8 @@ const objectStorageService = {
           timeout: 30000
         }
       },
-      region: region
+      region: region,
+      requestChecksumCalculation: 'WHEN_REQUIRED'
     });
     s3ClientCache.set(cacheKey, newClient);
     return newClient;
