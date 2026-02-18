@@ -65,6 +65,8 @@ spec:
   template:
     metadata:
       labels: {{ include "coms.selectorLabels" . | nindent 8 }}
+    annotations:
+      rollme: {{ randAlphaNum 5 | quote }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets: {{ toYaml . | nindent 8 }}
