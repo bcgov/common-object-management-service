@@ -198,11 +198,11 @@ const hasPermission = (permission) => {
         log.debug('Basic authTypes are always permitted', { function: 'hasPermission' });
       }
       // if reading a public object
-      else if (req.params.objectId && await isObjectPublic(req.currentObject) && permission === Permissions.READ) {
+      else if (req.params.objectId && await _isObjectPublic(req.currentObject) && permission === Permissions.READ) {
         log.debug('Read requests on public objects are always permitted', { function: 'hasPermission' });
       }
       // if reading a public bucket
-      else if (req.params.bucketId && await isBucketPublic(req.params.bucketId) && permission === Permissions.READ) {
+      else if (req.params.bucketId && await _isBucketPublic(req.params.bucketId) && permission === Permissions.READ) {
         log.debug('Read requests on public buckets are always permitted', { function: 'hasPermission' });
       }
       else if (!await _checkPermission(req, permission)) {
@@ -280,9 +280,9 @@ const checkElevatedUser = async (req, _res, next) => {
  * get public status from COMS database
  * checks current object and all parent folders
  */
-const isObjectPublic = async (currentObject) => {
+const _isObjectPublic = async (currentObject) => {
   if (currentObject.public) return true;
-  if (await isBucketPublic(currentObject.bucketId)) return true;
+  if (await _isBucketPublic(currentObject.bucketId)) return true;
   return false;
 };
 
@@ -290,7 +290,7 @@ const isObjectPublic = async (currentObject) => {
  * get public status from COMS database
  * checks current folder and all parent folders
  */
-const isBucketPublic = async (bucketId) => {
+const _isBucketPublic = async (bucketId) => {
   const bucket = await bucketService.read(bucketId);
   if (bucket.public) return true;
   const parentBuckets = await bucketService.searchParentBuckets(bucket);
@@ -305,7 +305,7 @@ module.exports = {
   checkS3BasicAccess,
   currentObject,
   hasPermission,
-  isBucketPublic,
-  isObjectPublic,
+  _isObjectPublic,
+  _isBucketPublic,
   restrictNonIdirUserSearch,
 };

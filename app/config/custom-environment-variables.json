@@ -30,6 +30,7 @@
     "enabled": "OBJECTSTORAGE_ENABLED",
     "endpoint": "OBJECTSTORAGE_ENDPOINT",
     "key": "OBJECTSTORAGE_KEY",
+    "public": "OBJECTSTORAGE_PUBLIC",
     "secretAccessKey": "OBJECTSTORAGE_SECRETACCESSKEY"
   },
   "server": {

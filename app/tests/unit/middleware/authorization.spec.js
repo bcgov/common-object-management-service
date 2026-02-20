@@ -16,6 +16,8 @@ jest.mock('config');
 jest.mock('../../../src/components/utils');
 
 const checkPermissionSpy = jest.spyOn(mw, '_checkPermission');
+const isObjectPublicSpy = jest.spyOn(mw, '_isObjectPublic');
+const isBucketPublicSpy = jest.spyOn(mw, '_isBucketPublic');
 
 beforeEach(() => {
   jest.resetAllMocks();
@@ -409,7 +411,7 @@ describe('hasPermission', () => {
 
   // TODO: public folder feature - update tests
   //        (remove .skip() when done!)
-  describe.skip('given currentObject with public false and currentUser', () => {
+  describe('given currentObject with public false and currentUser', () => {
     beforeEach(() => {
       req.currentObject = {};
       req.currentUser = {};
@@ -450,4 +452,52 @@ describe('hasPermission', () => {
         }
       });
   });
+});
+
+describe('isObjectPublic', () => {
+
+  beforeAll(() => {
+    isObjectPublicSpy.mockRestore();
+  });
+
+  // Test cases:
+  // currentObject.public = true, false
+  // _isBucketPublic = true, false
+
+  it('should return true when object is public and bucket is public', async () => {
+    // isBucketPublicSpy.mockResolvedValueOnce(true);
+    const result = await mw._isObjectPublic({ public: true });
+
+    expect(result).toEqual(true);
+    expect(isBucketPublicSpy).toHaveBeenCalledTimes(0);
+  });
+
+  it('should return true when object is public and bucket is not public', async () => {
+    // isBucketPublicSpy.mockResolvedValueOnce(false);
+    const result = await mw._isObjectPublic({ public: true });
+
+    expect(result).toEqual(true);
+    expect(isBucketPublicSpy).toHaveBeenCalledTimes(0);
+  });
+
+  it('should return true when object is not public and bucket is public', async () => {
+    isBucketPublicSpy.mockResolvedValueOnce(true);
+
+    const result = await mw._isObjectPublic({ public: false });
+
+    expect(result).toEqual(true);
+    expect(isBucketPublicSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('should return false when object is not public and bucket is not public', async () => {
+    isBucketPublicSpy.mockResolvedValueOnce(false);
+
+    const result = await mw._isObjectPublic({ public: false });
+
+    expect(result).toEqual(false);
+    expect(isBucketPublicSpy).toHaveBeenCalledTimes(1);
+  });
+
+
+
 });

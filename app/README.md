@@ -85,6 +85,7 @@ The following variables enable and enforce the use of OIDC Bearer Authentication
 | `bucket`          | `OBJECTSTORAGE_BUCKET`          |         | The object storage bucket name                                      |
 | `endpoint`        | `OBJECTSTORAGE_ENDPOINT`        |         | Object store URL. eg: `https://nrs.objectstore.gov.bc.ca`           |
 | `key`             | `OBJECTSTORAGE_KEY`             |         | The base path for storage location                                  |
+| `public`          | `OBJECTSTORAGE_PUBLIC           |         | Whether to make the storage location public                         |
 | `secretAccessKey` | `OBJECTSTORAGE_SECRETACCESSKEY` |         | The Secret Access Key for your S3 compatible object storage account |
 
 ### Server Variables

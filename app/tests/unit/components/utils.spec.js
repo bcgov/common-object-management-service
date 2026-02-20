@@ -130,6 +130,7 @@ describe('getBucket', () => {
       .mockReturnValueOnce(cdata.public) // objectStorage.public
       .mockReturnValueOnce(cdata.secretAccessKey) // objectStorage.secretAccessKey
       .mockReturnValueOnce(cdata.region); // objectStorage.region
+    config.has.mockReturnValueOnce(true); // config.has(objectStorage.region)
 
     const result = await utils.getBucket();
 
