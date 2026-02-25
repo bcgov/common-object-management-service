@@ -264,46 +264,15 @@ const objectStorageService = {
   },
 
   /**
-   * @function listAllObjects
-   * Lists all objects in the bucket with the prefix of `filePath`.
-   * Performs pagination behind the scenes if required.
-   * @param {string} [options.filePath=undefined] Optional filePath of the objects
-   * @param {string} [options.bucketId=undefined] Optional bucketId
-   * @param {boolean} [options.precisePath=true] Optional boolean for filtering results based on the precise path
-   * @returns {Promise<object[]>} An array of objects matching the criteria
-   */
-  async listAllObjects({ filePath = undefined, bucketId = undefined, precisePath = true } = {}) {
-    const key = filePath ?? (await utils.getBucket(bucketId)).key;
-    const path = key !== DELIMITER ? key : '';
-
-    const objects = [];
-
-    let incomplete = false;
-    let nextToken = undefined;
-    do {
-      const { Contents, IsTruncated, NextContinuationToken } = await this.listObjectsV2({
-        filePath: path,
-        continuationToken: nextToken,
-        bucketId: bucketId
-      });
-
-      if (Contents) objects.push(
-        ...Contents.filter(object => !precisePath || utils.isAtPath(path, object.Key))
-      );
-      incomplete = IsTruncated;
-      nextToken = NextContinuationToken;
-    } while (incomplete);
-
-    return Promise.resolve(objects);
-  },
-
-  /**
    * @function listAllObjectVersions
    * Lists all objects in the bucket with the prefix of `filePath`.
    * Performs pagination behind the scenes if required.
    * @param {string} [options.filePath=undefined] Optional filePath of the objects
    * @param {string} [options.bucketId=undefined] Optional bucketId
-   * @param {boolean} [options.precisePath=true] Optional boolean for filtering results based on the precise path
+   * @param {boolean} [options.precisePath=true] Optional boolean for filtering results based on the precise path. 
+   * If true, only objects that exist directly at the filepath will be included in the results,
+   * If false, all objects nested in 'subfolders' below the filepath will be included
+   * match the precise path rather than below the prefix
    * @param {boolean} [options.filterLatest=false] Optional boolean for filtering results to only entries
    * with IsLatest being true
    * @returns {Promise<object>} An object containg an array of DeleteMarkers and Versions
@@ -328,12 +297,18 @@ const objectStorageService = {
 
       if (DeleteMarkers) deleteMarkers.push(
         ...DeleteMarkers
-          .filter(object => !precisePath || utils.isAtPath(path, object.Key))
+          .filter(object => {
+            if (precisePath) return utils.isAtPath(path, object.Key);
+            else return utils.isBelowPrefix(path, object.Key);
+          })
           .filter(object => !filterLatest || object.IsLatest === true)
       );
       if (Versions) versions.push(
         ...Versions
-          .filter(object => !precisePath || utils.isAtPath(path, object.Key))
+          .filter(object => {
+            if (precisePath) return utils.isAtPath(path, object.Key);
+            else return utils.isBelowPrefix(path, object.Key);
+          })
           .filter(object => !filterLatest || object.IsLatest === true)
       );
       incomplete = IsTruncated;
@@ -488,7 +463,7 @@ const objectStorageService = {
 
       // list all objects at and below provided path (key)
       if (recursive) {
-        const s3Response = await this.listAllObjectVersions({ filePath: key, bucketId: bucketId, precisePath: false });
+        const s3Response = await this.listAllObjectVersions({ filePath: key, bucketId: bucketId });
         log.info(`Found ${s3Response.Versions.length} object versions and ${s3Response.DeleteMarkers.length} 
         delete markers in S3 for bucketId ${data.bucketId}`, { function: 'syncBucketRecursive' });
         const s3Keys = [...new Set([

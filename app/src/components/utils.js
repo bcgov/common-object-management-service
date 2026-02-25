@@ -407,7 +407,8 @@ const utils = {
     if (typeof prefix !== 'string' || typeof path !== 'string') return false;
     else if (path === prefix) return false;
     else if (prefix === DELIMITER) return true;
-    else if (path.startsWith(prefix)) return true;
+    else if (path.startsWith(prefix + DELIMITER)) return true;
+    else if (prefix === '') return true;
     else return false;
   },
 

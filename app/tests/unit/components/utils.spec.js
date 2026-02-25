@@ -466,6 +466,11 @@ describe('isBelowPrefix', () => {
     [false, 'a/b', 'a/c'],
     [false, 'a/b/c', 'a/c/b'],
     [true, 'a/b/c', 'a/b/c/d/e/f'],
+    [true, 'a/b/c', 'a/b/c/d/e/f/g.jpg'],
+    [true, 'a/b/c', 'a/b/c/d/e/f/g hij.jpg'],
+    [false, 'a', 'abcd.jpeg'],
+    [true, 'a', 'a/bcd.jpeg'],
+    [true, '', 'abcd.jpeg'],
   ])('should return %j given prefix %j and path %j', (expected, prefix, path) => {
     expect(utils.isBelowPrefix(prefix, path)).toEqual(expected);
   });
