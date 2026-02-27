@@ -2,8 +2,8 @@ const express = require('express');
 const router = express.Router();
 
 const { Permissions } = require('../../../components/constants');
-const { bucketPermissionController } = require('../../../controllers');
-const { bucketPermissionValidator } = require('../../../validators');
+const { bucketIdpPermissionController } = require('../../../controllers');
+const { bucketIdpPermissionValidator } = require('../../../validators');
 const {
   checkAppMode,
   currentObject,
@@ -18,45 +18,45 @@ router.use(requireSomeAuth);
 
 /** Search for bucket permissions */
 router.get('/',
-  bucketPermissionValidator.searchPermissions,
+  bucketIdpPermissionValidator.searchPermissions,
   checkS3BasicAccess,
   (req, res, next) => {
-    bucketPermissionController.searchPermissions(req, res, next);
+    bucketIdpPermissionController.searchPermissions(req, res, next);
   });
 
 /** Returns the bucket permissions */
 router.get('/:bucketId',
-  bucketPermissionValidator.listPermissions,
+  bucketIdpPermissionValidator.listPermissions,
   currentObject,
   checkS3BasicAccess,
   hasPermission(Permissions.READ),
   (req, res, next) => {
-    bucketPermissionController.listPermissions(req, res, next);
+    bucketIdpPermissionController.listPermissions(req, res, next);
   }
 );
 
-/** Grants bucket permissions to users */
+/** Grants bucket permissions to idps */
 router.put('/:bucketId',
   express.json(),
-  bucketPermissionValidator.addPermissions,
+  bucketIdpPermissionValidator.addPermissions,
   currentObject,
   checkS3BasicAccess,
   checkElevatedUser,
   hasPermission(Permissions.MANAGE),
   (req, res, next) => {
-    bucketPermissionController.addPermissions(req, res, next);
+    bucketIdpPermissionController.addPermissions(req, res, next);
   }
 );
 
-/** Deletes bucket permissions for a user */
+/** Deletes bucket permissions for a idp */
 router.delete('/:bucketId',
-  bucketPermissionValidator.removePermissions,
+  bucketIdpPermissionValidator.removePermissions,
   currentObject,
   checkS3BasicAccess,
   checkElevatedUser,
   hasPermission(Permissions.MANAGE),
   (req, res, next) => {
-    bucketPermissionController.removePermissions(req, res, next);
+    bucketIdpPermissionController.removePermissions(req, res, next);
   }
 );
 
