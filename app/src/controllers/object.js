@@ -21,7 +21,6 @@ const {
   getCurrentIdentity,
   getKeyValue,
   getMetadata,
-  getS3Url,
   getS3VersionId,
   joinPath,
   isTruthy,
@@ -882,18 +881,12 @@ const controller = {
         }
       }
       else {
-        let s3Url;
-        // if object is public, construct S3 url manually
-        if (req.currentObject.public) {
-          s3Url = await getS3Url(data);
-        }
-        // else get pre-signed S3 url
-        else {
-          s3Url = await storageService.readSignedUrl({
-            expiresIn: req.query.expiresIn,
-            ...data
-          });
-        }
+        // get pre-signed S3 url
+
+        const s3Url = await storageService.readSignedUrl({
+          expiresIn: req.query.expiresIn,
+          ...data
+        });
 
         // if request was for a url, present download url link
         if (req.query.download && req.query.download === DownloadMode.URL) {
@@ -901,21 +894,6 @@ const controller = {
         }
         // Download via HTTP redirect
         else {
-          /**
-           * Set CSP header to allow redirect to S3 URL
-           * /
-          // res
-          //   .set(
-          //     'Content-Security-Policy', 'default-src \'self\'; ' +
-          //     'connect-src \'self\' \'' + new URL(s3Url).origin + '\''
-          //   )
-          //   .set('Location', s3Url)
-          //   .end();
-
-          /**
-           * use express redirect 
-           * note: this will be a 302 redirect which is necessary for CORS preflight to work properly
-           */
           res.redirect(s3Url);
         }
       }
