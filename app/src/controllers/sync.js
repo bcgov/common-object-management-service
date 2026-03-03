@@ -6,6 +6,7 @@ const {
   getCurrentIdentity,
   formatS3KeyForCompare,
   isPrefixOfPath,
+  limitJobsPerFolder,
   mixedQueryToArray } = require('../components/utils');
 const utils = require('../db/models/utils');
 const log = require('../components/log')(module.filename);
@@ -20,6 +21,8 @@ const {
 } = require('../services');
 
 const SERVICE = 'ObjectQueueService';
+// limit number of objects synced per folder in a single sync operation
+const SYNCLIMITPERFOLDER = 50000;
 
 /**
  * The Sync Controller
@@ -296,8 +299,13 @@ const controller = {
       ])];
 
       // merge and remove duplicates
-      const jobs = [...new Map(objects.map(o => [o.path, o])).values()];
-      log.info(`Prepared ${jobs.length} jobs to enqueue to object queue`, { function: 'queueObjectRecords' });
+      const allObjects = [...new Map(objects.map(o => [o.path, o])).values()];
+      log.info(`Merged objects from S3 and COMS db to form ${allObjects.length} total object records to sync`);
+
+      // limit number of jobs per folder to avoid overwhelming the system with too many objects from a single folder
+      const jobs = limitJobsPerFolder(allObjects, SYNCLIMITPERFOLDER);
+      log.info(`Limited number of objects to sync to ${jobs.length} 
+        by limiting to ${SYNCLIMITPERFOLDER} objects per folder`);
 
       // create jobs in COMS db object_queue for each object
       // update 'lastSyncRequestedDate' value in COMS db for each bucket

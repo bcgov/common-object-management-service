@@ -413,6 +413,28 @@ const utils = {
   },
 
   /**
+   * Limits the number of jobs per folder to a specified number
+   * @function limitJobsPerFolder
+   * @param {*} jobs 
+   * @param {*} limit 
+   * @returns 
+   */
+  limitJobsPerFolder(jobs, limit) {
+    const jobsMap = new Map();
+    for (const job of jobs) {
+      const dirPath = job.path.substring(0, job.path.lastIndexOf(DELIMITER));
+      if (!jobsMap.has(dirPath)) {
+        jobsMap.set(dirPath, []);
+      }
+      const dirJobs = jobsMap.get(dirPath);
+      if (dirJobs.length < limit) {
+        dirJobs.push(job);
+      }
+    }
+    return Array.from(jobsMap.values()).flat();
+  },
+
+  /**
    * @function isTruthy
    * Returns true if the element name in the object contains a truthy value
    * @param {object} value The object to evaluate

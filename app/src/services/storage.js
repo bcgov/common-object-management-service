@@ -267,6 +267,12 @@ const objectStorageService = {
    * @function listAllObjectVersions
    * Lists all objects in the bucket with the prefix of `filePath`.
    * Performs pagination behind the scenes if required.
+   * 
+   * Note: `maxVersions` can be changed to limit total number of versions fetched.
+   * This will effectively limit to the number of objects synced between object storage and COMS
+   * todo: consider accepting this limit as a parameter for the `/bucket/sync` endpoint
+   * Note: COMS also enforces a limit of objects synced per folder in the sync controller
+   * 
    * @param {string} [options.filePath=undefined] Optional filePath of the objects
    * @param {string} [options.bucketId=undefined] Optional bucketId
    * @param {boolean} [options.precisePath=true] Optional boolean for filtering results based on the precise path. 
@@ -286,13 +292,17 @@ const objectStorageService = {
     const deleteMarkers = [];
     const versions = [];
 
+    let maxVersions = 5000000;
+    let maxVersionsPerIteration = 1000; // change number for limit
+    let iteration = 0;
     let incomplete = false;
     let nextKeyMarker = undefined;
     do {
       const { DeleteMarkers, Versions, IsTruncated, NextKeyMarker } = await this.listObjectVersion({
         filePath: path,
         keyMarker: nextKeyMarker,
-        bucketId: bucketId
+        bucketId: bucketId,
+        maxKeys: maxVersionsPerIteration
       });
 
       if (DeleteMarkers) deleteMarkers.push(
@@ -313,7 +323,8 @@ const objectStorageService = {
       );
       incomplete = IsTruncated;
       nextKeyMarker = NextKeyMarker;
-    } while (incomplete);
+      iteration++;
+    } while (incomplete && iteration < (maxVersions / maxVersionsPerIteration));
 
     return Promise.resolve({ DeleteMarkers: deleteMarkers, Versions: versions });
   },
