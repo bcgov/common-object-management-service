@@ -33,7 +33,7 @@ const service = {
       const currentPerms = await service.searchPermissions({ objId });
       const obj = data
         // Ensure all codes are upper cased
-        .map(p => ({ ...p, code: p.permCode.toUpperCase().trim() }))
+        .map(p => ({ ...p, permCode: p.permCode.toUpperCase().trim() }))
         // Filter out any invalid code values
         .filter(p => Object.values(Permissions).some(perm => perm === p.permCode))
         // Filter entry tuples that already exist
@@ -64,7 +64,6 @@ const service = {
   /**
    * @function listInheritedObjectIds
    * Get objects that are in bucket(s) with given permission(s) for given idp(s)
-   * with given permission(s) for given user(s).
    * @param {string[]} [params.idps] Optional array of idp(s)
    * @param {string[]} [params.bucketIds] Optional array of bucket id(s)
    * @param {string[]} [params.permCodes] Optional array of PermCode(s)
@@ -83,6 +82,7 @@ const service = {
       })
       .then(response => response.map(entry => entry.objectId));
   },
+
 
   /**
    * @function removePermissions
