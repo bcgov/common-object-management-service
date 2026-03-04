@@ -64,7 +64,6 @@ const service = {
   /**
    * @function listInheritedObjectIds
    * Get objects that are in bucket(s) with given permission(s) for given user(s)
-   * with given permission(s) for given user(s).
    * @param {string[]} [params.userIds] Optional array of user id(s)
    * @param {string[]} [params.bucketIds] Optional array of bucket id(s)
    * @param {string[]} [params.permCodes] Optional array of PermCode(s)

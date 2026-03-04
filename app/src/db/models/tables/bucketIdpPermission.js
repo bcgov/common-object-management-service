@@ -12,6 +12,7 @@ class BucketIdpPermission extends Timestamps(Model) {
 
   static get relationMappings() {
     const Bucket = require('./bucket');
+    const ObjectModel = require('./objectModel');
     const Permission = require('./permission');
     const IdentityProvider = require('./identityProvider');
 
@@ -22,6 +23,14 @@ class BucketIdpPermission extends Timestamps(Model) {
         join: {
           from: 'bucket_idp_permission.bucketId',
           to: 'bucket.bucketId'
+        }
+      },
+      object: {
+        relation: Model.HasOneRelation,
+        modelClass: ObjectModel,
+        join: {
+          from: 'bucket_idp_permission.bucketId',
+          to: 'object.bucketId'
         }
       },
       permission: {
