@@ -182,7 +182,7 @@ const service = {
   fetchMetadataForObject: (params) => {
     return ObjectModel.query()
       .select('object.id AS objectId', 'object.bucketId as bucketId')
-      .allowGraph('[bucketPermission, objectPermission, version.metadata]')
+      .allowGraph('[bucketPermission, objectPermission, objectIdpPermission, bucketIdpPermission, version.metadata]')
       .withGraphJoined('version.metadata')
       // get latest version that isn't a delete marker by default
       .modifyGraph('version', builder => {
@@ -206,14 +206,17 @@ const service = {
       // match on bucketIds parameter
       .modify('filterBucketIds', params.bucketIds)
       // scope to objects that user(s) has READ permission at object or bucket-level
-      .modify('hasPermission', params.userId, 'READ')
+      .modify('hasPermission', { userId: params.userId, idp: params.idp, permCode: 'READ' })
       // re-structure result like: [{ objectId: abc, metadata: [{ key: a, value: b }] }]
-      .then(result => result.map(row => {
-        return {
-          objectId: row.objectId,
-          metadata: row.version && row.version.length ? row.version[0].metadata : []
-        };
-      }));
+      .then(result =>
+        // de-dupe based on objectId, keeping all associated tags for each object
+        Array.from(new Map(result.map(item => [item.objectId, item])).values())
+          .map(row => {
+            return {
+              objectId: row.objectId,
+              metadata: row.version && row.version.length ? row.version[0].metadata : []
+            };
+          }));
   },
 
   /**
@@ -250,7 +253,11 @@ const service = {
             query
               .allowGraph('object')
               .withGraphJoined('object')
-              .modifyGraph('object', query => { query.modify('hasPermission', params.userId, 'READ'); })
+              .modifyGraph('object', query => {
+                query.modify('hasPermission', {
+                  userId: params.userId, idp: params.idp, permCode: 'READ'
+                });
+              })
               .whereNotNull('object.id');
           }
           if (params.bucketId) {
