@@ -23,7 +23,7 @@ const {
  * @function _checkIdpPermission
  * Checks if the current user is authorized to perform the operation because 
  * they have the required permission through their identity provider (idp) 
- * the identity provider of their athentication (eg: idir, bcsc, etc)
+ * of their athentication (eg: idir, bcsc, etc)
  * @param {object} req.currentUser Express request object currentUser
  * @param {object} req.params Express request object params
  * @param {string} permission The permission to check against
