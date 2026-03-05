@@ -13,9 +13,54 @@ const {
 const { NIL: SYSTEM_USER } = require('uuid');
 const {
   bucketPermissionService,
+  bucketIdpPermissionService,
   objectService,
   objectPermissionService,
+  objectIdpPermissionService,
   userService, bucketService } = require('../services');
+
+/**
+ * @function _checkIdpPermission
+ * Checks if the current user is authorized to perform the operation because 
+ * they have the required permission through their identity provider (idp) 
+ * of their athentication (eg: idir, bcsc, etc)
+ * @param {object} req.currentUser Express request object currentUser
+ * @param {object} req.params Express request object params
+ * @param {string} permission The permission to check against
+ * @returns {boolean} True if permission exists; false otherwise
+ */
+const _checkIdpPermission = async ({ currentObject, currentUser, params }, permission) => {
+  const authType = currentUser ? currentUser.authType : undefined;
+  let result = false;
+
+  // Guard against unauthorized access for all other cases
+  const userId = await userService.getCurrentUserId(getCurrentIdentity(currentUser, SYSTEM_USER));
+
+  if (authType === AuthType.BEARER && userId) {
+    const permissions = [];
+
+    const userIdp = currentUser.tokenPayload.identity_provider;
+    const searchParams = { permCode: permission, idp: userIdp };
+
+    if (params.objectId) {
+      // add object idp permissions
+      permissions.push(...await objectIdpPermissionService.searchPermissions({
+        objId: params.objectId, ...searchParams
+      }));
+    }
+    if (params.bucketId || currentObject.bucketId) {
+      // add bucket idp permissions
+      permissions.push(...await bucketIdpPermissionService.searchPermissions({
+        bucketId: params.bucketId || currentObject.bucketId, ...searchParams
+      }));
+    }
+
+    // Check if user has the required permission in their permission set
+    result = permissions.some(p => p.permCode === permission);
+  }
+
+  return result;
+};
 
 /**
  * @function _checkPermission
@@ -53,8 +98,6 @@ const _checkPermission = async ({ currentObject, currentUser, params }, permissi
     // Check if user has the required permission in their permission set
     result = permissions.some(p => p.permCode === permission);
   }
-
-  log.debug('Missing user identification', { function: '_checkPermission' });
   return result;
 };
 
@@ -187,14 +230,21 @@ const hasPermission = (permission) => {
     const canOidcMode = (mode) => [AuthMode.OIDCAUTH, AuthMode.FULLAUTH].includes(mode);
 
     try {
+      // if not in oidc mode, do not enforce permission checks
       if (!canOidcMode(authMode)) {
         log.debug('Current application mode does not enforce permission checks', { function: 'hasPermission' });
-      } else if (!req.params.objectId && !req.params.bucketId) {
+      }
+      // if missing either objectId and bucketId params, throw error as permission checks cannot be performed
+      else if (!req.params.objectId && !req.params.bucketId) {
         throw new Error('Missing request parameter(s)');
-      } else if (req.params.objectId && !req.currentObject) {
+      }
+      // if objectId param is present but currentObject property is not, throw - permission checks cannot be performed
+      else if (req.params.objectId && !req.currentObject) {
         // Force 403 on unauthorized or not found; do not allow 404 id brute force discovery
         throw new Error('Missing object record');
-      } else if (authType === AuthType.BASIC && canBasicMode(authMode)) {
+      }
+      // if in basic auth mode, allow access, buckets are pre-filtered in checkS3BasicAccess middleware
+      else if (authType === AuthType.BASIC && canBasicMode(authMode)) {
         log.debug('Basic authTypes are always permitted', { function: 'hasPermission' });
       }
       // if reading a public object
@@ -205,6 +255,11 @@ const hasPermission = (permission) => {
       else if (req.params.bucketId && await isBucketPublic(req.params.bucketId) && permission === Permissions.READ) {
         log.debug('Read requests on public buckets are always permitted', { function: 'hasPermission' });
       }
+      // if user has permission through their IDP, allow access without further checks
+      else if (await _checkIdpPermission(req, permission)) {
+        log.debug('User has required permission through IDP', { function: 'hasPermission' });
+      }
+      // else, check user permissions as normal
       else if (!await _checkPermission(req, permission)) {
         throw new Error(`User lacks required permission ${permission}`);
       }
@@ -299,6 +354,7 @@ const isBucketPublic = async (bucketId) => {
 };
 
 module.exports = {
+  _checkIdpPermission,
   _checkPermission,
   checkAppMode,
   checkElevatedUser,

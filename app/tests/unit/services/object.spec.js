@@ -141,7 +141,8 @@ describe('searchObjects', () => {
     expect(ObjectModel.query).toHaveBeenCalledTimes(1);
     expect(ObjectModel.query).toHaveBeenCalledWith(expect.anything());
     expect(ObjectModel.allowGraph).toHaveBeenCalledTimes(1);
-    expect(ObjectModel.allowGraph).toHaveBeenCalledWith('[bucketPermission, objectPermission, version]');
+    expect(ObjectModel.allowGraph)
+      .toHaveBeenCalledWith('[bucketPermission, objectPermission, objectIdpPermission, bucketIdpPermission, version]');
     expect(ObjectModel.groupBy).toHaveBeenCalledTimes(1);
     expect(ObjectModel.modify).toHaveBeenCalledTimes(11);
     expect(ObjectModel.modify).toHaveBeenNthCalledWith(1, 'filterIds', params.id);
@@ -156,7 +157,9 @@ describe('searchObjects', () => {
       metadata: params.metadata,
       tag: params.tag
     });
-    expect(ObjectModel.modify).toHaveBeenNthCalledWith(9, 'hasPermission', params.userId, 'READ');
+    expect(ObjectModel.modify).toHaveBeenNthCalledWith(9, 'hasPermission', {
+      idp: undefined, permCode: 'READ', userId: params.userId
+    });
     expect(ObjectModel.modify).toHaveBeenNthCalledWith(10, 'pagination', params.page, params.limit);
     expect(ObjectModel.modify).toHaveBeenNthCalledWith(11, 'sortOrder', params.sort, params.order);
     expect(objectModelTrx.commit).toHaveBeenCalledTimes(1);
@@ -187,7 +190,8 @@ describe('searchObjects', () => {
     expect(ObjectModel.query).toHaveBeenCalledTimes(1);
     expect(ObjectModel.query).toHaveBeenCalledWith(expect.anything());
     expect(ObjectModel.allowGraph).toHaveBeenCalledTimes(1);
-    expect(ObjectModel.allowGraph).toHaveBeenCalledWith('[bucketPermission, objectPermission, version]');
+    expect(ObjectModel.allowGraph)
+      .toHaveBeenCalledWith('[bucketPermission, objectPermission, objectIdpPermission, bucketIdpPermission, version]');
     expect(ObjectModel.groupBy).toHaveBeenCalledTimes(1);
     expect(ObjectModel.modify).toHaveBeenCalledTimes(11);
     expect(ObjectModel.modify).toHaveBeenNthCalledWith(1, 'filterIds', params.id);
@@ -203,7 +207,9 @@ describe('searchObjects', () => {
       metadata: params.metadata,
       tag: params.tag
     });
-    expect(ObjectModel.modify).toHaveBeenNthCalledWith(9, 'hasPermission', params.userId, 'READ');
+    expect(ObjectModel.modify).toHaveBeenNthCalledWith(9, 'hasPermission', {
+      idp: undefined, permCode: 'READ', userId: params.userId
+    });
     expect(ObjectModel.modify).toHaveBeenNthCalledWith(10, 'pagination', params.page, params.limit);
     expect(ObjectModel.modify).toHaveBeenNthCalledWith(11, 'sortOrder', params.sort, params.order);
     expect(objectModelTrx.commit).toHaveBeenCalledTimes(1);

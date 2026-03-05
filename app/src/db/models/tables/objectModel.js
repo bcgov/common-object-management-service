@@ -14,6 +14,8 @@ class ObjectModel extends Timestamps(Model) {
     const Bucket = require('./bucket');
     const ObjectPermission = require('./objectPermission');
     const BucketPermission = require('./bucketPermission');
+    const ObjectIdpPermission = require('./objectIdpPermission');
+    const BucketIdpPermission = require('./bucketIdpPermission');
     const Version = require('./version');
 
     return {
@@ -48,7 +50,23 @@ class ObjectModel extends Timestamps(Model) {
           from: 'object.bucketId',
           to: 'bucket_permission.bucketId'
         }
-      }
+      },
+      objectIdpPermission: {
+        relation: Model.HasManyRelation,
+        modelClass: ObjectIdpPermission,
+        join: {
+          from: 'object.id',
+          to: 'object_idp_permission.objectId'
+        }
+      },
+      bucketIdpPermission: {
+        relation: Model.HasManyRelation,
+        modelClass: BucketIdpPermission,
+        join: {
+          from: 'object.bucketId',
+          to: 'bucket_idp_permission.bucketId'
+        }
+      },
     };
   }
 
@@ -133,14 +151,17 @@ class ObjectModel extends Timestamps(Model) {
       findPath(query, value) {
         if (value) query.where('object.path', value);
       },
-      hasPermission(query, userId, permCode) {
-        if (userId && permCode) {
+      hasPermission(query, { userId, idp, permCode }) {
+        // userId will be defined if config.privacyMask is ON, in which case we want to filter by permissions. 
+        if (userId && idp && permCode) {
           query
             // withGraphFetched keep joining using default 'left join' operation,
             // to fix default behavior we are adding extra joinOperation which seems to be working with
             // corresponding JoinRelated
-            .withGraphFetched('[objectPermission, bucketPermission]', { joinOperation: 'fullOuterJoinRelated' })
-            .fullOuterJoinRelated('[objectPermission, bucketPermission]')
+            .withGraphFetched('[objectPermission, bucketPermission, objectIdpPermission, bucketIdpPermission]', {
+              joinOperation: 'fullOuterJoinRelated'
+            })
+            .fullOuterJoinRelated('[objectPermission, bucketPermission, objectIdpPermission, bucketIdpPermission]')
             // wrap in WHERE to make contained clauses exclusive of root query
             .where(query => {
               query
@@ -156,6 +177,20 @@ class ObjectModel extends Timestamps(Model) {
                     .where({
                       'bucketPermission.permCode': permCode,
                       'bucketPermission.userId': userId
+                    });
+                })
+                .orWhere(query => {
+                  query
+                    .where({
+                      'objectIdpPermission.permCode': permCode,
+                      'objectIdpPermission.idp': idp
+                    });
+                })
+                .orWhere(query => {
+                  query
+                    .where({
+                      'bucketIdpPermission.permCode': permCode,
+                      'bucketIdpPermission.idp': idp
                     });
                 });
             });
