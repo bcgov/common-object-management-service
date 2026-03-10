@@ -20,4 +20,10 @@ router.use('/invite', require('./invite'));
 /** Object Permission Router */
 router.use('/object', require('./objectPermission'));
 
+/** Bucket IDP Permission Router */
+router.use('/idp/bucket', require('./bucketIdpPermission'));
+
+/** Object IDP Permission Router */
+router.use('/idp/object', require('./objectIdpPermission'));
+
 module.exports = router;

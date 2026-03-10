@@ -38,6 +38,7 @@ const controller = {
       // if scoping to current user permissions on objects
       if (getConfigBoolean('server.privacyMask')) {
         params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
+        params.idp = req.currentUser.tokenPayload ? req.currentUser.tokenPayload.identity_provider : undefined;
         params.bucketId = bucketId?.length ? bucketId : undefined;
       }
       const response = await metadataService.fetchMetadataForVersion(params);
@@ -70,6 +71,7 @@ const controller = {
       // if scoping to current user permissions on objects
       if (getConfigBoolean('server.privacyMask')) {
         params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
+        params.idp = req.currentUser.tokenPayload ? req.currentUser.tokenPayload.identity_provider : undefined;
         params.bucketId = bucketId?.length ? bucketId : undefined;
       }
       const response = await tagService.fetchTagsForVersion(params);

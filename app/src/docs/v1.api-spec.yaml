@@ -18,26 +18,46 @@ security:
   - BearerAuth: []
     OpenID: []
 tags:
-  - name: Bucket
-    description: Operations for managing S3 Bucket(s).
-    externalDocs:
-      url: >-
-        https://developer.gov.bc.ca/docs/default/component/common-object-management-service/Endpoint-Notes/#bucket
-  - name: Metadata
-    description: Operations for managing Metadata for S3 Objects.
-    externalDocs:
-      url: >-
-        https://developer.gov.bc.ca/docs/default/component/common-object-management-service/Endpoint-Notes/#metadata
   - name: Object
     description: Operations directly influencing an S3 Object.
     externalDocs:
       url: >-
         https://developer.gov.bc.ca/docs/default/component/common-object-management-service/Endpoint-Notes/#object
-  - name: Permission
-    description: Operations for managing S3 permissions.
+  - name: Bucket
+    description: Operations for managing S3 Bucket(s).
     externalDocs:
       url: >-
-        https://developer.gov.bc.ca/docs/default/component/common-object-management-service/Endpoint-Notes/#permissions
+        https://developer.gov.bc.ca/docs/default/component/common-object-management-service/Endpoint-Notes/#bucket
+  - name: User
+    description: Operations to list valid queryable users and identity providers.
+    externalDocs:
+      url: >-
+        https://developer.gov.bc.ca/docs/default/component/common-object-management-service/Endpoint-Notes/#user
+  - name: User Permission
+    description: Operations for managing access permissions for users.
+    externalDocs:
+      url: >-
+        https://developer.gov.bc.ca/docs/default/component/common-object-management-service/Permissions
+  - name: IDP Permission
+    description: Operations for managing access permissions for users based on the identity provider of their OIDC token.
+    externalDocs:
+      url: >-
+        https://developer.gov.bc.ca/docs/default/component/common-object-management-service/Permissions
+  - name: Metadata
+    description: Operations for managing Metadata for S3 Objects.
+    externalDocs:
+      url: >-
+        https://developer.gov.bc.ca/docs/default/component/common-object-management-service/Endpoint-Notes/#metadata
+  - name: Tagging
+    description: Operations for managing Tags for S3 Objects.
+    externalDocs:
+      url: >-
+        https://developer.gov.bc.ca/docs/default/component/common-object-management-service/Endpoint-Notes/#tag
+  - name: Version
+    description: Operations to list object versions.
+    externalDocs:
+      url: >-
+        https://developer.gov.bc.ca/docs/default/component/common-object-management-service/Endpoint-Notes/#versions
   - name: Sync
     description: >-
       Operations for syncing existing buckets and objects. Ensures that external
@@ -45,21 +65,7 @@ tags:
     externalDocs:
       url: >-
         https://developer.gov.bc.ca/docs/default/component/common-object-management-service/Endpoint-Notes/#sync
-  - name: Tagging
-    description: Operations for managing Tags for S3 Objects.
-    externalDocs:
-      url: >-
-        https://developer.gov.bc.ca/docs/default/component/common-object-management-service/Endpoint-Notes/#tag
-  - name: User
-    description: Operations to list valid queryable users and identity providers.
-    externalDocs:
-      url: >-
-        https://developer.gov.bc.ca/docs/default/component/common-object-management-service/Endpoint-Notes/#user
-  - name: Version
-    description: Operations to list object versions.
-    externalDocs:
-      url: >-
-        hhttps://developer.gov.bc.ca/docs/default/component/common-object-management-service/Endpoint-Notes/#versions
+
 paths:
   /bucket:
     put:
@@ -1095,7 +1101,7 @@ paths:
         to get an extended bucket list factoring in object inheritance.
       operationId: bucketSearchPermissions
       tags:
-        - Permission
+        - User Permission
       parameters:
         - $ref: "#/components/parameters/Query-BucketId"
         - $ref: "#/components/parameters/Query-UserId"
@@ -1128,7 +1134,7 @@ paths:
         filtering parameters provided
       operationId: bucketListPermissions
       tags:
-        - Permission
+        - User Permission
       parameters:
         - $ref: "#/components/parameters/Query-UserId"
         - $ref: "#/components/parameters/Path-BucketId"
@@ -1162,7 +1168,7 @@ paths:
         permissions.
       operationId: bucketAddPermissions
       tags:
-        - Permission
+        - User Permission
       parameters:
         - $ref: "#/components/parameters/Path-BucketId"
         - $ref: "#/components/parameters/Query-Recursive"
@@ -1204,7 +1210,7 @@ paths:
         associated with a bucket; it is possible to lock yourself out of your own bucket!
       operationId: bucketRemovePermissions
       tags:
-        - Permission
+        - User Permission
       parameters:
         - $ref: "#/components/parameters/Path-BucketId"
         - $ref: "#/components/parameters/Query-UserId"
@@ -1236,7 +1242,7 @@ paths:
         for the intended resource to proceed.
       operationId: createInvite
       tags:
-        - Permission
+        - User Permission
       requestBody:
         description: >-
           An object containing at minimum either a `bucketId` or `objectId`
@@ -1271,7 +1277,7 @@ paths:
         authenticated.
       operationId: useInvite
       tags:
-        - Permission
+        - User Permission
       parameters:
         - $ref: "#/components/parameters/Path-InviteToken"
       responses:
@@ -1302,7 +1308,7 @@ paths:
         extended object list factoring in bucket inheritance.
       operationId: objectSearchPermissions
       tags:
-        - Permission
+        - User Permission
       parameters:
         - $ref: "#/components/parameters/Query-BucketId"
         - $ref: "#/components/parameters/Query-ObjectId"
@@ -1336,7 +1342,7 @@ paths:
         filtering parameters provided
       operationId: objectListPermissions
       tags:
-        - Permission
+        - User Permission
       parameters:
         - $ref: "#/components/parameters/Path-ObjectId"
         - $ref: "#/components/parameters/Query-UserId"
@@ -1368,7 +1374,7 @@ paths:
         the response.
       operationId: objectAddPermissions
       tags:
-        - Permission
+        - User Permission
       parameters:
         - $ref: "#/components/parameters/Path-ObjectId"
       requestBody:
@@ -1406,7 +1412,7 @@ paths:
         yourself out of your own object!
       operationId: objectRemovePermissions
       tags:
-        - Permission
+        - User Permission
       parameters:
         - $ref: "#/components/parameters/Path-ObjectId"
         - $ref: "#/components/parameters/Query-UserId"
@@ -1426,6 +1432,256 @@ paths:
           $ref: "#/components/responses/Forbidden"
         default:
           $ref: "#/components/responses/Error"
+  /permission/idp/bucket:
+    get:
+      summary: Searches for bucket permissions granted to identity providers
+      description: >-
+        Returns an array of buckets and their IDP permissions meeting the filtering
+        parameters provided. Use `objectPerms=true` in conjunction with an idp
+        to get an extended bucket list factoring in object inheritance.
+      operationId: bucketIdpSearchPermissions
+      tags:
+        - IDP Permission
+      parameters:
+        - $ref: "#/components/parameters/Query-BucketId"
+        - $ref: "#/components/parameters/Query-PermCode"
+        - $ref: "#/components/parameters/Query-ObjectPerms"
+        - $ref: "#/components/parameters/Query-Idp"
+      responses:
+        "200":
+          description: >-
+            Returns an array of bucketId and permissions matching the provided parameters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  anyOf:
+                    - $ref: "#/components/schemas/Response-BucketIdpPerms"
+                    - $ref: "#/components/schemas/Response-BucketIdpPermsWithObject"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        default:
+          $ref: "#/components/responses/Error"
+  /permission/idp/bucket/{bucketId}:
+    get:
+      summary: Returns the bucket permissions for identity providers
+      description: >-
+        Returns an array of IDP permissions for a specific bucket meeting the filtering parameters provided.
+      operationId: bucketIdpListPermissions
+      tags:
+        - IDP Permission
+      parameters:
+        - $ref: "#/components/parameters/Path-BucketId"
+        - $ref: "#/components/parameters/Query-Idp"
+        - $ref: "#/components/parameters/Query-PermCode"
+      responses:
+        "200":
+          description: >-
+            Returns an array of bucketId/idp/permCode triplets matching provided parameters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DB-BucketIdpPermission"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        default:
+          $ref: "#/components/responses/Error"
+    put:
+      summary: Grants bucket permissions to identity providers
+      description: >-
+        Adds permissions for a specific bucket to identity providers by specifying an arbitrary array of permCode and idp tuples.
+        This is an idempotent operation. The `recursive` option will also apply the specified
+        permissions to all child buckets where the current user has `MANAGE` permissions.
+      operationId: bucketIdpAddPermissions
+      tags:
+        - IDP Permission
+      parameters:
+        - $ref: "#/components/parameters/Path-BucketId"
+        - $ref: "#/components/parameters/Query-Recursive"
+      requestBody:
+        description: >-
+          An array of bucket permissions, each containing an `idp` and
+          `permCode`
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/Request-IdpPermissionTuple"
+      responses:
+        "201":
+          description: Returns an array of added permissions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DB-BucketIdpPermission"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        default:
+          $ref: "#/components/responses/Error"
+    delete:
+      summary: Deletes permissions for a bucket granted to identity providers
+      description: >-
+        Removes IDP permissions for a specific bucket by optionally specifying a set
+        of identity providers and subset of permissions to revoke. The `recursive` option will also remove the specified
+        permissions from all child buckets where the current user has `MANAGE` permissions.
+      operationId: bucketIdpRemovePermissions
+      tags:
+        - IDP Permission
+      parameters:
+        - $ref: "#/components/parameters/Path-BucketId"
+        - $ref: "#/components/parameters/Query-Idp"
+        - $ref: "#/components/parameters/Query-PermCode"
+        - $ref: "#/components/parameters/Query-Recursive"
+      responses:
+        "200":
+          description: Returns an array of deleted permissions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DB-BucketIdpPermission"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        default:
+          $ref: "#/components/responses/Error"
+
+  /permission/idp/object:
+    get:
+      summary: Search for object permissions granted to identity providers
+      description: >-
+        Returns an array of objects and their IDP permissions matching the filtering parameters provided.
+        Use `bucketPerms=true` in conjunction with an idp to get an extended object list factoring in bucket inheritance.
+      operationId: objectIdpSearchPermissions
+      tags:
+        - IDP Permission
+      parameters:
+        - $ref: "#/components/parameters/Query-BucketId"
+        - $ref: "#/components/parameters/Query-ObjectId"
+        - $ref: "#/components/parameters/Query-PermCode"
+        - $ref: "#/components/parameters/Query-BucketPerms"
+        - $ref: "#/components/parameters/Query-Idp"
+      responses:
+        "200":
+          description: >-
+            Returns an array of objectId and permissions matching provided parameters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  anyOf:
+                    - $ref: "#/components/schemas/Response-ObjectIdpPerms"
+                    - $ref: "#/components/schemas/Response-ObjectIdpPermsWithBucket"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        default:
+          $ref: "#/components/responses/Error"
+  /permission/idp/object/{objectId}:
+    get:
+      summary: Returns the object permissions for identity providers
+      description: >-
+        Returns an array of IDP permissions for a specific object meeting the filtering parameters provided.
+      operationId: objectIdpListPermissions
+      tags:
+        - IDP Permission
+      parameters:
+        - $ref: "#/components/parameters/Path-ObjectId"
+        - $ref: "#/components/parameters/Query-Idp"
+        - $ref: "#/components/parameters/Query-PermCode"
+      responses:
+        "200":
+          description: >-
+            Returns an array of objectId/idp/permCode triplets matching provided parameters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DB-ObjectIdpPermission"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        default:
+          $ref: "#/components/responses/Error"
+    put:
+      summary: Grants object permissions to identity providers
+      description: >-
+        Adds permissions for a specific object to identity providers by specifying an arbitrary array of permCode and idp tuples.
+        This is an idempotent operation.
+      operationId: objectIdpAddPermissions
+      tags:
+        - IDP Permission
+      parameters:
+        - $ref: "#/components/parameters/Path-ObjectId"
+      requestBody:
+        description: An array of objects, each containing a `permCode` and `idp`
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/Request-IdpPermissionTuple"
+      responses:
+        "201":
+          description: Returns an array of added permissions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DB-ObjectIdpPermission"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        default:
+          $ref: "#/components/responses/Error"
+    delete:
+      summary: Deletes permissions for an object granted to identity providers
+      description: >-
+        Removes IDP permissions for a specific object by optionally specifying a set
+        of identity providers and subset of permissions to revoke.
+      operationId: objectIdpRemovePermissions
+      tags:
+        - IDP Permission
+      parameters:
+        - $ref: "#/components/parameters/Path-ObjectId"
+        - $ref: "#/components/parameters/Query-Idp"
+        - $ref: "#/components/parameters/Query-PermCode"
+      responses:
+        "200":
+          description: Returns an array of deleted permissions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DB-ObjectIdpPermission"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        default:
+          $ref: "#/components/responses/Error"
+
   /sync:
     get:
       summary: Synchronize with the default bucket
@@ -2701,6 +2957,143 @@ components:
           description: The primary identifier for a user
           format: uuid
           example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
+    Request-IdpPermissionTuple:
+      title: Request IDP Permission Tuple
+      type: object
+      required:
+        - idp
+        - permCode
+      properties:
+        permCode:
+          $ref: "#/components/schemas/PermCode"
+        idp:
+          type: string
+          description: The identity provider (e.g. idir, bceid-basic)
+          example: idir
+
+    DB-BucketIdpPermission:
+      title: DB Bucket IDP Permission
+      type: object
+      allOf:
+        - type: object
+          required:
+            - id
+            - bucketId
+            - idp
+            - permCode
+          properties:
+            id:
+              type: string
+              format: uuid
+              description: The unique identifier for this permission tuple
+              example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
+            bucketId:
+              type: string
+              format: uuid
+              description: The unique identifier for the bucket
+              example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
+            idp:
+              type: string
+              description: The identity provider granted permissions
+              example: idir
+            permCode:
+              $ref: "#/components/schemas/PermCode"
+        - $ref: "#/components/schemas/DB-TimestampUserData"
+
+    DB-ObjectIdpPermission:
+      title: DB Object IDP Permission
+      type: object
+      allOf:
+        - type: object
+          required:
+            - id
+            - objectId
+            - idp
+            - permCode
+          properties:
+            id:
+              type: string
+              format: uuid
+              description: The unique identifier for this permission tuple
+              example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
+            objectId:
+              type: string
+              format: uuid
+              description: The unique identifier for the object
+              example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
+            idp:
+              type: string
+              description: The identity provider granted permissions
+              example: idir
+            permCode:
+              $ref: "#/components/schemas/PermCode"
+        - $ref: "#/components/schemas/DB-TimestampUserData"
+
+    Response-BucketIdpPerms:
+      title: Response Buckets with idp-level permissions
+      type: object
+      properties:
+        bucketId:
+          type: string
+          format: uuid
+          description: The unique identifier for the bucket
+          example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
+        permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/DB-BucketIdpPermission"
+    Response-BucketIdpPermsWithObject:
+      title: Response Buckets containing objects with idp permissions
+      description: >-
+        When `objectPerms=true` response will include buckets containing objects
+        with matching permissions.
+      type: object
+      properties:
+        bucketId:
+          type: string
+          format: uuid
+          description: >-
+            The unique identifier for the bucket. When `objectPerms=true`
+            response will include buckets containing objects with matching
+            permissions.
+          example: bf246e31-c807-496c-bc93-cd8bc2f1897f
+        permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/DB-BucketIdpPermission"
+
+    Response-ObjectIdpPerms:
+      title: Response Objects with idp-level permissions
+      type: object
+      properties:
+        objectId:
+          type: string
+          format: uuid
+          description: The unique identifier for the object
+          example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
+        permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/DB-ObjectIdpPermission"
+    Response-ObjectIdpPermsWithBucket:
+      title: Response Objects contained in buckets with idp permissions
+      description: >-
+        When `bucketPerms=true` response will include objects contained in
+        buckets with matching permissions.
+      type: object
+      properties:
+        objectId:
+          type: string
+          format: uuid
+          description: >-
+            The unique identifier for the object. When `bucketPerms=true` response
+            will include objects in buckets with matching permissions.
+          example: c05c7650-5f48-4e51-bf17-762e8fc121a1
+        permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/DB-ObjectIdpPermission"
+
     Response-BadRequest:
       title: Response Bad Request
       type: object
