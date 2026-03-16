@@ -9,7 +9,7 @@ const schema = {
       userId: scheme.guid,
       identityId: scheme.string,
       idp: scheme.string,
-      username: type.alphanum,
+      username: Joi.string().max(255),
       email: Joi.string(),
       firstName: type.alphanum,
       fullName: Joi.string().pattern(/^[\w\-\s]+$/).max(255),
