@@ -280,7 +280,7 @@ const hasPermission = (permission) => {
  * - complete email address
  * - userId
  * - identityId
- *
+ * - username
  * This restriction ensures that a non-idir user cannot expose other external user's names and email addresses
  * through a user search without knowing their full email, userId or identityId
  */
@@ -289,7 +289,7 @@ const restrictNonIdirUserSearch = async (req, _res, next) => {
     if (getConfigBoolean('server.privacyMask') &&
       req.currentUser.authType === AuthType.BEARER &&
       !ElevatedIdps.includes(req.currentUser.tokenPayload.identity_provider) &&
-      !hasOnlyPermittedKeys(req.query, ['email', 'userId', 'identityId'])
+      !hasOnlyPermittedKeys(req.query, ['email', 'userId', 'identityId', 'username'])
     ) {
       throw new Error('User lacks permission to complete this action');
     }

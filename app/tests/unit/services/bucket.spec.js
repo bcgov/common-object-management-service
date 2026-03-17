@@ -116,7 +116,7 @@ describe('searchBuckets', () => {
 
     expect(Bucket.query).toHaveBeenCalledTimes(1);
     expect(Bucket.allowGraph).toHaveBeenCalledTimes(1);
-    expect(Bucket.modify).toHaveBeenCalledTimes(5);
+    expect(Bucket.modify).toHaveBeenCalledTimes(7);
     expect(Bucket.then).toHaveBeenCalledTimes(1);
   });
 });

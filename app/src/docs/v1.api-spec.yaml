@@ -106,7 +106,7 @@ paths:
       summary: Search for buckets
       description: >-
         Returns a list of buckets matching all search criteria across all bucket
-        records
+        . Note: When searching by `endpoint`, `bucket` paramater must also be present and vice-versa.
       operationId: searchBuckets
       tags:
         - Bucket
@@ -114,6 +114,8 @@ paths:
         - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
         - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Query-BucketId"
+        - $ref: "#/components/parameters/Query-Bucket"
+        - $ref: "#/components/parameters/Query-BucketEndpoint"
         - $ref: "#/components/parameters/Query-Active"
         - $ref: "#/components/parameters/Query-Key"
         - $ref: "#/components/parameters/Query-BucketName"
@@ -1443,6 +1445,8 @@ paths:
       tags:
         - IDP Permission
       parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Query-BucketId"
         - $ref: "#/components/parameters/Query-PermCode"
         - $ref: "#/components/parameters/Query-ObjectPerms"
@@ -1474,6 +1478,8 @@ paths:
       tags:
         - IDP Permission
       parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Path-BucketId"
         - $ref: "#/components/parameters/Query-Idp"
         - $ref: "#/components/parameters/Query-PermCode"
@@ -1503,6 +1509,8 @@ paths:
       tags:
         - IDP Permission
       parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Path-BucketId"
         - $ref: "#/components/parameters/Query-Recursive"
       requestBody:
@@ -1540,6 +1548,8 @@ paths:
       tags:
         - IDP Permission
       parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Path-BucketId"
         - $ref: "#/components/parameters/Query-Idp"
         - $ref: "#/components/parameters/Query-PermCode"
@@ -1570,6 +1580,8 @@ paths:
       tags:
         - IDP Permission
       parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Query-BucketId"
         - $ref: "#/components/parameters/Query-ObjectId"
         - $ref: "#/components/parameters/Query-PermCode"
@@ -1602,6 +1614,8 @@ paths:
       tags:
         - IDP Permission
       parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Path-ObjectId"
         - $ref: "#/components/parameters/Query-Idp"
         - $ref: "#/components/parameters/Query-PermCode"
@@ -1630,6 +1644,8 @@ paths:
       tags:
         - IDP Permission
       parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Path-ObjectId"
       requestBody:
         description: An array of objects, each containing a `permCode` and `idp`
@@ -1663,6 +1679,8 @@ paths:
       tags:
         - IDP Permission
       parameters:
+        - $ref: "#/components/parameters/Header-S3AccessMode-Bucket"
+        - $ref: "#/components/parameters/Header-S3AccessMode-Endpoint"
         - $ref: "#/components/parameters/Path-ObjectId"
         - $ref: "#/components/parameters/Query-Idp"
         - $ref: "#/components/parameters/Query-PermCode"
@@ -2120,6 +2138,20 @@ components:
               type: string
               format: uuid
               example: ac246e31-c807-496c-bc93-cd8bc2f1b2b4
+    Query-Bucket:
+      in: query
+      name: bucket
+      description: The ID of a bucket
+      schema:
+        type: string
+        example: ezakyp
+    Query-BucketEndpoint:
+      in: query
+      name: endpoint
+      description: A valid RFC 3986 formatted S3 Service URI endpoint
+      schema:
+        type: string
+        example: https://nrs.objectstore.gov.bc.ca
     Query-BucketName:
       in: query
       name: bucketName
