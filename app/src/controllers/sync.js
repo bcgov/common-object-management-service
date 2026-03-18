@@ -204,12 +204,14 @@ const controller = {
         // for each bucket
         dbBuckets.map(async bucket => {
           // --- Add current user's permissions that exist on parent bucket if they dont already exist
-          await bucketPermissionService.addPermissions(
-            bucket.bucketId,
-            currentUserParentBucketPerms.map(permCode => ({ userId, permCode })),
-            undefined,
-            trx
-          );
+          if (userId !== SYSTEM_USER) {
+            await bucketPermissionService.addPermissions(
+              bucket.bucketId,
+              currentUserParentBucketPerms.map(permCode => ({ userId, permCode })),
+              undefined,
+              trx
+            );
+          }
           // --- Sync S3 Bucket Policies applied by COMS
           await this.syncBucketPublic(bucket, userId, trx);
         })

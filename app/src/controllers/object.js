@@ -1064,7 +1064,7 @@ const controller = {
         order: req.query.order,
       };
       // if scoping to current user permissions on objects
-      if (getConfigBoolean('server.privacyMask')) {
+      if (getConfigBoolean('server.privacyMask') && !params.public) {
         params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
         params.idp = req.currentUser.tokenPayload ? req.currentUser.tokenPayload.identity_provider : undefined;
 
