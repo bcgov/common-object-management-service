@@ -4,6 +4,8 @@ const { stamps } = require('../jsonSchema');
 const { Timestamps } = require('../mixins');
 const { filterOneOrMany, filterILike } = require('../utils');
 
+const { getConfigBoolean } = require('../../../components/utils');
+
 // The table is "object" but Object is a bit of a reserved word :)
 class ObjectModel extends Timestamps(Model) {
   static get tableName() {
@@ -151,48 +153,44 @@ class ObjectModel extends Timestamps(Model) {
       findPath(query, value) {
         if (value) query.where('object.path', value);
       },
-      hasPermission(query, { userId, idp, permCode }) {
-        // userId will be defined if config.privacyMask is ON, in which case we want to filter by permissions. 
+
+      /**
+       * hasPermission modifier to filter by user or idp permissions on object or parent bucket.
+       * If userId and idp are provided, will filter by permissions for both user and idp based on 
+       * hasPermissionType array which can contain 'user', 'idp', or both (or be empty, which is treated as both)
+       * @param {*} query 
+       * @param {*} object containing userId, idp, permCode, permision type to filter on (user, idp, or both) 
+       */
+      hasPermission(query, { userId, idp, permCode, hasPermissionType }) {
         if (userId && idp && permCode) {
+          const isUserOnly = hasPermissionType.length === 1 && hasPermissionType[0] === 'user';
+          const isIdpOnly = hasPermissionType.length === 1 && hasPermissionType[0] === 'idp';
+          const isBoth = (hasPermissionType.includes('user') && hasPermissionType.includes('idp')) ||
+            (getConfigBoolean('server.privacyMask') && (
+              !hasPermissionType.includes('user') &&
+              !hasPermissionType.includes('idp')
+            ));
+
+          const relations = isUserOnly
+            ? '[objectPermission, bucketPermission]'
+            : isIdpOnly
+              ? '[objectIdpPermission, bucketIdpPermission]'
+              : '[objectPermission, bucketPermission, objectIdpPermission, bucketIdpPermission]';
+
           query
-            // withGraphFetched keep joining using default 'left join' operation,
-            // to fix default behavior we are adding extra joinOperation which seems to be working with
-            // corresponding JoinRelated
-            .withGraphFetched('[objectPermission, bucketPermission, objectIdpPermission, bucketIdpPermission]', {
-              joinOperation: 'fullOuterJoinRelated'
-            })
-            .fullOuterJoinRelated('[objectPermission, bucketPermission, objectIdpPermission, bucketIdpPermission]')
-            // wrap in WHERE to make contained clauses exclusive of root query
-            .where(query => {
-              query
-                .where(query => {
-                  query
-                    .where({
-                      'objectPermission.permCode': permCode,
-                      'objectPermission.userId': userId
-                    });
-                })
-                .orWhere(query => {
-                  query
-                    .where({
-                      'bucketPermission.permCode': permCode,
-                      'bucketPermission.userId': userId
-                    });
-                })
-                .orWhere(query => {
-                  query
-                    .where({
-                      'objectIdpPermission.permCode': permCode,
-                      'objectIdpPermission.idp': idp
-                    });
-                })
-                .orWhere(query => {
-                  query
-                    .where({
-                      'bucketIdpPermission.permCode': permCode,
-                      'bucketIdpPermission.idp': idp
-                    });
-                });
+            .withGraphFetched(relations, { joinOperation: 'fullOuterJoinRelated' })
+            .fullOuterJoinRelated(relations)
+            .where(builder => {
+              if (isUserOnly || isBoth) {
+                builder
+                  .where({ 'objectPermission.permCode': permCode, 'objectPermission.userId': userId })
+                  .orWhere({ 'bucketPermission.permCode': permCode, 'bucketPermission.userId': userId });
+              }
+              if (isIdpOnly || isBoth) {
+                builder
+                  .orWhere({ 'objectIdpPermission.permCode': permCode, 'objectIdpPermission.idp': idp })
+                  .orWhere({ 'bucketIdpPermission.permCode': permCode, 'bucketIdpPermission.idp': idp });
+              }
             });
         } else {
           query.withGraphFetched('objectPermission');

@@ -147,12 +147,17 @@ const service = {
           tag: params.tag
         })
         // permissions
-        // if userId is provided (privacyMask is ON) then filter where:
+        // if userId is provided (privacyMask is ON or hasPermissionType is provided) then filter where:
         // - user has READ on object
         // - OR user has READ on parent folder
         // - OR user has READ permission granted to their IDP
         // - OR any parent folder.public is truthy
-        .modify('hasPermission', { userId: params.userId, idp: params.idp, permCode: 'READ' })
+        .modify('hasPermission', {
+          userId: params.userId,
+          idp: params.idp,
+          permCode: 'READ',
+          hasPermissionType: params.hasPermissionType
+        })
         // pagination
         .modify('pagination', params.page, params.limit)
         // sort results

@@ -477,6 +477,7 @@ paths:
         - $ref: "#/components/parameters/Query-Name"
         - $ref: "#/components/parameters/Query-TagSet"
         - $ref: "#/components/parameters/Query-Permissions"
+        - $ref: "#/components/parameters/Query-HasPermissionType"
         - $ref: "#/components/parameters/Query-Limit"
         - $ref: "#/components/parameters/Query-Order"
         - $ref: "#/components/parameters/Query-Page"
@@ -2355,6 +2356,20 @@ components:
       schema:
         type: boolean
         example: true
+    Query-HasPermissionType:
+      in: query
+      name: hasPermissionType
+      description: >-
+        One or Array of Permission types (eg: `user`, `idp`) for filtering results to objects for which the current OIDC user has READ permission, through that permission type.
+        Note: If COMS is configured with PrivacyMask environment variable, the OIDC user must have `user` OR `idp` permission (or both).
+      schema:
+        oneOf:
+          - type: string
+            example: 'user'
+          - type: array
+            items:
+              type: string
+              example: 'user'
     Query-Page:
       in: query
       name: page

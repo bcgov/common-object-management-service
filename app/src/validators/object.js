@@ -150,6 +150,7 @@ const schema = {
       deleteMarker: type.truthy,
       latest: type.truthy,
       permissions: type.truthy,
+      hasPermissionType: scheme.permissionType,
       ...scheme.pagination(
         ['id', 'path', 'public', 'active', 'createdBy', 'updatedBy', 'updatedAt', 'bucketId', 'name']
       ),

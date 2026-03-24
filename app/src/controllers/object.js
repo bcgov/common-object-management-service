@@ -1058,13 +1058,14 @@ const controller = {
         deleteMarker: isTruthy(req.query.deleteMarker),
         latest: isTruthy(req.query.latest),
         permissions: isTruthy(req.query.permissions),
+        hasPermissionType: req.query.hasPermissionType ? mixedQueryToArray(req.query.hasPermissionType) : [],
         page: req.query.page,
         limit: req.query.limit,
         sort: req.query.sort,
         order: req.query.order,
       };
       // if scoping to current user permissions on objects
-      if (getConfigBoolean('server.privacyMask') && !params.public) {
+      if ((getConfigBoolean('server.privacyMask') || params.hasPermissionType.length) && !params.public) {
         params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
         params.idp = req.currentUser.tokenPayload ? req.currentUser.tokenPayload.identity_provider : undefined;
 
