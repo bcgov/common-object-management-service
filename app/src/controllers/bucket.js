@@ -327,6 +327,8 @@ const controller = {
       const params = {
         bucketId: bucketIds ? bucketIds.map(id => addDashesToUuid(id)) : bucketIds,
         bucketName: req.query.bucketName,
+        bucket: req.query.bucket,
+        endpoint: req.query.endpoint,
         key: req.query.key,
         active: isTruthy(req.query.active)
       };

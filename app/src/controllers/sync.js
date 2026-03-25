@@ -6,6 +6,7 @@ const {
   getCurrentIdentity,
   formatS3KeyForCompare,
   isPrefixOfPath,
+  isBelowPrefix,
   limitJobsPerFolder,
   mixedQueryToArray } = require('../components/utils');
 const utils = require('../db/models/utils');
@@ -13,6 +14,7 @@ const log = require('../components/log')(module.filename);
 
 const {
   bucketPermissionService,
+  bucketIdpPermissionService,
   bucketService,
   objectService,
   storageService,
@@ -177,39 +179,29 @@ const controller = {
 
       // Create buckets only found in S3 in COMS db
       const newS3Keys = s3Keys.filter(k => !dbBuckets.map(b => b.key).includes(k));
-      await Promise.all(
-        newS3Keys.map(s3Key => {
-          log.info(`Creating new bucket record in COMS db for S3 key ${s3Key}`, { function: 'syncBucketRecords' });
-          const data = {
-            bucketName: s3Key.substring(s3Key.lastIndexOf('/') + 1),
-            accessKeyId: parentBucket.accessKeyId,
-            bucket: parentBucket.bucket,
-            endpoint: parentBucket.endpoint,
-            key: s3Key,
-            secretAccessKey: parentBucket.secretAccessKey,
-            region: parentBucket.region ?? undefined,
-            active: parentBucket.active,
-            userId: parentBucket.createdBy ?? SYSTEM_USER,
-            permCodes: currentUserParentBucketPerms
-          };
-          return bucketService.create(data, trx)
-            .then((dbResponse) => {
-              dbBuckets.push(dbResponse);
-            });
-        })
-      );
+      const newBuckets = await this.createNewBuckets(newS3Keys, parentBucket, currentUserParentBucketPerms, trx);
 
-      // Update permissions and Sync Public status
+      // Copy all user and idp permissions that exist on 
+      // closest existing parent folder to all new buckets created.
+      if (newBuckets.length > 0) {
+        await this.copyPermissionsToNewBuckets(newBuckets, dbBuckets, trx);
+        // ..Then add new buckets to `dbBuckets` variable assigned to 'total buckets being synced in db'
+        dbBuckets = dbBuckets.concat(newBuckets);
+      }
+
+      // Sync Public status on all buckets
       await Promise.all(
         // for each bucket
         dbBuckets.map(async bucket => {
-          // --- Add current user's permissions that exist on parent bucket if they dont already exist
-          await bucketPermissionService.addPermissions(
-            bucket.bucketId,
-            currentUserParentBucketPerms.map(permCode => ({ userId, permCode })),
-            undefined,
-            trx
-          );
+          // Add current user's permissions that exist on parent bucket if they dont already exist
+          if (userId !== SYSTEM_USER) {
+            await bucketPermissionService.addPermissions(
+              bucket.bucketId,
+              currentUserParentBucketPerms.map(permCode => ({ userId, permCode })),
+              undefined,
+              trx
+            );
+          }
           // --- Sync S3 Bucket Policies applied by COMS
           await this.syncBucketPublic(bucket, userId, trx);
         })
@@ -220,6 +212,91 @@ const controller = {
       log.error(err.message, { function: 'syncBucketRecords' });
       throw err;
     }
+  },
+
+  /**
+   * @function createNewBuckets
+   * Creates new bucket records in COMS db for new 'folders' found in S3
+   * @param {string[]} newS3Keys Array of key prefixes from S3 representing 'directories' 
+   * that do not have a corresponding bucket record in COMS db
+   * @param {object} parentBucket Bucket model for the COMS db bucket record of parent bucket
+   * @param {string[]} currentUserParentBucketPerms Array of PermCodes to add to NEW buckets
+   * @param {object} trx An Objection Transaction object
+   * @returns {object[]} Array of Bucket models for the new buckets created in COMS db
+  */
+  async createNewBuckets(newS3Keys, parentBucket, currentUserParentBucketPerms, trx) {
+    let newBuckets = [];
+    await Promise.all(
+      newS3Keys.map(s3Key => {
+        log.info(`Creating new bucket record in COMS db for S3 key ${s3Key}`, { function: 'syncBucketRecords' });
+        const data = {
+          bucketName: s3Key.substring(s3Key.lastIndexOf('/') + 1),
+          accessKeyId: parentBucket.accessKeyId,
+          bucket: parentBucket.bucket,
+          endpoint: parentBucket.endpoint,
+          key: s3Key,
+          secretAccessKey: parentBucket.secretAccessKey,
+          region: parentBucket.region ?? undefined,
+          active: parentBucket.active,
+          userId: parentBucket.createdBy ?? SYSTEM_USER,
+          permCodes: currentUserParentBucketPerms
+        };
+        return bucketService.create(data, trx)
+          .then((dbResponse) => {
+            newBuckets.push(dbResponse);
+          });
+      })
+    );
+    return newBuckets;
+  },
+  /**
+   * @function copyPermissionsToNewBuckets
+   * Copies permissions from the closest parent bucket to new buckets
+   * @param {object[]} newBuckets Array of new Bucket models
+   * @param {object[]} existingBuckets Array of existing Bucket models
+   * @param {object} trx An Objection Transaction object
+   * @returns {Promise<void>}
+   */
+  async copyPermissionsToNewBuckets(newBuckets, existingBuckets, trx) {
+    await Promise.all(
+      newBuckets.map(async (newBucket) => {
+        const closestParent = existingBuckets
+          .filter((x) => {
+            return isBelowPrefix(x.key, newBucket.key);
+          })
+          .reduce((a, b) => {
+            return b.key.length > a.key.length ? b : a;
+          });
+        // user permissions
+        const parentsUserPerms = await bucketPermissionService.searchPermissions({
+          bucketId: closestParent.bucketId
+        }, trx);
+        if (parentsUserPerms.length) {
+          log.info(`Copying ${parentsUserPerms.length} user permissions from closest parent ` +
+            `bucketId ${closestParent.key} to new bucketId ${newBucket.key}`);
+          await bucketPermissionService.addPermissions(
+            newBucket.bucketId,
+            parentsUserPerms.map(perm => ({ userId: perm.userId, permCode: perm.permCode })),
+            undefined,
+            trx
+          );
+        }
+        // idp permissions
+        const parentsIdpPerms = await bucketIdpPermissionService.searchPermissions({
+          bucketId: closestParent.bucketId
+        }, trx);
+        if (parentsIdpPerms.length) {
+          log.info(`Copying ${parentsIdpPerms.length} IDP permissions from closest parent ` +
+            `bucketId ${closestParent.bucketId} to new bucketId ${newBucket.bucketId}`);
+          await bucketIdpPermissionService.addPermissions(
+            newBucket.bucketId,
+            parentsIdpPerms.map(perm => ({ idp: perm.idp, permCode: perm.permCode })),
+            undefined,
+            trx
+          );
+        }
+      })
+    );
   },
 
   /**

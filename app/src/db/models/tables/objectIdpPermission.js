@@ -5,48 +5,39 @@ const { stamps } = require('../jsonSchema');
 const { Timestamps } = require('../mixins');
 const { filterOneOrMany } = require('../utils');
 
-class BucketPermission extends Timestamps(Model) {
+class ObjectIdpPermission extends Timestamps(Model) {
   static get tableName() {
-    return 'bucket_permission';
+    return 'object_idp_permission';
   }
 
   static get relationMappings() {
-    const Bucket = require('./bucket');
     const ObjectModel = require('./objectModel');
     const Permission = require('./permission');
-    const User = require('./user');
+    const IdentityProvider = require('./identityProvider');
 
     return {
-      bucket: {
-        relation: Model.HasOneRelation,
-        modelClass: Bucket,
-        join: {
-          from: 'bucket_permission.bucketId',
-          to: 'bucket.bucketId'
-        }
-      },
       object: {
         relation: Model.HasOneRelation,
         modelClass: ObjectModel,
         join: {
-          from: 'bucket_permission.bucketId',
-          to: 'object.bucketId'
+          from: 'object_idp_permission.objectId',
+          to: 'object.id'
         }
       },
       permission: {
         relation: Model.HasOneRelation,
         modelClass: Permission,
         join: {
-          from: 'bucket_permission.permCode',
+          from: 'object_idp_permission.permCode',
           to: 'permission.permCode'
         }
       },
-      user: {
+      identity_provider: {
         relation: Model.HasOneRelation,
-        modelClass: User,
+        modelClass: IdentityProvider,
         join: {
-          from: 'bucket_permission.userId',
-          to: 'user.userId'
+          from: 'object_idp_permission.idp',
+          to: 'identity_provider.idp'
         }
       }
     };
@@ -54,11 +45,19 @@ class BucketPermission extends Timestamps(Model) {
 
   static get modifiers() {
     return {
-      filterUserId(query, value) {
-        filterOneOrMany(query, value, 'userId');
-      },
       filterBucketId(query, value) {
-        filterOneOrMany(query, value, 'bucketId');
+        if (value) {
+          query
+            .select('object_idp_permission.*')
+            .joinRelated('object')
+            .whereIn('object.bucketId', value);
+        }
+      },
+      filterIdp(query, value) {
+        filterOneOrMany(query, value, 'idp');
+      },
+      filterObjectId(query, value) {
+        filterOneOrMany(query, value, 'objectId');
       },
       filterPermissionCode(query, value) {
         filterOneOrMany(query, value, 'permCode');
@@ -69,11 +68,11 @@ class BucketPermission extends Timestamps(Model) {
   static get jsonSchema() {
     return {
       type: 'object',
-      required: ['id', 'userId', 'bucketId', 'permCode'],
+      required: ['id', 'idp', 'objectId', 'permCode'],
       properties: {
         id: { type: 'string', format: 'uuid' },
-        userId: { type: 'string', format: 'uuid' },
-        bucketId: { type: 'string', format: 'uuid' },
+        idp: { type: 'string' },
+        objectId: { type: 'string', format: 'uuid' },
         permCode: { type: 'string', enum: Object.values(Permissions) },
         ...stamps
       },
@@ -82,4 +81,4 @@ class BucketPermission extends Timestamps(Model) {
   }
 }
 
-module.exports = BucketPermission;
+module.exports = ObjectIdpPermission;

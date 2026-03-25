@@ -128,7 +128,7 @@ const service = {
       // GroupBy() seems to be working faster with ObjectionJS Graphs
       // when comparing with distinct()
       response.data = await ObjectModel.query(trx)
-        .allowGraph('[bucketPermission, objectPermission, version]')
+        .allowGraph('[bucketPermission, objectPermission, objectIdpPermission, bucketIdpPermission, version]')
         .groupBy('object.id')
         // object
         .modify('filterIds', params.id)
@@ -147,11 +147,17 @@ const service = {
           tag: params.tag
         })
         // permissions
-        // if userId is provided (privacyMask is ON) then filter where:
+        // if userId is provided (privacyMask is ON or hasPermissionType is provided) then filter where:
         // - user has READ on object
-        // - user has READ on parent folder
-        // - any parent folder.public is truthy
-        .modify('hasPermission', params.userId, 'READ')
+        // - OR user has READ on parent folder
+        // - OR user has READ permission granted to their IDP
+        // - OR any parent folder.public is truthy
+        .modify('hasPermission', {
+          userId: params.userId,
+          idp: params.idp,
+          permCode: 'READ',
+          hasPermissionType: params.hasPermissionType
+        })
         // pagination
         .modify('pagination', params.page, params.limit)
         // sort results
@@ -168,8 +174,16 @@ const service = {
           }
           return Promise.all(
             results.map(row => {
-              // eslint-disable-next-line no-unused-vars
-              const { objectPermission, bucketPermission, version, ...object } = row;
+              // destructure permissions out of the row for cleaner response formatting, 
+              // and filter down to only current user permissions if privacyMask is ON
+              /* eslint-disable */
+              const {
+                objectPermission,
+                bucketPermission,
+                objectIdpPermission,
+                bucketIdpPermission,
+                version, ...object } = row;
+              /* eslint-enable */
               if (row.id && params.permissions) {
                 object.permissions = [];
                 if (objectPermission && params.userId && params.userId !== SYSTEM_USER) {

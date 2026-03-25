@@ -653,6 +653,7 @@ const controller = {
       // if scoping to current user permissions on objects
       if (getConfigBoolean('server.privacyMask')) {
         params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
+        params.idp = req.currentUser.tokenPayload ? req.currentUser.tokenPayload.identity_provider : undefined;
       }
       const response = await metadataService.fetchMetadataForObject(params);
       res.status(200).json(response);
@@ -682,6 +683,8 @@ const controller = {
       // if scoping to current user permissions on objects
       if (getConfigBoolean('server.privacyMask')) {
         params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
+        // params.idp = 'bc-box-local-4545';
+        params.idp = req.currentUser.tokenPayload ? req.currentUser.tokenPayload.identity_provider : undefined;
       }
       const response = await tagService.fetchTagsForObject(params);
       res.status(200).json(response);
@@ -1055,30 +1058,33 @@ const controller = {
         deleteMarker: isTruthy(req.query.deleteMarker),
         latest: isTruthy(req.query.latest),
         permissions: isTruthy(req.query.permissions),
+        hasPermissionType: req.query.hasPermissionType ? mixedQueryToArray(req.query.hasPermissionType) : [],
         page: req.query.page,
         limit: req.query.limit,
         sort: req.query.sort,
         order: req.query.order,
       };
       // if scoping to current user permissions on objects
-      if (getConfigBoolean('server.privacyMask')) {
-
-        if (req.currentUser.authType === AuthType.NONE) {
-
-          // no-auth requests MUST have all of the following:
-          //  (a) an object or bucket id; (b) ?public=true; (c) not search by S3 path
-          if (!(params.bucketId || params.id) || !params.public || params.path) {
-            throw new Problem(403, {
-              detail: 'User lacks permission to complete this action',
-              instance: req.originalUrl
-            });
-          }
-        }
+      if ((getConfigBoolean('server.privacyMask') || params.hasPermissionType.length) && !params.public) {
         params.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
+        params.idp = req.currentUser.tokenPayload ? req.currentUser.tokenPayload.identity_provider : undefined;
+
+      }
+
+      // if no-auth, MUST have ALL of the following:
+      //  (a) an object or bucket id; (b) ?public=true; (c) not search by S3 path
+      if (req.currentUser.authType === AuthType.NONE) {
+        if (!(params.bucketId || params.id) || !params.public || params.path) {
+          throw new Problem(403, {
+            detail: 'User lacks permission to complete this action',
+            instance: req.originalUrl
+          });
+        }
       }
 
       const response = await objectService.searchObjects(params);
 
+      // if no-auth request, redact sensitive fields from response
       if (req.currentUser.authType === AuthType.NONE) {
         const redactedFields = ['path', 'createdBy', 'updatedBy', 'lastSyncedDate'];
         const redactedResponseData = response.data.map(object => utils.redactSecrets(object, redactedFields));

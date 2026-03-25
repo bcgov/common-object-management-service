@@ -44,7 +44,6 @@ router.head('/:bucketId',
 router.get('/:bucketId',
   bucketValidator.readBucket,
   checkS3BasicAccess,
-  hasPermission(Permissions.READ),
   (req, res, next) => {
     bucketController.readBucket(req, res, next);
   });

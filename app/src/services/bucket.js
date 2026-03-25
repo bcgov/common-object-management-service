@@ -209,6 +209,8 @@ const service = {
       .allowGraph('bucketPermission')
       .modify('filterBucketIds', params.bucketId)
       .modify('filterBucketName', params.bucketName)
+      .modify('filterBucket', params.bucket)
+      .modify('filterEndpoint', params.endpoint)
       .modify('filterKey', params.key)
       .modify('filterActive', params.active)
       .modify('filterUserId', params.userId)

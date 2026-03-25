@@ -185,7 +185,9 @@ describe('fetchMetadataForObject', () => {
     expect(ObjectModel.modifyGraph).toHaveBeenCalledWith('version.metadata', expect.anything());
     expect(ObjectModel.modify).toHaveBeenCalledTimes(3);
     expect(ObjectModel.modify).toHaveBeenCalledWith('filterIds', params.objId);
-    expect(ObjectModel.modify).toHaveBeenCalledWith('hasPermission', params.userId, 'READ');
+    expect(ObjectModel.modify).toHaveBeenCalledWith('hasPermission', {
+      idp: undefined, permCode: 'READ', userId: '00000000-0000-0000-0000-000000000000'
+    });
     expect(ObjectModel.then).toHaveBeenCalledTimes(1);
   });
 });

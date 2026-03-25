@@ -82,6 +82,8 @@ const scheme = {
 
   string: oneOrMany(Joi.string().max(255)),
 
+  permissionType: oneOrMany(Joi.string().valid('user', 'idp')),
+
   pagination: (sortList) => ({
     page: Joi.alternatives()
       .conditional('limit', {

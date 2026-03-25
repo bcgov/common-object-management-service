@@ -65,8 +65,10 @@ const schema = {
       bucketId: scheme.guid,
       bucketName: Joi.string().max(255),
       key: Joi.string().max(255),
-      active: type.truthy
-    })
+      active: type.truthy,
+      bucket: Joi.string().max(255),
+      endpoint: Joi.string().uri({ scheme: /https?/ }).max(255),
+    }).and('bucket', 'endpoint'),
   },
 
   syncBucket: {
