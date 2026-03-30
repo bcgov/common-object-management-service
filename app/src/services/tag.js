@@ -257,7 +257,7 @@ const service = {
       // match on bucketIds parameter
       .modify('filterBucketIds', params.bucketIds)
       // scope to objects that user(s) has READ permission at object or bucket-level
-      .modify('hasPermission', { userId: params.userId, idp: params.idp, permCode: 'READ' })
+      .modify('hasPermission', { userId: params.userId, idp: params.idp, permCode: 'READ', hasPermissionType: [] })
       .then(result =>
         // de-dupe based on objectId, keeping all associated tags for each object
         Array.from(new Map(result.map(item => [item.objectId, item])).values())
@@ -306,7 +306,7 @@ const service = {
               .withGraphJoined('object')
               .modifyGraph('object', query => {
                 query.modify('hasPermission', {
-                  userId: params.userId, idp: params.idp, permCode: 'READ'
+                  userId: params.userId, idp: params.idp, permCode: 'READ', hasPermissionType: []
                 });
               })
               .whereNotNull('object.id');
