@@ -49,7 +49,7 @@ describe('fetchTags', () => {
 
     const tagset = query.keys.tagset;
 
-    it.skip('is the expected schema', () => {
+    it('is the expected schema', () => {
       expect(tagset).toEqual(type.tagset().describe());
     });
 

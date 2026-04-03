@@ -76,7 +76,7 @@ describe('addTags', () => {
     describe('tagset', () => {
       const tagset = query.keys.tagset;
 
-      it.skip('is the expected schema', () => {
+      it('is the expected schema', () => {
         expect(tagset).toEqual(type.tagset(1, 1).describe());
       });
     });
@@ -105,7 +105,7 @@ describe('createObject', () => {
     describe('tagset', () => {
       const tagset = schema.createObject.query.describe().keys.tagset;
 
-      it.skip('is the expected schema', () => {
+      it('is the expected schema', () => {
         expect(tagset).toEqual(type.tagset().describe());
       });
     });
@@ -202,7 +202,7 @@ describe('deleteTags', () => {
     describe('tagset', () => {
       const tagset = query.keys.tagset;
 
-      it.skip('is the expected schema', () => {
+      it('is the expected schema', () => {
         expect(tagset).toEqual(type.tagset().describe());
       });
     });
@@ -364,7 +364,7 @@ describe('replaceTags', () => {
     describe('tagset', () => {
       const tagset = query.keys.tagset;
 
-      it.skip('is the expected schema', () => {
+      it('is the expected schema', () => {
         expect(tagset).toEqual(type.tagset().describe());
       });
     });
@@ -492,7 +492,7 @@ describe('searchObjects', () => {
     describe('tagset', () => {
       const tagset = query.keys.tagset;
 
-      it.skip('is the expected schema', () => {
+      it('is the expected schema', () => {
         expect(tagset).toEqual(type.tagset().describe());
       });
     });
@@ -666,7 +666,7 @@ describe('updateObject', () => {
     describe('tagset', () => {
       const tagset = query.keys.tagset;
 
-      it.skip('is the expected schema', () => {
+      it('is the expected schema', () => {
         expect(tagset).toEqual(type.tagset().describe());
       });
     });

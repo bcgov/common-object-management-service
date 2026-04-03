@@ -15,9 +15,7 @@ const schema = {
 
   fetchTags: {
     query: Joi.object({
-      tagset: Joi.any(),
-      // TODO: fix our tagset type
-      // tagset: type.tagset(),
+      tagset: type.tagset(),
       s3VersionId: scheme.string,
       versionId: scheme.guid
     }).nand('s3VersionId', 'versionId')
