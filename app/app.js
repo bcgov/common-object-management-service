@@ -4,6 +4,7 @@ const config = require('config');
 const cors = require('cors');
 const express = require('express');
 const helmet = require('helmet');
+const qs = require('qs');
 
 const { name: appName, version: appVersion } = require('./package.json');
 const { AuthMode, DEFAULTCORS } = require('./src/components/constants');
@@ -31,6 +32,14 @@ let probeId;
 let queueId;
 
 const app = express();
+// Express.js v4 uses `qs` to parse query strings, which has a default max of 20 items per array
+//  (e.g. ?arr[]=value)
+// v5 instead defaults to Node's querystring instead of `qs`
+//  (it's still bundled with Express for now, it just needs to be specified).
+//  https://github.com/expressjs/express/discussions/5783#discussioncomment-13735430
+app.set('query parser', function (str) {
+  return qs.parse(str, { arrayLimit: Infinity });
+});
 app.use(compression());
 app.use(cors(DEFAULTCORS));
 // TODO: extend query param settings further as needed (eg allow bucketId[] for multiple bucket search)

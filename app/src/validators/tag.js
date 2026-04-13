@@ -1,15 +1,13 @@
 const Joi = require('joi');
 
-// const { type } = require('./common');
+const { type } = require('./common');
 const { validate } = require('../middleware/validation');
 
 
 const schema = {
   searchTags: {
     query: Joi.object({
-      tagset: Joi.any(),
-      // TODO: fix our tagset type
-      // tagset: type.tagset(),
+      tagset: type.tagset(),
     })
   }
 };

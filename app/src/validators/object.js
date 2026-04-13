@@ -21,9 +21,7 @@ const schema = {
       objectId: type.uuidv4.required()
     }),
     query: Joi.object({
-      tagset: Joi.any(),
-      // TODO: fix our tagset type
-      // tagset: type.tagset(),
+      tagset: type.tagset(),
       s3VersionId: Joi.string(),
       versionId: type.uuidv4
     }).nand('s3VersionId', 'versionId')
@@ -32,9 +30,7 @@ const schema = {
   createObject: {
     headers: type.metadata(),
     query: Joi.object({
-      tagset: Joi.any(),
-      // TODO: fix our tagset type
-      // tagset: type.tagset(),
+      tagset: type.tagset(),
       bucketId: type.uuidv4.required()
     })
   },
@@ -65,9 +61,7 @@ const schema = {
       objectId: type.uuidv4.required()
     }),
     query: Joi.object({
-      tagset: Joi.any(),
-      // TODO: fix our tagset type
-      // tagset: type.tagset(),
+      tagset: type.tagset(),
       s3VersionId: Joi.string(),
       versionId: type.uuidv4
     }).nand('s3VersionId', 'versionId')
@@ -136,9 +130,7 @@ const schema = {
       objectId: type.uuidv4.required()
     }),
     query: Joi.object({
-      tagset: Joi.any(),
-      // TODO: fix our tagset type
-      // tagset: type.tagset(),
+      tagset: type.tagset(),
       s3VersionId: Joi.string(),
       versionId: type.uuidv4
     }).nand('s3VersionId', 'versionId')
@@ -152,9 +144,7 @@ const schema = {
       name: Joi.string(),
       path: Joi.string().max(1024),
       mimeType: Joi.string().max(255),
-      tagset: Joi.any(),
-      // TODO: fix our tagset type
-      // tagset: type.tagset(),
+      tagset: type.tagset(),
       public: type.truthy,
       active: type.truthy,
       deleteMarker: type.truthy,
@@ -171,9 +161,7 @@ const schema = {
     query: Joi.object({
       bucketId: scheme.guid,
       objectId: scheme.guid,
-      tagset: Joi.any(),
-      // TODO: fix our tagset type
-      // tagset: type.tagset(),
+      tagset: type.tagset(),
     })
   },
 
@@ -200,9 +188,7 @@ const schema = {
       objectId: type.uuidv4.required()
     }),
     query: Joi.object({
-      tagset: Joi.any(),
-      // TODO: fix our tagset type
-      // tagset: type.tagset(),
+      tagset: type.tagset(),
     })
   },
 };

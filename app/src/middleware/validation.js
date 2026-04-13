@@ -10,16 +10,6 @@ const Problem = require('api-problem');
 const validate = (schema) => {
   return (req, _res, next) => {
 
-    /**
-     * Our implementation of Joi is unable to handle arrays with over 20 items passed in query parameters 
-     * Ensure the object is converted to an array
-     */
-    Object.entries(req.query).forEach(([key, value]) => {
-      if (typeof value === 'object' && !Array.isArray(value)) {
-        req.query[key] = Object.values(value);
-      }
-    });
-
     const validationErrors = Object.entries(schema)
       .map(([prop, def]) => {
         const result = def.validate(req[prop], { abortEarly: false })?.error;
