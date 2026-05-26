@@ -118,6 +118,12 @@ const currentUser = async (req, res, next) => {
 
         if (isValid) {
           currentUser.tokenPayload = typeof isValid === 'object' ? isValid : jwt.decode(bearerToken);
+
+          // coerce `azureidir` to `idir` - this allows re-use of the existing SiteMinder IDIR user record
+          if (currentUser.tokenPayload.identity_provider === 'azureidir') {
+            currentUser.tokenPayload.identity_provider = 'idir';
+          }
+
           await userService.login(currentUser.tokenPayload);
         } else {
           throw new Error('Invalid authorization token');
