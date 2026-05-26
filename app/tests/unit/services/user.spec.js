@@ -231,7 +231,7 @@ describe('login', () => {
     expect(User.query).toHaveBeenCalledTimes(1);
     expect(User.query).toHaveBeenCalledWith(expect.any(Object));
     expect(User.where).toHaveBeenCalledTimes(1);
-    expect(User.where).toHaveBeenCalledWith({ identityId: user.identityId, idp: user.idp });
+    expect(User.where).toHaveBeenCalledWith({ identityId: user.identityId });
     expect(User.first).toHaveBeenCalledTimes(1);
     expect(User.first).toHaveBeenCalledWith();
 
@@ -249,7 +249,27 @@ describe('login', () => {
     expect(User.query).toHaveBeenCalledTimes(1);
     expect(User.query).toHaveBeenCalledWith(expect.any(Object));
     expect(User.where).toHaveBeenCalledTimes(1);
-    expect(User.where).toHaveBeenCalledWith({ identityId: user.identityId, idp: user.idp });
+    expect(User.where).toHaveBeenCalledWith({ identityId: user.identityId });
+    expect(User.first).toHaveBeenCalledTimes(1);
+    expect(User.first).toHaveBeenCalledWith();
+
+    expect(createUserSpy).toHaveBeenCalledTimes(0);
+    expect(updateUserSpy).toHaveBeenCalledTimes(1);
+    expect(updateUserSpy).toHaveBeenCalledWith(
+      'a96f2809-d6f4-4cef-a02a-3f72edff06d7', expect.objectContaining(user), expect.any(Object)
+    );
+  });
+
+  it('Updates an existing idir user record if user logs in with azureidir', async () => {
+    trxWrapperSpy.mockImplementation(callback => callback({}));
+    User.first.mockResolvedValue({ ...user, idp: 'azureidir', userId: 'a96f2809-d6f4-4cef-a02a-3f72edff06d7' });
+
+    await service.login(token);
+
+    expect(User.query).toHaveBeenCalledTimes(1);
+    expect(User.query).toHaveBeenCalledWith(expect.any(Object));
+    expect(User.where).toHaveBeenCalledTimes(1);
+    expect(User.where).toHaveBeenCalledWith({ identityId: user.identityId });
     expect(User.first).toHaveBeenCalledTimes(1);
     expect(User.first).toHaveBeenCalledWith();
 
