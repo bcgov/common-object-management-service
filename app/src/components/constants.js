@@ -29,7 +29,8 @@ module.exports = Object.freeze({
    * are given additional permissions.
   */
   ElevatedIdps: [
-    'idir'
+    'idir',
+    'azureidir'
   ],
 
   /** Default CORS settings used across the entire application */

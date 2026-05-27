@@ -158,7 +158,7 @@ const service = {
     return await utils.trxWrapper(async (trx) => {
       // check if user exists in db
       const oldUser = await User.query(trx)
-        .where({ 'identityId': newUser.identityId, idp: newUser.idp })
+        .where({ 'identityId': newUser.identityId })
         .first();
 
       if (!oldUser) {
