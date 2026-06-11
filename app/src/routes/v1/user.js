@@ -7,6 +7,7 @@ const {
   checkS3BasicAccess,
   restrictNonIdirUserSearch,
 } = require('../../middleware/authorization');
+const { coerceAzureIDIRQueryParam: coerceAzureIDIRQueryParam } = require('../../middleware/azureidir');
 const { requireSomeAuth } = require('../../middleware/featureToggle');
 
 router.use(checkAppMode);
@@ -21,6 +22,7 @@ router.get('/',
   checkS3BasicAccess,
   userValidator.searchUsers,
   restrictNonIdirUserSearch,
+  coerceAzureIDIRQueryParam,
   (req, res, next) => {
     userController.searchUsers(req, res, next);
   });

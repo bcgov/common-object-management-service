@@ -3,6 +3,7 @@ const router = express.Router();
 
 const { Permissions } = require('../../../components/constants');
 const { objectIdpPermissionController } = require('../../../controllers');
+const { coerceAzureIDIRQueryParam } = require('../../../middleware/azureidir');
 const { objectIdpPermissionValidator } = require('../../../validators');
 const {
   checkAppMode,
@@ -20,6 +21,7 @@ router.use(requireSomeAuth);
 router.get('/',
   objectIdpPermissionValidator.searchPermissions,
   checkS3BasicAccess,
+  coerceAzureIDIRQueryParam,
   (req, res, next) => {
     objectIdpPermissionController.searchPermissions(req, res, next);
   });
@@ -30,6 +32,7 @@ router.get('/:objectId',
   currentObject,
   checkS3BasicAccess,
   hasPermission(Permissions.MANAGE),
+  coerceAzureIDIRQueryParam,
   (req, res, next) => {
     objectIdpPermissionController.listPermissions(req, res, next);
   }
@@ -43,6 +46,7 @@ router.put('/:objectId',
   checkS3BasicAccess,
   checkElevatedUser,
   hasPermission(Permissions.MANAGE),
+  coerceAzureIDIRQueryParam,
   (req, res, next) => {
     objectIdpPermissionController.addPermissions(req, res, next);
   }

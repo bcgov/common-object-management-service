@@ -17,7 +17,13 @@ const {
 } = require('../components/utils');
 const { redactSecrets } = require('../db/models/utils');
 
-const { bucketService, storageService, userService, bucketPermissionService } = require('../services');
+const {
+  bucketService,
+  storageService,
+  userService,
+  bucketPermissionService,
+  bucketIdpPermissionService
+} = require('../services');
 
 const SERVICE = 'BucketService';
 const secretFields = ['accessKeyId', 'secretAccessKey'];
@@ -184,7 +190,10 @@ const controller = {
       await controller._validateCredentials(childBucket);
       childBucket.userId = await userService.getCurrentUserId(getCurrentIdentity(req.currentUser, SYSTEM_USER));
 
-      const parentPermissions = await bucketPermissionService.searchPermissions({ bucketId: parentBucket.bucketId });
+      const parentPermissions = await bucketPermissionService.searchPermissions(
+        { bucketId: parentBucket.bucketId });
+      const parentIdpPermissions = await bucketIdpPermissionService.searchPermissions(
+        { bucketId: parentBucket.bucketId });
 
       response = await utils.trxWrapper(async (trx) => {
         // Create child bucket
@@ -194,6 +203,11 @@ const controller = {
         if (parentPermissions.length > 0)
           await bucketPermissionService.addPermissions(
             childBucketResp.bucketId, parentPermissions, childBucket.userId, trx);
+
+        // Add parent idp permissions to child bucket
+        if (parentIdpPermissions.length > 0)
+          await bucketIdpPermissionService.addPermissions(
+            childBucketResp.bucketId, parentIdpPermissions, childBucket.userId, trx);
 
         return childBucketResp;
       });
