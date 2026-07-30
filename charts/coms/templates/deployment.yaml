@@ -11,8 +11,8 @@ kind: StatefulSet
 name: {{ printf "%s-%s" "postgres-master" }}
 {{- end }}
 ---
-apiVersion: apps.openshift.io/v1
-kind: DeploymentConfig
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: {{ include "coms.fullname" . }}
   labels:
@@ -25,43 +25,10 @@ spec:
   replicas: {{ .Values.replicaCount }}
   revisionHistoryLimit: 10
   selector:
-    {{- include "coms.selectorLabels" . | nindent 4 }}
+    matchLabels:
+      {{- include "coms.selectorLabels" . | nindent 6 }}
   strategy:
-    resources:
-      {{- toYaml .Values.resources | nindent 6 }}
-    rollingParams:
-      timeoutSeconds: 600
-      {{- if or .Values.postgres.enabled $prRelease .Values.config.configMap.DB_ENABLED }}
-      pre:
-        failurePolicy: {{ .Values.failurePolicy }}
-        execNewPod:
-          command:
-            - npm
-            - run
-            - migrate
-          containerName: app
-          env:
-            - name: NODE_ENV
-              value: production
-            - name: DB_DATABASE
-              valueFrom:
-                secretKeyRef:
-                  key: dbname
-                  name: {{ $dbSecretName }}
-            - name: DB_HOST
-              value: {{ $dbHostName }}
-            - name: DB_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  key: user
-                  name: {{ $dbSecretName }}
-            - name: DB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  key: password
-                  name: {{ $dbSecretName }}
-      {{- end }}
-    type: Rolling
+    type: RollingUpdate
   template:
     metadata:
       labels: {{ include "coms.selectorLabels" . | nindent 8 }}
@@ -75,6 +42,36 @@ spec:
       {{- with .Values.podSecurityContext }}
       securityContext: {{ toYaml . | nindent 8 }}
       {{- end }}
+      {{- if or .Values.postgres.enabled $prRelease .Values.config.configMap.DB_ENABLED }}
+      initContainers:
+        - name: migrate
+          image: "{{ .Values.image.repository }}/{{ .Chart.Name }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - npm
+            - run
+            - migrate
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: DB_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  key: dbname
+                  name: {{ $dbSecretName }}
+            - name: DB_HOST
+              value: {{ $dbHostName | quote }}
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  key: user
+                  name: {{ $dbSecretName }}
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: password
+                  name: {{ $dbSecretName }}
+      {{- end }}
       containers:
         - name: app
           {{- with .Values.securityContext }}
@@ -83,13 +80,14 @@ spec:
           image: "{{ .Values.image.repository }}/{{ .Chart.Name }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
-            - containerPort: {{ .Values.service.port }}
+            - name: http
+              containerPort: {{ .Values.service.port }}
               protocol: TCP
           livenessProbe:
             failureThreshold: 3
             httpGet:
               path: {{ .Values.route.path }}
-              port: {{ .Values.service.port }}
+              port: http
               scheme: HTTP
             initialDelaySeconds: 10
             timeoutSeconds: 1
@@ -97,7 +95,7 @@ spec:
             failureThreshold: 3
             httpGet:
               path: {{ .Values.route.path }}
-              port: {{ .Values.service.port }}
+              port: http
               scheme: HTTP
             initialDelaySeconds: 10
             timeoutSeconds: 1
@@ -124,7 +122,7 @@ spec:
                   key: dbname
                   name: {{ $dbSecretName }}
             - name: DB_HOST
-              value: {{ $dbHostName }}
+              value: {{ $dbHostName | quote }}
             - name: DB_USERNAME
               valueFrom:
                 secretKeyRef:
@@ -170,6 +168,3 @@ spec:
                 name: {{ include "coms.configname" . }}-config
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
-  test: false
-  triggers:
-    - type: ConfigChange
