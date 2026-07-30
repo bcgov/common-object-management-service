@@ -2,6 +2,40 @@ apiVersion: v1
 entries:
   common-object-management-service:
   - apiVersion: v2
+    appVersion: 1.1.0
+    created: "2026-07-30T22:03:50.102318302Z"
+    dependencies:
+    - alias: postgres
+      condition: postgres.enabled
+      name: postgrescluster
+      repository: file://../postgres
+      version: 2.1.6
+    description: A microservice for managing access control to S3 Objects
+    digest: ad15b3a0374f8162d30a532d738841a334a3d5c84f8da7f2acea1bf359f5a114
+    home: https://bcgov.github.io/common-object-management-service
+    keywords:
+    - nodejs
+    - javascript
+    - docker
+    - microservice
+    - s3
+    - document-management
+    - access-control
+    - object-storage
+    - domo
+    kubeVersion: '>= 1.13.0'
+    maintainers:
+    - email: NR.CommonServiceShowcase@gov.bc.ca
+      name: NR Common Service Showcase Team
+      url: https://bcgov.github.io/common-service-showcase/team.html
+    name: common-object-management-service
+    sources:
+    - https://github.com/bcgov/common-object-management-service
+    type: application
+    urls:
+    - https://github.com/bcgov/common-object-management-service/releases/download/common-object-management-service-2.1.7/common-object-management-service-2.1.7.tgz
+    version: 2.1.7
+  - apiVersion: v2
     appVersion: 1.0.1
     created: "2026-02-18T19:08:56.787039212Z"
     dependencies:
@@ -1168,4 +1202,4 @@ entries:
     urls:
     - https://github.com/bcgov/common-object-management-service/releases/download/postgrescluster-2.0.0/postgrescluster-2.0.0.tgz
     version: 2.0.0
-generated: "2026-02-18T19:08:56.971775747Z"
+generated: "2026-07-30T22:03:50.102626367Z"
