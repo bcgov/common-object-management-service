@@ -157,8 +157,10 @@ const service = {
     // wrap with db transaction
     return await utils.trxWrapper(async (trx) => {
       // check if user exists in db
+      // Match on prefix or complete identityId (eg. abc or abc@bcbox-4545)
+      newUser.identityId = newUser.identityId?.split('@')[0];
       const oldUser = await User.query(trx)
-        .where({ 'identityId': newUser.identityId })
+        .whereRaw('lower(split_part("identityId", \'@\', 1)) = lower(?)', [newUser.identityId])
         .first();
 
       if (!oldUser) {

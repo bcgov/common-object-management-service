@@ -33,7 +33,8 @@ jest.mock('../../../src/db/models/tables/user', () => ({
   select: jest.fn(),
   throwIfNotFound: jest.fn(),
   where: jest.fn(),
-  whereNotNull: jest.fn()
+  whereNotNull: jest.fn(),
+  whereRaw: jest.fn()
 }));
 
 const service = require('../../../src/services/user');
@@ -230,8 +231,10 @@ describe('login', () => {
 
     expect(User.query).toHaveBeenCalledTimes(1);
     expect(User.query).toHaveBeenCalledWith(expect.any(Object));
-    expect(User.where).toHaveBeenCalledTimes(1);
-    expect(User.where).toHaveBeenCalledWith({ identityId: user.identityId });
+    expect(User.whereRaw).toHaveBeenCalledTimes(1);
+    expect(User.whereRaw).toHaveBeenCalledWith(
+      'lower(split_part("identityId", \'@\', 1)) = lower(?)', [user.identityId.split('@')[0]]
+    );
     expect(User.first).toHaveBeenCalledTimes(1);
     expect(User.first).toHaveBeenCalledWith();
 
@@ -248,8 +251,10 @@ describe('login', () => {
 
     expect(User.query).toHaveBeenCalledTimes(1);
     expect(User.query).toHaveBeenCalledWith(expect.any(Object));
-    expect(User.where).toHaveBeenCalledTimes(1);
-    expect(User.where).toHaveBeenCalledWith({ identityId: user.identityId });
+    expect(User.whereRaw).toHaveBeenCalledTimes(1);
+    expect(User.whereRaw).toHaveBeenCalledWith(
+      'lower(split_part("identityId", \'@\', 1)) = lower(?)', [user.identityId.split('@')[0]]
+    );
     expect(User.first).toHaveBeenCalledTimes(1);
     expect(User.first).toHaveBeenCalledWith();
 
@@ -268,8 +273,10 @@ describe('login', () => {
 
     expect(User.query).toHaveBeenCalledTimes(1);
     expect(User.query).toHaveBeenCalledWith(expect.any(Object));
-    expect(User.where).toHaveBeenCalledTimes(1);
-    expect(User.where).toHaveBeenCalledWith({ identityId: user.identityId });
+    expect(User.whereRaw).toHaveBeenCalledTimes(1);
+    expect(User.whereRaw).toHaveBeenCalledWith(
+      'lower(split_part("identityId", \'@\', 1)) = lower(?)', [user.identityId.split('@')[0]]
+    );
     expect(User.first).toHaveBeenCalledTimes(1);
     expect(User.first).toHaveBeenCalledWith();
 
